@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "snowscape", "snowscape\snowscape.csproj", "{73E9B9EB-EB08-4098-A8EC-8BD6E1AFB5AF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SnowscapeViewer", "SnowscapeViewer\SnowscapeViewer.csproj", "{24828E02-A6E2-4C59-89F1-8B694FCB347A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -13,6 +15,10 @@ Global
 		{73E9B9EB-EB08-4098-A8EC-8BD6E1AFB5AF}.Debug|x86.Build.0 = Debug|x86
 		{73E9B9EB-EB08-4098-A8EC-8BD6E1AFB5AF}.Release|x86.ActiveCfg = Release|x86
 		{73E9B9EB-EB08-4098-A8EC-8BD6E1AFB5AF}.Release|x86.Build.0 = Release|x86
+		{24828E02-A6E2-4C59-89F1-8B694FCB347A}.Debug|x86.ActiveCfg = Debug|x86
+		{24828E02-A6E2-4C59-89F1-8B694FCB347A}.Debug|x86.Build.0 = Debug|x86
+		{24828E02-A6E2-4C59-89F1-8B694FCB347A}.Release|x86.ActiveCfg = Release|x86
+		{24828E02-A6E2-4C59-89F1-8B694FCB347A}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
