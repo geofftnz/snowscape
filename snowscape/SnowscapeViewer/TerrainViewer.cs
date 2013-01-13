@@ -28,6 +28,36 @@ namespace Snowscape.Viewer
         }
 
 
+        protected override void OnLoad(EventArgs e)
+        {
+            this.VSync = VSyncMode.On;
+
+            // create VBOs/Shaders etc
+
+            // GL state
+            GL.Enable(EnableCap.DepthTest);
+            GL.ClearColor(new Color4(0, 24, 64, 255));
+
+            base.OnLoad(e);
+        }
+
+
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+        }
+
+        protected override void OnRenderFrame(FrameEventArgs e)
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            SwapBuffers();
+            base.OnRenderFrame(e);
+        }
+
+
+
+
         [STAThread]
         public static void Main()
         {
