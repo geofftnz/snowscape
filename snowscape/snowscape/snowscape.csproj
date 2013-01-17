@@ -87,6 +87,10 @@
       <Project>{24828E02-A6E2-4C59-89F1-8B694FCB347A}</Project>
       <Name>SnowscapeViewer</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TerrainGenerationViewer\TerrainGenerationViewer.csproj">
+      <Project>{C92F863E-36A3-4136-A72D-5DCB52775463}</Project>
+      <Name>TerrainGenerationViewer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

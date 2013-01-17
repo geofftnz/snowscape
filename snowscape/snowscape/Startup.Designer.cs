@@ -34,13 +34,13 @@
             // 
             // RunGeneratorButton
             // 
-            this.RunGeneratorButton.Enabled = false;
             this.RunGeneratorButton.Location = new System.Drawing.Point(13, 13);
             this.RunGeneratorButton.Name = "RunGeneratorButton";
             this.RunGeneratorButton.Size = new System.Drawing.Size(259, 30);
             this.RunGeneratorButton.TabIndex = 0;
             this.RunGeneratorButton.Text = "Run Terrain Generator";
             this.RunGeneratorButton.UseVisualStyleBackColor = true;
+            this.RunGeneratorButton.Click += new System.EventHandler(this.RunGeneratorButton_Click);
             // 
             // RunViewerButton
             // 

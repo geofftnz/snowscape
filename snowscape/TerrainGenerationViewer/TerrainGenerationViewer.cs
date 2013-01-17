@@ -6,7 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace TerrainGenerationViewer
+namespace Snowscape.TerrainGenerationViewer
 {
     public class TerrainGenerationViewer : GameWindow
     {

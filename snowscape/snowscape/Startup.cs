@@ -21,9 +21,19 @@ namespace Snowscape
         {
             this.Hide();
 
-            
-            //Snowscape.Viewer.TerrainViewer.Main();
             using (var v = new Snowscape.Viewer.TerrainViewer())
+            {
+                v.Run(30);
+            }
+            this.Show();
+        }
+
+        private void RunGeneratorButton_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+
+
+            using (var v = new Snowscape.TerrainGenerationViewer.TerrainGenerationViewer())
             {
                 v.Run(30);
             }
