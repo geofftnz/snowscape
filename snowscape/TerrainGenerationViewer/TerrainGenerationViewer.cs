@@ -6,17 +6,17 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-
-namespace Snowscape.Viewer
+namespace TerrainGenerationViewer
 {
-    public class TerrainViewer:GameWindow
+    public class TerrainGenerationViewer : GameWindow
     {
 
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
         public event CloseEventHandler OnClose;
 
-        public TerrainViewer():base(640,480,new GraphicsMode(),"Snowscape",GameWindowFlags.Default,DisplayDevice.Default,3,0,GraphicsContextFlags.Default)
+        public TerrainGenerationViewer()
+            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 0, GraphicsContextFlags.Default)
         {
 
         }
