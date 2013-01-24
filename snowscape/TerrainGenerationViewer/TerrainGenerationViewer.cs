@@ -10,8 +10,8 @@ namespace Snowscape.TerrainGenerationViewer
 {
     public class TerrainGenerationViewer : GameWindow
     {
+        private int heightTex = 0;
 
-        
 
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
@@ -39,10 +39,32 @@ namespace Snowscape.TerrainGenerationViewer
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
+            this.heightTex = GL.GenTexture();
+
+            byte[] image = new byte[1024*1024*4];
+
+            int i = 0;
+            for (int y = 0; y < 1024; y++)
+            {
+                for (int x = 0; x < 1024; x++)
+                {
+                    image[i++] = (byte)(y & 0xff);
+                    image[i++] = (byte)(x & 0xff);
+                    image[i++] = (byte)((x*y) & 0xff);
+                    image[i++] = 255;
+                }
+            }
+
+            GL.BindTexture(TextureTarget.Texture2D,this.heightTex);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1024, 1024, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image);
+            
             SetProjection();
 
             base.OnLoad(e);
         }
+
 
         protected override void OnUnload(EventArgs e)
         {
@@ -89,19 +111,24 @@ namespace Snowscape.TerrainGenerationViewer
 
             //GL.Enable(EnableCap.Blend);
             //GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Texture2D);
 
             GL.Begin(BeginMode.TriangleStrip);
 
-            GL.Color4(0.0f,0.0f,0.5f,1.0f);
+            GL.Color4(0.0f, 0.0f, 0.5f, 1.0f);
+            GL.TexCoord2(0.0, 0.0);
             GL.Vertex3(0.0f, 0.0f, 0.0f);
 
             GL.Color4(0.0f, 1.0f, 0.5f, 1.0f);
+            GL.TexCoord2(0.0, 1.0);
             GL.Vertex3(0.0f, 1.0f, 0.0f);
 
             GL.Color4(1.0f, 0.0f, 0.5f, 1.0f);
+            GL.TexCoord2(1.0, 0.0);
             GL.Vertex3(1.0f, 0.0f, 0.0f);
 
             GL.Color4(1.0f, 1.0f, 0.5f, 1.0f);
+            GL.TexCoord2(1.0, 1.0);
             GL.Vertex3(1.0f, 1.0f, 0.0f);
 
             GL.End();
