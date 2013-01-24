@@ -11,7 +11,27 @@ namespace Snowscape.TerrainGenerationViewer
     public class TerrainGenerationViewer : GameWindow
     {
         private int heightTex = 0;
+        private int shaderProgram = 0;
+        private int vertexShader = 0;
+        private int fragmentShader = 0;
 
+        private string vertexShaderSource = @"
+#version 140
+ 
+uniform Transformation {
+    mat4 projection_matrix;
+    mat4 modelview_matrix;
+};
+ 
+in vec3 vertex;
+ 
+void main() {
+    gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
+}
+        ";
+
+        private string fragmentShaderSource = @"
+        ";
 
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
@@ -59,6 +79,24 @@ namespace Snowscape.TerrainGenerationViewer
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1024, 1024, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image);
+
+
+            // setup shader
+            this.vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            this.fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+
+            GL.ShaderSource(this.vertexShader, this.vertexShaderSource);
+            GL.ShaderSource(this.fragmentShader, this.fragmentShaderSource);
+
+            GL.CompileShader(this.vertexShader);
+            GL.CompileShader(this.fragmentShader);
+
+            this.shaderProgram = GL.CreateProgram();
+            GL.AttachShader(this.shaderProgram, this.vertexShader);
+            GL.AttachShader(this.shaderProgram, this.fragmentShader);
+            GL.LinkProgram(this.shaderProgram);
+
+            GL.UseProgram(this.shaderProgram);
             
             SetProjection();
 
