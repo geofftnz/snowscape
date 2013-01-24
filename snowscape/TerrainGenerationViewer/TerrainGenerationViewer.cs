@@ -11,6 +11,8 @@ namespace Snowscape.TerrainGenerationViewer
     public class TerrainGenerationViewer : GameWindow
     {
 
+        
+
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
         public event CloseEventHandler OnClose;
@@ -37,22 +39,29 @@ namespace Snowscape.TerrainGenerationViewer
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            GL.Ortho(-1.0, 1.0, 1.0, -1.0, 0.001, 10.0);
-            GL.MatrixMode(MatrixMode.Modelview);
+            SetProjection();
 
             base.OnLoad(e);
         }
 
+        protected override void OnUnload(EventArgs e)
+        {
+            base.OnUnload(e);
+        }
+
         protected override void OnResize(EventArgs e)
+        {
+            SetProjection();
+            base.OnResize(e);
+        }
+
+        private void SetProjection()
         {
             GL.Viewport(this.ClientRectangle);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            GL.Ortho(-1.0, 1.0, 1.0, -1.0, 0.001, 10.0);
+            GL.Ortho(0.0, (double)this.ClientRectangle.Width / (double)this.ClientRectangle.Height, 1.0, 0.0, 0.001, 10.0);
             GL.MatrixMode(MatrixMode.Modelview);
-            base.OnResize(e);
         }
 
 
@@ -71,7 +80,7 @@ namespace Snowscape.TerrainGenerationViewer
             GL.PushMatrix();
             GL.LoadIdentity();
             GL.Translate(0.0, 0.0, -1.0);
-            GL.Scale(0.5, 0.5, 0.5);
+            //GL.Scale(0.5, 0.5, 0.5);
 
             //GL.Disable(EnableCap.Lighting);
             //GL.Disable(EnableCap.Texture2D);
@@ -83,11 +92,16 @@ namespace Snowscape.TerrainGenerationViewer
 
             GL.Begin(BeginMode.TriangleStrip);
 
-            GL.Color4(1.0f,0.5f,0.0f,0.5f);
+            GL.Color4(0.0f,0.0f,0.5f,1.0f);
+            GL.Vertex3(0.0f, 0.0f, 0.0f);
 
-            GL.Vertex3(-1.0f, -1.0f, 0.0f);
-            GL.Vertex3(-1.0f, 1.0f, 0.0f);
-            GL.Vertex3(1.0f, -1.0f, 0.0f);
+            GL.Color4(0.0f, 1.0f, 0.5f, 1.0f);
+            GL.Vertex3(0.0f, 1.0f, 0.0f);
+
+            GL.Color4(1.0f, 0.0f, 0.5f, 1.0f);
+            GL.Vertex3(1.0f, 0.0f, 0.0f);
+
+            GL.Color4(1.0f, 1.0f, 0.5f, 1.0f);
             GL.Vertex3(1.0f, 1.0f, 0.0f);
 
             GL.End();
