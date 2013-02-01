@@ -5,6 +5,7 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using System.Drawing;
 
 namespace OpenTKExtensions
 {
@@ -22,12 +23,12 @@ namespace OpenTKExtensions
             }
         }
 
-        private Dictionary<string, Uniform<object>> uniforms = new Dictionary<string, Uniform<object>>();
-        public Dictionary<string, Uniform<object>> Uniforms
+        private Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
+        public Dictionary<string, int> UniformLocations
         {
             get
             {
-                return this.Uniforms;
+                return this.uniformLocations;
             }
         }
 
@@ -72,18 +73,52 @@ namespace OpenTKExtensions
 
         public void ClearUniforms()
         {
-            this.Uniforms.Clear();
+            this.uniformLocations.Clear();
         }
-        /*
-        public void SetUniform<T>(string name, T value) 
+
+        private int LocateUniform(string name)
         {
-            // if uniform doesn't exist, create it.
-            if (!this.Uniforms.ContainsKey(name))
+            int location=0;
+            if (this.UniformLocations.TryGetValue(name, out location))
             {
-                Uniform<object> temp = new Uniform<T>(this, name);
-                this.Uniforms.Add(name, temp);
+                return location;
             }
-        }*/
+            else
+            {
+                location = GL.GetUniformLocation(this.Handle, name);
+
+                if (location != -1)
+                {
+                    this.UniformLocations.Add(name, location);
+                }
+            }
+            return location;
+        }
+
+        public void SetUniform(string name, float value) 
+        {
+            int location = LocateUniform(name);
+            if (location != -1)
+            {
+                GL.Uniform1(location, value);
+            }
+        }
+        public void SetUniform(string name, Vector4 value)
+        {
+            int location = LocateUniform(name);
+            if (location != -1)
+            {
+                GL.Uniform4(location, value);
+            }
+        }
+        public void SetUniform(string name, Matrix4 value)
+        {
+            int location = LocateUniform(name);
+            if (location != -1)
+            {
+                GL.UniformMatrix4(location,false,ref value);
+            }
+        }
 
 
     }
