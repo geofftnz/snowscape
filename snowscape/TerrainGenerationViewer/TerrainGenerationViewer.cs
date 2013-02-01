@@ -18,11 +18,8 @@ namespace Snowscape.TerrainGenerationViewer
         private string vertexShaderSource = @"
 #version 140
  
-uniform Transformation {
-    mat4 projection_matrix;
-    mat4 modelview_matrix;
-};
- 
+uniform mat4 projection_matrix;
+uniform mat4 modelview_matrix;
 in vec3 vertex;
  
 void main() {
@@ -31,6 +28,16 @@ void main() {
         ";
 
         private string fragmentShaderSource = @"
+#version 140
+precision highp float;
+
+out vec4 out_Color;
+
+void main(void)
+{
+    out_Color = vec4(1.,1.,0.,1.);
+}
+
         ";
 
         public class CloseEventArgs : EventArgs { }
@@ -38,7 +45,7 @@ void main() {
         public event CloseEventHandler OnClose;
 
         public TerrainGenerationViewer()
-            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 0, GraphicsContextFlags.Default)
+            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
 
         }

@@ -22,6 +22,15 @@ namespace OpenTKExtensions
             }
         }
 
+        private Dictionary<string, Uniform<object>> uniforms = new Dictionary<string, Uniform<object>>();
+        public Dictionary<string, Uniform<object>> Uniforms
+        {
+            get
+            {
+                return this.Uniforms;
+            }
+        }
+
         public ShaderProgram()
         {
             this.Handle = -1;
@@ -60,6 +69,21 @@ namespace OpenTKExtensions
         {
             GL.UseProgram(this.Handle);
         }
+
+        public void ClearUniforms()
+        {
+            this.Uniforms.Clear();
+        }
+        /*
+        public void SetUniform<T>(string name, T value) 
+        {
+            // if uniform doesn't exist, create it.
+            if (!this.Uniforms.ContainsKey(name))
+            {
+                Uniform<object> temp = new Uniform<T>(this, name);
+                this.Uniforms.Add(name, temp);
+            }
+        }*/
 
 
     }
