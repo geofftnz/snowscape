@@ -5,15 +5,17 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using NLog;
 
 namespace OpenTKExtensions
 {
     public class Shader
     {
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
         public int Handle { get; set; }
         public string Source { get; set; }
         public ShaderType Type { get; set; }
-        public string Log { get; private set; }
 
         public Shader()
         {
@@ -39,7 +41,7 @@ namespace OpenTKExtensions
             }
             GL.ShaderSource(this.Handle, this.Source);
             GL.CompileShader(this.Handle);
-            this.Log = GL.GetShaderInfoLog(this.Handle);
+            log.Trace("Shader.Compile: {0}",GL.GetShaderInfoLog(this.Handle));
         }
 
 

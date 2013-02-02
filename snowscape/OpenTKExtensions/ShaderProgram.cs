@@ -6,11 +6,14 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing;
+using NLog;
 
 namespace OpenTKExtensions
 {
     public class ShaderProgram
     {
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
         public int Handle { get; set; }
         public string Log { get; set; }
 
@@ -39,7 +42,19 @@ namespace OpenTKExtensions
 
         public void Create()
         {
-            this.Handle = GL.CreateProgram();
+            if (this.Handle == -1)
+            {
+                int handle = GL.CreateProgram();
+
+                if (handle != -1)
+                {
+                    this.Handle = handle;
+                }
+                else
+                {
+                    log.Error("ShaderProgram.Create: could not create program.");
+                }
+            }
         }
 
         public void AddShader(Shader s)
@@ -47,8 +62,29 @@ namespace OpenTKExtensions
             this.Shaders.Add(s);
         }
 
+        public void AddShader(ShaderType type, string source)
+        {
+            Shader s = new Shader();
+            s.Type = type;
+            s.Source = source;
+            s.Create();
+            s.Compile();
+            this.Shaders.Add(s);
+        }
+
+        public void AddVertexShader(string source)
+        {
+            AddShader(ShaderType.VertexShader, source);
+        }
+        public void AddFragmentShader(string source)
+        {
+            AddShader(ShaderType.FragmentShader, source);
+        }
+
         public void Link()
         {
+            this.Create();
+
             if (this.Handle < 0)
             {
                 throw new InvalidOperationException("Program not created");
@@ -63,8 +99,17 @@ namespace OpenTKExtensions
                 GL.AttachShader(this.Handle, s.Handle);
             }
             GL.LinkProgram(this.Handle);
-            this.Log = GL.GetProgramInfoLog(this.Handle); 
+            
+            log.Trace(GL.GetProgramInfoLog(this.Handle));
         }
+
+        public void Init(string vertexSource, string fragmentSource)
+        {
+            this.AddVertexShader(vertexSource);
+            this.AddFragmentShader(fragmentSource);
+            this.Link();
+        }
+
 
         public void UseProgram()
         {
@@ -89,7 +134,12 @@ namespace OpenTKExtensions
 
                 if (location != -1)
                 {
+                    log.Trace("ShaderProgram.LocateUniform: {0} is at {1}", name, location);
                     this.UniformLocations.Add(name, location);
+                }
+                else
+                {
+                    log.Warn("ShaderProgram.LocateUniform: Could not locate {0}", name);
                 }
             }
             return location;

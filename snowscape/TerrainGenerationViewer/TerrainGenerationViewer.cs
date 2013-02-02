@@ -5,16 +5,30 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTKExtensions;
 
 namespace Snowscape.TerrainGenerationViewer
 {
     public class TerrainGenerationViewer : GameWindow
     {
         private int heightTex = 0;
-        private int shaderProgram = 0;
-        private int vertexShader = 0;
-        private int fragmentShader = 0;
 
+        private Matrix4 projection = Matrix4.Identity;
+        private Matrix4 modelview = Matrix4.Identity;
+        private ShaderProgram quadShader = new ShaderProgram();
+        private VBO quadVertexVBO = new VBO(BufferTarget.ArrayBuffer);
+        private VBO quadIndexVBO = new VBO(BufferTarget.ElementArrayBuffer);
+
+
+        private Vector3[] quadPos = new Vector3[]{
+            new Vector3(0f,0f,0f),
+            new Vector3(0f,1f,0f),
+            new Vector3(1f,0f,0f),
+            new Vector3(1f,1f,0f)
+        };
+
+        private uint[] quadIndex = new uint[] { 0,1,2,3 };
+        
         private string vertexShaderSource = @"
 #version 140
  
@@ -35,7 +49,7 @@ out vec4 out_Color;
 
 void main(void)
 {
-    out_Color = vec4(1.,1.,0.,1.);
+    out_Color = vec4(1.,0.5,0.,1.);
 }
 
         ";
@@ -87,24 +101,13 @@ void main(void)
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1024, 1024, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image);
 
+            // setup VBOs
+            this.quadVertexVBO.SetData(this.quadPos);
+            this.quadIndexVBO.SetData(this.quadIndex);
 
             // setup shader
-            this.vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            this.fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource);
 
-            GL.ShaderSource(this.vertexShader, this.vertexShaderSource);
-            GL.ShaderSource(this.fragmentShader, this.fragmentShaderSource);
-
-            GL.CompileShader(this.vertexShader);
-            GL.CompileShader(this.fragmentShader);
-
-            this.shaderProgram = GL.CreateProgram();
-            GL.AttachShader(this.shaderProgram, this.vertexShader);
-            GL.AttachShader(this.shaderProgram, this.fragmentShader);
-            GL.LinkProgram(this.shaderProgram);
-
-            GL.UseProgram(this.shaderProgram);
-            
             SetProjection();
 
             base.OnLoad(e);
@@ -125,10 +128,10 @@ void main(void)
         private void SetProjection()
         {
             GL.Viewport(this.ClientRectangle);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            GL.Ortho(0.0, (double)this.ClientRectangle.Width / (double)this.ClientRectangle.Height, 1.0, 0.0, 0.001, 10.0);
-            GL.MatrixMode(MatrixMode.Modelview);
+
+            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f,(float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 1.0f, 0.0f,0.001f, 10.0f);
+            this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f,0.0f,-1.0f);
+
         }
 
 
@@ -143,45 +146,18 @@ void main(void)
             GL.ClearDepth(10.0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-            GL.Translate(0.0, 0.0, -1.0);
-            //GL.Scale(0.5, 0.5, 0.5);
 
-            //GL.Disable(EnableCap.Lighting);
-            //GL.Disable(EnableCap.Texture2D);
-            //GL.CullFace(CullFaceMode.Back);
-            //GL.LineWidth(2.0f);
+            quadShader.UseProgram();
+            quadShader.SetUniform("projection_matrix", this.projection);
+            quadShader.SetUniform("modelview_matrix", this.modelview);
+            quadVertexVBO.Bind(0, quadShader, "vertex");
+            quadIndexVBO.Bind();
 
-            //GL.Enable(EnableCap.Blend);
-            //GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.Texture2D);
+            GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
-            GL.Begin(BeginMode.TriangleStrip);
-
-            GL.Color4(0.0f, 0.0f, 0.5f, 1.0f);
-            GL.TexCoord2(0.0, 0.0);
-            GL.Vertex3(0.0f, 0.0f, 0.0f);
-
-            GL.Color4(0.0f, 1.0f, 0.5f, 1.0f);
-            GL.TexCoord2(0.0, 1.0);
-            GL.Vertex3(0.0f, 1.0f, 0.0f);
-
-            GL.Color4(1.0f, 0.0f, 0.5f, 1.0f);
-            GL.TexCoord2(1.0, 0.0);
-            GL.Vertex3(1.0f, 0.0f, 0.0f);
-
-            GL.Color4(1.0f, 1.0f, 0.5f, 1.0f);
-            GL.TexCoord2(1.0, 1.0);
-            GL.Vertex3(1.0f, 1.0f, 0.0f);
-
-            GL.End();
-
-            GL.PopMatrix();
+            GL.Flush();
 
             SwapBuffers();
-            //base.OnRenderFrame(e);
         }
 
     }
