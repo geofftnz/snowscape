@@ -53,6 +53,10 @@
       <Project>{DC685AA2-F46C-4525-9855-21CCD138E9D6}</Project>
       <Name>OpenTKExtensions</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TerrainGeneration\TerrainGeneration.csproj">
+      <Project>{9D035467-1C64-4D8A-995A-C4AA9A5C0BB2}</Project>
+      <Name>TerrainGeneration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{E66023D1-358E-44B9-BC5B-51F6B205D60F}</Project>
       <Name>Utils</Name>

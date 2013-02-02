@@ -89,10 +89,10 @@ namespace OpenTKExtensions
             GL.TexImage2D<T>(this.Target, 0, this.InternalFormat, this.Width, this.Height, 0, this.Format, this.Type, data);
         }
 
-        public void RefreshImage(IntPtr data)
+        public void RefreshImage<T>(T[] data) where T : struct
         {
             this.Bind();
-            GL.TexSubImage2D(this.Target, 0, 0, 0, this.Width, this.Height, this.Format, this.Type, data);
+            GL.TexSubImage2D<T>(this.Target, 0, 0, 0, this.Width, this.Height, this.Format, this.Type, data);
         }
 
         public void Unload()

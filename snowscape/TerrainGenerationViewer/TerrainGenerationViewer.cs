@@ -7,11 +7,16 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
 using Utils;
+using TerrainGeneration;
 
 namespace Snowscape.TerrainGenerationViewer
 {
     public class TerrainGenerationViewer : GameWindow
     {
+        const int TileWidth = 1024;
+        const int TileHeight = 1024;
+
+        public TerrainGen Terrain { get; set; }
 
         private Matrix4 projection = Matrix4.Identity;
         private Matrix4 modelview = Matrix4.Identity;
@@ -20,6 +25,10 @@ namespace Snowscape.TerrainGenerationViewer
         private VBO quadTexcoordVBO = new VBO(BufferTarget.ArrayBuffer);
         private VBO quadIndexVBO = new VBO(BufferTarget.ElementArrayBuffer);
         private Texture heightTex;
+        private Texture shadeTex;
+        float[] heightTexData = new float[TileWidth * TileHeight];
+        byte[] shadeTexData = new byte[TileWidth * TileHeight*4];
+        uint framecounter = 0;
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -95,7 +104,7 @@ void main(void)
         public TerrainGenerationViewer()
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
-
+            this.Terrain = new TerrainGen(1024, 1024);
         }
 
         protected override void OnClosed(EventArgs e)
@@ -115,8 +124,6 @@ void main(void)
             GL.Enable(EnableCap.DepthTest);
 
 
-            float[] image = new float[1024 * 1024 * 4];
-
             
 
             int i = 0;
@@ -127,7 +134,7 @@ void main(void)
                 fx=0f;
                 for (int x = 0; x < 1024; x++)
                 {
-                    image[i] = SimplexNoise.noise(fx, fy);
+                    heightTexData[i] = SimplexNoise.noise(fx, fy);
                     i++;
                     fx += (16.0f / 1024.0f);
                 }
@@ -141,7 +148,7 @@ void main(void)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
-                .Upload(image);
+                .Upload(heightTexData);
 
             // setup VBOs
             this.quadVertexVBO.SetData(this.quadPos);
@@ -152,6 +159,9 @@ void main(void)
             quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource, new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
             SetProjection();
+
+            // slow
+            this.Terrain.InitTerrain1();
 
             base.OnLoad(e);
         }
@@ -177,17 +187,33 @@ void main(void)
 
         }
 
+        protected void UpdateTextures()
+        {
+            ParallelHelper.For2D(1024, 1024, (x, y, i) =>
+            {
+                this.heightTexData[i] = (this.Terrain.Map[i].Height) / 4096.0f;
+            });
+
+            this.heightTex.RefreshImage(this.heightTexData);
+        }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            //base.OnUpdateFrame(e);
+            this.Terrain.ModifyTerrain();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+
+            if (framecounter % 1000 == 0)
+            {
+                UpdateTextures();
+            }
+
             GL.ClearColor(new Color4(0, 96, 64, 255));
             GL.ClearDepth(10.0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
 
             this.heightTex.Bind(TextureUnit.Texture0);
             quadShader.UseProgram();
@@ -203,6 +229,8 @@ void main(void)
             GL.Flush();
 
             SwapBuffers();
+
+            framecounter++;
         }
 
     }
