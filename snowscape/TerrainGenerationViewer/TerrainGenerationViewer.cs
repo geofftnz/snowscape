@@ -106,7 +106,7 @@ void main(void)
             this.quadIndexVBO.SetData(this.quadIndex);
 
             // setup shader
-            quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource);
+            quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource, new List<Variable> { new Variable(0,"vertex") });
 
             SetProjection();
 
@@ -150,7 +150,7 @@ void main(void)
             quadShader.UseProgram();
             quadShader.SetUniform("projection_matrix", this.projection);
             quadShader.SetUniform("modelview_matrix", this.modelview);
-            quadVertexVBO.Bind(0, quadShader, "vertex");
+            quadVertexVBO.Bind(quadShader.VariableLocation("vertex"));
             quadIndexVBO.Bind();
 
             GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);

@@ -103,7 +103,7 @@ namespace OpenTKExtensions
             }
         }
 
-        public void Bind(int index, int shaderProgramHandle, string shaderInputName)
+        public void Bind(int index)
         {
             if (this.Loaded)
             {
@@ -112,19 +112,13 @@ namespace OpenTKExtensions
                 if (this.Target != BufferTarget.ElementArrayBuffer)
                 {
                     GL.EnableVertexAttribArray(index);
-                    GL.BindAttribLocation(shaderProgramHandle, index, shaderInputName);
-                    GL.VertexAttribPointer(0, fieldsPerElement, pointerType, false, stride, 0);
+                    GL.VertexAttribPointer(index, fieldsPerElement, pointerType, false, stride, 0);
                 }
             }
             else
             {
                 log.Warn("VBO.Bind - buffer not loaded");
             }
-        }
-
-        public void Bind(int index, ShaderProgram program, string shaderInputName)
-        {
-            Bind(index, program.Handle, shaderInputName);
         }
 
         public void Bind()

@@ -35,6 +35,16 @@ namespace OpenTKExtensions
             }
         }
 
+        private Dictionary<string, int> variableLocations = new Dictionary<string, int>();
+        public Dictionary<string, int> VariableLocations
+        {
+            get
+            {
+                return this.variableLocations;
+            }
+        }
+
+
         public ShaderProgram()
         {
             this.Handle = -1;
@@ -81,6 +91,28 @@ namespace OpenTKExtensions
             AddShader(ShaderType.FragmentShader, source);
         }
 
+        public void AddVariable(int index, string name)
+        {
+            if (this.VariableLocations.ContainsKey(name))
+            {
+                this.VariableLocations[name] = index;
+            }
+            else
+            {
+                this.VariableLocations.Add(name, index);
+            }
+        }
+
+        public int VariableLocation(string name)
+        {
+            int location;
+            if (this.VariableLocations.TryGetValue(name, out location))
+            {
+                return location;
+            }
+            throw new InvalidOperationException(string.Format("Could not find variable {0}",name));
+        }
+
         public void Link()
         {
             this.Create();
@@ -98,15 +130,29 @@ namespace OpenTKExtensions
             {
                 GL.AttachShader(this.Handle, s.Handle);
             }
+
+            // bind attribs
+            foreach (var v in this.VariableLocations)
+            {
+                GL.BindAttribLocation(this.Handle,v.Value,v.Key);
+            }
+
+
             GL.LinkProgram(this.Handle);
             
             log.Trace(GL.GetProgramInfoLog(this.Handle));
         }
 
-        public void Init(string vertexSource, string fragmentSource)
+        public void Init(string vertexSource, string fragmentSource, IList<Variable> variables)
         {
             this.AddVertexShader(vertexSource);
             this.AddFragmentShader(fragmentSource);
+
+            foreach (var v in variables)
+            {
+                this.AddVariable(v.Index,v.Name);
+            }
+
             this.Link();
         }
 
