@@ -50,9 +50,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions.cs" />
+    <Compile Include="ITextureParameter.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="ShaderProgram.cs" />
     <Compile Include="Texture.cs" />
+    <Compile Include="TextureParameter.cs" />
     <Compile Include="Variable.cs" />
     <Compile Include="VBO.cs" />
     <Compile Include="Vector.cs" />

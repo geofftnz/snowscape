@@ -15,12 +15,15 @@ namespace OpenTKExtensions
         private static Logger log = LogManager.GetCurrentClassLogger();
 
         private int handle = -1;
-        public int Handle {
+        public int Handle
+        {
             get { return handle; }
             private set { handle = value; }
         }
         public bool Loaded { get; set; }
         public BufferTarget Target { get; set; }
+        public BufferUsageHint UsageHint { get; set; }
+
 
         private int arraySize;
         private int stride;
@@ -40,15 +43,22 @@ namespace OpenTKExtensions
         }
 
 
-        public VBO(BufferTarget target)
+        public VBO(BufferTarget target, BufferUsageHint usageHint)
         {
             this.Handle = -1;
             this.Loaded = false;
             this.Target = target;
+            this.UsageHint = usageHint;
         }
-        public VBO():this(BufferTarget.ArrayBuffer)
+
+        public VBO(BufferTarget target)
+            : this(target, BufferUsageHint.StaticDraw)
         {
-                
+        }
+
+        public VBO()
+            : this(BufferTarget.ArrayBuffer)
+        {
         }
 
         public int Init()
@@ -57,24 +67,24 @@ namespace OpenTKExtensions
             {
                 GL.GenBuffers(1, out handle);
 
-                log.Trace("GL.GenBuffers returned {0}",handle);
+                log.Trace("GL.GenBuffers returned {0}", handle);
             }
 
             return handle;
         }
 
-        public void SetData(Vector3[] data)
+        public void SetData<T>(T[] data, int elementSizeInBytes, VertexAttribPointerType pointerType, int fieldsPerElement) where T : struct
         {
             if (Init() != -1)
             {
                 GL.BindBuffer(this.Target, this.Handle);
 
-                stride = Vector3.SizeInBytes;
-                arraySize = data.Length * stride;
-                pointerType = VertexAttribPointerType.Float;
-                fieldsPerElement = 3;
+                this.stride = elementSizeInBytes;
+                this.arraySize = data.Length * stride;
+                this.pointerType = pointerType;
+                this.fieldsPerElement = fieldsPerElement;
 
-                GL.BufferData<Vector3>(this.Target, new IntPtr(arraySize), data, BufferUsageHint.StaticDraw);
+                GL.BufferData<T>(this.Target, new IntPtr(arraySize), data, this.UsageHint);
                 this.Loaded = true;
             }
             else
@@ -83,24 +93,18 @@ namespace OpenTKExtensions
             }
         }
 
+
+        public void SetData(Vector3[] data)
+        {
+            this.SetData(data, Vector3.SizeInBytes, VertexAttribPointerType.Float, 3);
+        }
+        public void SetData(Vector2[] data)
+        {
+            this.SetData(data, Vector2.SizeInBytes, VertexAttribPointerType.Float, 2);
+        }
         public void SetData(uint[] data)
         {
-            if (Init() != -1)
-            {
-                GL.BindBuffer(this.Target, this.Handle);
-
-                stride = sizeof(uint);
-                arraySize = data.Length * stride;
-                pointerType = VertexAttribPointerType.UnsignedInt;
-                fieldsPerElement = 1;
-
-                GL.BufferData<uint>(this.Target, new IntPtr(arraySize), data, BufferUsageHint.StaticDraw);
-                this.Loaded = true;
-            }
-            else
-            {
-                log.Error("VBO.SetData - buffer not initialised");
-            }
+            this.SetData(data, sizeof(uint), VertexAttribPointerType.UnsignedInt, 1);
         }
 
         public void Bind(int index)
