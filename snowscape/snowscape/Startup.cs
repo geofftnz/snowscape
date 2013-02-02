@@ -32,10 +32,16 @@ namespace Snowscape
         {
             this.Hide();
 
-
-            using (var v = new Snowscape.TerrainGenerationViewer.TerrainGenerationViewer())
+            try
             {
-                v.Run(30);
+                using (var v = new Snowscape.TerrainGenerationViewer.TerrainGenerationViewer())
+                {
+                    v.Run(30);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, ex.GetType().Name);
             }
             this.Show();
         }

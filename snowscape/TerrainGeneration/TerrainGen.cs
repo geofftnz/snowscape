@@ -703,7 +703,6 @@ namespace TerrainGeneration
                         float t = (float)x / (float)this.Width;
                         for (int j = 1; j <= octaves; j++)
                         {
-                            //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
                             h += transform(SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1)));
                         }
 

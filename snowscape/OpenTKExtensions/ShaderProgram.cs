@@ -77,7 +77,6 @@ namespace OpenTKExtensions
             Shader s = new Shader();
             s.Type = type;
             s.Source = source;
-            s.Create();
             s.Compile();
             this.Shaders.Add(s);
         }
@@ -139,8 +138,21 @@ namespace OpenTKExtensions
 
 
             GL.LinkProgram(this.Handle);
-            
-            log.Trace(GL.GetProgramInfoLog(this.Handle));
+
+            string infoLog = GL.GetProgramInfoLog(this.Handle);
+            int linkStatus;
+            GL.GetProgram(this.Handle, ProgramParameter.LinkStatus, out linkStatus);
+
+            if (linkStatus != 1)
+            {
+                log.Error("ShaderProgram.Link: {0}", infoLog);
+                throw new InvalidOperationException(string.Format("ShaderProgram did not link: {0}", infoLog));
+            }
+            else
+            {
+                log.Trace("ShaderProgram.Link: {0}", infoLog);
+            }
+
         }
 
         public void Init(string vertexSource, string fragmentSource, IList<Variable> variables)

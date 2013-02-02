@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
+using Utils;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -61,10 +62,28 @@ uniform sampler2D tex0;
 in vec2 texcoord0;
 out vec4 out_Colour;
 
+const float TEXEL = 1.0 / 1024.0;
+
+vec3 getNormal(vec2 pos)
+{
+    float h1 = texture2D(tex0,vec2(pos.x,pos.y-TEXEL)).r;
+    float h2 = texture2D(tex0,vec2(pos.x,pos.y+TEXEL)).r;
+    float h3 = texture2D(tex0,vec2(pos.x-TEXEL,pos.y)).r;
+    float h4 = texture2D(tex0,vec2(pos.x+TEXEL,pos.y)).r;
+
+    return normalize(vec3(h4-h3,h2-h1,2.0*TEXEL));
+}
+
+
 void main(void)
 {
-    out_Colour = vec4(texture2D(tex0,texcoord0.st).rgb,1.0);
-    //out_Colour = vec4(1.0f,0.5f,0.2f,1.0f);
+    vec3 n = getNormal(texcoord0.st);
+    vec3 l = normalize(vec3(-0.4,-0.6,-0.2));
+
+    vec3 col = vec3(0.6,0.6,0.65) * (dot(n,l) * 0.5f + 0.5f);
+
+    out_Colour = vec4(col.rgb,1.0);
+  
 }
 
         ";
@@ -96,32 +115,33 @@ void main(void)
             GL.Enable(EnableCap.DepthTest);
 
 
-            byte[] image = new byte[1024 * 1024 * 4];
+            float[] image = new float[1024 * 1024 * 4];
+
+            
 
             int i = 0;
+            float fx=0f,fy=0f;
+
             for (int y = 0; y < 1024; y++)
             {
+                fx=0f;
                 for (int x = 0; x < 1024; x++)
                 {
-                    image[i++] = (byte)(y & 0xff);
-                    image[i++] = (byte)(x & 0xff);
-                    image[i++] = (byte)((x * y) & 0xff);
-                    image[i++] = 255;
+                    image[i] = SimplexNoise.noise(fx, fy);
+                    i++;
+                    fx += (16.0f / 1024.0f);
                 }
+                fy+=(16.0f/1024.0f);
             }
 
-            this.heightTex = new Texture(1024, 1024, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.heightTex = new Texture(1024, 1024, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
 
             this.heightTex
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear));
-            
-            this.heightTex.Upload(image);
-
-            //GL.BindTexture(TextureTarget.Texture2D, this.heightTex);
-            //GL.TexParameter(TextureTarget.Texture2D, ;
-            //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
-            //GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1024, 1024, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image);
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
+                .Upload(image);
 
             // setup VBOs
             this.quadVertexVBO.SetData(this.quadPos);

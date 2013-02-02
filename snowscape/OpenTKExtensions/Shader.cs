@@ -24,25 +24,40 @@ namespace OpenTKExtensions
             this.Source = string.Empty;
         }
 
-        public void Create()
+        public int Init()
         {
-            if (this.Handle != -1)
+            if (this.Handle == -1)
             {
-                throw new InvalidOperationException("Shader already created");
+                this.Handle = GL.CreateShader(this.Type);
             }
-            this.Handle = GL.CreateShader(this.Type);
+            return this.Handle;
         }
 
         public void Compile()
         {
-            if (this.Handle < 0)
+            if (this.Init() != -1)
             {
-                throw new InvalidOperationException("Shader not created");
+                GL.ShaderSource(this.Handle, this.Source);
+                GL.CompileShader(this.Handle);
+
+                string infoLog = GL.GetShaderInfoLog(this.Handle);
+
+                int compileStatus;
+                GL.GetShader(this.Handle, ShaderParameter.CompileStatus, out compileStatus);
+
+                if (compileStatus != 1)
+                {
+                    log.Error("Shader.Compile: {0}", infoLog);
+                    throw new InvalidOperationException(string.Format("Shader did not compile: {0}", infoLog));
+                }
+                else
+                {
+                    log.Trace("Shader.Compile: {0}", infoLog);
+                }
             }
-            GL.ShaderSource(this.Handle, this.Source);
-            GL.CompileShader(this.Handle);
-            log.Trace("Shader.Compile: {0}",GL.GetShaderInfoLog(this.Handle));
         }
+
+        
 
 
 
