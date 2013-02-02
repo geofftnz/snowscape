@@ -28,7 +28,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Texture shadeTex;
         float[] heightTexData = new float[TileWidth * TileHeight];
         byte[] shadeTexData = new byte[TileWidth * TileHeight*4];
-        uint framecounter = 0;
+        uint frameCounter = 0;
+        uint updateCounter = 0;
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -66,7 +67,8 @@ void main() {
 #version 140
 precision highp float;
 
-uniform sampler2D tex0;
+uniform sampler2D heightTex;
+uniform sampler2D shadeTex;
 
 in vec2 texcoord0;
 out vec4 out_Colour;
@@ -75,10 +77,10 @@ const float TEXEL = 1.0 / 1024.0;
 
 vec3 getNormal(vec2 pos)
 {
-    float h1 = texture2D(tex0,vec2(pos.x,pos.y-TEXEL)).r;
-    float h2 = texture2D(tex0,vec2(pos.x,pos.y+TEXEL)).r;
-    float h3 = texture2D(tex0,vec2(pos.x-TEXEL,pos.y)).r;
-    float h4 = texture2D(tex0,vec2(pos.x+TEXEL,pos.y)).r;
+    float h1 = texture2D(heightTex,vec2(pos.x,pos.y-TEXEL)).r;
+    float h2 = texture2D(heightTex,vec2(pos.x,pos.y+TEXEL)).r;
+    float h3 = texture2D(heightTex,vec2(pos.x-TEXEL,pos.y)).r;
+    float h4 = texture2D(heightTex,vec2(pos.x+TEXEL,pos.y)).r;
 
     return normalize(vec3(h4-h3,h2-h1,2.0*TEXEL));
 }
@@ -86,10 +88,37 @@ vec3 getNormal(vec2 pos)
 
 void main(void)
 {
-    vec3 n = getNormal(texcoord0.st);
-    vec3 l = normalize(vec3(-0.4,-0.6,-0.2));
 
-    vec3 col = vec3(0.6,0.6,0.65) * (dot(n,l) * 0.5f + 0.5f);
+	vec4 colH1 = vec4(0.3,0.247,0.223,1.0);
+	vec4 colH2 = vec4(0.3,0.247,0.223,1.0);
+
+	vec4 colL1 = vec4(0.41,0.39,0.16,1.0);
+	vec4 colL2 = vec4(0.41,0.39,0.16,1.0);
+
+	vec4 colW = vec4(0.7,0.8,1.0,1.0);
+	vec4 colE = vec4(1.0,0.4,0.0,1.0);
+
+	vec4 s = texture2D(shadeTex,texcoord0.st);
+	float h = texture2D(heightTex,texcoord0.st).r;
+
+	float looseblend = clamp(s.g * s.g * 8.0,0.0,1.0);
+	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
+
+	vec4 colW0 = vec4(0.325,0.498,0.757,1.0);  // blue water
+	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
+	vec4 colW2 = vec4(1.4,1.4,1.4,1.0); // white water
+
+	colW = mix(colW0,colW1,clamp(s.r*4.0,0,1));  // make water dirty->clean
+	colW = mix(colW,colW2,s.a*0.2);  // white water
+
+	col = mix(col,colE,clamp(s.a,0.0,0.2));
+	col = mix(col,colW,clamp(s.b*s.b*16.0,0,0.6)); // water
+
+    vec3 n = getNormal(texcoord0.st);
+    vec3 l = normalize(vec3(0.4,0.6,0.2));
+
+	float diffuse = clamp(dot(n,l) * 0.5 + 0.5,0,1);
+	col *= (0.4 + 0.6 * diffuse);
 
     out_Colour = vec4(col.rgb,1.0);
   
@@ -123,32 +152,22 @@ void main(void)
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
-
-            
-
-            int i = 0;
-            float fx=0f,fy=0f;
-
-            for (int y = 0; y < 1024; y++)
-            {
-                fx=0f;
-                for (int x = 0; x < 1024; x++)
-                {
-                    heightTexData[i] = SimplexNoise.noise(fx, fy);
-                    i++;
-                    fx += (16.0f / 1024.0f);
-                }
-                fy+=(16.0f/1024.0f);
-            }
-
-            this.heightTex = new Texture(1024, 1024, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
-
+            this.heightTex = new Texture(TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
             this.heightTex
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
                 .Upload(heightTexData);
+
+            this.shadeTex = new Texture(TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.shadeTex
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
+                .Upload(shadeTexData);
+
 
             // setup VBOs
             this.quadVertexVBO.SetData(this.quadPos);
@@ -189,23 +208,38 @@ void main(void)
 
         protected void UpdateTextures()
         {
-            ParallelHelper.For2D(1024, 1024, (x, y, i) =>
+            ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
             {
                 this.heightTexData[i] = (this.Terrain.Map[i].Height) / 4096.0f;
             });
-
             this.heightTex.RefreshImage(this.heightTexData);
+
+            ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
+            {
+                int j = i << 2;
+
+                this.shadeTexData[j] = (byte)((this.Terrain.Map[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j+1] = (byte)((this.Terrain.Map[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j+2] = (byte)((this.Terrain.Map[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                this.shadeTexData[j+3] = (byte)((this.Terrain.Map[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+            });
+            this.shadeTex.RefreshImage(this.shadeTexData);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
-            this.Terrain.ModifyTerrain();
+            if (updateCounter % 3 == 0)
+            {
+                this.Terrain.ModifyTerrain();
+            }
+
+            updateCounter++;
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
 
-            if (framecounter % 1000 == 0)
+            if (frameCounter % 10 == 0)
             {
                 UpdateTextures();
             }
@@ -216,10 +250,12 @@ void main(void)
 
 
             this.heightTex.Bind(TextureUnit.Texture0);
+            this.shadeTex.Bind(TextureUnit.Texture1);
             quadShader.UseProgram();
             quadShader.SetUniform("projection_matrix", this.projection);
             quadShader.SetUniform("modelview_matrix", this.modelview);
-            quadShader.SetUniform("tex0", 0);
+            quadShader.SetUniform("heightTex", 0);
+            quadShader.SetUniform("shadeTex", 1);
             quadVertexVBO.Bind(quadShader.VariableLocation("vertex"));
             quadTexcoordVBO.Bind(quadShader.VariableLocation("in_texcoord0"));
             quadIndexVBO.Bind();
@@ -230,7 +266,7 @@ void main(void)
 
             SwapBuffers();
 
-            framecounter++;
+            frameCounter++;
         }
 
     }
