@@ -120,6 +120,8 @@ namespace OpenTKExtensions
             }
         }
 
+        //TODO: every other uniform type
+
 
     }
 }

@@ -50,6 +50,7 @@
     <Compile Include="Shader.cs" />
     <Compile Include="ShaderProgram.cs" />
     <Compile Include="Texture.cs" />
+    <Compile Include="VBO.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>
