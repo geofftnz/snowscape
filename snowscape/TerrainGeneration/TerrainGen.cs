@@ -235,14 +235,14 @@ namespace TerrainGeneration
             this.AddSimplexNoise(5, 37.7f / (float)this.Width, 10.0f, h => Math.Abs(h), h => (h * h * 2f).ClampInclusive(0.1f, 10.0f) - 0.1f);*/
 
             this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
-
+            /*
             this.AddSimplexNoise(7, 1.3f / (float)this.Width, 800.0f, h => (h >= 0f ? h : -h), h => h * h);
 
             this.AddMultipliedSimplexNoise(
                 3, 1.0f / (float)this.Width, h => h, 0.6f, 0.5f,
                 10, 1.7f / (float)this.Width, h => (h >= 0f ? h : -h), 0.1f, 1.0f,
                 h => h, 500.0f);
-
+            */
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
             this.AddLooseMaterial(10.0f);

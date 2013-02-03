@@ -27,9 +27,10 @@ namespace Snowscape.TerrainGenerationViewer
         private Texture heightTex;
         private Texture shadeTex;
         float[] heightTexData = new float[TileWidth * TileHeight];
-        byte[] shadeTexData = new byte[TileWidth * TileHeight*4];
+        byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
         uint frameCounter = 0;
         uint updateCounter = 0;
+        private SDFFont font = new SDFFont();
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -48,6 +49,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private uint[] quadIndex = new uint[] { 0, 1, 2, 3 };
 
+        #region shaders
         private string vertexShaderSource = @"
 #version 140
  
@@ -123,8 +125,8 @@ void main(void)
     out_Colour = vec4(col.rgb,1.0);
   
 }
-
         ";
+        #endregion
 
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
@@ -177,10 +179,19 @@ void main(void)
             // setup shader
             quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource, new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
+            // setup font
+            font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
+
+            font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
+            font.AddChar('0', 0.25f, 0.1f, 0.0f, 0.003f);
+            font.Refresh();
+
             SetProjection();
 
-            // slow
+            // slow - replace with load
             this.Terrain.InitTerrain1();
+
+
 
             base.OnLoad(e);
         }
@@ -231,10 +242,11 @@ void main(void)
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
+            /*
             if (updateCounter % 3 == 0)
             {
                 this.Terrain.ModifyTerrain();
-            }
+            }*/
 
             updateCounter++;
         }
@@ -242,11 +254,11 @@ void main(void)
         protected override void OnRenderFrame(FrameEventArgs e)
         {
 
-            if (frameCounter % 5 == 0)
+            if (frameCounter % 200 == 0)
             {
                 UpdateShadeTexture();
             }
-            if (frameCounter % 100 == 0)
+            if (frameCounter % 200 == 100)
             {
                 UpdateHeightTexture();
             }
@@ -268,6 +280,10 @@ void main(void)
             quadIndexVBO.Bind();
 
             GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+
+            GL.Disable(EnableCap.DepthTest);
+            font.Render(projection, modelview);
+            GL.Enable(EnableCap.DepthTest);
 
             GL.Flush();
 

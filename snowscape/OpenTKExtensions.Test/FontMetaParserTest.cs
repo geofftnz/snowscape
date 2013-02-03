@@ -49,8 +49,8 @@ namespace OpenTKExtensions.Test
 
             //@"char id=1     x=507   y=463   width=4     height=5     xoffset=-1.500    yoffset=1.600     xadvance=30.813      page=0  chnl=0";
             Assert.AreEqual(1, c.ID);
-            Assert.IsTrue(Math.Abs(507.0f - c.TexcoordS) < floatError);
-            Assert.IsTrue(Math.Abs(463.0f - c.TexcoordT) < floatError);
+            Assert.IsTrue(Math.Abs(507.0f - c.TexcoordX) < floatError);
+            Assert.IsTrue(Math.Abs(463.0f - c.TexcoordY) < floatError);
             Assert.IsTrue(Math.Abs(4.0f - c.TexcoordW) < floatError);
             Assert.IsTrue(Math.Abs(5.0f - c.TexcoordH) < floatError);
             Assert.IsTrue(Math.Abs(-1.5f - c.XOffset) < floatError);

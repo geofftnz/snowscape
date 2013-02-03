@@ -44,8 +44,8 @@ namespace OpenTKExtensions
             try
             {
                 fontCharacter.ID = fields.GetIntValue(@"id");
-                fontCharacter.TexcoordS = fields.GetFloatValue(@"x");
-                fontCharacter.TexcoordT = fields.GetFloatValue(@"y");
+                fontCharacter.TexcoordX = fields.GetFloatValue(@"x");
+                fontCharacter.TexcoordY = fields.GetFloatValue(@"y");
                 fontCharacter.TexcoordW = fields.GetFloatValue(@"width");
                 fontCharacter.TexcoordH = fields.GetFloatValue(@"height");
                 fontCharacter.XOffset = fields.GetFloatValue(@"xoffset");
