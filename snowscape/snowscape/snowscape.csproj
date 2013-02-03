@@ -92,6 +92,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Resources\Resources.csproj">
+      <Project>{4694A2B7-DE02-4B97-B363-E21AAAE65A72}</Project>
+      <Name>Resources</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SnowscapeViewer\SnowscapeViewer.csproj">
       <Project>{24828E02-A6E2-4C59-89F1-8B694FCB347A}</Project>
       <Name>SnowscapeViewer</Name>

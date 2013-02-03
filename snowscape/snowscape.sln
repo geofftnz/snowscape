@@ -13,7 +13,21 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainGenerationViewer", "TerrainGenerationViewer\TerrainGenerationViewer.csproj", "{C92F863E-36A3-4136-A72D-5DCB52775463}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resources", "Resources\Resources.csproj", "{4694A2B7-DE02-4B97-B363-E21AAAE65A72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTKExtensions.Test", "OpenTKExtensions.Test\OpenTKExtensions.Test.csproj", "{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3E9DD6B5-402B-43EF-85DF-E923741138C0}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		snowscape.vsmdi = snowscape.vsmdi
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = snowscape.vsmdi
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -83,6 +97,26 @@ Global
 		{C92F863E-36A3-4136-A72D-5DCB52775463}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{C92F863E-36A3-4136-A72D-5DCB52775463}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C92F863E-36A3-4136-A72D-5DCB52775463}.Release|x86.ActiveCfg = Release|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{4694A2B7-DE02-4B97-B363-E21AAAE65A72}.Release|x86.ActiveCfg = Release|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{38FA0AEB-4C46-4979-833E-45EAE2BF9ABF}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
