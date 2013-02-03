@@ -206,22 +206,25 @@ void main(void)
 
         }
 
-        protected void UpdateTextures()
+        protected void UpdateHeightTexture()
         {
             ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
             {
                 this.heightTexData[i] = (this.Terrain.Map[i].Height) / 4096.0f;
             });
             this.heightTex.RefreshImage(this.heightTexData);
+        }
 
+        protected void UpdateShadeTexture()
+        {
             ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
             {
                 int j = i << 2;
 
                 this.shadeTexData[j] = (byte)((this.Terrain.Map[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j+1] = (byte)((this.Terrain.Map[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j+2] = (byte)((this.Terrain.Map[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                this.shadeTexData[j+3] = (byte)((this.Terrain.Map[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+                this.shadeTexData[j + 1] = (byte)((this.Terrain.Map[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j + 2] = (byte)((this.Terrain.Map[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                this.shadeTexData[j + 3] = (byte)((this.Terrain.Map[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
             });
             this.shadeTex.RefreshImage(this.shadeTexData);
         }
@@ -239,9 +242,13 @@ void main(void)
         protected override void OnRenderFrame(FrameEventArgs e)
         {
 
-            if (frameCounter % 10 == 0)
+            if (frameCounter % 5 == 0)
             {
-                UpdateTextures();
+                UpdateShadeTexture();
+            }
+            if (frameCounter % 100 == 0)
+            {
+                UpdateHeightTexture();
             }
 
             GL.ClearColor(new Color4(0, 96, 64, 255));
