@@ -97,17 +97,9 @@ namespace OpenTKExtensions
 
             void main() {
                 
-                //float t = texture2D(tex0,texcoord0.xy).a;
+                float t = texture2D(tex0,texcoord0.xy).a;
 
-                //vec4 col = vec4(1.0,1.0,1.0,1.0);
-                vec4 col = texture2D(tex0,texcoord0.xy).rgba;
-
-//                if (t < 0.5){
-//                    col.a = 0.0;
-//                }   
-//                else{
-//                    col.a = 1.0;
-//                }
+                vec4 col = vec4(1.0,1.0,1.0,smoothstep(0.4,0.6,t));
 
                 out_Colour = col;
             }
@@ -165,7 +157,7 @@ namespace OpenTKExtensions
             ImageLoader.ImageInfo info;
 
             // load red channel from file.
-            var data = fileName.LoadImage(out info).ExtractChannelFromRGBA(0);
+            var data = fileName.LoadImage(out info).ExtractChannelFromRGBA(3);
 
             this.TexWidth = info.Width;
             this.TexHeight = info.Height;
@@ -342,6 +334,9 @@ namespace OpenTKExtensions
             {
                 throw new InvalidOperationException("Font isn't fully loaded.");
             }
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             this.sdfTexture.Bind(TextureUnit.Texture0);
             
