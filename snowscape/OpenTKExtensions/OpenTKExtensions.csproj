@@ -55,7 +55,7 @@
     <Compile Include="FontCharacter.cs" />
     <Compile Include="FontMetaParser.cs" />
     <Compile Include="ITextureParameter.cs" />
-    <Compile Include="SDFFont.cs" />
+    <Compile Include="Font.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="ShaderProgram.cs" />
     <Compile Include="Texture.cs" />

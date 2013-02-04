@@ -30,7 +30,7 @@ namespace Snowscape.TerrainGenerationViewer
         byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
         uint frameCounter = 0;
         uint updateCounter = 0;
-        private SDFFont font = new SDFFont();
+        private Font font = new Font();
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -180,10 +180,11 @@ void main(void)
             quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource, new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
             // setup font
-            font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
+            font.Init(Resources.FontOCR, Resources.FontOCRMeta);
 
             font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
-            font.AddChar('0', 0.25f, 0.1f, 0.0f, 0.003f);
+            font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
+            font.AddChar('°', 0.4f, 0.1f, 0.0f, 0.003f);
             font.Refresh();
 
             SetProjection();

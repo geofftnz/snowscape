@@ -74,7 +74,7 @@ namespace OpenTKExtensions.Test
         [TestMethod()]
         public void LoadMetaDataTest()
         {
-            SDFFont target = new SDFFont();
+            Font target = new Font();
             
             string testInput = @"
 info face=""Consolas""

@@ -27,7 +27,7 @@ namespace OpenTKExtensions
      * 
      * 
     */
-    public class SDFFont
+    public class Font
     {
         const int MAXCHARS = 4000;
         const int NUMVERTICES = MAXCHARS * 4;
@@ -108,7 +108,7 @@ namespace OpenTKExtensions
         #endregion
 
 
-        public SDFFont()
+        public Font()
         {
             this.IsTextureLoaded = false;
             this.IsVertexVBOLoaded = false;
@@ -285,28 +285,28 @@ namespace OpenTKExtensions
 
                 // top left
                 this.vertex[i].X = x + (charinfo.XOffset * size);
-                this.vertex[i].Y = y;
+                this.vertex[i].Y = y + (charinfo.YOffset * size);
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexTopLeft;
                 i++;
 
                 // top right
                 this.vertex[i].X = x + (charinfo.XOffset + charinfo.Width) * size;
-                this.vertex[i].Y = y;
+                this.vertex[i].Y = y + (charinfo.YOffset * size);
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexTopRight;
                 i++;
 
                 // bottom left
                 this.vertex[i].X = x + (charinfo.XOffset * size);
-                this.vertex[i].Y = y + charinfo.Height * size;
+                this.vertex[i].Y = y + (charinfo.YOffset + charinfo.Height) * size;
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexBottomLeft;
                 i++;
 
                 // bottom right
                 this.vertex[i].X = x + (charinfo.XOffset + charinfo.Width) * size;
-                this.vertex[i].Y = y + charinfo.Height * size;
+                this.vertex[i].Y = y + (charinfo.YOffset + charinfo.Height) * size;
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexBottomRight;
 
