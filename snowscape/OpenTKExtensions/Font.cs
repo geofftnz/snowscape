@@ -12,7 +12,7 @@ namespace OpenTKExtensions
     /*
      * Signed Distance Field Font Rendering
      * 
-     * Based one work by:
+     * Based on work by:
      * 
      * Chris Green / Valve: Improved Alpha-Tested Magniﬁcation for Vector Textures and Special Effects
      * http://www.valvesoftware.com/publications/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
@@ -79,6 +79,7 @@ namespace OpenTKExtensions
         }
 
         public int Count { get; private set; }
+        public float GlobalScale { get; set; }
 
         #region shaders
         private const string vertexShaderSource =
@@ -135,6 +136,7 @@ namespace OpenTKExtensions
             this.IsShaderLoaded = false;
             this.IsColourVBOLoaded = false;
             this.Count = 0;
+            this.GlobalScale = 1.0f;
         }
 
         public Font()
@@ -322,6 +324,7 @@ namespace OpenTKExtensions
         public float AddChar(char c, float x, float y, float z, float size, Vector4 col)
         {
             FontCharacter charinfo;
+            size *= GlobalScale;
 
             if (this.Count < MAXCHARS && this.Characters.TryGetValue(c, out charinfo))
             {
