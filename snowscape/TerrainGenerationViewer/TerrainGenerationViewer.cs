@@ -180,11 +180,15 @@ void main(void)
             quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource, new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
             // setup font
-            font.Init(Resources.FontOCR, Resources.FontOCRMeta);
+            //font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
+            font.Init(Resources.FontSegoeScript, Resources.FontSegoeScriptMeta);
+            //font.Init(Resources.FontOCR, Resources.FontOCRMeta);
 
-            font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
-            font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
-            font.AddChar('°', 0.4f, 0.1f, 0.0f, 0.003f);
+            //font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
+            //font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
+            //font.AddChar('°', 0.4f, 0.1f, 0.0f, 0.003f);
+            font.AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0.1f, 0.1f, 0.0f, 0.003f);
+            font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f);
             font.Refresh();
 
             SetProjection();

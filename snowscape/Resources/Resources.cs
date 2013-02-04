@@ -13,6 +13,10 @@ namespace Snowscape
         public const string FontOCR = @"Fonts/OCRAExt.TTF_sdf_256.png";
         public const string FontOCRMeta = @"Fonts/OCRAExt.TTF_sdf_256.txt";
 
+
+
+        public const string FontSegoeScript = @"Fonts/segoesc.ttf_sdf.png";
+        public const string FontSegoeScriptMeta = @"Fonts/segoesc.ttf_sdf.txt";
         
     }
 }

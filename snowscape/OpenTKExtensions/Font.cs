@@ -164,9 +164,9 @@ namespace OpenTKExtensions
 
             // setup texture
 
-            this.sdfTexture = new Texture(info.Width,info.Height,TextureTarget.Texture2D,PixelInternalFormat.Alpha,PixelFormat.Alpha,PixelType.UnsignedByte);
+            this.sdfTexture = new Texture(info.Width, info.Height, TextureTarget.Texture2D, PixelInternalFormat.Alpha, PixelFormat.Alpha, PixelType.UnsignedByte);
             this.sdfTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp))
                 .Upload(data);
@@ -285,28 +285,28 @@ namespace OpenTKExtensions
 
                 // top left
                 this.vertex[i].X = x + (charinfo.XOffset * size);
-                this.vertex[i].Y = y + (charinfo.YOffset * size);
+                this.vertex[i].Y = y + (-charinfo.YOffset * size);
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexTopLeft;
                 i++;
 
                 // top right
                 this.vertex[i].X = x + (charinfo.XOffset + charinfo.Width) * size;
-                this.vertex[i].Y = y + (charinfo.YOffset * size);
+                this.vertex[i].Y = y + (-charinfo.YOffset * size);
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexTopRight;
                 i++;
 
                 // bottom left
                 this.vertex[i].X = x + (charinfo.XOffset * size);
-                this.vertex[i].Y = y + (charinfo.YOffset + charinfo.Height) * size;
+                this.vertex[i].Y = y + (-charinfo.YOffset + charinfo.Height) * size;
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexBottomLeft;
                 i++;
 
                 // bottom right
                 this.vertex[i].X = x + (charinfo.XOffset + charinfo.Width) * size;
-                this.vertex[i].Y = y + (charinfo.YOffset + charinfo.Height) * size;
+                this.vertex[i].Y = y + (-charinfo.YOffset + charinfo.Height) * size;
                 this.vertex[i].Z = z;
                 this.texcoord[i] = charinfo.TexBottomRight;
 
@@ -315,6 +315,16 @@ namespace OpenTKExtensions
                 return charinfo.XAdvance * size;
             }
             return 0f;
+        }
+
+        public float AddString(string s, float x, float y, float z, float size)
+        {
+            float xx = x;
+            foreach (char c in s)
+            {
+                xx += AddChar(c, xx, y, z, size);
+            }
+            return xx - x;
         }
 
         public void Init(string imageFilename, string metadataFilename)
