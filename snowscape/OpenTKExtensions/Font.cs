@@ -112,13 +112,9 @@ namespace OpenTKExtensions
             out vec4 out_Colour;
 
             void main() {
-                
                 float t = texture2D(tex0,texcoord0.xy).a;
-
                 vec4 col = col0;
-
                 col.a = col.a * smoothstep(0.4,0.6,t);
-
                 out_Colour = col;
             }
              ";
