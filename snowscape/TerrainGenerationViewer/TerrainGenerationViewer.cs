@@ -181,8 +181,8 @@ void main(void)
 
             // setup font
             //font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
-            font.Init(Resources.FontSegoeScript, Resources.FontSegoeScriptMeta);
-            //font.Init(Resources.FontOCR, Resources.FontOCRMeta);
+            //font.Init(Resources.FontSegoeScript, Resources.FontSegoeScriptMeta);
+            font.Init(Resources.FontOCR, Resources.FontOCRMeta);
 
             //font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
             //font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
