@@ -48,7 +48,7 @@ namespace OpenTKExtensions
                 GL.ShaderSource(this.Handle, this.Source);
                 GL.CompileShader(this.Handle);
 
-                string infoLog = GL.GetShaderInfoLog(this.Handle);
+                string infoLog = GL.GetShaderInfoLog(this.Handle).TrimEnd();
 
                 int compileStatus;
                 GL.GetShader(this.Handle, ShaderParameter.CompileStatus, out compileStatus);

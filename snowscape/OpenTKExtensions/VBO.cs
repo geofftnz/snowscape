@@ -79,6 +79,7 @@ namespace OpenTKExtensions
 
         public void SetData<T>(T[] data, int elementSizeInBytes, VertexAttribPointerType pointerType, int fieldsPerElement) where T : struct
         {
+            log.Trace("VBO.SetData ({0}): Loading...", this.Name);
             if (Init() != -1)
             {
                 GL.BindBuffer(this.Target, this.Handle);

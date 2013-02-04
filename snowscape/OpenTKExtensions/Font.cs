@@ -256,7 +256,7 @@ namespace OpenTKExtensions
 
             for (int i = 0; i < NUMVERTICES; i++)
             {
-                this.colour[i] = Vector4.Zero;
+                this.colour[i] = Vector4.One;
             }
 
             this.colourVBO = new VBO(this.Name + "_colour", BufferTarget.ArrayBuffer, BufferUsageHint.DynamicDraw);
@@ -281,6 +281,7 @@ namespace OpenTKExtensions
         public void Refresh()
         {
             this.vertexVBO.SetData(this.vertex);
+            this.colourVBO.SetData(this.colour);
             this.texcoordVBO.SetData(this.texcoord);
         }
 

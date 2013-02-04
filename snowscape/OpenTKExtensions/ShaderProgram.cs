@@ -147,7 +147,7 @@ namespace OpenTKExtensions
 
             GL.LinkProgram(this.Handle);
 
-            string infoLog = GL.GetProgramInfoLog(this.Handle);
+            string infoLog = GL.GetProgramInfoLog(this.Handle).TrimEnd();
             int linkStatus;
             GL.GetProgram(this.Handle, ProgramParameter.LinkStatus, out linkStatus);
 
