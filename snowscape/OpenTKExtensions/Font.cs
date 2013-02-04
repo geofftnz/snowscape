@@ -28,7 +28,7 @@ namespace OpenTKExtensions
      * 
      * 
     */
-    public class Font
+    public class Font : ITextRenderer
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
@@ -310,6 +310,39 @@ namespace OpenTKExtensions
             {
                 c.Value.NormalizeTexcoords((float)this.TexWidth, (float)this.TexHeight);
             }
+        }
+
+        public Vector3 MeasureChar(char c, float size)
+        {
+            FontCharacter charinfo;
+            size *= GlobalScale;
+            if (this.Characters.TryGetValue(c, out charinfo))
+            {
+                return new Vector3(charinfo.XAdvance * size, charinfo.Height * size, 0f);
+            }
+            return Vector3.Zero;
+        }
+
+        public Vector3 MeasureString(string s, float size)
+        {
+            Vector3 r = Vector3.Zero;
+
+            foreach (char c in s)
+            {
+                var charsize = this.MeasureChar(c, size);
+                r.X += charsize.X;
+                if (r.Y < charsize.Y)
+                {
+                    r.Y = charsize.Y;
+                }
+                if (r.Z < charsize.Z)
+                {
+                    r.Z = charsize.Z;
+                }
+
+            }
+
+            return r;
         }
 
         /// <summary>

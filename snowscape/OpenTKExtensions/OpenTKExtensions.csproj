@@ -53,6 +53,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FontCharacter.cs" />
     <Compile Include="FontMetaParser.cs" />
+    <Compile Include="ITextRenderer.cs" />
     <Compile Include="ITextureParameter.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="Shader.cs" />
