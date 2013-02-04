@@ -417,9 +417,9 @@ namespace OpenTKExtensions
             return xx - x;
         }
 
-        public float AddString(string s, Vector3 pos, float size, Vector4 col)
+        public float AddString(string s, Vector3 position, float size, Vector4 col)
         {
-            return AddString(s, pos.X, pos.Y, pos.Z, size, col);
+            return AddString(s, position.X, position.Y, position.Z, size, col);
         }
 
         public void Init(string imageFilename, string metadataFilename)
@@ -461,7 +461,7 @@ namespace OpenTKExtensions
 
         public void Clear()
         {
-            this.Characters.Clear();
+            this.Count = 0;
         }
 
     }

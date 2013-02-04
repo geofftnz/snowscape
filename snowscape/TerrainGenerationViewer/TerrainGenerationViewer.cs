@@ -31,6 +31,7 @@ namespace Snowscape.TerrainGenerationViewer
         uint frameCounter = 0;
         uint updateCounter = 0;
         private Font font = new Font();
+        private TextManager textManager = new TextManager("DefaultText", null);
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -180,16 +181,21 @@ void main(void)
             quadShader.Init(this.vertexShaderSource, this.fragmentShaderSource, new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
             // setup font
-            //font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
+            font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
             //font.Init(Resources.FontSegoeScript, Resources.FontSegoeScriptMeta);
-            font.Init(Resources.FontOCR, Resources.FontOCRMeta);
+            //font.Init(Resources.FontOCR, Resources.FontOCRMeta);
+            textManager.Font = font;
 
             //font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
             //font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
             //font.AddChar('°', 0.4f, 0.1f, 0.0f, 0.003f);
-            font.AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0.1f, 0.1f, 0.0f, 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f));
-            font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f, new Vector4(0.3f, 0.5f, 1.0f, 1.0f));
-            font.Refresh();
+            //font.AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0.1f, 0.1f, 0.0f, 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f));
+            //font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f, new Vector4(0.3f, 0.5f, 1.0f, 1.0f));
+            //font.Refresh();
+
+            textManager.Add(new TextBlock("l1", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", new Vector3(0.05f, 0.1f, 0.0f), 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f)));
+            textManager.Add(new TextBlock("l2", "abcdefghijklmnopqrstuvwxyz", new Vector3(0.05f, 0.25f, 0.0f), 0.01f, new Vector4(1.0f, 0.2f, 0.6f, 1.0f)));
+            textManager.Add(new TextBlock("l3", "0123456789!@#$%^&*()-=_+[]{}", new Vector3(0.05f, 0.3f, 0.0f), 0.001f, new Vector4(0.1f, 0.6f, 1.0f, 1.0f)));
 
             SetProjection();
 
@@ -287,7 +293,8 @@ void main(void)
             GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
             GL.Disable(EnableCap.DepthTest);
-            font.Render(projection, modelview);
+            //font.Render(projection, modelview);
+            textManager.Render(projection, modelview);
             GL.Enable(EnableCap.DepthTest);
 
             GL.Flush();
