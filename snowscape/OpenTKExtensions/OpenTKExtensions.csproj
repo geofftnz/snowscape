@@ -59,6 +59,7 @@
     <Compile Include="Shader.cs" />
     <Compile Include="ShaderProgram.cs" />
     <Compile Include="TextBlock.cs" />
+    <Compile Include="TextManager.cs" />
     <Compile Include="Texture.cs" />
     <Compile Include="TextureParameter.cs" />
     <Compile Include="Variable.cs" />

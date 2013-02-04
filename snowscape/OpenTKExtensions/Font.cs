@@ -402,6 +402,11 @@ namespace OpenTKExtensions
             return 0f;
         }
 
+        public float AddChar(char c, Vector3 position, float size, Vector4 col)
+        {
+            return AddChar(c, position.X, position.Y, position.Z, size, col);
+        }
+
         public float AddString(string s, float x, float y, float z, float size, Vector4 col)
         {
             float xx = x;
@@ -410,6 +415,11 @@ namespace OpenTKExtensions
                 xx += AddChar(c, xx, y, z, size, col);
             }
             return xx - x;
+        }
+
+        public float AddString(string s, Vector3 pos, float size, Vector4 col)
+        {
+            return AddString(s, pos.X, pos.Y, pos.Z, size, col);
         }
 
         public void Init(string imageFilename, string metadataFilename)
@@ -447,7 +457,11 @@ namespace OpenTKExtensions
 
             GL.DrawElements(BeginMode.Triangles, this.Count * 6, DrawElementsType.UnsignedInt, 0);
 
+        }
 
+        public void Clear()
+        {
+            this.Characters.Clear();
         }
 
     }
