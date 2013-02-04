@@ -16,6 +16,7 @@ namespace OpenTKExtensions
 
         public int Handle { get; set; }
         public string Log { get; set; }
+        public string Name { get; set; }
 
         private List<Shader> shaders = new List<Shader>();
         public List<Shader> Shaders
@@ -45,9 +46,16 @@ namespace OpenTKExtensions
         }
 
 
-        public ShaderProgram()
+        public ShaderProgram(string name)
         {
             this.Handle = -1;
+            this.Name = name;
+        }
+
+        public ShaderProgram()
+            : this("unnamed")
+        {
+
         }
 
         public void Create()
@@ -62,7 +70,7 @@ namespace OpenTKExtensions
                 }
                 else
                 {
-                    log.Error("ShaderProgram.Create: could not create program.");
+                    log.Error("ShaderProgram.Create ({0}): could not create program.", this.Name);
                 }
             }
         }
@@ -74,7 +82,7 @@ namespace OpenTKExtensions
 
         public void AddShader(ShaderType type, string source)
         {
-            Shader s = new Shader();
+            Shader s = new Shader(string.Format("{0}:{1}", this.Name, type.ToString()));
             s.Type = type;
             s.Source = source;
             s.Compile();
@@ -109,7 +117,7 @@ namespace OpenTKExtensions
             {
                 return location;
             }
-            throw new InvalidOperationException(string.Format("Could not find variable {0}",name));
+            throw new InvalidOperationException(string.Format("Shader Program {0} could not find variable {1}", this.Name, name));
         }
 
         public void Link()
@@ -118,11 +126,11 @@ namespace OpenTKExtensions
 
             if (this.Handle < 0)
             {
-                throw new InvalidOperationException("Program not created");
+                throw new InvalidOperationException(string.Format("Shader Program {0} Link: program was not created before Link() called", this.Name));
             }
             if (this.Shaders.Count < 1)
             {
-                throw new InvalidOperationException("No shaders added");
+                throw new InvalidOperationException(string.Format("Shader Program {0} Link: no shaders were added prior to linking", this.Name));
             }
 
             foreach (var s in this.Shaders)
@@ -133,7 +141,7 @@ namespace OpenTKExtensions
             // bind attribs
             foreach (var v in this.VariableLocations)
             {
-                GL.BindAttribLocation(this.Handle,v.Value,v.Key);
+                GL.BindAttribLocation(this.Handle, v.Value, v.Key);
             }
 
 
@@ -145,12 +153,12 @@ namespace OpenTKExtensions
 
             if (linkStatus != 1)
             {
-                log.Error("ShaderProgram.Link: {0}", infoLog);
-                throw new InvalidOperationException(string.Format("ShaderProgram did not link: {0}", infoLog));
+                log.Error("ShaderProgram.Link ({0}): {1}", this.Name, infoLog);
+                throw new InvalidOperationException(string.Format("ShaderProgram.Link ({0}): {1}", this.Name, infoLog));
             }
             else
             {
-                log.Trace("ShaderProgram.Link: {0}", infoLog);
+                log.Trace("ShaderProgram.Link ({0}): {1}", this.Name, infoLog);
             }
 
         }
@@ -162,7 +170,7 @@ namespace OpenTKExtensions
 
             foreach (var v in variables)
             {
-                this.AddVariable(v.Index,v.Name);
+                this.AddVariable(v.Index, v.Name);
             }
 
             this.Link();
@@ -181,7 +189,7 @@ namespace OpenTKExtensions
 
         private int LocateUniform(string name)
         {
-            int location=0;
+            int location = 0;
             if (this.UniformLocations.TryGetValue(name, out location))
             {
                 return location;
@@ -192,18 +200,18 @@ namespace OpenTKExtensions
 
                 if (location != -1)
                 {
-                    log.Trace("ShaderProgram.LocateUniform: {0} is at {1}", name, location);
+                    log.Trace("ShaderProgram.LocateUniform ({0}): {1} is at {2}", this.Name, name, location);
                     this.UniformLocations.Add(name, location);
                 }
                 else
                 {
-                    log.Warn("ShaderProgram.LocateUniform: Could not locate {0}", name);
+                    log.Warn("ShaderProgram.LocateUniform ({0}): Could not locate {1}", this.Name, name);
                 }
             }
             return location;
         }
 
-        public void SetUniform(string name, float value) 
+        public void SetUniform(string name, float value)
         {
             int location = LocateUniform(name);
             if (location != -1)
@@ -232,7 +240,7 @@ namespace OpenTKExtensions
             int location = LocateUniform(name);
             if (location != -1)
             {
-                GL.UniformMatrix4(location,false,ref value);
+                GL.UniformMatrix4(location, false, ref value);
             }
         }
 

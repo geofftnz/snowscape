@@ -14,6 +14,8 @@ namespace OpenTKExtensions
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
+        public string Name { get; set; }
+
         private int handle = -1;
         public int Handle
         {
@@ -43,21 +45,22 @@ namespace OpenTKExtensions
         }
 
 
-        public VBO(BufferTarget target, BufferUsageHint usageHint)
+        public VBO(string name, BufferTarget target, BufferUsageHint usageHint)
         {
+            this.Name = name;
             this.Handle = -1;
             this.Loaded = false;
             this.Target = target;
             this.UsageHint = usageHint;
         }
 
-        public VBO(BufferTarget target)
-            : this(target, BufferUsageHint.StaticDraw)
+        public VBO(string name, BufferTarget target)
+            : this(name, target, BufferUsageHint.StaticDraw)
         {
         }
 
-        public VBO()
-            : this(BufferTarget.ArrayBuffer)
+        public VBO(string name)
+            : this(name, BufferTarget.ArrayBuffer)
         {
         }
 
@@ -66,11 +69,12 @@ namespace OpenTKExtensions
             if (this.Handle < 0)
             {
                 GL.GenBuffers(1, out handle);
+                this.Handle = handle;
 
-                log.Trace("GL.GenBuffers returned {0}", handle);
+                log.Trace("VBO.Init ({0}): Handle is {1}", this.Name, this.Handle);
             }
 
-            return handle;
+            return this.Handle;
         }
 
         public void SetData<T>(T[] data, int elementSizeInBytes, VertexAttribPointerType pointerType, int fieldsPerElement) where T : struct
@@ -86,14 +90,19 @@ namespace OpenTKExtensions
 
                 GL.BufferData<T>(this.Target, new IntPtr(arraySize), data, this.UsageHint);
                 this.Loaded = true;
+                log.Trace("VBO.SetData ({0}): Loaded {1} elements, {2} bytes", this.Name, data.Length, arraySize);
             }
             else
             {
-                log.Error("VBO.SetData - buffer not initialised");
+                log.Error("VBO.SetData ({0}): buffer not initialised", this.Name);
             }
         }
 
 
+        public void SetData(Vector4[] data)
+        {
+            this.SetData(data, Vector4.SizeInBytes, VertexAttribPointerType.Float, 4);
+        }
         public void SetData(Vector3[] data)
         {
             this.SetData(data, Vector3.SizeInBytes, VertexAttribPointerType.Float, 3);
@@ -121,7 +130,7 @@ namespace OpenTKExtensions
             }
             else
             {
-                log.Warn("VBO.Bind - buffer not loaded");
+                log.Warn("VBO.Bind ({0}): buffer not loaded", this.Name);
             }
         }
 
@@ -132,6 +141,7 @@ namespace OpenTKExtensions
                 GL.BindBuffer(this.Target, this.Handle);
             }
         }
+
 
 
     }

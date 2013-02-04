@@ -20,10 +20,10 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Matrix4 projection = Matrix4.Identity;
         private Matrix4 modelview = Matrix4.Identity;
-        private ShaderProgram quadShader = new ShaderProgram();
-        private VBO quadVertexVBO = new VBO(BufferTarget.ArrayBuffer);
-        private VBO quadTexcoordVBO = new VBO(BufferTarget.ArrayBuffer);
-        private VBO quadIndexVBO = new VBO(BufferTarget.ElementArrayBuffer);
+        private ShaderProgram quadShader = new ShaderProgram("QuadShader");
+        private VBO quadVertexVBO = new VBO("quadvertex", BufferTarget.ArrayBuffer);
+        private VBO quadTexcoordVBO = new VBO("quadtexcoord", BufferTarget.ArrayBuffer);
+        private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
         private Texture heightTex;
         private Texture shadeTex;
         float[] heightTexData = new float[TileWidth * TileHeight];
@@ -154,7 +154,7 @@ void main(void)
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
-            this.heightTex = new Texture(TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
+            this.heightTex = new Texture("height", TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
             this.heightTex
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
@@ -162,7 +162,7 @@ void main(void)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
                 .Upload(heightTexData);
 
-            this.shadeTex = new Texture(TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.shadeTex = new Texture("shade", TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
             this.shadeTex
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear))
@@ -187,8 +187,8 @@ void main(void)
             //font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
             //font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
             //font.AddChar('°', 0.4f, 0.1f, 0.0f, 0.003f);
-            font.AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0.1f, 0.1f, 0.0f, 0.003f);
-            font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f);
+            font.AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0.1f, 0.1f, 0.0f, 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f));
+            font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f, new Vector4(0.3f, 0.5f, 1.0f, 1.0f));
             font.Refresh();
 
             SetProjection();

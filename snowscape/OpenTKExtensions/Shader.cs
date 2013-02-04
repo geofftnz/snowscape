@@ -17,11 +17,19 @@ namespace OpenTKExtensions
         public string Source { get; set; }
         public ShaderType Type { get; set; }
 
-        public Shader()
+        public string Name { get; set; }
+
+        public Shader(string name)
         {
             this.Type = ShaderType.FragmentShader;
             this.Handle = -1;
             this.Source = string.Empty;
+            this.Name = name;
+        }
+
+        public Shader()
+            : this("unnamed")
+        {
         }
 
         public int Init()
@@ -47,17 +55,17 @@ namespace OpenTKExtensions
 
                 if (compileStatus != 1)
                 {
-                    log.Error("Shader.Compile: {0}", infoLog);
-                    throw new InvalidOperationException(string.Format("Shader did not compile: {0}", infoLog));
+                    log.Error("Shader.Compile ({0}): {1}", this.Name, infoLog);
+                    throw new InvalidOperationException(string.Format("Shader {0} did not compile: {1}", this.Name, infoLog));
                 }
                 else
                 {
-                    log.Trace("Shader.Compile: {0}", infoLog);
+                    log.Trace("Shader.Compile ({0}): {1}", this.Name, infoLog);
                 }
             }
         }
 
-        
+
 
 
 

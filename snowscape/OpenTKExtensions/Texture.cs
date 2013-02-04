@@ -25,8 +25,9 @@ namespace OpenTKExtensions
         private List<ITextureParameter> parameters = new List<ITextureParameter>();
         public List<ITextureParameter> Parameters { get { return this.parameters; } }
 
-        public Texture(int width, int height, TextureTarget target, PixelInternalFormat internalFormat, PixelFormat format, PixelType type)
+        public Texture(string name, int width, int height, TextureTarget target, PixelInternalFormat internalFormat, PixelFormat format, PixelType type)
         {
+            this.Name = name;
             this.ID = -1;
             this.Target = target;
             this.InternalFormat = internalFormat;
@@ -34,6 +35,11 @@ namespace OpenTKExtensions
             this.Height = height;
             this.Format = format;
             this.Type = type;
+        }
+
+        public Texture(int width, int height, TextureTarget target, PixelInternalFormat internalFormat, PixelFormat format, PixelType type)
+            : this("unnamed", width, height, target, internalFormat, format, type)
+        {
         }
 
         public Texture SetParameter(ITextureParameter param)
@@ -47,7 +53,7 @@ namespace OpenTKExtensions
             if (this.ID == -1)
             {
                 this.ID = GL.GenTexture();
-                log.Trace("Texture.GenerateID returned {0}", this.ID);
+                log.Trace("Texture.GenerateID ({0}) returned {1}", this.Name, this.ID);
             }
             return this.ID;
         }
@@ -87,12 +93,14 @@ namespace OpenTKExtensions
         private void UploadImage<T>(T[] data) where T : struct
         {
             GL.TexImage2D<T>(this.Target, 0, this.InternalFormat, this.Width, this.Height, 0, this.Format, this.Type, data);
+            log.Trace("Texture.UploadImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
         }
 
         public void RefreshImage<T>(T[] data) where T : struct
         {
             this.Bind();
             GL.TexSubImage2D<T>(this.Target, 0, 0, 0, this.Width, this.Height, this.Format, this.Type, data);
+            log.Trace("Texture.RefreshImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
         }
 
         public void Unload()
