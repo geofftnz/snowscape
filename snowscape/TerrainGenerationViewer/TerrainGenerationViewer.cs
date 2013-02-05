@@ -274,7 +274,7 @@ void main(void)
                 UpdateHeightTexture();
             }
 
-            GL.ClearColor(new Color4(0, 96, 64, 255));
+            GL.ClearColor(new Color4(192, 208, 255, 255));
             GL.ClearDepth(10.0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -290,7 +290,7 @@ void main(void)
             quadTexcoordVBO.Bind(quadShader.VariableLocation("in_texcoord0"));
             quadIndexVBO.Bind();
 
-            GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+            //GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
             GL.Disable(EnableCap.DepthTest);
             //font.Render(projection, modelview);

@@ -213,7 +213,9 @@ namespace OpenTKExtensions
                 float t = samplePos(texcoord0.xy);
                 vec4 col = col0;
                 
-                vec4 colBorder = vec4(0.0,0.0,0.0,1.0);
+                //vec4 colBorder = vec4(0.0,0.0,0.0,0.4);
+                vec4 colBorder = vec4(col0.rgb * 0.5,0.4);
+
                 col = mix(colBorder,col,smoothstep(0.45,0.7,t));
 
 
