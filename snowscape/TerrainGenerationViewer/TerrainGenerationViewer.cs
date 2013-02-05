@@ -194,8 +194,8 @@ void main(void)
             //font.Refresh();
 
             textManager.Add(new TextBlock("l1", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", new Vector3(0.05f, 0.1f, 0.0f), 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f)));
-            textManager.Add(new TextBlock("l2", "abcdefghijklmnopqrstuvwxyz", new Vector3(0.05f, 0.25f, 0.0f), 0.01f, new Vector4(1.0f, 0.2f, 0.6f, 1.0f)));
-            textManager.Add(new TextBlock("l3", "0123456789!@#$%^&*()-=_+[]{}", new Vector3(0.05f, 0.3f, 0.0f), 0.001f, new Vector4(0.1f, 0.6f, 1.0f, 1.0f)));
+            textManager.Add(new TextBlock("l2", "abcdefghijklmnopqrstuvwxyz", new Vector3(0.05f, 0.25f, 0.0f), 0.002f, new Vector4(1.0f, 0.2f, 0.6f, 1.0f)));
+            textManager.Add(new TextBlock("l3", "0123456789!@#$%^&*()-=_+[]{}", new Vector3(0.05f, 0.3f, 0.0f), 0.0005f, new Vector4(0.1f, 0.6f, 1.0f, 1.0f)));
 
             SetProjection();
 

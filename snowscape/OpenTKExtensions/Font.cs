@@ -100,7 +100,44 @@ namespace OpenTKExtensions
                 col0 = in_col0;
             }
             ";
-        private const string fragmentShaderSource =
+        private const string fragmentShaderSourceEmbossed =
+            @"#version 140
+            precision highp float;
+
+            uniform sampler2D tex0;
+
+            in vec2 texcoord0;
+            in vec4 col0;
+
+            out vec4 out_Colour;
+
+            const float TEXEL = 1.0/256.0;
+
+            vec3 getNormal(vec2 pos)
+            {
+                float h1 = texture2D(tex0,vec2(pos.x,pos.y-TEXEL)).a;
+                float h2 = texture2D(tex0,vec2(pos.x,pos.y+TEXEL)).a;
+                float h3 = texture2D(tex0,vec2(pos.x-TEXEL,pos.y)).a;
+                float h4 = texture2D(tex0,vec2(pos.x+TEXEL,pos.y)).a;
+                return normalize(vec3(h4-h3,h2-h1,2.0*TEXEL));
+            }
+
+            void main() {
+                float t = texture2D(tex0,texcoord0.xy).a;
+                vec4 col = col0;
+
+                vec3 n = getNormal(texcoord0.xy);
+                vec3 l = normalize(vec3(0.6,0.5,0.2));
+                float diffuse = clamp(dot(n,l) * 0.5 + 0.5,0,1);
+                col *= 0.5 + 0.5 * diffuse;
+                col.a = 1.0;
+
+
+                col.a = col.a * smoothstep(0.4,0.6,t);
+                out_Colour = col;
+            }
+             ";
+        private const string fragmentShaderSourceNormal =
             @"#version 140
             precision highp float;
 
@@ -115,6 +152,72 @@ namespace OpenTKExtensions
                 float t = texture2D(tex0,texcoord0.xy).a;
                 vec4 col = col0;
                 col.a = col.a * smoothstep(0.4,0.6,t);
+                out_Colour = col;
+            }
+             ";
+        private const string fragmentShaderSourceShadow =
+            @"#version 140
+            precision highp float;
+
+            uniform sampler2D tex0;
+
+            in vec2 texcoord0;
+            in vec4 col0;
+
+            out vec4 out_Colour;
+            
+            void main() {
+
+                vec2 shadowOffset = vec2(0.003,0.003);
+                float shadow = texture2D(tex0,texcoord0.xy - shadowOffset).a;
+
+                float t = texture2D(tex0,texcoord0.xy).a;
+
+                vec4 shadowcol = vec4(0.0,0.0,1.0,1.0);
+                shadowcol.a * smoothstep(0.4,0.6,shadow);
+                shadow = max(0.0,shadow - t);
+
+                vec4 col = col0;
+                col.a = col.a * smoothstep(0.4,0.6,t);
+
+                col = mix(col, shadowcol, shadow);
+
+                out_Colour = col;
+            }
+             ";
+
+        private const string fragmentShaderSource =
+            @"#version 140
+            precision highp float;
+            uniform sampler2D tex0;
+            in vec2 texcoord0;
+            in vec4 col0;
+            out vec4 out_Colour;
+
+            const float TEXEL = 1.0/512.0;
+
+            float samplePos(vec2 p){
+
+                float t = 0.0;
+                t += texture2D(tex0,p).a;
+                t += texture2D(tex0,p + vec2(TEXEL,0.0)).a;
+                t += texture2D(tex0,p + vec2(-TEXEL,0.0)).a;
+                t += texture2D(tex0,p + vec2(0.0,TEXEL)).a;
+                t += texture2D(tex0,p + vec2(0.0,-TEXEL)).a;
+                t /= 5.0;    
+                return t;            
+            }
+
+            void main() {
+
+                float t = samplePos(texcoord0.xy);
+                vec4 col = col0;
+                
+                vec4 colBorder = vec4(0.0,0.0,0.0,1.0);
+                col = mix(colBorder,col,smoothstep(0.45,0.7,t));
+
+
+                col.a = col.a * smoothstep(0.1,0.5,t);
                 out_Colour = col;
             }
              ";
