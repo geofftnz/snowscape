@@ -22,7 +22,8 @@ namespace OpenTKExtensions
             get { return handle; }
             private set { handle = value; }
         }
-        public bool Loaded { get; set; }
+        public bool Loaded { get; private set; }
+        public bool Mapped { get; private set; }
         public BufferTarget Target { get; set; }
         public BufferUsageHint UsageHint { get; set; }
 
@@ -91,6 +92,7 @@ namespace OpenTKExtensions
 
                 GL.BufferData<T>(this.Target, new IntPtr(arraySize), data, this.UsageHint);
                 this.Loaded = true;
+                GL.BindBuffer(this.Target, 0);
                 log.Trace("VBO.SetData ({0}): Loaded {1} elements, {2} bytes", this.Name, data.Length, arraySize);
             }
             else
@@ -115,6 +117,14 @@ namespace OpenTKExtensions
         public void SetData(uint[] data)
         {
             this.SetData(data, sizeof(uint), VertexAttribPointerType.UnsignedInt, 1);
+        }
+        public void SetData(byte[] data)
+        {
+            this.SetData(data, sizeof(byte), VertexAttribPointerType.UnsignedByte, 1);
+        }
+        public void SetData(float[] data)
+        {
+            this.SetData(data, sizeof(float), VertexAttribPointerType.Float, 1);
         }
 
         public void Bind(int index)
@@ -141,6 +151,35 @@ namespace OpenTKExtensions
             {
                 GL.BindBuffer(this.Target, this.Handle);
             }
+        }
+
+        public void Unbind()
+        {
+            GL.BindBuffer(this.Target, 0);
+        }
+
+        public IntPtr Map(BufferAccess access)
+        {
+            if (!this.Loaded)
+            {
+                var s = string.Format("VBO.MapBuffer ({0}): buffer not loaded", this.Name);
+                log.Error(s);
+                throw new InvalidOperationException(s);
+            }
+
+            var ptr =  GL.MapBuffer(this.Target, access);
+            this.Mapped = true;
+            return ptr;
+        }
+
+        public void Unmap()
+        {
+            if (!this.Mapped)
+            {
+                log.Warn("VBO.Unmap ({0}): buffer not mapped", this.Name);
+            }
+            GL.UnmapBuffer(this.Target);
+            this.Mapped = false;
         }
 
 

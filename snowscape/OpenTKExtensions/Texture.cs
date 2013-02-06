@@ -105,6 +105,24 @@ namespace OpenTKExtensions
             log.Trace("Texture.RefreshImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
         }
 
+        public void RefreshImage<T>(T[] data, int xoffset, int yoffset, int width, int height) where T : struct
+        {
+            log.Trace("Texture.RefreshImage ({0}) uploading...", this.Name);
+            this.Bind();
+            GL.TexSubImage2D<T>(this.Target, 0, xoffset, yoffset, width, height, this.Format, this.Type, data);
+            log.Trace("Texture.RefreshImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
+        }
+
+        public void RefreshImage(VBO buffer) 
+        {
+            log.Trace("Texture.RefreshImage ({0}) uploading from buffer...", this.Name);
+            buffer.Bind();
+            this.Bind();
+            GL.TexSubImage2D(this.Target, 0, 0, 0, this.Width, this.Height, this.Format, this.Type, (IntPtr)IntPtr.Zero);
+            //buffer.Unbind();
+            log.Trace("Texture.RefreshImage ({0}) uploaded", this.Name);
+        }
+
         public void Unload()
         {
             if (this.ID != -1)

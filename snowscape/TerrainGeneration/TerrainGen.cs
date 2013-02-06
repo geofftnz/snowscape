@@ -157,7 +157,7 @@ namespace TerrainGeneration
             this.TerrainCollapseSamplesPerFrame = 500;
 
             // Water erosion
-            this.WaterNumParticles = 10000;  // 4000
+            this.WaterNumParticles = 4000;  // 4000
             this.WaterIterationsPerFrame = 5;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;
             this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
@@ -329,7 +329,7 @@ namespace TerrainGeneration
 
             var up = new Vector3(0f, 0f, 1f);
             var rand = new Random();
-            var tileDir = new Vector2(0f,0f);
+            var tileDir = new Vector2(0f, 0f);
             var turbulence = new Vector3(0f, 0f, 0f);
 
             Func<int, float, float> LowestNeighbour = (i, h) => this.Map[i].WHeight < h ? this.Map[i].WHeight : h;
@@ -1199,7 +1199,7 @@ namespace TerrainGeneration
             float h01 = this.Map[C(xx, yy + 1)].Height;
             float h11 = this.Map[C(xx + 1, yy + 1)].Height;
 
-            
+
             //return MathHelper.Lerp(MathHelper.Lerp(h00, h10, xfrac), MathHelper.Lerp(h01, h11, xfrac), yfrac);
             return yfrac.Lerp(xfrac.Lerp(h00, h10), xfrac.Lerp(h01, h11));
         }
@@ -1274,6 +1274,7 @@ namespace TerrainGeneration
                 }
                 fs.Close();
             }
+
         }
 
         #endregion

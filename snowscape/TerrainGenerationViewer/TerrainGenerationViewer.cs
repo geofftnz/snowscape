@@ -8,6 +8,8 @@ using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
 using Utils;
 using TerrainGeneration;
+using System.Threading;
+using System.IO;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -24,8 +26,13 @@ namespace Snowscape.TerrainGenerationViewer
         private VBO quadVertexVBO = new VBO("quadvertex", BufferTarget.ArrayBuffer);
         private VBO quadTexcoordVBO = new VBO("quadtexcoord", BufferTarget.ArrayBuffer);
         private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
+        
         private Texture heightTex;
+        private VBO heightTexBuffer = new VBO("heightTex", BufferTarget.PixelUnpackBuffer);
+
         private Texture shadeTex;
+        private VBO shadeTexBuffer = new VBO("shadeTex", BufferTarget.PixelUnpackBuffer);
+
         float[] heightTexData = new float[TileWidth * TileHeight];
         byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
         uint updateCounter = 0;
@@ -34,6 +41,12 @@ namespace Snowscape.TerrainGenerationViewer
 
         private FrameCounter frameCounter = new FrameCounter();
         private TextBlock frameCounterText = new TextBlock("fps","",new Vector3(0.01f,0.05f,0.0f),0.0005f,new Vector4(1.0f,1.0f,1.0f,1.0f));
+
+        private Thread updateThread;
+        private bool killThread = false;
+        private TerrainGen.Cell[] threadCopyMap;
+
+        private string terrainPath = @"../../../../terrains/";
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -139,16 +152,31 @@ void main(void)
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
             this.Terrain = new TerrainGen(1024, 1024);
+
+            this.UpdateFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_UpdateFrame);
+            this.RenderFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_RenderFrame);
+            this.Load += new EventHandler<EventArgs>(TerrainGenerationViewer_Load);
+            this.Unload += new EventHandler<EventArgs>(TerrainGenerationViewer_Unload);
+            this.Resize += new EventHandler<EventArgs>(TerrainGenerationViewer_Resize);
+            this.Closed += new EventHandler<EventArgs>(TerrainGenerationViewer_Closed);
         }
 
+        void TerrainGenerationViewer_Closed(object sender, EventArgs e)
+        {
+            OnClose(this, new CloseEventArgs());
+        }
+
+        /*
         protected override void OnClosed(EventArgs e)
         {
             OnClose(this, new CloseEventArgs());
             base.OnClosed(e);
-        }
+        }*/
 
 
-        protected override void OnLoad(EventArgs e)
+
+
+        void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
             this.VSync = VSyncMode.On;
 
@@ -173,6 +201,10 @@ void main(void)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
                 .Upload(shadeTexData);
 
+            // setup texture data buffers
+            this.heightTexBuffer.SetData(heightTexData);
+            this.shadeTexBuffer.SetData(shadeTexData);
+
 
             // setup VBOs
             this.quadVertexVBO.SetData(this.quadPos);
@@ -188,40 +220,71 @@ void main(void)
             //font.Init(Resources.FontOCR, Resources.FontOCRMeta);
             textManager.Font = font;
 
-            //font.AddChar('A', 0.2f, 0.1f, 0.0f, 0.003f);
-            //font.AddChar('b', 0.3f, 0.1f, 0.0f, 0.003f);
-            //font.AddChar('°', 0.4f, 0.1f, 0.0f, 0.003f);
-            //font.AddString("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0.1f, 0.1f, 0.0f, 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f));
-            //font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f, new Vector4(0.3f, 0.5f, 1.0f, 1.0f));
-            //font.Refresh();
-
-            //textManager.Add(new TextBlock("l1", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", new Vector3(0.05f, 0.1f, 0.0f), 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f)));
-            //textManager.Add(new TextBlock("l2", "abcdefghijklmnopqrstuvwxyz", new Vector3(0.05f, 0.25f, 0.0f), 0.002f, new Vector4(1.0f, 0.2f, 0.6f, 1.0f)));
-            //textManager.Add(new TextBlock("l3", "0123456789!@#$%^&*()-=_+[]{}", new Vector3(0.05f, 0.3f, 0.0f), 0.0005f, new Vector4(0.1f, 0.6f, 1.0f, 1.0f)));
-
-            //textManager.Add(frameCounterText);
-
             SetProjection();
 
-            // slow - replace with load
-            this.Terrain.InitTerrain1();
+            try
+            {
+                this.Terrain.Load(this.GetTerrainFileName(0));
+            }
+            catch (FileNotFoundException)
+            {
+                this.Terrain.InitTerrain1();
+            }
 
+            this.threadCopyMap = new TerrainGen.Cell[this.Terrain.Width * this.Terrain.Height];
 
             this.frameCounter.Start();
 
-            base.OnLoad(e);
+            this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
+            
         }
 
-
-        protected override void OnUnload(EventArgs e)
+        private void UpdateThreadProc()
         {
-            base.OnUnload(e);
+            bool killMe = false;
+            uint iteration = 0;
+
+            while (true)
+            {
+                // check for kill request.
+                lock (this)
+                {
+                    killMe = this.killThread;
+                }
+                if (killMe)
+                {
+                    break;
+                }
+
+                this.Terrain.ModifyTerrain();
+                iteration++;
+
+                if (iteration % 4 == 0)
+                {
+                    lock (this)
+                    {
+                        ParallelHelper.For2D(this.Terrain.Width, this.Terrain.Height, (i) =>
+                        {
+                            this.threadCopyMap[i] = this.Terrain.Map[i];
+                        });
+                    }
+                }
+
+
+                Thread.Sleep(1);
+
+            }
+
         }
 
-        protected override void OnResize(EventArgs e)
+
+        void TerrainGenerationViewer_Unload(object sender, EventArgs e)
+        {
+        }
+
+        void TerrainGenerationViewer_Resize(object sender, EventArgs e)
         {
             SetProjection();
-            base.OnResize(e);
         }
 
         private void SetProjection()
@@ -235,48 +298,91 @@ void main(void)
 
         protected void UpdateHeightTexture()
         {
-            ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
+            
+            heightTexBuffer.Bind();
+            IntPtr p = heightTexBuffer.Map(BufferAccess.WriteOnly);
+            unsafe
             {
-                this.heightTexData[i] = (this.Terrain.Map[i].Height) / 4096.0f;
-            });
-            this.heightTex.RefreshImage(this.heightTexData);
+                float* dest = (float *)p.ToPointer();
+                if ((IntPtr)dest != IntPtr.Zero)
+                {
+                    float scale = 1.0f / 4096.0f;
+
+                    ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
+                    {
+                        dest[i] = (this.Terrain.Map[i].Height) * scale;
+                    });
+                }
+            }
+            heightTexBuffer.Unmap();
+            heightTexBuffer.Unbind();
+            //GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
+            //this.heightTex.RefreshImage(this.heightTexData);
+            this.heightTex.RefreshImage(heightTexBuffer);
         }
 
         protected void UpdateShadeTexture()
         {
-            ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
+            
+            shadeTexBuffer.Bind();
+            IntPtr p = shadeTexBuffer.Map(BufferAccess.WriteOnly);
+            unsafe
             {
-                int j = i << 2;
+                byte* dest = (byte*)p.ToPointer();
 
-                this.shadeTexData[j] = (byte)((this.Terrain.Map[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j + 1] = (byte)((this.Terrain.Map[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j + 2] = (byte)((this.Terrain.Map[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                this.shadeTexData[j + 3] = (byte)((this.Terrain.Map[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
-            });
-            this.shadeTex.RefreshImage(this.shadeTexData);
+                if ((IntPtr)dest != IntPtr.Zero)
+                {
+                    ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
+                    {
+                        int j = i << 2;
+
+                        dest[j] = (byte)((this.Terrain.Map[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
+                        dest[j + 1] = (byte)((this.Terrain.Map[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                        dest[j + 2] = (byte)((this.Terrain.Map[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                        dest[j + 3] = (byte)((this.Terrain.Map[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+                    });
+                }
+            }
+            shadeTexBuffer.Unmap();
+            shadeTexBuffer.Unbind();
+            this.shadeTex.RefreshImage(shadeTexBuffer);
         }
 
-        protected override void OnUpdateFrame(FrameEventArgs e)
+        /*
+        protected void OnUpdateFrame(FrameEventArgs e)
         {
-            /*
-            if (updateCounter % 3 == 0)
-            {
-                this.Terrain.ModifyTerrain();
-            }*/
+            //this.Terrain.ModifyTerrain();
+            //Thread.Sleep(0);
 
+            updateCounter++;
+        }*/
+
+        void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
+        {
+            //this.Terrain.ModifyTerrain();
             updateCounter++;
         }
 
-        protected override void OnRenderFrame(FrameEventArgs e)
+        void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
-            frameCounterText.Text = string.Format("FPS: {0:000.00}", frameCounter.FPS);
+
+            /*
+            throw new NotImplementedException();
+        }
+
+        protected void OnRenderFrame(FrameEventArgs e)
+        {*/
+
+            this.Terrain.ModifyTerrain();
+
+            frameCounterText.Text = string.Format("FPS: {0:0.00}", frameCounter.FPSSmooth);
             textManager.AddOrUpdate(frameCounterText);
 
-            if (frameCounter.Frames % 200 == 0)
+            if (frameCounter.Frames % 20 == 0)
             {
                 UpdateShadeTexture();
             }
-            if (frameCounter.Frames % 200 == 100)
+            if (frameCounter.Frames % 20 == 10)
             {
                 UpdateHeightTexture();
             }
@@ -308,6 +414,11 @@ void main(void)
             SwapBuffers();
 
             this.frameCounter.Frame();
+        }
+
+        protected string GetTerrainFileName(int index)
+        {
+            return string.Format("{0}Terrain{1}.1024.pass1.ter", this.terrainPath, index);
         }
 
     }

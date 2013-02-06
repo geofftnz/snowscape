@@ -14,6 +14,9 @@ namespace Utils
         private int bufferPos = 0;
         private long frameCount = 0;
 
+        private double fpsSmoothed = 0.0;
+        private double fpsLowpassAmount = 0.3;
+
         public double FPS
         {
             get
@@ -24,6 +27,14 @@ namespace Utils
                     return (double)BUFLEN / ts;
                 }
                 return 0.0;
+            }
+        }
+
+        public double FPSSmooth
+        {
+            get
+            {
+                return fpsSmoothed;
             }
         }
 
@@ -73,6 +84,9 @@ namespace Utils
             bufferPos++;
             bufferPos %= BUFLEN;
             tickBuffer[bufferPos] = sw.ElapsedTicks;
+
+            var f = this.FPS;
+            this.fpsSmoothed = f * this.fpsLowpassAmount + (1.0 - this.fpsLowpassAmount) * this.fpsSmoothed;
         }
 
     }
