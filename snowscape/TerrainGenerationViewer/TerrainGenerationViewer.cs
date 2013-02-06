@@ -28,10 +28,12 @@ namespace Snowscape.TerrainGenerationViewer
         private Texture shadeTex;
         float[] heightTexData = new float[TileWidth * TileHeight];
         byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
-        uint frameCounter = 0;
         uint updateCounter = 0;
         private Font font = new Font();
         private TextManager textManager = new TextManager("DefaultText", null);
+
+        private FrameCounter frameCounter = new FrameCounter();
+        private TextBlock frameCounterText = new TextBlock("fps","",new Vector3(0.01f,0.05f,0.0f),0.0005f,new Vector4(1.0f,1.0f,1.0f,1.0f));
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -193,9 +195,11 @@ void main(void)
             //font.AddString("abcdefghijklmnopqrstuvwxyz", 0.1f, 0.25f, 0.0f, 0.003f, new Vector4(0.3f, 0.5f, 1.0f, 1.0f));
             //font.Refresh();
 
-            textManager.Add(new TextBlock("l1", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", new Vector3(0.05f, 0.1f, 0.0f), 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f)));
-            textManager.Add(new TextBlock("l2", "abcdefghijklmnopqrstuvwxyz", new Vector3(0.05f, 0.25f, 0.0f), 0.002f, new Vector4(1.0f, 0.2f, 0.6f, 1.0f)));
-            textManager.Add(new TextBlock("l3", "0123456789!@#$%^&*()-=_+[]{}", new Vector3(0.05f, 0.3f, 0.0f), 0.0005f, new Vector4(0.1f, 0.6f, 1.0f, 1.0f)));
+            //textManager.Add(new TextBlock("l1", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", new Vector3(0.05f, 0.1f, 0.0f), 0.003f, new Vector4(1.0f, 0.5f, 0.0f, 1.0f)));
+            //textManager.Add(new TextBlock("l2", "abcdefghijklmnopqrstuvwxyz", new Vector3(0.05f, 0.25f, 0.0f), 0.002f, new Vector4(1.0f, 0.2f, 0.6f, 1.0f)));
+            //textManager.Add(new TextBlock("l3", "0123456789!@#$%^&*()-=_+[]{}", new Vector3(0.05f, 0.3f, 0.0f), 0.0005f, new Vector4(0.1f, 0.6f, 1.0f, 1.0f)));
+
+            //textManager.Add(frameCounterText);
 
             SetProjection();
 
@@ -203,6 +207,7 @@ void main(void)
             this.Terrain.InitTerrain1();
 
 
+            this.frameCounter.Start();
 
             base.OnLoad(e);
         }
@@ -264,12 +269,14 @@ void main(void)
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            frameCounterText.Text = string.Format("FPS: {0:000.00}", frameCounter.FPS);
+            textManager.AddOrUpdate(frameCounterText);
 
-            if (frameCounter % 200 == 0)
+            if (frameCounter.Frames % 200 == 0)
             {
                 UpdateShadeTexture();
             }
-            if (frameCounter % 200 == 100)
+            if (frameCounter.Frames % 200 == 100)
             {
                 UpdateHeightTexture();
             }
@@ -290,10 +297,9 @@ void main(void)
             quadTexcoordVBO.Bind(quadShader.VariableLocation("in_texcoord0"));
             quadIndexVBO.Bind();
 
-            //GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
             GL.Disable(EnableCap.DepthTest);
-            //font.Render(projection, modelview);
             textManager.Render(projection, modelview);
             GL.Enable(EnableCap.DepthTest);
 
@@ -301,7 +307,7 @@ void main(void)
 
             SwapBuffers();
 
-            frameCounter++;
+            this.frameCounter.Frame();
         }
 
     }
