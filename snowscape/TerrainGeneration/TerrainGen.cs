@@ -143,7 +143,7 @@ namespace TerrainGeneration
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 1.0f;
             this.TerrainSlumpMovementAmount = 0.05f;
-            this.TerrainSlumpSamplesPerFrame = 40000;
+            this.TerrainSlumpSamplesPerFrame = 10000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.5f;
@@ -157,7 +157,7 @@ namespace TerrainGeneration
             this.TerrainCollapseSamplesPerFrame = 500;
 
             // Water erosion
-            this.WaterNumParticles = 4000;  // 4000
+            this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 5;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;
             this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
@@ -927,15 +927,21 @@ namespace TerrainGeneration
                 SlumpTo(x, y, threadlocal.diffmap);
             }
 
-            Parallel.For(0, 8, j =>
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
             {
-                int ii = j * ((this.Width * this.Height) >> 3);
-                for (int i = 0; i < (this.Width * this.Height) >> 3; i++)
-                {
-                    this.Map[ii].Loose += threadlocal.diffmap[ii];
-                    ii++;
-                }
+                this.Map[i].Loose += threadlocal.diffmap[i];
             });
+
+
+            //Parallel.For(0, 8, j =>
+            //{
+            //    int ii = j * ((this.Width * this.Height) >> 3);
+            //    for (int i = 0; i < (this.Width * this.Height) >> 3; i++)
+            //    {
+            //        this.Map[ii].Loose += threadlocal.diffmap[ii];
+            //        ii++;
+            //    }
+            //});
 
 
         }

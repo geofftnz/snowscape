@@ -41,7 +41,7 @@ namespace OpenTKExtensions
         {
             if (!Blocks.ContainsKey(b.Name))
             {
-                log.Info("TextManager.Add ({0}): Adding \"{1}\"", this.Name,b.Text);
+                log.Trace("TextManager.Add ({0}): Adding \"{1}\"", this.Name,b.Text);
                 Blocks.Add(b.Name, b);
                 this.NeedsRefresh = true;
                 return true;
@@ -72,7 +72,7 @@ namespace OpenTKExtensions
 
         public void Refresh()
         {
-            log.Info("TextManager.Refresh ({0}): Refreshing {1} blocks...", this.Name, this.Blocks.Count);
+            log.Trace("TextManager.Refresh ({0}): Refreshing {1} blocks...", this.Name, this.Blocks.Count);
 
             if (this.Font == null)
             {

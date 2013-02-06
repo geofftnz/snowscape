@@ -10,11 +10,15 @@ using Utils;
 using TerrainGeneration;
 using System.Threading;
 using System.IO;
+using NLog;
+using System.Diagnostics;
 
 namespace Snowscape.TerrainGenerationViewer
 {
     public class TerrainGenerationViewer : GameWindow
     {
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
         const int TileWidth = 1024;
         const int TileHeight = 1024;
 
@@ -45,6 +49,10 @@ namespace Snowscape.TerrainGenerationViewer
         private Thread updateThread;
         private bool killThread = false;
         private TerrainGen.Cell[] threadCopyMap;
+        private TerrainGen.Cell[] threadRenderMap;
+        private uint updateThreadIterations;
+        private uint prevThreadIterations;
+        private double updateThreadUpdateTime = 0.0;
 
         private string terrainPath = @"../../../../terrains/";
 
@@ -159,6 +167,26 @@ void main(void)
             this.Unload += new EventHandler<EventArgs>(TerrainGenerationViewer_Unload);
             this.Resize += new EventHandler<EventArgs>(TerrainGenerationViewer_Resize);
             this.Closed += new EventHandler<EventArgs>(TerrainGenerationViewer_Closed);
+            this.Closing += new EventHandler<System.ComponentModel.CancelEventArgs>(TerrainGenerationViewer_Closing);
+        }
+
+        void TerrainGenerationViewer_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // kill thread
+            log.Trace("Sending kill signal to update thread");
+            lock (this)
+            {
+                this.killThread = true;
+            }
+
+            // wait for thread to complete
+            log.Trace("Waiting for thread to complete...");
+            this.updateThread.Join(2000);
+            if (this.updateThread.IsAlive)
+            {
+                log.Warn("Thread.Join timeout - aborting");
+                this.updateThread.Abort();
+            }
         }
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
@@ -232,17 +260,24 @@ void main(void)
             }
 
             this.threadCopyMap = new TerrainGen.Cell[this.Terrain.Width * this.Terrain.Height];
+            this.threadRenderMap = new TerrainGen.Cell[this.Terrain.Width * this.Terrain.Height];
 
             this.frameCounter.Start();
 
+            log.Trace("Starting update thread...");
             this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
-            
+            this.updateThread.Start();
         }
 
         private void UpdateThreadProc()
         {
             bool killMe = false;
             uint iteration = 0;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            double startTime = 0.0;
+            double updateTime = 0.0;
+            
 
             while (true)
             {
@@ -256,10 +291,13 @@ void main(void)
                     break;
                 }
 
+                startTime = sw.Elapsed.TotalMilliseconds;
                 this.Terrain.ModifyTerrain();
+                updateTime = sw.Elapsed.TotalMilliseconds - startTime;
+
                 iteration++;
 
-                if (iteration % 4 == 0)
+                if (iteration % 10 == 0)
                 {
                     lock (this)
                     {
@@ -267,6 +305,8 @@ void main(void)
                         {
                             this.threadCopyMap[i] = this.Terrain.Map[i];
                         });
+                        this.updateThreadIterations = iteration;
+                        this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
                     }
                 }
 
@@ -275,6 +315,17 @@ void main(void)
 
             }
 
+        }
+
+        protected void CopyMapDataFromUpdateThread()
+        {
+            lock (this)
+            {
+                ParallelHelper.For2D(this.Terrain.Width, this.Terrain.Height, (i) =>
+                {
+                    this.threadRenderMap[i] = this.threadCopyMap[i];
+                });
+            }
         }
 
 
@@ -310,7 +361,7 @@ void main(void)
 
                     ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
                     {
-                        dest[i] = (this.Terrain.Map[i].Height) * scale;
+                        dest[i] = (this.threadRenderMap[i].Height) * scale;
                     });
                 }
             }
@@ -336,10 +387,10 @@ void main(void)
                     {
                         int j = i << 2;
 
-                        dest[j] = (byte)((this.Terrain.Map[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                        dest[j + 1] = (byte)((this.Terrain.Map[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                        dest[j + 2] = (byte)((this.Terrain.Map[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                        dest[j + 3] = (byte)((this.Terrain.Map[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+                        dest[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
+                        dest[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                        dest[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                        dest[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
                     });
                 }
             }
@@ -347,15 +398,6 @@ void main(void)
             shadeTexBuffer.Unbind();
             this.shadeTex.RefreshImage(shadeTexBuffer);
         }
-
-        /*
-        protected void OnUpdateFrame(FrameEventArgs e)
-        {
-            //this.Terrain.ModifyTerrain();
-            //Thread.Sleep(0);
-
-            updateCounter++;
-        }*/
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
@@ -366,25 +408,18 @@ void main(void)
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
 
-            /*
-            throw new NotImplementedException();
-        }
-
-        protected void OnRenderFrame(FrameEventArgs e)
-        {*/
-
             this.Terrain.ModifyTerrain();
 
-            frameCounterText.Text = string.Format("FPS: {0:0.00}", frameCounter.FPSSmooth);
+            frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms", frameCounter.FPSSmooth,this.updateThreadIterations, this.updateThreadUpdateTime);
             textManager.AddOrUpdate(frameCounterText);
 
-            if (frameCounter.Frames % 20 == 0)
+            uint currentThreadIterations = updateThreadIterations;
+            if (prevThreadIterations != currentThreadIterations)
             {
+                CopyMapDataFromUpdateThread();
                 UpdateShadeTexture();
-            }
-            if (frameCounter.Frames % 20 == 10)
-            {
                 UpdateHeightTexture();
+                prevThreadIterations = currentThreadIterations;
             }
 
             GL.ClearColor(new Color4(192, 208, 255, 255));
