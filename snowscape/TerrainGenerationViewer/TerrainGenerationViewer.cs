@@ -53,6 +53,8 @@ namespace Snowscape.TerrainGenerationViewer
         private long waterIterations = 0;
         private int textureUpdateCount = 0;
 
+        private PerfMonitor perfmon = new PerfMonitor();
+
         private string terrainPath = @"../../../../terrains/";
 
 
@@ -297,23 +299,17 @@ void main(void)
 
                 iteration++;
 
-                if (iteration % 5 == 0)
+                if (iteration % 10 == 0)
                 {
                     lock (this)
                     {
-                        ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
-                        {
-                            this.threadCopyMap[i] = this.Terrain.Map[i];
-                        });
+                        ParallelHelper.CopySingleThreadUnrolled(this.Terrain.Map,this.threadCopyMap, TileWidth * TileHeight);
                         this.updateThreadIterations = iteration;
                         this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
                         this.waterIterations = this.Terrain.WaterIterations;
                     }
                 }
-
-
                 Thread.Sleep(1);
-
             }
 
         }
@@ -322,10 +318,9 @@ void main(void)
         {
             lock (this)
             {
-                ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
-                {
-                    this.threadRenderMap[i] = this.threadCopyMap[i];
-                });
+                perfmon.Start("Copy2");
+                ParallelHelper.CopySingleThreadUnrolled(this.threadCopyMap, this.threadRenderMap, TileWidth * TileHeight);
+                perfmon.Stop("Copy2");
             }
         }
 
@@ -350,25 +345,38 @@ void main(void)
 
         protected void UpdateHeightTexture()
         {
+            perfmon.Start("UpdateHeightTexture");
+            float m = 1.0f / 4096.0f;
             ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
             {
-                this.heightTexData[i] = (this.threadRenderMap[i].Height) / 4096.0f;
+                this.heightTexData[i] = (this.threadRenderMap[i].Height) * m;
             });
+            perfmon.Stop("UpdateHeightTexture");
+            perfmon.Start("UploadHeightTexture");
             this.heightTex.RefreshImage(this.heightTexData);
+            perfmon.Stop("UploadHeightTexture");
         }
 
         protected void UpdateShadeTexture()
         {
-            ParallelHelper.For2D(TileWidth, TileHeight, 0, (i) =>
+            perfmon.Start("UpdateShadeTexture");
+            ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
             {
                 int j = (i) << 2;
 
-                this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+                //this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
+                //this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                //this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+                this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).Clamp(0.0f, 255.0f));
+                this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
+                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).Clamp(0.0f, 255.0f));  // erosion rate
+                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying capacity
             });
+            perfmon.Stop("UpdateShadeTexture");
+            perfmon.Start("UploadShadeTexture");
             this.shadeTex.RefreshImage(this.shadeTexData);
+            perfmon.Stop("UploadShadeTexture");
         }
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
@@ -378,8 +386,18 @@ void main(void)
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
-            frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+            frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
             textManager.AddOrUpdate(frameCounterText);
+
+            if (this.frameCounter.Frames % 128 == 0)
+            {
+                float y = 0.1f;
+                foreach (var timer in this.perfmon.AllAverageTimes())
+                {
+                    textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+                    y += 0.0125f;
+                }
+            }
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
@@ -396,6 +414,7 @@ void main(void)
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 
+            perfmon.Start("RenderTerrain");
             this.heightTex.Bind(TextureUnit.Texture0);
             this.shadeTex.Bind(TextureUnit.Texture1);
             quadShader.UseProgram();
@@ -406,11 +425,17 @@ void main(void)
             quadVertexVBO.Bind(quadShader.VariableLocation("vertex"));
             quadTexcoordVBO.Bind(quadShader.VariableLocation("in_texcoord0"));
             quadIndexVBO.Bind();
-
             GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+            perfmon.Stop("RenderTerrain");
 
             GL.Disable(EnableCap.DepthTest);
+            perfmon.Start("RefreshText");
+            if (textManager.NeedsRefresh) textManager.Refresh();
+            perfmon.Stop("RefreshText");
+
+            perfmon.Start("RenderText");
             textManager.Render(projection, modelview);
+            perfmon.Stop("RenderText");
             GL.Enable(EnableCap.DepthTest);
 
             GL.Flush();

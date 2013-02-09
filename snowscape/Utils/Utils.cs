@@ -16,6 +16,23 @@ namespace Utils
             return (x.CompareTo(min) >= 0) ? ((x.CompareTo(max) <= 0) ? x : max) : min;
         }
 
+        public static float Min(float a, float b) 
+        {
+            return (a + b - Math.Abs(a - b)) / 2;
+        }
+        public static float Max(float a, float b)
+        {
+            return (a + b + Math.Abs(a - b)) / 2;
+        }
+        public static float Clamp(this float x, float min, float max)
+        {
+            //return Min(Max(x, min), max);
+            if (x >= min && x <= max) return x;
+            if (x < min) return min;
+            if (x > max) return max;
+            return x;
+        }
+
         public static Color4 ToColor(this Vector3 v)
         {
             return new Color4(v.X * 0.5f + 0.5f, v.Y * 0.5f + 0.5f, v.Z * 0.5f + 0.5f,1.0f);
