@@ -70,7 +70,8 @@ namespace TerrainGeneration
         public float WaterErosionOverCapacityFactor { get; set; }
         #endregion
 
-        public int Iterations { get; set; }
+        public int Iterations { get; private set; }
+        public long WaterIterations { get; private set; }
 
 
 
@@ -157,8 +158,8 @@ namespace TerrainGeneration
             this.TerrainCollapseSamplesPerFrame = 500;
 
             // Water erosion
-            this.WaterNumParticles = 10000;  // 4000
-            this.WaterIterationsPerFrame = 5;  // 20
+            this.WaterNumParticles = 5000;  // 4000
+            this.WaterIterationsPerFrame = 10;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;
             this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 3.0f;  // 3
@@ -178,6 +179,7 @@ namespace TerrainGeneration
             this.WaterTurbulence = 0f; // 0.05f;
 
             this.Iterations = 0;
+            this.WaterIterations = 0;
 
             Random r = new Random();
 
@@ -262,7 +264,7 @@ namespace TerrainGeneration
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
-            DecayWater(0.985f, 0.97f, 0.95f);
+            DecayWater(0.99f, 0.97f, 0.95f);
 
             this.Iterations++;
         }
@@ -276,7 +278,7 @@ namespace TerrainGeneration
                 for (int x = 0; x < this.Width; x++)
                 {
                     this.Map[i].MovingWater *= MovingWaterDecay;
-                    this.Map[i].Erosion *= WaterErosionDecay;
+                    //this.Map[i].Erosion *= WaterErosionDecay;
                     this.Map[i].Carrying *= CarryingDecay;
                     //this.Map[i].Slumping *= CarryingDecay;
                     i++;
@@ -356,7 +358,7 @@ namespace TerrainGeneration
                 // run the particle for a number of cells
                 for (int i = 0; i < CellsPerRun; i++)
                 {
-
+                    this.WaterIterations++;
 
                     // add some flowing water to the terrain so we can see it
                     //this.Map[celli].MovingWater += 0.001f; // moved further down
@@ -569,7 +571,7 @@ namespace TerrainGeneration
                                 this.Map[celli].Loose -= looseErodeAmount;
                                 wp.CarryingAmount += looseErodeAmount;
 
-                                this.Map[celli].Erosion += looseErodeAmount;
+                                //this.Map[celli].Erosion += looseErodeAmount;
                                 cdiff -= looseErodeAmount;
 
                                 //CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
@@ -587,7 +589,7 @@ namespace TerrainGeneration
                                 this.Map[celli].Hard -= hardErodeAmount;
                                 wp.CarryingAmount += hardErodeAmount; // loose material is less dense than hard, so make it greater.
 
-                                this.Map[celli].Erosion += hardErodeAmount;
+                                //this.Map[celli].Erosion += hardErodeAmount;
 
                                 //CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
                             }
@@ -879,7 +881,7 @@ namespace TerrainGeneration
                         diffmap[pFrom] -= diff;
                         diffmap[pTo] += diff;
 
-                        this.Map[pFrom].Erosion += diff;
+                        //this.Map[pFrom].Erosion += diff;
 
                         return diff;
                     }
@@ -977,7 +979,7 @@ namespace TerrainGeneration
                     diffmap[pFrom] -= diff;
                     diffmap[pTo] += diff;
 
-                    this.Map[pFrom].Erosion += diff;
+                    //this.Map[pFrom].Erosion += diff;
 
                     return diff;
                 }

@@ -30,7 +30,7 @@ namespace Snowscape.TerrainGenerationViewer
         private VBO quadVertexVBO = new VBO("quadvertex", BufferTarget.ArrayBuffer);
         private VBO quadTexcoordVBO = new VBO("quadtexcoord", BufferTarget.ArrayBuffer);
         private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
-        
+
         private Texture heightTex;
         private VBO heightTexBuffer = new VBO("heightTex", BufferTarget.PixelUnpackBuffer);
 
@@ -44,7 +44,7 @@ namespace Snowscape.TerrainGenerationViewer
         private TextManager textManager = new TextManager("DefaultText", null);
 
         private FrameCounter frameCounter = new FrameCounter();
-        private TextBlock frameCounterText = new TextBlock("fps","",new Vector3(0.01f,0.05f,0.0f),0.0005f,new Vector4(1.0f,1.0f,1.0f,1.0f));
+        private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
         private Thread updateThread;
         private bool killThread = false;
@@ -53,6 +53,9 @@ namespace Snowscape.TerrainGenerationViewer
         private uint updateThreadIterations;
         private uint prevThreadIterations;
         private double updateThreadUpdateTime = 0.0;
+        private long waterIterations = 0;
+        private int textureUpdateCount = 0;
+        const int textureUpdateSlices = 4;
 
         private string terrainPath = @"../../../../terrains/";
 
@@ -129,12 +132,13 @@ void main(void)
 
 	float looseblend = clamp(s.g * s.g * 8.0,0.0,1.0);
 	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
+    col *= 1.4;
 
-	vec4 colW0 = vec4(0.325,0.498,0.757,1.0);  // blue water
+	vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
 	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
 	vec4 colW2 = vec4(1.4,1.4,1.4,1.0); // white water
 
-	colW = mix(colW0,colW1,clamp(s.r*4.0,0,1));  // make water dirty->clean
+	colW = mix(colW0,colW1,clamp(s.r*1.5,0,1));  // make water dirty->clean
 	colW = mix(colW,colW2,s.a*0.2);  // white water
 
 	col = mix(col,colE,clamp(s.a,0.0,0.2));
@@ -182,11 +186,15 @@ void main(void)
             // wait for thread to complete
             log.Trace("Waiting for thread to complete...");
             this.updateThread.Join(2000);
+
             if (this.updateThread.IsAlive)
             {
                 log.Warn("Thread.Join timeout - aborting");
                 this.updateThread.Abort();
             }
+
+            log.Trace("Saving terrain into slot 0...");
+            this.Terrain.Save(this.GetTerrainFileName(0));
         }
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
@@ -277,7 +285,7 @@ void main(void)
             sw.Start();
             double startTime = 0.0;
             double updateTime = 0.0;
-            
+
 
             while (true)
             {
@@ -297,18 +305,19 @@ void main(void)
 
                 iteration++;
 
-                if (iteration % 10 == 0)
+                //if (iteration % 10 == 0)
+                //{
+                lock (this)
                 {
-                    lock (this)
+                    ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices), (i) =>
                     {
-                        ParallelHelper.For2D(this.Terrain.Width, this.Terrain.Height, (i) =>
-                        {
-                            this.threadCopyMap[i] = this.Terrain.Map[i];
-                        });
-                        this.updateThreadIterations = iteration;
-                        this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
-                    }
+                        this.threadCopyMap[i] = this.Terrain.Map[i];
+                    });
+                    this.updateThreadIterations = iteration;
+                    this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
+                    this.waterIterations = this.Terrain.WaterIterations;
                 }
+                //}
 
 
                 Thread.Sleep(1);
@@ -321,7 +330,7 @@ void main(void)
         {
             lock (this)
             {
-                ParallelHelper.For2D(this.Terrain.Width, this.Terrain.Height, (i) =>
+                ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices), (i) =>
                 {
                     this.threadRenderMap[i] = this.threadCopyMap[i];
                 });
@@ -347,14 +356,14 @@ void main(void)
 
         }
 
-        protected void UpdateHeightTexture()
+        protected void UpdateHeightTexturePBO()
         {
-            
+
             heightTexBuffer.Bind();
             IntPtr p = heightTexBuffer.Map(BufferAccess.WriteOnly);
             unsafe
             {
-                float* dest = (float *)p.ToPointer();
+                float* dest = (float*)p.ToPointer();
                 if ((IntPtr)dest != IntPtr.Zero)
                 {
                     float scale = 1.0f / 4096.0f;
@@ -367,14 +376,12 @@ void main(void)
             }
             heightTexBuffer.Unmap();
             heightTexBuffer.Unbind();
-            //GL.BindBuffer(BufferTarget.PixelUnpackBuffer, 0);
-            //this.heightTex.RefreshImage(this.heightTexData);
             this.heightTex.RefreshImage(heightTexBuffer);
         }
 
-        protected void UpdateShadeTexture()
+        protected void UpdateShadeTexturePBO()
         {
-            
+
             shadeTexBuffer.Bind();
             IntPtr p = shadeTexBuffer.Map(BufferAccess.WriteOnly);
             unsafe
@@ -399,6 +406,34 @@ void main(void)
             this.shadeTex.RefreshImage(shadeTexBuffer);
         }
 
+        protected void UpdateHeightTexture()
+        {
+            int yOffset = ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices);
+
+            ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, 0, (i) =>
+            {
+                this.heightTexData[i] = (this.threadRenderMap[i + yOffset * TileWidth].Height) / 4096.0f;
+            });
+            this.heightTex.RefreshImage(this.heightTexData, 0, yOffset, TileWidth, TileHeight / textureUpdateSlices);
+        }
+
+        protected void UpdateShadeTexture()
+        {
+            int yOffset = ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices);
+
+            ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, 0, (i) =>
+            {
+                int j = (i) << 2;
+                int ii = i + yOffset * TileWidth;
+
+                this.shadeTexData[j] = (byte)((this.threadRenderMap[ii].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[ii].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[ii].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[ii].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+            });
+            this.shadeTex.RefreshImage(this.shadeTexData, 0, yOffset, TileWidth, TileHeight / textureUpdateSlices);
+        }
+
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
             //this.Terrain.ModifyTerrain();
@@ -410,8 +445,11 @@ void main(void)
 
             this.Terrain.ModifyTerrain();
 
-            frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms", frameCounter.FPSSmooth,this.updateThreadIterations, this.updateThreadUpdateTime);
-            textManager.AddOrUpdate(frameCounterText);
+            if (this.frameCounter.Frames % 4 == 0)
+            {
+                frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+                textManager.AddOrUpdate(frameCounterText);
+            }
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
@@ -419,6 +457,7 @@ void main(void)
                 CopyMapDataFromUpdateThread();
                 UpdateShadeTexture();
                 UpdateHeightTexture();
+                textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
             }
 
