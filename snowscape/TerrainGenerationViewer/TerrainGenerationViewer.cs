@@ -32,10 +32,7 @@ namespace Snowscape.TerrainGenerationViewer
         private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
 
         private Texture heightTex;
-        private VBO heightTexBuffer = new VBO("heightTex", BufferTarget.PixelUnpackBuffer);
-
         private Texture shadeTex;
-        private VBO shadeTexBuffer = new VBO("shadeTex", BufferTarget.PixelUnpackBuffer);
 
         float[] heightTexData = new float[TileWidth * TileHeight];
         byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
@@ -235,10 +232,6 @@ void main(void)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
                 .Upload(shadeTexData);
-
-            // setup texture data buffers
-            this.heightTexBuffer.SetData(heightTexData);
-            this.shadeTexBuffer.SetData(shadeTexData);
 
 
             // setup VBOs
