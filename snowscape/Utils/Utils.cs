@@ -26,8 +26,6 @@ namespace Utils
         }
         public static float Clamp(this float x, float min, float max)
         {
-            //return Min(Max(x, min), max);
-            if (x >= min && x <= max) return x;
             if (x < min) return min;
             if (x > max) return max;
             return x;

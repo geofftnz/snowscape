@@ -229,12 +229,12 @@ namespace TerrainGeneration
         public void InitTerrain1()
         {
             this.Clear(0.0f);
-            /*
+            
             this.AddSimplexNoise(10, 0.3f / (float)this.Width, 2000.0f);
             this.AddSimplexNoise(10, 0.43f / (float)this.Width, 1000.0f, h => Math.Abs(h), h => h * h);
 
             this.AddSimplexNoise(10, 7.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => (h * h * 2f).ClampInclusive(0.1f, 10.0f) - 0.1f);
-            this.AddSimplexNoise(5, 37.7f / (float)this.Width, 10.0f, h => Math.Abs(h), h => (h * h * 2f).ClampInclusive(0.1f, 10.0f) - 0.1f);*/
+            this.AddSimplexNoise(5, 37.7f / (float)this.Width, 10.0f, h => Math.Abs(h), h => (h * h * 2f).ClampInclusive(0.1f, 10.0f) - 0.1f);
 
             this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
             /*
@@ -617,7 +617,7 @@ namespace TerrainGeneration
 
                 if (needReset)
                 {
-                    this.Map[celli].Loose += wp.CarryingAmount.ClampInclusive(0f, 1000f);
+                    this.Map[celli].Loose += wp.CarryingAmount.Clamp(0f, 1000f);
                     wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
                 }
 
@@ -903,9 +903,9 @@ namespace TerrainGeneration
                 int se = C(x + 1, y + 1);
 
                 float h = this.Map[p].Hard + this.Map[p].Loose;
-                float a = (amount * (this.Map[p].MovingWater * 50.0f + 0.2f)).ClampInclusive(0.005f, 0.1f);  // slump more where there is more water
+                float a = amount; // (amount * (this.Map[p].MovingWater * 50.0f + 0.2f)).Clamp(0.005f, 0.1f);  // slump more where there is more water
 
-                float th = _threshold / (1f + this.Map[p].MovingWater * 50f);
+                float th = _threshold / (1f + this.Map[p].MovingWater * 200f);
                 float th2 = th * 1.414f;
 
                 h += SlumpF(n, p, h, a, th, diffmap);

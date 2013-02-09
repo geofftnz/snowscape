@@ -128,7 +128,7 @@ void main(void)
 	vec4 s = texture2D(shadeTex,texcoord0.st);
 	float h = texture2D(heightTex,texcoord0.st).r;
 
-	float looseblend = clamp(s.g * s.g * 8.0,0.0,1.0);
+	float looseblend = clamp(s.r * s.r * 8.0,0.0,1.0);
 	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
     col *= 1.4;
 
@@ -136,11 +136,11 @@ void main(void)
 	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
 	vec4 colW2 = vec4(1.4,1.4,1.4,1.0); // white water
 
-	colW = mix(colW0,colW1,clamp(s.r*1.5,0,1));  // make water dirty->clean
-	colW = mix(colW,colW2,s.a*0.2);  // white water
+	colW = mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
+	colW = mix(colW,colW2,s.g*0.2);  // white water
 
-	col = mix(col,colE,clamp(s.a,0.0,0.2));
-	col = mix(col,colW,clamp(s.b*s.b*16.0,0,0.6)); // water
+	//col = mix(col,colE,clamp(s.a,0.0,0.2));
+	col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
 
     vec3 n = getNormal(texcoord0.st);
     vec3 l = normalize(vec3(0.4,0.6,0.2));
@@ -364,14 +364,10 @@ void main(void)
             {
                 int j = (i) << 2;
 
-                //this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                //this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                //this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
                 this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).Clamp(0.0f, 255.0f));
                 this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
-                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).Clamp(0.0f, 255.0f));  // erosion rate
-                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying capacity
+                //this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).Clamp(0.0f, 255.0f));  // erosion rate
+                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying capacity
             });
             perfmon.Stop("UpdateShadeTexture");
             perfmon.Start("UploadShadeTexture");
@@ -386,11 +382,12 @@ void main(void)
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
-            frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
-            textManager.AddOrUpdate(frameCounterText);
 
-            if (this.frameCounter.Frames % 128 == 0)
+            if (this.frameCounter.Frames % 32 == 0)
             {
+                frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+                textManager.AddOrUpdate(frameCounterText);
+                
                 float y = 0.1f;
                 foreach (var timer in this.perfmon.AllAverageTimes())
                 {
