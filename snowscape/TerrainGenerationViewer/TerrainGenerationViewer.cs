@@ -55,7 +55,6 @@ namespace Snowscape.TerrainGenerationViewer
         private double updateThreadUpdateTime = 0.0;
         private long waterIterations = 0;
         private int textureUpdateCount = 0;
-        const int textureUpdateSlices = 4;
 
         private string terrainPath = @"../../../../terrains/";
 
@@ -305,19 +304,19 @@ void main(void)
 
                 iteration++;
 
-                //if (iteration % 10 == 0)
-                //{
-                lock (this)
+                if (iteration % 5 == 0)
                 {
-                    ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices), (i) =>
+                    lock (this)
                     {
-                        this.threadCopyMap[i] = this.Terrain.Map[i];
-                    });
-                    this.updateThreadIterations = iteration;
-                    this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
-                    this.waterIterations = this.Terrain.WaterIterations;
+                        ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
+                        {
+                            this.threadCopyMap[i] = this.Terrain.Map[i];
+                        });
+                        this.updateThreadIterations = iteration;
+                        this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
+                        this.waterIterations = this.Terrain.WaterIterations;
+                    }
                 }
-                //}
 
 
                 Thread.Sleep(1);
@@ -330,7 +329,7 @@ void main(void)
         {
             lock (this)
             {
-                ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices), (i) =>
+                ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
                 {
                     this.threadRenderMap[i] = this.threadCopyMap[i];
                 });
@@ -356,100 +355,38 @@ void main(void)
 
         }
 
-        protected void UpdateHeightTexturePBO()
-        {
-
-            heightTexBuffer.Bind();
-            IntPtr p = heightTexBuffer.Map(BufferAccess.WriteOnly);
-            unsafe
-            {
-                float* dest = (float*)p.ToPointer();
-                if ((IntPtr)dest != IntPtr.Zero)
-                {
-                    float scale = 1.0f / 4096.0f;
-
-                    ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
-                    {
-                        dest[i] = (this.threadRenderMap[i].Height) * scale;
-                    });
-                }
-            }
-            heightTexBuffer.Unmap();
-            heightTexBuffer.Unbind();
-            this.heightTex.RefreshImage(heightTexBuffer);
-        }
-
-        protected void UpdateShadeTexturePBO()
-        {
-
-            shadeTexBuffer.Bind();
-            IntPtr p = shadeTexBuffer.Map(BufferAccess.WriteOnly);
-            unsafe
-            {
-                byte* dest = (byte*)p.ToPointer();
-
-                if ((IntPtr)dest != IntPtr.Zero)
-                {
-                    ParallelHelper.For2D(TileWidth, TileHeight, (x, y, i) =>
-                    {
-                        int j = i << 2;
-
-                        dest[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                        dest[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                        dest[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                        dest[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
-                    });
-                }
-            }
-            shadeTexBuffer.Unmap();
-            shadeTexBuffer.Unbind();
-            this.shadeTex.RefreshImage(shadeTexBuffer);
-        }
-
         protected void UpdateHeightTexture()
         {
-            int yOffset = ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices);
-
-            ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, 0, (i) =>
+            ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
             {
-                this.heightTexData[i] = (this.threadRenderMap[i + yOffset * TileWidth].Height) / 4096.0f;
+                this.heightTexData[i] = (this.threadRenderMap[i].Height) / 4096.0f;
             });
-            this.heightTex.RefreshImage(this.heightTexData, 0, yOffset, TileWidth, TileHeight / textureUpdateSlices);
+            this.heightTex.RefreshImage(this.heightTexData);
         }
 
         protected void UpdateShadeTexture()
         {
-            int yOffset = ((int)textureUpdateCount % textureUpdateSlices) * (TileHeight / textureUpdateSlices);
-
-            ParallelHelper.For2D(TileWidth, TileHeight / textureUpdateSlices, 0, (i) =>
+            ParallelHelper.For2D(TileWidth, TileHeight, 0, (i) =>
             {
                 int j = (i) << 2;
-                int ii = i + yOffset * TileWidth;
 
-                this.shadeTexData[j] = (byte)((this.threadRenderMap[ii].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[ii].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
-                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[ii].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
-                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[ii].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
+                this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).ClampInclusive(0.0f, 255.0f));
+                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).ClampInclusive(0.0f, 255.0f));  // erosion rate
+                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Carrying * 32f).ClampInclusive(0.0f, 255.0f)); // carrying capacity
             });
-            this.shadeTex.RefreshImage(this.shadeTexData, 0, yOffset, TileWidth, TileHeight / textureUpdateSlices);
+            this.shadeTex.RefreshImage(this.shadeTexData);
         }
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
-            //this.Terrain.ModifyTerrain();
             updateCounter++;
         }
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
-
-            this.Terrain.ModifyTerrain();
-
-            if (this.frameCounter.Frames % 4 == 0)
-            {
-                frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
-                textManager.AddOrUpdate(frameCounterText);
-            }
+            frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+            textManager.AddOrUpdate(frameCounterText);
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
