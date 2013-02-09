@@ -227,6 +227,22 @@ namespace OpenTKExtensions
                 GL.Uniform1(location, value);
             }
         }
+        public void SetUniform(string name, Vector2 value)
+        {
+            int location = LocateUniform(name);
+            if (location != -1)
+            {
+                GL.Uniform2(location, value);
+            }
+        }
+        public void SetUniform(string name, Vector3 value)
+        {
+            int location = LocateUniform(name);
+            if (location != -1)
+            {
+                GL.Uniform3(location, value);
+            }
+        }
         public void SetUniform(string name, Vector4 value)
         {
             int location = LocateUniform(name);

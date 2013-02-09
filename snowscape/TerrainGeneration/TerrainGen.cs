@@ -269,7 +269,7 @@ namespace TerrainGeneration
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
-            DecayWater(0.98f, 0.97f, 0.95f);
+            DecayWater(0.99f, 0.97f, 0.95f);
 
             this.Iterations++;
         }
@@ -283,7 +283,7 @@ namespace TerrainGeneration
                 for (int x = 0; x < this.Width; x++)
                 {
                     this.Map[i].MovingWater *= MovingWaterDecay;
-                    this.Map[i].Erosion *= WaterErosionDecay;
+                    //this.Map[i].Erosion *= WaterErosionDecay;
                     this.Map[i].Carrying *= CarryingDecay;
                     //this.Map[i].Slumping *= CarryingDecay;
                     i++;

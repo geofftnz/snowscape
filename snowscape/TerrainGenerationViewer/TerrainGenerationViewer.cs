@@ -12,6 +12,7 @@ using System.Threading;
 using System.IO;
 using NLog;
 using System.Diagnostics;
+using OpenTK.Input;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -57,6 +58,9 @@ namespace Snowscape.TerrainGenerationViewer
 
         private string terrainPath = @"../../../../terrains/";
 
+        private Vector2 view_offset = Vector2.Zero;
+        private float view_scale = 1.0f;
+
 
         private Vector3[] quadPos = new Vector3[]{
             new Vector3(0f,0f,0f),
@@ -80,13 +84,16 @@ namespace Snowscape.TerrainGenerationViewer
  
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
+uniform vec2 tex0_offset;
+uniform float tex0_scale;
 in vec3 vertex;
 in vec2 in_texcoord0;
 out vec2 texcoord0;
  
 void main() {
     gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
-    texcoord0 = in_texcoord0;
+    vec2 ofs = tex0_offset;
+    texcoord0 = ((in_texcoord0 - vec2(0.5,0.5)) * tex0_scale + vec2(0.5,0.5)) + ofs;
 }
         ";
 
@@ -170,7 +177,10 @@ void main(void)
             this.Resize += new EventHandler<EventArgs>(TerrainGenerationViewer_Resize);
             this.Closed += new EventHandler<EventArgs>(TerrainGenerationViewer_Closed);
             this.Closing += new EventHandler<System.ComponentModel.CancelEventArgs>(TerrainGenerationViewer_Closing);
+ 
         }
+
+
 
         void TerrainGenerationViewer_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -377,6 +387,38 @@ void main(void)
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
+            float moveRate = 0.02f * this.view_scale;
+            if (Keyboard[Key.Plus])
+            {
+                this.view_scale *= 0.95f;
+            }
+
+            if (Keyboard[Key.Minus])
+            {
+                this.view_scale *= 1.05f;
+            }
+
+            if (Keyboard[Key.Left])
+            {
+                this.view_offset.X -= moveRate;
+            }
+            if (Keyboard[Key.Right])
+            {
+                this.view_offset.X += moveRate;
+            }
+            if (Keyboard[Key.Up])
+            {
+                this.view_offset.Y -= moveRate;
+            }
+            if (Keyboard[Key.Down])
+            {
+                this.view_offset.Y += moveRate;
+            }
+
+            this.view_offset.X = this.view_offset.X.Wrap(1.0f);
+            this.view_offset.Y = this.view_offset.Y.Wrap(1.0f);
+
+
             updateCounter++;
         }
 
@@ -417,6 +459,8 @@ void main(void)
             quadShader.UseProgram();
             quadShader.SetUniform("projection_matrix", this.projection);
             quadShader.SetUniform("modelview_matrix", this.modelview);
+            quadShader.SetUniform("tex0_offset", this.view_offset);
+            quadShader.SetUniform("tex0_scale", this.view_scale);
             quadShader.SetUniform("heightTex", 0);
             quadShader.SetUniform("shadeTex", 1);
             quadVertexVBO.Bind(quadShader.VariableLocation("vertex"));
