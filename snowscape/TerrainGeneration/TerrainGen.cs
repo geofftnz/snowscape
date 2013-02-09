@@ -144,7 +144,7 @@ namespace TerrainGeneration
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 1.0f;
             this.TerrainSlumpMovementAmount = 0.05f;
-            this.TerrainSlumpSamplesPerFrame = 10000;
+            this.TerrainSlumpSamplesPerFrame = 20000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.5f;
@@ -158,12 +158,12 @@ namespace TerrainGeneration
             this.TerrainCollapseSamplesPerFrame = 500;
 
             // Water erosion
-            this.WaterNumParticles = 5000;  // 4000
-            this.WaterIterationsPerFrame = 10;  // 20
-            this.WaterCarryingAmountDecayPerRun = 1.2f;
+            this.WaterNumParticles = 10000;  // 4000
+            this.WaterIterationsPerFrame = 5;  // 20
+            this.WaterCarryingAmountDecayPerRun = 1.05f;  // 1.2
             this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
-            this.WaterCarryingCapacitySpeedCoefficient = 3.0f;  // 3
-            this.WaterMaxCarryingCapacity = 100.0f;  // 50
+            this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 3
+            this.WaterMaxCarryingCapacity = 200.0f;  // 100 50
             this.WaterProportionToDropOnOverCapacity = 0.1f;  // 0.8
             this.WaterErosionSpeedCoefficientMin = 0.1f;
             this.WaterErosionSpeedCoefficient = 3.0f;  // 1
@@ -229,14 +229,15 @@ namespace TerrainGeneration
         public void InitTerrain1()
         {
             this.Clear(0.0f);
-            
-            this.AddSimplexNoise(10, 0.3f / (float)this.Width, 2000.0f);
-            this.AddSimplexNoise(10, 0.43f / (float)this.Width, 1000.0f, h => Math.Abs(h), h => h * h);
 
-            this.AddSimplexNoise(10, 7.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => (h * h * 2f).ClampInclusive(0.1f, 10.0f) - 0.1f);
-            this.AddSimplexNoise(5, 37.7f / (float)this.Width, 10.0f, h => Math.Abs(h), h => (h * h * 2f).ClampInclusive(0.1f, 10.0f) - 0.1f);
+            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 4000.0f);
+            this.AddSimplexNoise(8, 1.3f / (float)this.Width, 1300.0f);
+            this.AddSimplexNoise(8, 2.43f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h * h);
 
-            this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
+            this.AddSimplexNoise(10, 7.7f / (float)this.Width, 250.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
+            this.AddSimplexNoise(5, 37.7f / (float)this.Width, 5.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
+
+            //this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
             /*
             this.AddSimplexNoise(7, 1.3f / (float)this.Width, 800.0f, h => (h >= 0f ? h : -h), h => h * h);
 
@@ -248,7 +249,7 @@ namespace TerrainGeneration
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
             this.AddLooseMaterial(10.0f);
-            //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 10.0f);
+            this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
 
 
@@ -258,6 +259,10 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
+            if (this.Iterations % 16 == 0)
+            {
+                this.SortWater();
+            }
             this.RunWater2(this.WaterIterationsPerFrame);
             this.Slump(this.TerrainSlumpMaxHeightDifference, this.TerrainSlumpMovementAmount, this.TerrainSlumpSamplesPerFrame);
             this.Slump(this.TerrainSlump2MaxHeightDifference, this.TerrainSlump2MovementAmount, this.TerrainSlump2SamplesPerFrame);
@@ -322,6 +327,10 @@ namespace TerrainGeneration
         #region Water
 
 
+        public void SortWater()
+        {
+            this.WaterParticles.Sort(delegate(WaterErosionParticle a, WaterErosionParticle b) { return a.Pos.Y.CompareTo(b.Pos.Y) * this.Width + a.Pos.X.CompareTo(b.Pos.X); });
+        }
 
 
         public void RunWater2(int CellsPerRun)
