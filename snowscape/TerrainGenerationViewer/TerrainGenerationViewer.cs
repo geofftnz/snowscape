@@ -156,7 +156,6 @@ void main(void)
 	vec4 colL2 = vec4(0.41,0.39,0.16,1.0);
 
 	vec4 colW = vec4(0.7,0.8,1.0,1.0);
-	vec4 colE = vec4(1.0,0.4,0.0,1.0);
 
 	vec4 s = texture2D(shadeTex,texcoord0.st);
 	float h = sampleHeight(texcoord0.st);
@@ -170,10 +169,14 @@ void main(void)
 	vec4 colW2 = vec4(1.4,1.4,1.4,1.0); // white water
 
 	colW = mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
-	colW = mix(colW,colW2,s.g*0.2);  // white water
+	colW = mix(colW,colW2,s.a*0.8);  // speed -> white water
 
-	//col = mix(col,colE,clamp(s.a,0.0,0.2));
 	col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
+
+    // misc vis
+	//vec4 colE = vec4(1.0,0.0,1.0,1.0);
+	//col += colE * clamp(s.a,0.0,1.0);
+
 
     vec3 n = getNormal(texcoord0.st);
     vec3 l = normalize(vec3(0.4,0.6,0.2));
@@ -346,7 +349,7 @@ void main(void)
 
                 iteration++;
 
-                if (iteration % 10 == 0)
+                if (iteration % 5 == 0)
                 {
                     lock (this)
                     {
@@ -413,8 +416,9 @@ void main(void)
 
                 this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).Clamp(0.0f, 255.0f));
                 this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
-                //this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Erosion * 32f).Clamp(0.0f, 255.0f));  // erosion rate
                 this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying capacity
+
+                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 64f).Clamp(0.0f, 255.0f));  // misc - particle speed
             });
             perfmon.Stop("UpdateShadeTexture");
             perfmon.Start("UploadShadeTexture");
