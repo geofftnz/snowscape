@@ -162,15 +162,15 @@ namespace TerrainGeneration
 
             // Water erosion
             this.WaterNumParticles = 10000;  // 4000
-            this.WaterIterationsPerFrame = 10;  // 20
-            this.WaterCarryingAmountDecayPerRun = 1.02f;  // 1.05 1.2
+            this.WaterIterationsPerFrame = 5;  // 20
+            this.WaterCarryingAmountDecayPerRun = 1.05f;  // 1.05 1.2
             this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 10.0f;  // 3
-            this.WaterMaxCarryingCapacity = 50.0f;  // 100 50
+            this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.8f;
             this.WaterProportionToDropOnOverCapacity = 0.05f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
-            this.WaterSpeedDepthCoefficient = 0.5f;
+            this.WaterSpeedDepthCoefficient = 2.0f;
             this.WaterErosionSpeedCoefficient = 1.0f;  // 1
             this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.5f;
@@ -180,7 +180,7 @@ namespace TerrainGeneration
             this.WaterAccumulatePerFrame = 0.005f; // 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.9f;  // 0.2 0.8 
-            this.WaterMomentumFactor = 0.005f; // 0 0.05f;  
+            this.WaterMomentumFactor = 0.1f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.002f; // 0  0.05f;
 
             this.Iterations = 0;
@@ -235,12 +235,16 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(5, 0.37f / (float)this.Width, 2000.0f);
-            this.AddSimplexNoise(12, 1.3f / (float)this.Width, 3000.0f, h => Math.Abs(h), h => h);
+            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 2000.0f, h => h, h => h*h);
+            this.AddSimplexNoise(14, 0.3f / (float)this.Width, 5000.0f, h => Math.Abs(h), h => h + h*h);
+
+            //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
+
+
             //this.AddSimplexNoise(8, 2.43f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h * h);
 
-            this.AddSimplexNoise(10, 7.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
-            this.AddSimplexNoise(5, 37.7f / (float)this.Width, 5.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
+            //this.AddSimplexNoise(10, 7.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
+            //this.AddSimplexNoise(5, 37.7f / (float)this.Width, 5.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
 
             //this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
             /*
@@ -254,7 +258,7 @@ namespace TerrainGeneration
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
             this.AddLooseMaterial(30.0f);
-            this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
+            //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
 
 
@@ -932,10 +936,10 @@ namespace TerrainGeneration
 
         void DistributeRemainingMaterial(float amount, int x, int y)
         {
-            float distAmount = amount / 8.1f;
+            float distAmount = amount / 10.0f;
             float totalDist = 0f;
             float h = this.Map[C(x, y)].Height;
-            float threshold = h + 1.0f;
+            float threshold = h + 0.1f;
 
             // if a neighbour is within threshold of our height, give it some material.
             Func<int, int, float> Distribute = (dx, dy) =>
@@ -958,7 +962,7 @@ namespace TerrainGeneration
             totalDist += Distribute(0, 1);
             totalDist += Distribute(1, 1);
 
-            this.Map[C(x , y)].Loose += (amount - totalDist);
+            this.Map[C(x, y)].Loose += (amount - totalDist);
         }
 
 

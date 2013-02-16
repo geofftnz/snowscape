@@ -461,7 +461,7 @@ void main(void)
 
             if (Keyboard[Key.R])
             {
-                this.Terrain.InitTerrain2();
+                this.Terrain.InitTerrain1();
             }
 
 
