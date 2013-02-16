@@ -459,6 +459,11 @@ void main(void)
             this.view_offset.X = this.view_offset.X.Wrap(1.0f);
             this.view_offset.Y = this.view_offset.Y.Wrap(1.0f);
 
+            if (Keyboard[Key.R])
+            {
+                this.Terrain.InitTerrain2();
+            }
+
 
             updateCounter++;
         }
