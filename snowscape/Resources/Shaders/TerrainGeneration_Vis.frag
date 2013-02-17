@@ -66,12 +66,13 @@ void main(void)
 
 	vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
 	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
-	vec4 colW2 = vec4(1.4,1.4,1.4,1.0); // white water
+	vec4 colW2 = vec4(1.2,1.3,1.4,1.0); // white water
 
 	colW = mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
-	colW = mix(colW,colW2,s.a*0.8);  // speed -> white water
+	colW = mix(colW,colW2,smoothstep(0.05,0.8,s.a)*0.8);  // speed -> white water
 
-	col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
+	//col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
+	col = mix(col,colW,smoothstep(0.02,0.5,s.g) * 0.5); // water
 
     // misc vis
 	//vec4 colE = vec4(1.0,0.0,1.0,1.0);
