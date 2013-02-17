@@ -146,13 +146,13 @@ namespace TerrainGeneration
 
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
-            this.TerrainSlumpMovementAmount = 0.02f;
-            this.TerrainSlumpSamplesPerFrame = 10000;
+            this.TerrainSlumpMovementAmount = 0.01f;
+            this.TerrainSlumpSamplesPerFrame = 20000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.5f;
-            this.TerrainSlump2MovementAmount = 0.05f;
-            this.TerrainSlump2SamplesPerFrame = 100;
+            this.TerrainSlump2MovementAmount = 0.02f;
+            this.TerrainSlump2SamplesPerFrame = 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
@@ -165,13 +165,13 @@ namespace TerrainGeneration
             this.WaterIterationsPerFrame = 5;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.05f;  // 1.05 1.2
             this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
-            this.WaterCarryingCapacitySpeedCoefficient = 10.0f;  // 10 3
-            this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
+            this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
+            this.WaterMaxCarryingCapacity = 5.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.8f;
             this.WaterProportionToDropOnOverCapacity = 0.05f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
             this.WaterSpeedDepthCoefficient = 1.0f;
-            this.WaterErosionSpeedCoefficient = 1.0f;  // 1
+            this.WaterErosionSpeedCoefficient = 0.5f;  // 1
             this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.5f;
             this.WaterErosionCollapseToAmount = 0.02f;
@@ -179,7 +179,7 @@ namespace TerrainGeneration
             this.WaterErosionOverCapacityFactor = 3.0f;
             this.WaterAccumulatePerFrame = 0.005f; //0.005 0.002f;
 
-            this.WaterSpeedLowpassAmount = 0.8f;  // 0.2 0.8 
+            this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.005f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.001f; // 0  0.05f;
 

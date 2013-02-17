@@ -60,7 +60,7 @@ void main(void)
 	vec4 s = texture2D(shadeTex,texcoord0.st);
 	float h = sampleHeight(texcoord0.st);
 
-	float looseblend = clamp(s.r * s.r * 8.0,0.0,1.0);
+	float looseblend = clamp(s.r * s.r * 2.0,0.0,1.0);
 	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
     col *= 1.4;
 

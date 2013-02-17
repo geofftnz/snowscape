@@ -169,7 +169,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.quadIndexVBO.SetData(this.quadIndex);
 
             // setup shader
-            quadShader.Init(@"../../../Resources/Shaders/TerrainGeneration.vert".Load(), @"../../../Resources/Shaders/TerrainGeneration.frag".Load(), new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
+            quadShader.Init(@"../../../Resources/Shaders/TerrainGeneration.vert".Load(), @"../../../Resources/Shaders/TerrainGeneration_Vis.frag".Load(), new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
             // setup font
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
