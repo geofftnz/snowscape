@@ -6,6 +6,7 @@ using System.Text;
 using OpenTK;
 using System.Diagnostics;
 using OpenTK.Graphics;
+using System.IO;
 
 namespace Utils
 {
@@ -82,6 +83,11 @@ namespace Utils
         public static float Lerp(this float x, float a, float b)
         {
             return a + (b - a) * x;
+        }
+
+        public static string Load(this string filename)
+        {
+            return File.ReadAllText(filename);
         }
 
     }
