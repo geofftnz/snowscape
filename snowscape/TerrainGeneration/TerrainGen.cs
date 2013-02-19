@@ -162,7 +162,7 @@ namespace TerrainGeneration
 
             // Water erosion
             this.WaterNumParticles = 10000;  // 4000
-            this.WaterIterationsPerFrame = 5;  // 20
+            this.WaterIterationsPerFrame = 7;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;  // 1.05 1.2
             this.WaterDepositWaterCollapseAmount = 0.1f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
@@ -174,7 +174,7 @@ namespace TerrainGeneration
             this.WaterErosionSpeedCoefficient = 1.0f;  // 1
             this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.5f;
-            this.WaterErosionCollapseToAmount = 0.02f;
+            this.WaterErosionCollapseToAmount = 0.05f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterErosionOverCapacityFactor = 1.1f;
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
@@ -896,6 +896,8 @@ namespace TerrainGeneration
                                 this.Map[celli].Hard -= hardErodeAmount;
                                 wp.CarryingAmount += hardErodeAmount; // loose material is less dense than hard, so make it greater.
                             }
+
+                            CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
                         }
                     }
                     //}
