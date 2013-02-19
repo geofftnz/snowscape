@@ -168,20 +168,20 @@ namespace TerrainGeneration
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 10.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
-            this.WaterProportionToDropOnOverCapacity = 0.7f;  // 0.8
+            this.WaterProportionToDropOnOverCapacity = 0.5f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
             this.WaterSpeedDepthCoefficient = 1.0f;
             this.WaterErosionSpeedCoefficient = 1.0f;  // 1
             this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.5f;
-            this.WaterErosionCollapseToAmount = 0.05f;
+            this.WaterErosionCollapseToAmount = 0.01f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterErosionOverCapacityFactor = 1.1f;
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
-            this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
-            this.WaterTurbulence = 0.0f; // 0  0.05f;
+            this.WaterMomentumFactor = 0.005f; // 0.005 0 0.05f;  
+            this.WaterTurbulence = 0.01f; // 0  0.05f;
 
             this.Iterations = 0;
             this.WaterIterations = 0;
@@ -235,8 +235,8 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 2000.0f, h => h, h => h*h);
-            this.AddSimplexNoise(14, 0.3f / (float)this.Width, 5000.0f, h => Math.Abs(h), h => h + h*h);
+            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 2000.0f, h => h, h => h * h);
+            this.AddSimplexNoise(14, 0.3f / (float)this.Width, 5000.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -898,6 +898,10 @@ namespace TerrainGeneration
                             }
 
                             CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
+                            CollapseFrom(cellx + 1, celly, this.WaterDepositWaterCollapseAmount);
+                            CollapseFrom(cellx - 1, celly, this.WaterDepositWaterCollapseAmount);
+                            CollapseFrom(cellx, celly - 1, this.WaterDepositWaterCollapseAmount);
+                            CollapseFrom(cellx, celly + 1, this.WaterDepositWaterCollapseAmount);
                         }
                     }
                     //}
