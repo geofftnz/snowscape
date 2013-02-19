@@ -164,7 +164,7 @@ namespace TerrainGeneration
             this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 5;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;  // 1.05 1.2
-            this.WaterDepositWaterCollapseAmount = 0.01f;  // 0.05
+            this.WaterDepositWaterCollapseAmount = 0.9f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 10.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
@@ -835,7 +835,7 @@ namespace TerrainGeneration
                         this.Map[cellni].Loose += cdiff;  // drop at new location
                         wp.CarryingAmount -= cdiff;
 
-                        //CollapseFrom(cellx, celly, this.WaterDepositWaterCollapseAmount);
+                        CollapseFrom(cellx, celly, this.WaterDepositWaterCollapseAmount);
                     }
                     else  // we're under our carrying capacity, so do some erosion
                     {
@@ -923,9 +923,7 @@ namespace TerrainGeneration
                     //this.Map[celli].Erosion = 8.0f;
                     //this.Map[celli].Loose += wp.CarryingAmount;
                     DistributeRemainingMaterial(wp.CarryingAmount, cellx, celly);
-                    //CollapseFrom(cellx, celly, 0.1f);
-                    //CollapseFrom(cellx, celly, 0.1f);
-                    //CollapseFrom(cellx, celly, 0.1f);
+                    CollapseFrom(cellx, celly, 1.0f);
 
                     wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
                 }
@@ -939,7 +937,7 @@ namespace TerrainGeneration
             float distAmount = amount / 10.0f;
             float totalDist = 0f;
             float h = this.Map[C(x, y)].Height;
-            float threshold = h + 0.1f;
+            float threshold = h + 0.01f;
 
             // if a neighbour is within threshold of our height, give it some material.
             Func<int, int, float> Distribute = (dx, dy) =>
