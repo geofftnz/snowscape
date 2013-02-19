@@ -164,7 +164,7 @@ namespace TerrainGeneration
             this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 5;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;  // 1.05 1.2
-            this.WaterDepositWaterCollapseAmount = 0.9f;  // 0.05
+            this.WaterDepositWaterCollapseAmount = 0.1f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 10.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
@@ -177,7 +177,7 @@ namespace TerrainGeneration
             this.WaterErosionCollapseToAmount = 0.02f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterErosionOverCapacityFactor = 1.1f;
-            this.WaterAccumulatePerFrame = 0.005f; //0.005 0.002f;
+            this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
@@ -292,7 +292,7 @@ namespace TerrainGeneration
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
-            DecayWater(0.99f, 0.97f, 0.95f);
+            DecayWater(0.98f, 0.97f, 0.95f);
 
             this.Iterations++;
         }
@@ -921,9 +921,9 @@ namespace TerrainGeneration
                 if (needReset)
                 {
                     //this.Map[celli].Erosion = 8.0f;
-                    //this.Map[celli].Loose += wp.CarryingAmount;
-                    DistributeRemainingMaterial(wp.CarryingAmount, cellx, celly);
-                    CollapseFrom(cellx, celly, 1.0f);
+                    this.Map[celli].Loose += wp.CarryingAmount;
+                    //DistributeRemainingMaterial(wp.CarryingAmount, cellx, celly);
+                    CollapseFrom(cellx, celly, 0.1f);
 
                     wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
                 }
@@ -1382,34 +1382,28 @@ namespace TerrainGeneration
 
         }
 
-        private Func<Cell[], int, int, float, float, float> CollapseCellFunc = (m, ci, i, h, a) =>
+        private Func<Cell[], int, int, float, float, float> CollapseCellFunc = (m, collapseFromCell, collapseToCell, collapseFromHeight, a) =>
         {
-            float diff = (h - m[i].Height);
+            float diff = (collapseFromHeight - m[collapseToCell].Height);
 
-            if (diff > m[ci].Loose * 0.2f)
-                diff = m[ci].Loose * 0.2f;
 
             if (diff > 0f)
             {
-                diff *= a;
-                m[i].Loose += diff;
+                diff = Utils.Utils.Min(diff, m[collapseFromCell].Loose * 0.15f) * a;
+                m[collapseToCell].Loose += diff;
                 return diff;
             }
             return 0f;
         };
 
-        private Func<Cell[], int, int, float, float, float> CollapseToCellFunc = (m, ci, i, h, a) =>
+        private Func<Cell[], int, int, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a) =>
         {
-            float diff = (m[i].Height - h);
-
-            // take at most half available loose material
-            if (diff > m[i].Loose * 0.25f)
-                diff = m[i].Loose * 0.25f;
+            float diff = (m[collapseFromCell].Height - collapseToHeight);
 
             if (diff > 0f)
             {
-                diff *= a;
-                m[i].Loose -= diff;
+                diff = Utils.Utils.Min(diff, m[collapseFromCell].Loose * 0.15f) * a;
+                m[collapseFromCell].Loose -= diff;
                 return diff;
             }
             return 0f;
