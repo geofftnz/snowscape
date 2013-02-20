@@ -897,7 +897,7 @@ namespace TerrainGeneration
                                 wp.CarryingAmount += hardErodeAmount; // loose material is less dense than hard, so make it greater.
                             }
 
-                            CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
+                            //CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
                             //CollapseFrom(cellx + 1, celly, this.WaterDepositWaterCollapseAmount);
                             //CollapseFrom(cellx - 1, celly, this.WaterDepositWaterCollapseAmount);
                             //CollapseFrom(cellx, celly - 1, this.WaterDepositWaterCollapseAmount);
@@ -905,6 +905,9 @@ namespace TerrainGeneration
                         }
                     }
                     //}
+
+                    // collapse material toward current cell
+                    CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
 
                     // move particle params
                     wp.Pos = newPos;
