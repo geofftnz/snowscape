@@ -164,7 +164,7 @@ namespace TerrainGeneration
             this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 7;  // 20
             this.WaterCarryingAmountDecayPerRun = 1.2f;  // 1.05 1.2
-            this.WaterDepositWaterCollapseAmount = 0.1f;  // 0.05
+            this.WaterDepositWaterCollapseAmount = 0.02f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 10.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
@@ -174,7 +174,7 @@ namespace TerrainGeneration
             this.WaterErosionSpeedCoefficient = 1.0f;  // 1
             this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.5f;
-            this.WaterErosionCollapseToAmount = 0.01f;
+            this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterErosionOverCapacityFactor = 1.1f;
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
@@ -832,7 +832,7 @@ namespace TerrainGeneration
                         cdiff *= this.WaterProportionToDropOnOverCapacity * crossdistance; // amount to drop
 
                         // drop a portion of our material
-                        this.Map[cellni].Loose += cdiff;  // drop at new location
+                        this.Map[celli].Loose += cdiff;  // drop at old location
                         wp.CarryingAmount -= cdiff;
 
                         CollapseFrom(cellx, celly, this.WaterDepositWaterCollapseAmount);
@@ -898,10 +898,10 @@ namespace TerrainGeneration
                             }
 
                             CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
-                            CollapseFrom(cellx + 1, celly, this.WaterDepositWaterCollapseAmount);
-                            CollapseFrom(cellx - 1, celly, this.WaterDepositWaterCollapseAmount);
-                            CollapseFrom(cellx, celly - 1, this.WaterDepositWaterCollapseAmount);
-                            CollapseFrom(cellx, celly + 1, this.WaterDepositWaterCollapseAmount);
+                            //CollapseFrom(cellx + 1, celly, this.WaterDepositWaterCollapseAmount);
+                            //CollapseFrom(cellx - 1, celly, this.WaterDepositWaterCollapseAmount);
+                            //CollapseFrom(cellx, celly - 1, this.WaterDepositWaterCollapseAmount);
+                            //CollapseFrom(cellx, celly + 1, this.WaterDepositWaterCollapseAmount);
                         }
                     }
                     //}
