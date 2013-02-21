@@ -168,18 +168,18 @@ namespace TerrainGeneration
             this.WaterCarryingAmountDecayPerRun = 1.0f;  // 1.05 1.2
             this.WaterDepositWaterCollapseAmount = 0.02f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
-            this.WaterMaxCarryingCapacity = 10.0f;  // 100 50
+            this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
-            this.WaterProportionToDropOnOverCapacity = 0.5f;  // 0.8
+            this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
             this.WaterSpeedDepthCoefficient = 0.0f;
             this.WaterErosionSpeedCoefficient = 0.005f;  // 1
             //this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
-            this.WaterErosionHardErosionFactor = 0.15f;
+            this.WaterErosionHardErosionFactor = 0.3f;
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterErosionOverCapacityFactor = 1.0f;
-            this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
+            this.WaterAccumulatePerFrame = 0.05f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.5f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
