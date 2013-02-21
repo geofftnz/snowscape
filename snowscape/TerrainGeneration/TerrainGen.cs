@@ -121,7 +121,7 @@ namespace TerrainGeneration
             {
                 get
                 {
-                    return Hard + Loose + MovingWater;
+                    return Hard + Loose;
                 }
             }
         }
