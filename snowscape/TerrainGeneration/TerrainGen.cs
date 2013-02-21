@@ -297,7 +297,7 @@ namespace TerrainGeneration
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
-            DecayWater(0.96f, 0.92f, 0.95f);
+            DecayWater(0.96f, 0.5f, 0.95f);
 
             this.Iterations++;
         }
