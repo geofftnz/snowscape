@@ -44,7 +44,7 @@ namespace TerrainGeneration
         public float WaterProportionToDropOnOverCapacity { get; set; } // 0.8
         //public float WaterErosionSpeedCoefficientMin { get; set; }  // 0.02
         public float WaterErosionSpeedCoefficient { get; set; } // 1.0
-        public float WaterErosionWaterDepthMultiplier { get; set; } // 20.0
+        //public float WaterErosionWaterDepthMultiplier { get; set; } // 20.0
         public float WaterErosionHardErosionFactor { get; set; }  // 0.3
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionMinSpeed { get; set; }
@@ -171,8 +171,8 @@ namespace TerrainGeneration
             this.WaterProportionToDropOnOverCapacity = 0.5f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
             this.WaterSpeedDepthCoefficient = 1.0f;
-            this.WaterErosionSpeedCoefficient = 0.1f;  // 1
-            this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
+            this.WaterErosionSpeedCoefficient = 0.005f;  // 1
+            //this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.5f;
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
