@@ -147,9 +147,9 @@ namespace TerrainGeneration
             // init parameters
 
             // Slump loose slopes - general case
-            this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
+            this.TerrainSlumpMaxHeightDifference = 0.8f;  // 1.0
             this.TerrainSlumpMovementAmount = 0.01f;
-            this.TerrainSlumpSamplesPerFrame = 0;// 20000;
+            this.TerrainSlumpSamplesPerFrame = 20000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.5f;
@@ -240,8 +240,8 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 500.0f, h => h, h => h * h);
-            this.AddSimplexNoise(12, 0.3f / (float)this.Width, 2000.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 500.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 2000.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -398,7 +398,7 @@ namespace TerrainGeneration
                 for (int i = 0; i < CellsPerRun && !needReset; i++)
                 {
                     wp.Age++;
-                    this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * (float)wp.Age;
+                    this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * (float)(wp.Age + 50);
 
                     this.WaterIterations++;
 
@@ -1015,7 +1015,7 @@ namespace TerrainGeneration
                 float h = this.Map[p].Hard + this.Map[p].Loose;
                 float a = amount; // (amount * (this.Map[p].MovingWater * 50.0f + 0.2f)).Clamp(0.005f, 0.1f);  // slump more where there is more water
 
-                float th = _threshold / (1f + this.Map[p].MovingWater * 200f);
+                float th = _threshold;// / (1f + this.Map[p].MovingWater * 200f);
                 float th2 = th * 1.414f;
 
                 h += SlumpF(n, p, h, a, th, diffmap);
