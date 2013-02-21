@@ -122,7 +122,7 @@ namespace TerrainGeneration
             {
                 get
                 {
-                    return Hard + Loose;
+                    return Hard + Loose + MovingWater;
                 }
             }
         }
@@ -184,7 +184,7 @@ namespace TerrainGeneration
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.0f; // 0  0.05f;
 
-            this.WaterParticleMaxAge = 1000;  //min age of particle before it can be recycled
+            this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
 
             this.Iterations = 0;
             this.WaterIterations = 0;
@@ -238,8 +238,8 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 2000.0f, h => h, h => h * h);
-            this.AddSimplexNoise(14, 0.3f / (float)this.Width, 5000.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(3, 0.1f / (float)this.Width, 500.0f, h => h, h => h * h);
+            this.AddSimplexNoise(12, 0.3f / (float)this.Width, 2000.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -662,7 +662,7 @@ namespace TerrainGeneration
                     CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
 
                     // if we're old and not carrying much at all, reset
-                    if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < 0.01f)
+                    if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < 0.001f)
                     {
                         needReset = true;
                         break;
