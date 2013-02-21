@@ -295,7 +295,10 @@ namespace Snowscape.TerrainGenerationViewer
                 this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
                 this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying
 
-                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 16f).Clamp(0.0f, 255.0f));  // misc - particle speed
+                //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 16f).Clamp(0.0f, 255.0f));  // misc - particle speed
+                //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 255f).Clamp(0.0f, 255.0f));  // misc - particle death
+
+                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 0.25f).Clamp(0.0f, 255.0f)); // misc - age
             });
             perfmon.Stop("UpdateShadeTexture");
             perfmon.Start("UploadShadeTexture");

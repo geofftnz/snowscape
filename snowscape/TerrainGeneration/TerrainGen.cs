@@ -48,6 +48,7 @@ namespace TerrainGeneration
         public float WaterErosionHardErosionFactor { get; set; }  // 0.3
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionMinSpeed { get; set; }
+        public int WaterParticleMaxAge { get; set; }
 
         /// <summary>
         /// Amount we add to the "water height/density" component per frame, multiplied by crossdistance
@@ -179,9 +180,11 @@ namespace TerrainGeneration
             this.WaterErosionOverCapacityFactor = 1.1f;
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
-            this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
+            this.WaterSpeedLowpassAmount = 0.5f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.0f; // 0  0.05f;
+
+            this.WaterParticleMaxAge = 1000;  //min age of particle before it can be recycled
 
             this.Iterations = 0;
             this.WaterIterations = 0;
@@ -292,7 +295,7 @@ namespace TerrainGeneration
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
-            DecayWater(0.96f, 0.97f, 0.95f);
+            DecayWater(0.96f, 0.92f, 0.95f);
 
             this.Iterations++;
         }
@@ -392,6 +395,9 @@ namespace TerrainGeneration
                 // run the particle for a number of cells
                 for (int i = 0; i < CellsPerRun && !needReset; i++)
                 {
+                    wp.Age++;
+                    this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * (float)wp.Age;
+
                     this.WaterIterations++;
 
                     // add some flowing water to the terrain so we can see it
@@ -553,7 +559,7 @@ namespace TerrainGeneration
                         //wp.Speed = wp.Speed * this.WaterSpeedLowpassAmount + (1.0f - this.WaterSpeedLowpassAmount) * slope;
 
                         // blend speed into map for display
-                        this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * wp.Speed;
+                        //this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * wp.Speed;
                     }
 
 
@@ -655,6 +661,13 @@ namespace TerrainGeneration
                     // collapse material toward current cell
                     CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
 
+                    // if we're old and not carrying much at all, reset
+                    if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < 0.01f)
+                    {
+                        needReset = true;
+                        break;
+                    }
+
                     // move particle params
                     wp.Pos = newPos;
                     cellx = cellnx; // this may not work across loop runs. May need to store on particle.
@@ -664,18 +677,20 @@ namespace TerrainGeneration
 
 
                 // if we haven't moved further than a portion of the cells per run (manhattan distance), then decay carrying capacity faster
-                if (Math.Abs(cellx - cellox) + Math.Abs(celly - celloy) < CellsPerRun / 2)
-                {
-                    wp.CarryingDecay *= 1.1f;
-                    if (wp.CarryingDecay > 1.0f)
-                    {
-                        needReset = true;
-                    }
-                }
+                //if (Math.Abs(cellx - cellox) + Math.Abs(celly - celloy) < CellsPerRun / 2)
+                //{
+                //    wp.CarryingDecay *= 1.1f;
+                //    if (wp.CarryingDecay > 1.0f)
+                //    {
+                //        needReset = true;
+                //    }
+                //}
+
 
                 if (needReset)
                 {
-                    //this.Map[celli].Erosion = 8.0f;
+                    //this.Map[celli].Erosion += 0.9f;
+
                     this.Map[celli].Loose += wp.CarryingAmount;
                     //DistributeRemainingMaterial(wp.CarryingAmount, cellx, celly);
                     CollapseFrom(cellx, celly, 0.1f);
