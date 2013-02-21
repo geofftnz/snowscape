@@ -49,6 +49,7 @@ namespace TerrainGeneration
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionMinSpeed { get; set; }
         public int WaterParticleMaxAge { get; set; }
+        public float WaterParticleMinCarryingToSurvive { get; set; }
 
         /// <summary>
         /// Amount we add to the "water height/density" component per frame, multiplied by crossdistance
@@ -177,7 +178,7 @@ namespace TerrainGeneration
             this.WaterErosionHardErosionFactor = 0.15f;
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
-            this.WaterErosionOverCapacityFactor = 1.1f;
+            this.WaterErosionOverCapacityFactor = 1.0f;
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.5f;  // 0.2 0.8 
@@ -185,6 +186,7 @@ namespace TerrainGeneration
             this.WaterTurbulence = 0.0f; // 0  0.05f;
 
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
+            this.WaterParticleMinCarryingToSurvive = 0.01f;
 
             this.Iterations = 0;
             this.WaterIterations = 0;
@@ -662,7 +664,7 @@ namespace TerrainGeneration
                     CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
 
                     // if we're old and not carrying much at all, reset
-                    if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < 0.001f)
+                    if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < this.WaterParticleMinCarryingToSurvive)
                     {
                         needReset = true;
                         break;
