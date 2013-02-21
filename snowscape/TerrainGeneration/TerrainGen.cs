@@ -405,18 +405,18 @@ namespace TerrainGeneration
                     #region Hole Check
                     // hole check - if the minimum height of our neighbours exceeds our own height, try to fill the hole
                     float lowestNeighbour = this.Map[C(cellx - 1, celly)].WHeight;
-                    lowestNeighbour = LowestNeighbour(C(cellx + 1, celly), h);
-                    lowestNeighbour = LowestNeighbour(C(cellx, celly - 1), h);
-                    lowestNeighbour = LowestNeighbour(C(cellx, celly + 1), h);
-                    lowestNeighbour = LowestNeighbour(C(cellx - 1, celly - 1), h);
-                    lowestNeighbour = LowestNeighbour(C(cellx - 1, celly + 1), h);
-                    lowestNeighbour = LowestNeighbour(C(cellx + 1, celly - 1), h);
-                    lowestNeighbour = LowestNeighbour(C(cellx + 1, celly + 1), h);
+                    lowestNeighbour = LowestNeighbour(C(cellx + 1, celly), lowestNeighbour);
+                    lowestNeighbour = LowestNeighbour(C(cellx, celly - 1), lowestNeighbour);
+                    lowestNeighbour = LowestNeighbour(C(cellx, celly + 1), lowestNeighbour);
+                    lowestNeighbour = LowestNeighbour(C(cellx - 1, celly - 1), lowestNeighbour);
+                    lowestNeighbour = LowestNeighbour(C(cellx - 1, celly + 1), lowestNeighbour);
+                    lowestNeighbour = LowestNeighbour(C(cellx + 1, celly - 1), lowestNeighbour);
+                    lowestNeighbour = LowestNeighbour(C(cellx + 1, celly + 1), lowestNeighbour);
 
                     float ndiff = lowestNeighbour - h;
                     if (lowestNeighbour > h)
                     {
-                        ndiff *= 1.02f;
+                        ndiff *= 1.001f;
                         if (wp.CarryingAmount > ndiff)
                         {
                             // carrying more than difference -> fill hole plus a little bit extra to make sure we can get out.
