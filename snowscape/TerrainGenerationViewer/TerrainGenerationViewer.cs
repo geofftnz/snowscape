@@ -412,6 +412,8 @@ namespace Snowscape.TerrainGenerationViewer
             SwapBuffers();
 
             this.frameCounter.Frame();
+
+            Thread.Sleep(16);
         }
 
         protected string GetTerrainFileName(int index)

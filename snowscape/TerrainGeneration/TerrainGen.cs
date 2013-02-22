@@ -173,7 +173,7 @@ namespace TerrainGeneration
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
             this.WaterSpeedDepthCoefficient = 0.0f;
-            this.WaterErosionSpeedCoefficient = 0.005f;  // 1
+            this.WaterErosionSpeedCoefficient = 0.01f;  // 1
             //this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.3f;
             this.WaterErosionCollapseToAmount = 0.005f;
@@ -240,8 +240,8 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 500.0f, h => h, h => h + h * h);
-            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 2000.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 200.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 500.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -297,7 +297,8 @@ namespace TerrainGeneration
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
-            DecayWater(0.96f, 0.5f, 0.95f);
+            // 0.96
+            DecayWater(0.9f, 0.5f, 0.95f);
 
             this.Iterations++;
         }
