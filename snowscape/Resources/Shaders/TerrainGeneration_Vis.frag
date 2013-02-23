@@ -56,7 +56,7 @@ void main(void)
 	vec4 s = texture2D(shadeTex,texcoord0.st);
 	float h = sampleHeight(texcoord0.st);
 
-	float clayBlend = clamp(s.r * s.r * 2.0,0.0,1.0);
+	float clayBlend = clamp(s.r,0.0,1.0);
 	float siltBlend = clamp(s.g * s.g * 2.0,0.0,1.0);
 
 	vec4 col = mix(mix(colRock,colClay,clayBlend),colSilt,siltBlend);

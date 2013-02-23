@@ -24,16 +24,12 @@ namespace TerrainGeneration
             public float MinErosionSpeed { get; set; }
             public float MinCompactionDepth { get; set; }
             public float CompactionRate { get; set; }
+            public float MaxStableHeightDifference { get; set; }
         }
 
         #region Generation Parameters
-        public float TerrainSlumpMaxHeightDifference { get; set; }
         public float TerrainSlumpMovementAmount { get; set; }
         public int TerrainSlumpSamplesPerFrame { get; set; }
-
-        public float TerrainSlump2MaxHeightDifference { get; set; }
-        public float TerrainSlump2MovementAmount { get; set; }
-        public int TerrainSlump2SamplesPerFrame { get; set; }
 
         public float TerrainCollapseMaxHeightDifference { get; set; }
         public float TerrainCollapseMovementAmount { get; set; }
@@ -138,7 +134,8 @@ namespace TerrainGeneration
         public Cell[] Map { get; private set; }
         private float[] TempDiffMap;
 
-        private List<WaterErosionParticle> WaterParticles = new List<WaterErosionParticle>();
+        //private List<WaterErosionParticle> WaterParticles = new List<WaterErosionParticle>();
+        private WaterErosionParticle[] WaterParticles = null;
 
         public TerrainGen(int width, int height)
         {
@@ -150,15 +147,10 @@ namespace TerrainGeneration
 
             // init parameters
 
-            // Slump loose slopes - general case
-            this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
+            // Slump clay/silt
             this.TerrainSlumpMovementAmount = 0.01f;
             this.TerrainSlumpSamplesPerFrame = 5000;
 
-            // Slump loose slopes - rare case
-            this.TerrainSlump2MaxHeightDifference = 0.5f;
-            this.TerrainSlump2MovementAmount = 0.02f;
-            this.TerrainSlump2SamplesPerFrame = 0;// 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
@@ -189,18 +181,20 @@ namespace TerrainGeneration
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
             this.WaterParticleMinCarryingToSurvive = 0.01f;
 
-            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.001f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f };
-            this.ClayLayer = new LayerParameters() { Density = 1.5f, MinErosionSpeed = 0.02f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f };
-            this.RockLayer = new LayerParameters() { Density = 2.2f, MinErosionSpeed = 0.1f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f };
+            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.001f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f, MaxStableHeightDifference = 0.4f };
+            this.ClayLayer = new LayerParameters() { Density = 1.5f, MinErosionSpeed = 0.02f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f, MaxStableHeightDifference = 1.0f };
+            this.RockLayer = new LayerParameters() { Density = 2.2f, MinErosionSpeed = 0.1f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f, MaxStableHeightDifference = 0f };
 
             this.Iterations = 0;
             this.WaterIterations = 0;
 
             Random r = new Random();
 
+            this.WaterParticles = new WaterErosionParticle[this.WaterNumParticles];
+
             for (int i = 0; i < this.WaterNumParticles; i++)
             {
-                this.WaterParticles.Add(new WaterErosionParticle(r.Next(this.Width), r.Next(this.Height)));
+                this.WaterParticles[i] = new WaterErosionParticle(r.Next(this.Width), r.Next(this.Height));
             }
 
         }
@@ -234,7 +228,20 @@ namespace TerrainGeneration
             this.AddClay(10.0f);
 
             this.SetBaseLevel();
+
+            this.ClearAllWaterParticles();
         }
+
+        public void ClearAllWaterParticles()
+        {
+            var r = new Random();
+
+            foreach (var wp in this.WaterParticles)
+            {
+                wp.Reset(r.Next(this.Width), r.Next(this.Height),r);
+            }
+        }
+
 
         public void InitTerrain2()
         {
@@ -249,17 +256,18 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
-            if (this.Iterations % 16 == 0)
-            {
-                this.SortWater();
-            }
+            //if (this.Iterations % 16 == 0)
+            //{
+            //this.SortWater();
+            //}
 
 
             this.RunWater2(this.WaterIterationsPerFrame);
 
-            this.Slump(this.TerrainSlumpMaxHeightDifference, this.TerrainSlumpMovementAmount, this.TerrainSlumpSamplesPerFrame);
-            this.Slump(this.TerrainSlump2MaxHeightDifference, this.TerrainSlump2MovementAmount, this.TerrainSlump2SamplesPerFrame);
-            this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
+            this.SlumpClay(this.ClayLayer.MaxStableHeightDifference, this.TerrainSlumpMovementAmount, this.TerrainSlumpSamplesPerFrame);
+            this.SlumpSilt(this.SiltLayer.MaxStableHeightDifference, this.TerrainSlumpMovementAmount, this.TerrainSlumpSamplesPerFrame);
+            
+            //this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
             // fade water amount
             // 0.96
@@ -317,10 +325,10 @@ namespace TerrainGeneration
         #region Water
 
 
-        public void SortWater()
-        {
-            this.WaterParticles.Sort(delegate(WaterErosionParticle a, WaterErosionParticle b) { return a.Pos.Y.CompareTo(b.Pos.Y) * this.Width + a.Pos.X.CompareTo(b.Pos.X); });
-        }
+        //public void SortWater()
+        //{
+        //    this.WaterParticles.Sort(delegate(WaterErosionParticle a, WaterErosionParticle b) { return a.Pos.Y.CompareTo(b.Pos.Y) * this.Width + a.Pos.X.CompareTo(b.Pos.X); });
+        //}
 
 
 
@@ -546,19 +554,19 @@ namespace TerrainGeneration
                             erosionRate = wp.Speed - this.SiltLayer.MinErosionSpeed;
                             erosionRate *= erosionRate;
                             erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
-                            
+
                             // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
                             erosionRate = Utils.Utils.Min(erosionRate, cdiff);
-                            
+
                             // or more than we have
                             erosionRate = Utils.Utils.Min(erosionRate, silt);
 
                             // erode
                             silt -= erosionRate;
-                            this.Map[celli].Silt = silt; 
+                            this.Map[celli].Silt = silt;
                             wp.CarryingAmount += erosionRate;
                             cdiff -= erosionRate;
-                            
+
                         }
 
                         // if we've got negligible silt left, as well as enough speed for clay and capacity, start eroding clay
@@ -598,7 +606,7 @@ namespace TerrainGeneration
                             this.Map[celli].Rock = rock;
                             wp.CarryingAmount += erosionRate * this.RockLayer.Density;
                         }
-                        
+
                     }
 
                     // collapse material toward current cell
@@ -861,32 +869,29 @@ namespace TerrainGeneration
         /// <param name="threshold">height difference that will trigger a redistribution of material</param>
         /// <param name="amount">amount of material to move (proportional to difference)</param>
         /// 
-        public void Slump(float _threshold, float amount, int numIterations)
+        public void SlumpSilt(float _threshold, float amount, int numIterations)
         {
-            //float amount2 = amount * 0.707f;
             float _threshold2 = (float)(_threshold * Math.Sqrt(2.0));
             this.ClearTempDiffMap();
 
             Func<int, int, float, float, float, float[], float> SlumpF = (pFrom, pTo, h, a, threshold, diffmap) =>
             {
-                float loose = this.Map[pFrom].Silt; // can only slump loose material.
-                if (loose > 0.0f)
+                float silt = this.Map[pFrom].Silt;
+                if (silt > 0.0f)
                 {
-                    float diff = (this.Map[pFrom].Rock + loose) - h;
+                    float diff = (this.Map[pFrom].Rock + this.Map[pFrom].Clay + silt) - h;
                     if (diff > threshold)
                     {
                         diff -= threshold;
-                        if (diff > loose)
+                        if (diff > silt)
                         {
-                            diff = loose;
+                            diff = silt;
                         }
 
                         diff *= a;
 
                         diffmap[pFrom] -= diff;
                         diffmap[pTo] += diff;
-
-                        //this.Map[pFrom].Erosion += diff;
 
                         return diff;
                     }
@@ -907,10 +912,10 @@ namespace TerrainGeneration
                 int sw = C(x - 1, y + 1);
                 int se = C(x + 1, y + 1);
 
-                float h = this.Map[p].Rock + this.Map[p].Silt;
-                float a = amount; // (amount * (this.Map[p].MovingWater * 50.0f + 0.2f)).Clamp(0.005f, 0.1f);  // slump more where there is more water
+                float h = this.Map[p].Rock + this.Map[p].Clay + this.Map[p].Silt;
+                float a = amount;
 
-                float th = _threshold;// / (1f + this.Map[p].MovingWater * 200f);
+                float th = _threshold;
                 float th2 = th * 1.414f;
 
                 h += SlumpF(n, p, h, a, th, diffmap);
@@ -924,7 +929,6 @@ namespace TerrainGeneration
                 h += SlumpF(se, p, h, a, th2, diffmap);
             };
 
-            //var threadlocal = new { diffmap = new float[this.Width * this.Height], r = new Random() };
             var threadlocal = new { diffmap = this.TempDiffMap, r = new Random() };
             for (int i = 0; i < numIterations; i++)
             {
@@ -938,20 +942,84 @@ namespace TerrainGeneration
             {
                 this.Map[i].Silt += threadlocal.diffmap[i];
             });
-
-
-            //Parallel.For(0, 8, j =>
-            //{
-            //    int ii = j * ((this.Width * this.Height) >> 3);
-            //    for (int i = 0; i < (this.Width * this.Height) >> 3; i++)
-            //    {
-            //        this.Map[ii].Loose += threadlocal.diffmap[ii];
-            //        ii++;
-            //    }
-            //});
-
-
         }
+
+        public void SlumpClay(float _threshold, float amount, int numIterations)
+        {
+            float _threshold2 = (float)(_threshold * Math.Sqrt(2.0));
+            this.ClearTempDiffMap();
+
+            Func<int, int, float, float, float, float[], float> SlumpF = (pFrom, pTo, h, a, threshold, diffmap) =>
+            {
+                float clay = this.Map[pFrom].Clay;
+                if (clay > 0.0f)
+                {
+                    float diff = (this.Map[pFrom].Rock + clay) - h;
+                    if (diff > threshold)
+                    {
+                        diff -= threshold;
+                        if (diff > clay)
+                        {
+                            diff = clay;
+                        }
+
+                        diff *= a;
+
+                        diffmap[pFrom] -= diff;
+                        diffmap[pTo] += diff;
+
+                        return diff;
+                    }
+                }
+                return 0f;
+            };
+
+            Action<int, int, float[]> SlumpTo = (x, y, diffmap) =>
+            {
+                int p = C(x, y);
+                int n = C(x, y - 1);
+                int s = C(x, y + 1);
+                int w = C(x - 1, y);
+                int e = C(x + 1, y);
+
+                int nw = C(x - 1, y - 1);
+                int ne = C(x + 1, y - 1);
+                int sw = C(x - 1, y + 1);
+                int se = C(x + 1, y + 1);
+
+                float h = this.Map[p].Rock + this.Map[p].Clay;
+                float a = amount;
+
+                float th = _threshold;
+                float th2 = th * 1.414f;
+
+                h += SlumpF(n, p, h, a, th, diffmap);
+                h += SlumpF(s, p, h, a, th, diffmap);
+                h += SlumpF(w, p, h, a, th, diffmap);
+                h += SlumpF(e, p, h, a, th, diffmap);
+
+                h += SlumpF(nw, p, h, a, th2, diffmap);
+                h += SlumpF(ne, p, h, a, th2, diffmap);
+                h += SlumpF(sw, p, h, a, th2, diffmap);
+                h += SlumpF(se, p, h, a, th2, diffmap);
+            };
+
+            var threadlocal = new { diffmap = this.TempDiffMap, r = new Random() };
+            for (int i = 0; i < numIterations; i++)
+            {
+                int x = threadlocal.r.Next(this.Width);
+                int y = threadlocal.r.Next(this.Height);
+
+                SlumpTo(x, y, threadlocal.diffmap);
+            }
+
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
+            {
+                this.Map[i].Clay += threadlocal.diffmap[i];
+            });
+        }
+
+
 
 
         /// <summary>
@@ -1113,8 +1181,8 @@ namespace TerrainGeneration
                 return diff;
             }
             return 0f;
-        };        
-        
+        };
+
         public void CollapseTo(int cx, int cy, float amount, float threshold)
         {
             int ci = C(cx, cy);
