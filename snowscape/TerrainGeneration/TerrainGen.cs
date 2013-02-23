@@ -22,6 +22,7 @@ namespace TerrainGeneration
         {
             public float Density { get; set; }
             public float MinErosionSpeed { get; set; }
+            public float ErosionRate { get; set; }
             public float MinCompactionDepth { get; set; }
             public float CompactionRate { get; set; }
             public float MaxStableHeightDifference { get; set; }
@@ -46,7 +47,6 @@ namespace TerrainGeneration
         public float WaterMaxCarryingCapacity { get; set; } // 1.0
         public float WaterProportionToDropOnOverCapacity { get; set; } // 0.8
         public float WaterErosionSpeedCoefficient { get; set; } // 1.0
-        public float WaterErosionHardErosionFactor { get; set; }  // 0.3
 
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionCollapseToThreshold { get; set; } // 0.02f
@@ -167,8 +167,7 @@ namespace TerrainGeneration
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
-            this.WaterErosionSpeedCoefficient = 0.01f;  // 1
-            this.WaterErosionHardErosionFactor = 0.1f;
+            this.WaterErosionSpeedCoefficient = 0.02f;  // 1
 
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionCollapseToThreshold = 0.5f;
@@ -181,9 +180,9 @@ namespace TerrainGeneration
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
             this.WaterParticleMinCarryingToSurvive = 0.01f;
 
-            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.001f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f, MaxStableHeightDifference = 0.4f };
-            this.ClayLayer = new LayerParameters() { Density = 1.5f, MinErosionSpeed = 0.02f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f, MaxStableHeightDifference = 1.0f };
-            this.RockLayer = new LayerParameters() { Density = 2.2f, MinErosionSpeed = 0.1f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f, MaxStableHeightDifference = 0f };
+            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.001f, ErosionRate = 1.0f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f, MaxStableHeightDifference = 0.4f };
+            this.ClayLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.01f, ErosionRate = 0.6f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f, MaxStableHeightDifference = 1.0f };
+            this.RockLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.02f, ErosionRate = 0.2f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f, MaxStableHeightDifference = 0f };
 
             this.Iterations = 0;
             this.WaterIterations = 0;
@@ -222,8 +221,8 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 100.0f, h => h, h => h + h * h);
-            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(11, 0.3f / (float)this.Width, 1000.0f, h => h, h => h);
+            this.AddSimplexNoise(10, 2.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => h);
 
             this.AddClay(10.0f);
 
@@ -241,17 +240,6 @@ namespace TerrainGeneration
                 wp.Reset(r.Next(this.Width), r.Next(this.Height),r);
             }
         }
-
-
-        public void InitTerrain2()
-        {
-            this.Clear(0.0f);
-            this.AddSimplexNoise(8, 0.37f / (float)this.Width, 100.0f);
-            this.AddClay(30.0f);
-            this.SetBaseLevel();
-        }
-
-
 
 
         public void ModifyTerrain()
@@ -357,10 +345,19 @@ namespace TerrainGeneration
                 // run the particle for a number of cells
                 for (int i = 0; i < CellsPerRun && !needReset; i++)
                 {
+                    this.WaterIterations++;
                     wp.Age++;
                     this.Map[celli].VisParam += 100.0f;
 
-                    this.WaterIterations++;
+                    if (wp.Age > this.WaterParticleMaxAge)
+                    {
+                        wp.CarryingDecay += 0.01f;
+                        if (wp.CarryingDecay >= 1.0f && wp.CarryingAmount < 0.00000001f)
+                        {
+                            needReset = true;
+                            break;
+                        }
+                    }
 
                     this.Map[celli].Carrying = this.Map[celli].Carrying * 0.5f + 0.5f * wp.CarryingAmount;  // vis for carrying amount
 
@@ -526,6 +523,10 @@ namespace TerrainGeneration
                         wp.CarryingCapacity = this.WaterMaxCarryingCapacity;
                     }
 
+                    // decay carrying capacity if we're killing this particle
+                    wp.CarryingCapacity *= (1.0f - wp.CarryingDecay);
+
+
                     // if we're over our carrying capacity, start dropping material
                     float cdiff = wp.CarryingAmount - wp.CarryingCapacity;
                     if (cdiff > 0.0f)
@@ -553,7 +554,7 @@ namespace TerrainGeneration
                             // calculate erosion for silt
                             erosionRate = wp.Speed - this.SiltLayer.MinErosionSpeed;
                             erosionRate *= erosionRate;
-                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
+                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient * this.SiltLayer.ErosionRate; // global scale factor
 
                             // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
                             erosionRate = Utils.Utils.Min(erosionRate, cdiff);
@@ -575,7 +576,7 @@ namespace TerrainGeneration
                             // calculate erosion for clay
                             erosionRate = wp.Speed - this.ClayLayer.MinErosionSpeed;
                             erosionRate *= erosionRate;
-                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
+                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient * this.ClayLayer.ErosionRate; // global scale factor
 
                             // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
                             erosionRate = Utils.Utils.Min(erosionRate, cdiff * this.ClayLayer.Density);
@@ -596,7 +597,7 @@ namespace TerrainGeneration
                             // calculate erosion for rock
                             erosionRate = wp.Speed - this.RockLayer.MinErosionSpeed;
                             erosionRate *= erosionRate;
-                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
+                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient * this.RockLayer.ErosionRate; // global scale factor
 
                             // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
                             erosionRate = Utils.Utils.Min(erosionRate, cdiff * this.RockLayer.Density);
@@ -613,17 +614,29 @@ namespace TerrainGeneration
                     CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount, this.WaterErosionCollapseToThreshold);
 
                     // if we're old and not carrying much at all, reset
-                    if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < this.WaterParticleMinCarryingToSurvive)
-                    {
-                        needReset = true;
-                        break;
-                    }
+                    //if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < this.WaterParticleMinCarryingToSurvive)
+                    //{
+                    //    needReset = true;
+                    //    break;
+                    //}
 
                     // move particle params
                     wp.Pos = newPos;
                     cellx = cellnx; // this may not work across loop runs. May need to store on particle.
                     celly = cellny;
                     celli = cellni;
+                }
+
+                
+                //// if we're old and haven't moved enough, drop material
+                if (Math.Abs(cellx - cellox) + Math.Abs(celly - celloy) < 3)
+                {
+                    wp.CarryingDecay += 0.1f;
+
+                    if (wp.CarryingDecay >= 1.0f)
+                    {
+                        needReset = true;
+                    }
                 }
 
 
@@ -863,6 +876,7 @@ namespace TerrainGeneration
         #endregion
 
 
+        #region Slump
         /// <summary>
         /// Slumps the terrain by looking at difference between cell and adjacent cells
         /// </summary>
@@ -1019,8 +1033,9 @@ namespace TerrainGeneration
             });
         }
 
+        #endregion
 
-
+        #region Collapse
 
         /// <summary>
         /// Similar to Slump(), but works on hard material instead of loose, and only when amount of loose coverage is below a certain threshold
@@ -1117,7 +1132,13 @@ namespace TerrainGeneration
 
         }
 
-        private Func<Cell[], int, int, float, float, float> CollapseCellFunc = (m, collapseFromCell, collapseToCell, collapseFromHeight, a) =>
+        #endregion
+
+
+
+        #region Single Cell collapse from/to
+
+        private Func<Cell[], int, int, float, float, float> CollapseFromCellFunc = (m, collapseFromCell, collapseToCell, collapseFromHeight, a) =>
         {
             float diff = (collapseFromHeight - m[collapseToCell].Height);
 
@@ -1148,14 +1169,14 @@ namespace TerrainGeneration
             float dh = 0f;
             float amount2 = amount * 0.707f;
 
-            dh += CollapseCellFunc(this.Map, ci, C(cx - 1, cy), h, amount);
-            dh += CollapseCellFunc(this.Map, ci, C(cx + 1, cy), h, amount);
-            dh += CollapseCellFunc(this.Map, ci, C(cx, cy - 1), h, amount);
-            dh += CollapseCellFunc(this.Map, ci, C(cx, cy + 1), h, amount);
-            dh += CollapseCellFunc(this.Map, ci, C(cx - 1, cy - 1), h, amount2);
-            dh += CollapseCellFunc(this.Map, ci, C(cx - 1, cy + 1), h, amount2);
-            dh += CollapseCellFunc(this.Map, ci, C(cx + 1, cy - 1), h, amount2);
-            dh += CollapseCellFunc(this.Map, ci, C(cx + 1, cy + 1), h, amount2);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx - 1, cy), h, amount);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx + 1, cy), h, amount);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx, cy - 1), h, amount);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx, cy + 1), h, amount);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx - 1, cy - 1), h, amount2);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx - 1, cy + 1), h, amount2);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx + 1, cy - 1), h, amount2);
+            dh += CollapseFromCellFunc(this.Map, ci, C(cx + 1, cy + 1), h, amount2);
 
             if (dh < this.Map[ci].Silt)
             {
@@ -1202,6 +1223,9 @@ namespace TerrainGeneration
             this.Map[ci].Silt += dh;
 
         }
+
+        #endregion
+
 
         #region utils
 

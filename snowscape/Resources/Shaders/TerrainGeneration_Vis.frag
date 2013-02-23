@@ -57,7 +57,7 @@ void main(void)
 	float h = sampleHeight(texcoord0.st);
 
 	float clayBlend = clamp(s.r,0.0,1.0);
-	float siltBlend = clamp(s.g * s.g * 2.0,0.0,1.0);
+	float siltBlend = clamp(s.g,0.0,1.0);
 
 	vec4 col = mix(mix(colRock,colClay,clayBlend),colSilt,siltBlend);
 

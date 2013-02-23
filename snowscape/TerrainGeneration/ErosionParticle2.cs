@@ -17,6 +17,8 @@ namespace TerrainGeneration
         public float Speed;
         public int Age;
 
+        public float CarryingDecay;
+
         public WaterErosionParticle()
         {
             this.Pos = new Vector2(0f,0f);
@@ -45,6 +47,7 @@ namespace TerrainGeneration
           //  this.Vel = new Vector2(0.0f);
             this.CarryingAmount = 0.0f;
             this.CarryingCapacity = 0.0f;
+            this.CarryingDecay = 0.0f;
             this.Speed = 0f;
             this.Vel.X = 0f;
             this.Vel.Y = 0f;
