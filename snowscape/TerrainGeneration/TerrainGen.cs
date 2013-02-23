@@ -175,7 +175,7 @@ namespace TerrainGeneration
             this.WaterSpeedDepthCoefficient = 0.0f;
             this.WaterErosionSpeedCoefficient = 0.01f;  // 1
             //this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
-            this.WaterErosionHardErosionFactor = 0.3f;
+            this.WaterErosionHardErosionFactor = 0.1f;
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterErosionOverCapacityFactor = 1.0f;
