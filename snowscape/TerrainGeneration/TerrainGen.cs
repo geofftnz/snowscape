@@ -147,9 +147,9 @@ namespace TerrainGeneration
             // init parameters
 
             // Slump loose slopes - general case
-            this.TerrainSlumpMaxHeightDifference = 0.8f;  // 1.0
+            this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
             this.TerrainSlumpMovementAmount = 0.01f;
-            this.TerrainSlumpSamplesPerFrame = 20000;
+            this.TerrainSlumpSamplesPerFrame = 5000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.5f;
