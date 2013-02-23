@@ -189,9 +189,9 @@ namespace TerrainGeneration
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
             this.WaterParticleMinCarryingToSurvive = 0.01f;
 
-            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.01f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f };
-            this.ClayLayer = new LayerParameters() { Density = 1.5f, MinErosionSpeed = 0.1f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f };
-            this.RockLayer = new LayerParameters() { Density = 2.2f, MinErosionSpeed = 0.5f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f };
+            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.001f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f };
+            this.ClayLayer = new LayerParameters() { Density = 1.5f, MinErosionSpeed = 0.02f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f };
+            this.RockLayer = new LayerParameters() { Density = 2.2f, MinErosionSpeed = 0.1f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f };
 
             this.Iterations = 0;
             this.WaterIterations = 0;
@@ -631,38 +631,6 @@ namespace TerrainGeneration
 
         }
 
-        void DistributeRemainingMaterial(float amount, int x, int y)
-        {
-            float distAmount = amount / 10.0f;
-            float totalDist = 0f;
-            float h = this.Map[C(x, y)].Height;
-            float threshold = h + 0.01f;
-
-            // if a neighbour is within threshold of our height, give it some material.
-            Func<int, int, float> Distribute = (dx, dy) =>
-            {
-                int i = C(x + dx, y + dy);
-                if (this.Map[i].Height < threshold)
-                {
-                    this.Map[i].Silt += distAmount;
-                    return distAmount;
-                }
-                return 0f;
-            };
-
-            totalDist += Distribute(-1, -1);
-            totalDist += Distribute(0, -1);
-            totalDist += Distribute(1, -1);
-            totalDist += Distribute(-1, 0);
-            totalDist += Distribute(1, 0);
-            totalDist += Distribute(-1, 1);
-            totalDist += Distribute(0, 1);
-            totalDist += Distribute(1, 1);
-
-            this.Map[C(x, y)].Silt += (amount - totalDist);
-        }
-
-
         #endregion
 
         #region noise
@@ -1095,18 +1063,7 @@ namespace TerrainGeneration
             return 0f;
         };
 
-        private Func<Cell[], int, int, float, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a, threshold) =>
-        {
-            float diff = (m[collapseFromCell].Height - collapseToHeight) - threshold;
 
-            if (diff > 0.0f)
-            {
-                diff = Utils.Utils.Min(diff, m[collapseFromCell].Silt * 0.15f) * a;
-                m[collapseFromCell].Silt -= diff;
-                return diff;
-            }
-            return 0f;
-        };
 
         /// <summary>
         /// Collapses loose material away from the specified point.
@@ -1143,6 +1100,21 @@ namespace TerrainGeneration
             }
         }
 
+
+
+        private Func<Cell[], int, int, float, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a, threshold) =>
+        {
+            float diff = (m[collapseFromCell].Height - collapseToHeight) - threshold;
+
+            if (diff > 0.0f)
+            {
+                diff = Utils.Utils.Min(diff, m[collapseFromCell].Silt * 0.15f) * a;
+                m[collapseFromCell].Silt -= diff;
+                return diff;
+            }
+            return 0f;
+        };        
+        
         public void CollapseTo(int cx, int cy, float amount, float threshold)
         {
             int ci = C(cx, cy);
@@ -1265,8 +1237,8 @@ namespace TerrainGeneration
                     for (int i = 0; i < this.Width * this.Height; i++)
                     {
                         sw.Write(this.Map[i].Rock);
+                        sw.Write(this.Map[i].Clay);
                         sw.Write(this.Map[i].Silt);
-                        sw.Write(this.Map[i].VisParam);
                         sw.Write(this.Map[i].MovingWater);
                     }
 
@@ -1304,8 +1276,8 @@ namespace TerrainGeneration
                     for (int i = 0; i < this.Width * this.Height; i++)
                     {
                         this.Map[i].Rock = sr.ReadSingle();
+                        this.Map[i].Clay = sr.ReadSingle();
                         this.Map[i].Silt = sr.ReadSingle();
-                        this.Map[i].VisParam = sr.ReadSingle();
                         this.Map[i].MovingWater = sr.ReadSingle();
 
                         this.Map[i].MovingWater = 0f;

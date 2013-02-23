@@ -49,31 +49,29 @@ float contour(float h0, float h1,float h2, float h3, float h4, float contourscal
 void main(void)
 {
 
-	vec4 colH1 = vec4(0.3,0.247,0.223,1.0);
-	vec4 colH2 = vec4(0.3,0.247,0.223,1.0);
-
-	vec4 colL1 = vec4(0.41,0.39,0.16,1.0);
-	vec4 colL2 = vec4(0.41,0.39,0.16,1.0);
-
-	vec4 colW = vec4(0.7,0.8,1.0,1.0);
+	vec4 colRock = vec4(0.675,0.667,0.769,1.0);
+	vec4 colClay = vec4(0.408,0.557,0.125,1.0);
+	vec4 colSilt = vec4(0.949,0.890,0.635,1.0);
 
 	vec4 s = texture2D(shadeTex,texcoord0.st);
 	float h = sampleHeight(texcoord0.st);
 
-	float looseblend = clamp(s.r * s.r * 2.0,0.0,1.0);
-	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
-    col *= 1.4;
+	float clayBlend = clamp(s.r * s.r * 2.0,0.0,1.0);
+	float siltBlend = clamp(s.g * s.g * 2.0,0.0,1.0);
+
+	vec4 col = mix(mix(colRock,colClay,clayBlend),colSilt,siltBlend);
 
 	vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
 	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
 	vec4 colW2 = vec4(1.2,1.3,1.4,1.0); // white water
 
-	colW = mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
+	vec4 colW = colW0;//mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
 
 	//colW = mix(colW,colW2,smoothstep(0.05,0.8,s.a)*0.8);  // speed -> white water
 
 	//col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
-	col = mix(col,colW,smoothstep(0.02,0.5,s.g) * 0.5); // water
+
+	col = mix(col,colW,smoothstep(0.02,0.5,s.b) * 0.5); // water
 
     // misc vis
 	vec4 colE = vec4(1.0,0.0,1.0,1.0);
