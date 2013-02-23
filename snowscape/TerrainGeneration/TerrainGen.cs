@@ -42,7 +42,7 @@ namespace TerrainGeneration
 
         public int WaterNumParticles { get; set; }
         public int WaterIterationsPerFrame { get; set; }
-        
+
         public float WaterDepositWaterCollapseAmount { get; set; }
         public float WaterSpeedLowpassAmount { get; set; }
         public float WaterCarryingCapacitySpeedCoefficient { get; set; } // 10.8
@@ -51,7 +51,7 @@ namespace TerrainGeneration
         public float WaterProportionToDropOnOverCapacity { get; set; } // 0.8
         public float WaterErosionSpeedCoefficient { get; set; } // 1.0
         public float WaterErosionHardErosionFactor { get; set; }  // 0.3
-        
+
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionCollapseToThreshold { get; set; } // 0.02f
 
@@ -169,7 +169,7 @@ namespace TerrainGeneration
             // Water erosion
             this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 7;  // 20
-            
+
             this.WaterDepositWaterCollapseAmount = 0.02f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
@@ -403,9 +403,6 @@ namespace TerrainGeneration
                         break;
                     }
 
-                    //turbulence.X = (float)rand.NextDouble() - 0.5f;
-                    //turbulence.Y = (float)rand.NextDouble() - 0.5f;
-
                     wp.Vel = fall; // wp.Vel * this.WaterMomentumFactor + fall + turbulence * this.WaterTurbulence;
                     wp.Vel.Normalize();
 
@@ -535,53 +532,73 @@ namespace TerrainGeneration
                     }
                     else  // we're under our carrying capacity, so do some erosion
                     {
-                        cdiff = -cdiff;
+                        cdiff = -cdiff;  // this is the amount of carrying capacity we have left
 
                         float silt = this.Map[celli].Silt;
+                        float clay = this.Map[celli].Clay;
                         float rock = this.Map[celli].Rock;
+                        float erosionRate = 0f;
 
-
-                        if (wp.Speed > this.WaterErosionMinSpeed)
+                        // if we've got silt and the ability to erode it, then try to erode it
+                        if (silt > 0f && wp.Speed > this.SiltLayer.MinErosionSpeed)
                         {
-                            // erosion rate goes up with the square of water velocity over the critical velocity (shear stress)
-                            float erosionFactor = (wp.Speed - this.WaterErosionMinSpeed);
-                            erosionFactor *= erosionFactor;
-                            erosionFactor *= crossdistance * this.WaterErosionSpeedCoefficient;
+                            // calculate erosion for silt
+                            erosionRate = wp.Speed - this.SiltLayer.MinErosionSpeed;
+                            erosionRate *= erosionRate;
+                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
+                            
+                            // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
+                            erosionRate = Utils.Utils.Min(erosionRate, cdiff);
+                            
+                            // or more than we have
+                            erosionRate = Utils.Utils.Min(erosionRate, silt);
 
-                            float looseErodeAmount = erosionFactor; // erosion coefficient for loose material
-
-                            if (looseErodeAmount > cdiff)
-                            {
-                                looseErodeAmount = cdiff;
-                            }
-
-                            // first of all, see if we can pick up any loose material.
-                            if (silt > 0.0f)
-                            {
-                                if (looseErodeAmount > silt)
-                                {
-                                    looseErodeAmount = silt;
-                                }
-
-                                this.Map[celli].Silt -= looseErodeAmount;
-                                wp.CarryingAmount += looseErodeAmount;
-
-                                cdiff -= looseErodeAmount;
-                            }
-
-                            // if we've got any erosion potential left, use it
-                            float hardErodeAmount = (erosionFactor - looseErodeAmount) * this.WaterErosionHardErosionFactor;
-                            if (hardErodeAmount > cdiff)
-                            {
-                                hardErodeAmount = cdiff;
-                            }
-
-                            if (hardErodeAmount > 0.0f)
-                            {
-                                this.Map[celli].Rock -= hardErodeAmount;
-                                wp.CarryingAmount += hardErodeAmount; // loose material is less dense than hard, so make it greater.
-                            }
+                            // erode
+                            silt -= erosionRate;
+                            this.Map[celli].Silt = silt; 
+                            wp.CarryingAmount += erosionRate;
+                            cdiff -= erosionRate;
+                            
                         }
+
+                        // if we've got negligible silt left, as well as enough speed for clay and capacity, start eroding clay
+                        if (silt < 0.000001f && clay > 0f && wp.Speed > this.ClayLayer.MinErosionSpeed)
+                        {
+                            // calculate erosion for clay
+                            erosionRate = wp.Speed - this.ClayLayer.MinErosionSpeed;
+                            erosionRate *= erosionRate;
+                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
+
+                            // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
+                            erosionRate = Utils.Utils.Min(erosionRate, cdiff * this.ClayLayer.Density);
+
+                            // or more than we have
+                            erosionRate = Utils.Utils.Min(erosionRate, clay);
+
+                            // erode
+                            clay -= erosionRate;
+                            this.Map[celli].Clay = clay;
+                            wp.CarryingAmount += erosionRate * this.ClayLayer.Density;
+                            cdiff -= erosionRate * this.ClayLayer.Density;
+                        }
+
+                        // if we're down to rock, start eroding that
+                        if (silt < 0.0000001f && clay < 0.0000001f && wp.Speed > this.RockLayer.MinErosionSpeed)
+                        {
+                            // calculate erosion for rock
+                            erosionRate = wp.Speed - this.RockLayer.MinErosionSpeed;
+                            erosionRate *= erosionRate;
+                            erosionRate *= crossdistance * this.WaterErosionSpeedCoefficient; // global scale factor
+
+                            // we now have how much we can erode - make sure this is no more than our remaining carrying capacity...
+                            erosionRate = Utils.Utils.Min(erosionRate, cdiff * this.RockLayer.Density);
+
+                            // erode
+                            rock -= erosionRate;
+                            this.Map[celli].Rock = rock;
+                            wp.CarryingAmount += erosionRate * this.RockLayer.Density;
+                        }
+                        
                     }
 
                     // collapse material toward current cell
@@ -1081,7 +1098,7 @@ namespace TerrainGeneration
         private Func<Cell[], int, int, float, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a, threshold) =>
         {
             float diff = (m[collapseFromCell].Height - collapseToHeight) - threshold;
-            
+
             if (diff > 0.0f)
             {
                 diff = Utils.Utils.Min(diff, m[collapseFromCell].Silt * 0.15f) * a;
