@@ -399,7 +399,7 @@ namespace TerrainGeneration
                 for (int i = 0; i < CellsPerRun && !needReset; i++)
                 {
                     wp.Age++;
-                    this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * (float)(wp.Age + 50);
+                    this.Map[celli].Erosion += 100.0f;
 
                     this.WaterIterations++;
 
