@@ -228,8 +228,8 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 200.0f, h => h, h => h + h * h);
-            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 500.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 100.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -250,7 +250,7 @@ namespace TerrainGeneration
             */
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(30.0f);
+            this.AddLooseMaterial(10.0f);
             //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
 
