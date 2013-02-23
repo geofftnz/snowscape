@@ -79,21 +79,32 @@ namespace TerrainGeneration
         public struct Cell
         {
             /// <summary>
-            /// Hard rock - eroded by wind and water
+            /// Hard rock - eroded by water to make silt
             /// </summary>
-            public float Hard;
+            public float Rock;
+
             /// <summary>
-            /// Loose material/soil/dust - moved by wind and water
+            /// Clay - formed from compacted silt
             /// </summary>
-            public float Loose;
+            public float Clay;
+
+            /// <summary>
+            /// Silt - created by water erosion of clay and rock
+            /// </summary>
+            public float Silt;
+
+            /// <summary>
+            /// Measure of how much flowing water is over this tile.
+            /// Rough particle density map
+            /// </summary>
+            public float MovingWater;
+
+
+
             /// <summary>
             /// Suspended material - indicates erosion
             /// </summary>
-            public float Erosion;
-            /// <summary>
-            /// Non-height component indicating how much flowing water is over this tile.
-            /// </summary>
-            public float MovingWater;
+            public float VisParam;
 
             /// <summary>
             /// Amount of suspended material carried over this tile.
@@ -104,7 +115,7 @@ namespace TerrainGeneration
             {
                 get
                 {
-                    return Hard + Loose;
+                    return Rock + Silt;
                 }
             }
 
@@ -112,7 +123,7 @@ namespace TerrainGeneration
             {
                 get
                 {
-                    return Hard + Loose + MovingWater;
+                    return Rock + Silt + MovingWater;
                 }
             }
         }
@@ -300,7 +311,7 @@ namespace TerrainGeneration
                 for (int x = 0; x < this.Width; x++)
                 {
                     this.Map[i].MovingWater *= MovingWaterDecay;
-                    this.Map[i].Erosion *= WaterErosionDecay;
+                    this.Map[i].VisParam *= WaterErosionDecay;
                     this.Map[i].Carrying *= CarryingDecay;
                     i++;
                 }
@@ -320,11 +331,11 @@ namespace TerrainGeneration
 
         public void SetBaseLevel()
         {
-            float min = this.Map.Select(c => c.Hard).Min();
+            float min = this.Map.Select(c => c.Rock).Min();
 
             for (int i = 0; i < Width * Height; i++)
             {
-                this.Map[i].Hard -= min;
+                this.Map[i].Rock -= min;
             }
         }
 
@@ -332,7 +343,7 @@ namespace TerrainGeneration
         {
             for (int i = 0; i < Width * Height; i++)
             {
-                this.Map[i].Loose += amount;
+                this.Map[i].Silt += amount;
             }
         }
 
@@ -373,7 +384,7 @@ namespace TerrainGeneration
                 for (int i = 0; i < CellsPerRun && !needReset; i++)
                 {
                     wp.Age++;
-                    this.Map[celli].Erosion += 100.0f;
+                    this.Map[celli].VisParam += 100.0f;
 
                     this.WaterIterations++;
 
@@ -400,7 +411,7 @@ namespace TerrainGeneration
                         if (wp.CarryingAmount > ndiff)
                         {
                             // carrying more than difference -> fill hole plus a little bit extra to make sure we can get out.
-                            this.Map[celli].Loose += ndiff;
+                            this.Map[celli].Silt += ndiff;
                             wp.CarryingAmount -= ndiff;
 
                             // adjust our height up accordingly
@@ -497,7 +508,7 @@ namespace TerrainGeneration
                         if (wp.CarryingAmount > amountToDrop)
                         {
                             // carrying more than difference -> fill hole
-                            this.Map[celli].Loose += amountToDrop;
+                            this.Map[celli].Silt += amountToDrop;
                             wp.CarryingAmount -= amountToDrop;
                             h += amountToDrop;
                             ndiff = nh - h;
@@ -552,7 +563,7 @@ namespace TerrainGeneration
                         cdiff *= this.WaterProportionToDropOnOverCapacity * crossdistance; // amount to drop
 
                         // drop a portion of our material
-                        this.Map[celli].Loose += cdiff;  // drop at old location
+                        this.Map[celli].Silt += cdiff;  // drop at old location
                         wp.CarryingAmount -= cdiff;
 
                         CollapseFrom(cellx, celly, this.WaterDepositWaterCollapseAmount);
@@ -561,8 +572,8 @@ namespace TerrainGeneration
                     {
                         cdiff = -cdiff;
 
-                        float loose = this.Map[celli].Loose;
-                        float hard = this.Map[celli].Hard;
+                        float loose = this.Map[celli].Silt;
+                        float hard = this.Map[celli].Rock;
 
 
                         if (wp.Speed > this.WaterErosionMinSpeed)
@@ -587,7 +598,7 @@ namespace TerrainGeneration
                                     looseErodeAmount = loose;
                                 }
 
-                                this.Map[celli].Loose -= looseErodeAmount;
+                                this.Map[celli].Silt -= looseErodeAmount;
                                 wp.CarryingAmount += looseErodeAmount;
 
                                 cdiff -= looseErodeAmount;
@@ -602,7 +613,7 @@ namespace TerrainGeneration
 
                             if (hardErodeAmount > 0.0f)
                             {
-                                this.Map[celli].Hard -= hardErodeAmount;
+                                this.Map[celli].Rock -= hardErodeAmount;
                                 wp.CarryingAmount += hardErodeAmount; // loose material is less dense than hard, so make it greater.
                             }
                         }
@@ -628,7 +639,7 @@ namespace TerrainGeneration
 
                 if (needReset)
                 {
-                    this.Map[celli].Loose += wp.CarryingAmount;
+                    this.Map[celli].Silt += wp.CarryingAmount;
                     CollapseFrom(cellx, celly, 0.1f);
 
                     wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
@@ -651,7 +662,7 @@ namespace TerrainGeneration
                 int i = C(x + dx, y + dy);
                 if (this.Map[i].Height < threshold)
                 {
-                    this.Map[i].Loose += distAmount;
+                    this.Map[i].Silt += distAmount;
                     return distAmount;
                 }
                 return 0f;
@@ -666,7 +677,7 @@ namespace TerrainGeneration
             totalDist += Distribute(0, 1);
             totalDist += Distribute(1, 1);
 
-            this.Map[C(x, y)].Loose += (amount - totalDist);
+            this.Map[C(x, y)].Silt += (amount - totalDist);
         }
 
 
@@ -695,7 +706,7 @@ namespace TerrainGeneration
                             //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
                             h += SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1));
                         }
-                        this.Map[i].Hard += h * amplitude;
+                        this.Map[i].Rock += h * amplitude;
                         i++;
                     }
                 }
@@ -723,7 +734,7 @@ namespace TerrainGeneration
                             //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
                             h += SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1));
                         }
-                        this.Map[i].Loose += h * amplitude;
+                        this.Map[i].Silt += h * amplitude;
                         i++;
                     }
                 }
@@ -754,11 +765,11 @@ namespace TerrainGeneration
 
                         if (postTransform != null)
                         {
-                            this.Map[i].Hard += postTransform(h) * amplitude;
+                            this.Map[i].Rock += postTransform(h) * amplitude;
                         }
                         else
                         {
-                            this.Map[i].Hard += h * amplitude;
+                            this.Map[i].Rock += h * amplitude;
                         }
                         i++;
                     }
@@ -788,7 +799,7 @@ namespace TerrainGeneration
                             //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
                             h += SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1));
                         }
-                        this.Map[i].Hard += postTransform((float)Math.Pow(h, power) * amplitude);
+                        this.Map[i].Rock += postTransform((float)Math.Pow(h, power) * amplitude);
                         i++;
                     }
                 }
@@ -847,11 +858,11 @@ namespace TerrainGeneration
 
                         if (postTransform != null)
                         {
-                            this.Map[i].Hard += postTransform(h) * amplitude;
+                            this.Map[i].Rock += postTransform(h) * amplitude;
                         }
                         else
                         {
-                            this.Map[i].Hard += h * amplitude;
+                            this.Map[i].Rock += h * amplitude;
                         }
                         i++;
                     }
@@ -883,7 +894,7 @@ namespace TerrainGeneration
 
                         if (a > threshold)
                         {
-                            this.Map[i].Hard += amplitude;
+                            this.Map[i].Rock += amplitude;
                         }
 
                         i++;
@@ -908,10 +919,10 @@ namespace TerrainGeneration
 
             Func<int, int, float, float, float, float[], float> SlumpF = (pFrom, pTo, h, a, threshold, diffmap) =>
             {
-                float loose = this.Map[pFrom].Loose; // can only slump loose material.
+                float loose = this.Map[pFrom].Silt; // can only slump loose material.
                 if (loose > 0.0f)
                 {
-                    float diff = (this.Map[pFrom].Hard + loose) - h;
+                    float diff = (this.Map[pFrom].Rock + loose) - h;
                     if (diff > threshold)
                     {
                         diff -= threshold;
@@ -946,7 +957,7 @@ namespace TerrainGeneration
                 int sw = C(x - 1, y + 1);
                 int se = C(x + 1, y + 1);
 
-                float h = this.Map[p].Hard + this.Map[p].Loose;
+                float h = this.Map[p].Rock + this.Map[p].Silt;
                 float a = amount; // (amount * (this.Map[p].MovingWater * 50.0f + 0.2f)).Clamp(0.005f, 0.1f);  // slump more where there is more water
 
                 float th = _threshold;// / (1f + this.Map[p].MovingWater * 200f);
@@ -975,7 +986,7 @@ namespace TerrainGeneration
 
             ParallelHelper.For2D(this.Width, this.Height, (i) =>
             {
-                this.Map[i].Loose += threadlocal.diffmap[i];
+                this.Map[i].Silt += threadlocal.diffmap[i];
             });
 
 
@@ -1008,12 +1019,12 @@ namespace TerrainGeneration
             Func<int, int, float, float, float, float[], float> SlumpF = (pFrom, pTo, h, a, threshold, diffmap) =>
             {
 
-                if (this.Map[pFrom].Loose > looseThreshold)
+                if (this.Map[pFrom].Silt > looseThreshold)
                 {
                     return 0f;
                 }
 
-                float diff = this.Map[pFrom].Hard - h;
+                float diff = this.Map[pFrom].Rock - h;
                 if (diff > threshold)
                 {
                     diff -= threshold;
@@ -1044,7 +1055,7 @@ namespace TerrainGeneration
                 int sw = C(x - 1, y + 1);
                 int se = C(x + 1, y + 1);
 
-                float h = this.Map[p].Hard + this.Map[p].Loose;
+                float h = this.Map[p].Rock + this.Map[p].Silt;
 
                 h += SlumpF(n, p, h, amount, _threshold, diffmap);
                 h += SlumpF(s, p, h, amount, _threshold, diffmap);
@@ -1075,11 +1086,11 @@ namespace TerrainGeneration
                     float d = threadlocal.diffmap[ii];
                     if (d < 0)
                     {
-                        this.Map[ii].Hard += d;
+                        this.Map[ii].Rock += d;
                     }
                     else
                     {
-                        this.Map[ii].Loose += d;
+                        this.Map[ii].Silt += d;
                     }
                     ii++;
                 }
@@ -1095,8 +1106,8 @@ namespace TerrainGeneration
 
             if (diff > 0f)
             {
-                diff = Utils.Utils.Min(diff, m[collapseFromCell].Loose * 0.15f) * a;
-                m[collapseToCell].Loose += diff;
+                diff = Utils.Utils.Min(diff, m[collapseFromCell].Silt * 0.15f) * a;
+                m[collapseToCell].Silt += diff;
                 return diff;
             }
             return 0f;
@@ -1108,8 +1119,8 @@ namespace TerrainGeneration
             
             if (diff > 0.0f)
             {
-                diff = Utils.Utils.Min(diff, m[collapseFromCell].Loose * 0.15f) * a;
-                m[collapseFromCell].Loose -= diff;
+                diff = Utils.Utils.Min(diff, m[collapseFromCell].Silt * 0.15f) * a;
+                m[collapseFromCell].Silt -= diff;
                 return diff;
             }
             return 0f;
@@ -1139,14 +1150,14 @@ namespace TerrainGeneration
             dh += CollapseCellFunc(this.Map, ci, C(cx + 1, cy - 1), h, amount2);
             dh += CollapseCellFunc(this.Map, ci, C(cx + 1, cy + 1), h, amount2);
 
-            if (dh < this.Map[ci].Loose)
+            if (dh < this.Map[ci].Silt)
             {
-                this.Map[ci].Loose -= dh;
+                this.Map[ci].Silt -= dh;
             }
             else
             {
-                this.Map[ci].Hard -= (dh - this.Map[ci].Loose);
-                this.Map[ci].Loose = 0f;
+                this.Map[ci].Rock -= (dh - this.Map[ci].Silt);
+                this.Map[ci].Silt = 0f;
             }
         }
 
@@ -1166,7 +1177,7 @@ namespace TerrainGeneration
             dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy - 1), h, amount2, threshold);
             dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy + 1), h, amount2, threshold);
 
-            this.Map[ci].Loose += dh;
+            this.Map[ci].Silt += dh;
 
         }
 
@@ -1271,9 +1282,9 @@ namespace TerrainGeneration
 
                     for (int i = 0; i < this.Width * this.Height; i++)
                     {
-                        sw.Write(this.Map[i].Hard);
-                        sw.Write(this.Map[i].Loose);
-                        sw.Write(this.Map[i].Erosion);
+                        sw.Write(this.Map[i].Rock);
+                        sw.Write(this.Map[i].Silt);
+                        sw.Write(this.Map[i].VisParam);
                         sw.Write(this.Map[i].MovingWater);
                     }
 
@@ -1310,13 +1321,13 @@ namespace TerrainGeneration
 
                     for (int i = 0; i < this.Width * this.Height; i++)
                     {
-                        this.Map[i].Hard = sr.ReadSingle();
-                        this.Map[i].Loose = sr.ReadSingle();
-                        this.Map[i].Erosion = sr.ReadSingle();
+                        this.Map[i].Rock = sr.ReadSingle();
+                        this.Map[i].Silt = sr.ReadSingle();
+                        this.Map[i].VisParam = sr.ReadSingle();
                         this.Map[i].MovingWater = sr.ReadSingle();
 
                         this.Map[i].MovingWater = 0f;
-                        this.Map[i].Erosion = 0f;
+                        this.Map[i].VisParam = 0f;
                     }
 
                     sr.Close();
