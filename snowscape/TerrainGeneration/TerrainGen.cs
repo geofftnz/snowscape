@@ -18,6 +18,14 @@ namespace TerrainGeneration
         const int NUMTHREADS = 3;
         const int FILEMAGIC = 0x54455230;
 
+        public class LayerParameters
+        {
+            public float Density { get; set; }
+            public float MinErosionSpeed { get; set; }
+            public float MinCompactionDepth { get; set; }
+            public float CompactionRate { get; set; }
+        }
+
         #region Generation Parameters
         public float TerrainSlumpMaxHeightDifference { get; set; }
         public float TerrainSlumpMovementAmount { get; set; }
@@ -55,6 +63,13 @@ namespace TerrainGeneration
         /// Amount we add to the "water height/density" component per frame, multiplied by crossdistance
         /// </summary>
         public float WaterAccumulatePerFrame { get; set; }  // 0.001 originally
+
+        // layer parameters
+        public LayerParameters RockLayer { get; set; }
+        public LayerParameters ClayLayer { get; set; }
+        public LayerParameters SiltLayer { get; set; }
+
+
 
         #endregion
 
@@ -174,6 +189,10 @@ namespace TerrainGeneration
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
             this.WaterParticleMinCarryingToSurvive = 0.01f;
 
+            this.SiltLayer = new LayerParameters() { Density = 1.0f, MinErosionSpeed = 0.01f, MinCompactionDepth = 1.0f, CompactionRate = 0.01f };
+            this.ClayLayer = new LayerParameters() { Density = 1.5f, MinErosionSpeed = 0.1f, MinCompactionDepth = 5.0f, CompactionRate = 0.001f };
+            this.RockLayer = new LayerParameters() { Density = 2.2f, MinErosionSpeed = 0.5f, MinCompactionDepth = 0.0f, CompactionRate = 0.0f };
+
             this.Iterations = 0;
             this.WaterIterations = 0;
 
@@ -199,23 +218,6 @@ namespace TerrainGeneration
         private Func<int, int> CX = (i) => i & 1023;
         private Func<int, int> CY = (i) => (i >> 10) & 1023;
 
-        //private int C(int x, int y)
-        //{
-        //    return ((x + 1024) & 1023) + (((y + 1024) & 1023) << 10);
-        //    //return x.Wrap(this.Width) + y.Wrap(this.Height) * this.Width;
-        //}
-
-
-        //private int CX(int i)
-        //{
-        //    return i & 1023;
-        //    //return (i % this.Width).Wrap(this.Width);
-        //}
-        //private int CY(int i)
-        //{
-        //    return (i >> 10) & 1023;
-        //    //return (i / this.Width).Wrap(this.Height);
-        //}
 
         private void ClearTempDiffMap()
         {
@@ -229,29 +231,7 @@ namespace TerrainGeneration
             this.AddSimplexNoise(6, 0.1f / (float)this.Width, 100.0f, h => h, h => h + h * h);
             this.AddSimplexNoise(12, 0.7f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h + h * h);
 
-            //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
-
-
-            //this.AddSimplexNoise(8, 2.43f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h * h);
-
-            //this.AddSimplexNoise(10, 7.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
-            //this.AddSimplexNoise(5, 37.7f / (float)this.Width, 5.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
-
-            //this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
-            /*
-            this.AddSimplexNoise(7, 1.3f / (float)this.Width, 800.0f, h => (h >= 0f ? h : -h), h => h * h);
-
-            this.AddMultipliedSimplexNoise(
-                3, 1.0f / (float)this.Width, h => h, 0.6f, 0.5f,
-                10, 1.7f / (float)this.Width, h => (h >= 0f ? h : -h), 0.1f, 1.0f,
-                h => h, 500.0f);
-            */
-
-            //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(10.0f);
-            //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
-
-
+            this.AddClay(10.0f);
 
             this.SetBaseLevel();
         }
@@ -260,7 +240,7 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
             this.AddSimplexNoise(8, 0.37f / (float)this.Width, 100.0f);
-            this.AddLooseMaterial(30.0f);
+            this.AddClay(30.0f);
             this.SetBaseLevel();
         }
 
@@ -325,11 +305,11 @@ namespace TerrainGeneration
             }
         }
 
-        public void AddLooseMaterial(float amount)
+        public void AddClay(float amount)
         {
             for (int i = 0; i < Width * Height; i++)
             {
-                this.Map[i].Silt += amount;
+                this.Map[i].Clay += amount;
             }
         }
 
