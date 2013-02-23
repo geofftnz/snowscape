@@ -67,11 +67,6 @@ namespace TerrainGeneration
         /// </summary>
         public float WaterMomentumFactor { get; set; }
 
-        /// <summary>
-        /// Amount over our capacity that we're allowed to erode material.
-        /// Setting this to 1 should be more correct, but tends to make straight lines which look unnatural.
-        /// </summary>
-        public float WaterErosionOverCapacityFactor { get; set; }
         #endregion
 
         public int Iterations { get; private set; }
@@ -176,7 +171,6 @@ namespace TerrainGeneration
             this.WaterErosionHardErosionFactor = 0.1f;
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
-            this.WaterErosionOverCapacityFactor = 1.0f;
             this.WaterAccumulatePerFrame = 0.05f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.5f;  // 0.2 0.8 
@@ -580,9 +574,6 @@ namespace TerrainGeneration
                     else  // we're under our carrying capacity, so do some erosion
                     {
                         cdiff = -cdiff;
-
-                        // multiply the remaining capacity to allow more material to be eroded.
-                        cdiff *= this.WaterErosionOverCapacityFactor;
 
                         float loose = this.Map[celli].Loose;
                         float hard = this.Map[celli].Hard;
