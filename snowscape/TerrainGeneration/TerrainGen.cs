@@ -41,9 +41,7 @@ namespace TerrainGeneration
         public float WaterCarryingCapacityLowpass { get; set; }
         public float WaterMaxCarryingCapacity { get; set; } // 1.0
         public float WaterProportionToDropOnOverCapacity { get; set; } // 0.8
-        //public float WaterErosionSpeedCoefficientMin { get; set; }  // 0.02
         public float WaterErosionSpeedCoefficient { get; set; } // 1.0
-        //public float WaterErosionWaterDepthMultiplier { get; set; } // 20.0
         public float WaterErosionHardErosionFactor { get; set; }  // 0.3
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionMinSpeed { get; set; }
@@ -98,12 +96,6 @@ namespace TerrainGeneration
             /// Amount of suspended material carried over this tile.
             /// </summary>
             public float Carrying;
-
-            /// <summary>
-            /// Amount of material slumped recently.
-            /// </summary>
-            //public float Slumping;
-
 
             public float Height
             {
@@ -165,9 +157,7 @@ namespace TerrainGeneration
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
-            //this.WaterErosionSpeedCoefficientMin = 0.2f;
             this.WaterErosionSpeedCoefficient = 0.01f;  // 1
-            //this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.1f;
             this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
@@ -306,15 +296,11 @@ namespace TerrainGeneration
                     this.Map[i].MovingWater *= MovingWaterDecay;
                     this.Map[i].Erosion *= WaterErosionDecay;
                     this.Map[i].Carrying *= CarryingDecay;
-                    //this.Map[i].Slumping *= CarryingDecay;
                     i++;
                 }
             });
 
 
-            //if (this.Iterations % 8 == 0)
-            //{
-            //}
         }
 
 
@@ -385,9 +371,6 @@ namespace TerrainGeneration
 
                     this.WaterIterations++;
 
-                    // add some flowing water to the terrain so we can see it
-                    //this.Map[celli].MovingWater += 0.001f; // moved further down
-
                     this.Map[celli].Carrying = this.Map[celli].Carrying * 0.5f + 0.5f * wp.CarryingAmount;  // vis for carrying amount
 
                     // get our current height
@@ -453,28 +436,28 @@ namespace TerrainGeneration
                     {
                         if ((wp.Pos.X - (float)Math.Floor(wp.Pos.X)) < 0.05f)
                         {
-                            wp.Pos.X += 0.2f;
+                            wp.Pos.X += 0.05f;
                         }
                     }
                     else
                     {
                         if ((wp.Pos.X - (float)Math.Floor(wp.Pos.X)) > 0.95f)
                         {
-                            wp.Pos.X -= 0.2f;
+                            wp.Pos.X -= 0.05f;
                         }
                     }
                     if (tileDir.Y < 0f)
                     {
                         if ((wp.Pos.Y - (float)Math.Floor(wp.Pos.Y)) < 0.05f)
                         {
-                            wp.Pos.Y += 0.2f;
+                            wp.Pos.Y += 0.05f;
                         }
                     }
                     else
                     {
                         if ((wp.Pos.Y - (float)Math.Floor(wp.Pos.Y)) > 0.95f)
                         {
-                            wp.Pos.Y -= 0.2f;
+                            wp.Pos.Y -= 0.05f;
                         }
                     }
                     #endregion
