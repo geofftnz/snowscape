@@ -43,7 +43,10 @@ namespace TerrainGeneration
         public float WaterProportionToDropOnOverCapacity { get; set; } // 0.8
         public float WaterErosionSpeedCoefficient { get; set; } // 1.0
         public float WaterErosionHardErosionFactor { get; set; }  // 0.3
+        
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
+        public float WaterErosionCollapseToThreshold { get; set; } // 0.02f
+
         public float WaterErosionMinSpeed { get; set; }
         public int WaterParticleMaxAge { get; set; }
         public float WaterParticleMinCarryingToSurvive { get; set; }
@@ -159,7 +162,10 @@ namespace TerrainGeneration
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
             this.WaterErosionSpeedCoefficient = 0.01f;  // 1
             this.WaterErosionHardErosionFactor = 0.1f;
+
             this.WaterErosionCollapseToAmount = 0.005f;
+            this.WaterErosionCollapseToThreshold = 0.5f;
+
             this.WaterErosionMinSpeed = 0.01f;  // 0.01
             this.WaterAccumulatePerFrame = 0.05f; //0.005 0.002f;
 
@@ -520,9 +526,6 @@ namespace TerrainGeneration
                         wp.Speed *= 0.95f; // drag
                         wp.Speed = wp.Speed * this.WaterSpeedLowpassAmount + (1.0f - this.WaterSpeedLowpassAmount) * newSpeed;
 
-                        // modify speed of particle
-                        //wp.Speed = wp.Speed * this.WaterSpeedLowpassAmount + (1.0f - this.WaterSpeedLowpassAmount) * slope;
-
                         // blend speed into map for display
                         //this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * wp.Speed;
                     }
@@ -569,14 +572,6 @@ namespace TerrainGeneration
                             erosionFactor *= erosionFactor;
                             erosionFactor *= crossdistance * this.WaterErosionSpeedCoefficient;
 
-
-                            // we can only erode the difference between our height and our lowest neighbour.
-                            //erosionFactor = erosionFactor.ClampInclusive(0f, (h - lowestNeighbour) * 3.0f);
-                            //if (erosionFactor > (h - lowestNeighbour))
-                            //{
-                            //    erosionFactor = h - lowestNeighbour;
-                            //}
-
                             float looseErodeAmount = erosionFactor; // erosion coefficient for loose material
 
                             if (looseErodeAmount > cdiff)
@@ -610,18 +605,11 @@ namespace TerrainGeneration
                                 this.Map[celli].Hard -= hardErodeAmount;
                                 wp.CarryingAmount += hardErodeAmount; // loose material is less dense than hard, so make it greater.
                             }
-
-                            //CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
-                            //CollapseFrom(cellx + 1, celly, this.WaterDepositWaterCollapseAmount);
-                            //CollapseFrom(cellx - 1, celly, this.WaterDepositWaterCollapseAmount);
-                            //CollapseFrom(cellx, celly - 1, this.WaterDepositWaterCollapseAmount);
-                            //CollapseFrom(cellx, celly + 1, this.WaterDepositWaterCollapseAmount);
                         }
                     }
-                    //}
 
                     // collapse material toward current cell
-                    CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount);
+                    CollapseTo(cellx, celly, this.WaterErosionCollapseToAmount, this.WaterErosionCollapseToThreshold);
 
                     // if we're old and not carrying much at all, reset
                     if (wp.Age > this.WaterParticleMaxAge && wp.CarryingAmount < this.WaterParticleMinCarryingToSurvive)
@@ -1114,11 +1102,11 @@ namespace TerrainGeneration
             return 0f;
         };
 
-        private Func<Cell[], int, int, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a) =>
+        private Func<Cell[], int, int, float, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a, threshold) =>
         {
-            float diff = (m[collapseFromCell].Height - collapseToHeight);
-
-            if (diff > 0f)
+            float diff = (m[collapseFromCell].Height - collapseToHeight) - threshold;
+            
+            if (diff > 0.0f)
             {
                 diff = Utils.Utils.Min(diff, m[collapseFromCell].Loose * 0.15f) * a;
                 m[collapseFromCell].Loose -= diff;
@@ -1162,21 +1150,21 @@ namespace TerrainGeneration
             }
         }
 
-        public void CollapseTo(int cx, int cy, float amount)
+        public void CollapseTo(int cx, int cy, float amount, float threshold)
         {
             int ci = C(cx, cy);
             float h = this.Map[ci].Height;
             float dh = 0f;
             float amount2 = amount * 0.707f;
 
-            dh += CollapseToCellFunc(this.Map, ci, C(cx - 1, cy), h, amount);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy), h, amount);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx, cy - 1), h, amount);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx, cy + 1), h, amount);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx - 1, cy - 1), h, amount2);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx - 1, cy + 1), h, amount2);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy - 1), h, amount2);
-            dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy + 1), h, amount2);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx - 1, cy), h, amount, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy), h, amount, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx, cy - 1), h, amount, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx, cy + 1), h, amount, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx - 1, cy - 1), h, amount2, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx - 1, cy + 1), h, amount2, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy - 1), h, amount2, threshold);
+            dh += CollapseToCellFunc(this.Map, ci, C(cx + 1, cy + 1), h, amount2, threshold);
 
             this.Map[ci].Loose += dh;
 
