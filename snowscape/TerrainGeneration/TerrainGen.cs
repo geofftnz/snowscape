@@ -37,7 +37,6 @@ namespace TerrainGeneration
         
         public float WaterDepositWaterCollapseAmount { get; set; }
         public float WaterSpeedLowpassAmount { get; set; }
-        public float WaterSpeedDepthCoefficient { get; set; }
         public float WaterCarryingCapacitySpeedCoefficient { get; set; } // 10.8
         public float WaterCarryingCapacityLowpass { get; set; }
         public float WaterMaxCarryingCapacity { get; set; } // 1.0
@@ -172,7 +171,6 @@ namespace TerrainGeneration
             this.WaterCarryingCapacityLowpass = 0.2f;
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
             //this.WaterErosionSpeedCoefficientMin = 0.2f;
-            this.WaterSpeedDepthCoefficient = 0.0f;
             this.WaterErosionSpeedCoefficient = 0.01f;  // 1
             //this.WaterErosionWaterDepthMultiplier = 2.0f;  //10 20
             this.WaterErosionHardErosionFactor = 0.1f;
@@ -539,9 +537,6 @@ namespace TerrainGeneration
 
                         // calculate accelleration due to gravity
                         float accel = 2.0f * (ndiff / slopeLength);
-
-                        // increase acceleration where the water is deep
-                        accel *= (1.0f + this.Map[celli].MovingWater * this.WaterSpeedDepthCoefficient);
 
                         float newSpeed = wp.Speed + accel * 0.5f;
 
