@@ -34,7 +34,7 @@ namespace TerrainGeneration
 
         public int WaterNumParticles { get; set; }
         public int WaterIterationsPerFrame { get; set; }
-        public float WaterCarryingAmountDecayPerRun { get; set; }
+        
         public float WaterDepositWaterCollapseAmount { get; set; }
         public float WaterSpeedLowpassAmount { get; set; }
         public float WaterSpeedDepthCoefficient { get; set; }
@@ -165,7 +165,7 @@ namespace TerrainGeneration
             // Water erosion
             this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 7;  // 20
-            this.WaterCarryingAmountDecayPerRun = 1.0f;  // 1.05 1.2
+            
             this.WaterDepositWaterCollapseAmount = 0.02f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
@@ -385,16 +385,6 @@ namespace TerrainGeneration
                 int cellox = cellx, celloy = celly; // check for oscillation in a small area
                 bool needReset = false;
 
-
-
-                wp.CarryingDecay *= this.WaterCarryingAmountDecayPerRun;  //1.04
-                if (wp.CarryingDecay >= 1.0f)
-                {
-                    //this.Map[celli].Loose += wp.CarryingAmount;
-                    //wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
-                    needReset = true;
-                }
-
                 // run the particle for a number of cells
                 for (int i = 0; i < CellsPerRun && !needReset; i++)
                 {
@@ -573,7 +563,7 @@ namespace TerrainGeneration
                     this.Map[celli].MovingWater += WaterAccumulatePerFrame * crossdistance;
 
                     // calculate new carrying capacity
-                    float newCarryingCapacity = (this.WaterCarryingCapacitySpeedCoefficient * wp.Speed) * (1.0f - wp.CarryingDecay);
+                    float newCarryingCapacity = (this.WaterCarryingCapacitySpeedCoefficient * wp.Speed);
                     wp.CarryingCapacity = wp.CarryingCapacity * this.WaterCarryingCapacityLowpass + (1f - this.WaterCarryingCapacityLowpass) * newCarryingCapacity;
                     if (wp.CarryingCapacity > this.WaterMaxCarryingCapacity)
                     {
@@ -679,23 +669,9 @@ namespace TerrainGeneration
                 }
 
 
-                // if we haven't moved further than a portion of the cells per run (manhattan distance), then decay carrying capacity faster
-                //if (Math.Abs(cellx - cellox) + Math.Abs(celly - celloy) < CellsPerRun / 2)
-                //{
-                //    wp.CarryingDecay *= 1.1f;
-                //    if (wp.CarryingDecay > 1.0f)
-                //    {
-                //        needReset = true;
-                //    }
-                //}
-
-
                 if (needReset)
                 {
-                    //this.Map[celli].Erosion += 0.9f;
-
                     this.Map[celli].Loose += wp.CarryingAmount;
-                    //DistributeRemainingMaterial(wp.CarryingAmount, cellx, celly);
                     CollapseFrom(cellx, celly, 0.1f);
 
                     wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
