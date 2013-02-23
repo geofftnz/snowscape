@@ -56,18 +56,6 @@ namespace TerrainGeneration
         /// </summary>
         public float WaterAccumulatePerFrame { get; set; }  // 0.001 originally
 
-        /// <summary>
-        /// This adds a random vector of length up to 0.5 x this factor to the fall vector.
-        /// This will ruin the behaviour if you make it too big.
-        /// </summary>
-        public float WaterTurbulence { get; set; }
-
-        /// <summary>
-        /// The momentum of the water particles. Practically this means the amount of the previous fall vector added to the current one.
-        /// Influences the perceived scale of the terrain.
-        /// </summary>
-        public float WaterMomentumFactor { get; set; }
-
         #endregion
 
         public int Iterations { get; private set; }
@@ -102,12 +90,13 @@ namespace TerrainGeneration
 
 
             /// <summary>
-            /// Suspended material - indicates erosion
+            /// Misc param used for visualisation
             /// </summary>
             public float VisParam;
 
             /// <summary>
             /// Amount of suspended material carried over this tile.
+            /// Used for visualisation
             /// </summary>
             public float Carrying;
 
@@ -115,7 +104,7 @@ namespace TerrainGeneration
             {
                 get
                 {
-                    return Rock + Silt;
+                    return Rock + Clay + Silt;
                 }
             }
 
@@ -123,7 +112,7 @@ namespace TerrainGeneration
             {
                 get
                 {
-                    return Rock + Silt + MovingWater;
+                    return Rock + Clay + Silt + MovingWater;
                 }
             }
         }
@@ -181,8 +170,6 @@ namespace TerrainGeneration
             this.WaterAccumulatePerFrame = 0.05f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.5f;  // 0.2 0.8 
-            this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
-            this.WaterTurbulence = 0.0f; // 0  0.05f;
 
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
             this.WaterParticleMinCarryingToSurvive = 0.01f;
@@ -289,7 +276,6 @@ namespace TerrainGeneration
 
 
             this.RunWater2(this.WaterIterationsPerFrame);
-            //this.RunWater3(this.WaterIterationsPerFrame);
 
             this.Slump(this.TerrainSlumpMaxHeightDifference, this.TerrainSlumpMovementAmount, this.TerrainSlumpSamplesPerFrame);
             this.Slump(this.TerrainSlump2MaxHeightDifference, this.TerrainSlump2MovementAmount, this.TerrainSlump2SamplesPerFrame);
@@ -437,10 +423,10 @@ namespace TerrainGeneration
                         break;
                     }
 
-                    turbulence.X = (float)rand.NextDouble() - 0.5f;
-                    turbulence.Y = (float)rand.NextDouble() - 0.5f;
+                    //turbulence.X = (float)rand.NextDouble() - 0.5f;
+                    //turbulence.Y = (float)rand.NextDouble() - 0.5f;
 
-                    wp.Vel = wp.Vel * this.WaterMomentumFactor + fall + turbulence * this.WaterTurbulence;
+                    wp.Vel = fall; // wp.Vel * this.WaterMomentumFactor + fall + turbulence * this.WaterTurbulence;
                     wp.Vel.Normalize();
 
                     // compute exit point and new cell coords
@@ -500,6 +486,7 @@ namespace TerrainGeneration
                     // calculate distance that we're travelling across cell.
                     float crossdistance = (newPos - wp.Pos).Length;
 
+                    #region Uphill check
                     if (ndiff > 0f)
                     {
                         // we are moving uphill... shouldn't happen, but try to remedy
@@ -520,13 +507,13 @@ namespace TerrainGeneration
                             break;
                         }
                     }
+                    #endregion
 
                     // now we should really be moving downhill
                     if (ndiff < 0f)
                     {
                         ndiff = -ndiff;
 
-                        //float slope = (float)Math.Atan(-ndiff) / 1.570796f;
                         float slopeLength = ((float)Math.Sqrt(ndiff * ndiff + crossdistance * crossdistance));  // drop over total distance travelled
 
                         // calculate accelleration due to gravity
@@ -537,8 +524,6 @@ namespace TerrainGeneration
                         wp.Speed *= 0.95f; // drag
                         wp.Speed = wp.Speed * this.WaterSpeedLowpassAmount + (1.0f - this.WaterSpeedLowpassAmount) * newSpeed;
 
-                        // blend speed into map for display
-                        //this.Map[celli].Erosion = this.Map[celli].Erosion * 0.5f + 0.5f * wp.Speed;
                     }
 
 
@@ -572,8 +557,8 @@ namespace TerrainGeneration
                     {
                         cdiff = -cdiff;
 
-                        float loose = this.Map[celli].Silt;
-                        float hard = this.Map[celli].Rock;
+                        float silt = this.Map[celli].Silt;
+                        float rock = this.Map[celli].Rock;
 
 
                         if (wp.Speed > this.WaterErosionMinSpeed)
@@ -591,11 +576,11 @@ namespace TerrainGeneration
                             }
 
                             // first of all, see if we can pick up any loose material.
-                            if (loose > 0.0f)
+                            if (silt > 0.0f)
                             {
-                                if (looseErodeAmount > loose)
+                                if (looseErodeAmount > silt)
                                 {
-                                    looseErodeAmount = loose;
+                                    looseErodeAmount = silt;
                                 }
 
                                 this.Map[celli].Silt -= looseErodeAmount;
