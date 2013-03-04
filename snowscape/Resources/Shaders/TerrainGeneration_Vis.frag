@@ -76,7 +76,7 @@ void main(void)
 	col = mix(col,colW,smoothstep(0.02,0.5,s.g) * 0.5); // water
 
     // misc vis
-	vec4 colE = vec4(1.0,0.0,1.0,1.0);
+	vec4 colE = vec4(0.4,0.6,0.9,1.0);
 	col += colE * clamp(s.a,0.0,1.0);
 
 
