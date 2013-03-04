@@ -271,7 +271,7 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
-            if (this.Iterations % 16 == 0)
+            if (this.Iterations % 64 == 0)
             {
                 this.SortWater();
             }
@@ -286,7 +286,7 @@ namespace TerrainGeneration
 
             // fade water amount
             // 0.96
-            DecayWater(0.9f, 0.5f, 0.95f);
+            DecayWater(0.975f, 0.5f, 0.95f);
 
             this.Iterations++;
         }

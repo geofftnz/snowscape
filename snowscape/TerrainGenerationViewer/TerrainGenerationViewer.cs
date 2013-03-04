@@ -226,7 +226,7 @@ namespace Snowscape.TerrainGenerationViewer
 
                 iteration++;
 
-                if (iteration % 5 == 0)
+                if (iteration % 2 == 0)
                 {
                     lock (this)
                     {
