@@ -137,8 +137,8 @@ namespace TerrainGeneration
 
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
-            this.TerrainSlumpMovementAmount = 0.01f;
-            this.TerrainSlumpSamplesPerFrame = 5000;
+            this.TerrainSlumpMovementAmount = 0.05f;
+            this.TerrainSlumpSamplesPerFrame = 10000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.3f;
@@ -160,7 +160,7 @@ namespace TerrainGeneration
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
-            this.WaterErosionSpeedCoefficient = 0.01f;  // 1
+            this.WaterErosionSpeedCoefficient = 0.0025f;  // 0.01
             this.WaterErosionHardErosionFactor = 0.1f;
 
             this.WaterErosionCollapseToAmount = 0.005f;
