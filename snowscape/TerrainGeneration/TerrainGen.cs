@@ -136,14 +136,14 @@ namespace TerrainGeneration
             // init parameters
 
             // Slump loose slopes - general case
-            this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
+            this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
             this.TerrainSlumpMovementAmount = 0.05f;
             this.TerrainSlumpSamplesPerFrame = 10000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.3f;
-            this.TerrainSlump2MovementAmount = 0.02f;
-            this.TerrainSlump2SamplesPerFrame = 100;// 2000;
+            this.TerrainSlump2MovementAmount = 0.05f;
+            this.TerrainSlump2SamplesPerFrame = 500;// 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
