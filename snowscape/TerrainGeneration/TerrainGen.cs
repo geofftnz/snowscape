@@ -160,16 +160,16 @@ namespace TerrainGeneration
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
             this.WaterCarryingCapacityLowpass = 0.2f;
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
-            this.WaterErosionSpeedCoefficient = 0.0025f;  // 0.01
+            this.WaterErosionSpeedCoefficient = 0.005f;  // 0.01
             this.WaterErosionHardErosionFactor = 0.1f;
 
-            this.WaterErosionCollapseToAmount = 0.005f;
-            this.WaterErosionCollapseToThreshold = 0.5f;
+            this.WaterErosionCollapseToAmount = 0.01f;
+            this.WaterErosionCollapseToThreshold = 0.05f;
 
-            this.WaterErosionMinSpeed = 0.01f;  // 0.01
-            this.WaterAccumulatePerFrame = 0.05f; //0.005 0.002f;
+            this.WaterErosionMinSpeed = 0.001f;  // 0.01
+            this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
-            this.WaterSpeedLowpassAmount = 0.5f;  // 0.2 0.8 
+            this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.0f; // 0  0.05f;
 
@@ -228,10 +228,10 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.25f / (float)this.Width, 800.0f, h => h, h => h + h * h);
-            this.AddSimplexNoise(8, 1.9f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(6, 0.25f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(8, 1.1f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
 
-            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => h, h => h);
+            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => Math.Abs(h), h => h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -252,7 +252,7 @@ namespace TerrainGeneration
             */
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(20.0f);
+            this.AddLooseMaterial(25.0f);
             //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
 
@@ -288,7 +288,7 @@ namespace TerrainGeneration
 
             // fade water amount
             // 0.96
-            DecayWater(0.95f, 0.5f, 0.95f);
+            DecayWater(0.99f, 0.5f, 0.95f);
 
             this.Iterations++;
         }
