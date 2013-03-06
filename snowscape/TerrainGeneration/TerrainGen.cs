@@ -136,23 +136,23 @@ namespace TerrainGeneration
             // init parameters
 
             // Slump loose slopes - general case
-            this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
+            this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
             this.TerrainSlumpMovementAmount = 0.01f;
             this.TerrainSlumpSamplesPerFrame = 5000;
 
             // Slump loose slopes - rare case
-            this.TerrainSlump2MaxHeightDifference = 0.5f;
+            this.TerrainSlump2MaxHeightDifference = 0.3f;
             this.TerrainSlump2MovementAmount = 0.02f;
-            this.TerrainSlump2SamplesPerFrame = 0;// 2000;
+            this.TerrainSlump2SamplesPerFrame = 100;// 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
             this.TerrainCollapseMovementAmount = 0.08f;
             this.TerrainCollapseLooseThreshold = 1f;
-            this.TerrainCollapseSamplesPerFrame = 0;// 500;
+            this.TerrainCollapseSamplesPerFrame = 100;// 500;
 
             // Water erosion
-            this.WaterNumParticles = 10000;  // 4000
+            this.WaterNumParticles = 5000;  // 4000
             this.WaterIterationsPerFrame = 7;  // 20
             
             this.WaterDepositWaterCollapseAmount = 0.02f;  // 0.05
@@ -228,8 +228,10 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.1f / (float)this.Width, 100.0f, h => h, h => h + h * h);
-            this.AddSimplexNoise(12, 0.7f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(6, 0.25f / (float)this.Width, 800.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(8, 1.9f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
+
+            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => h, h => h);
 
             //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
 
@@ -250,7 +252,7 @@ namespace TerrainGeneration
             */
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(10.0f);
+            this.AddLooseMaterial(20.0f);
             //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
 
@@ -286,7 +288,7 @@ namespace TerrainGeneration
 
             // fade water amount
             // 0.96
-            DecayWater(0.975f, 0.5f, 0.95f);
+            DecayWater(0.95f, 0.5f, 0.95f);
 
             this.Iterations++;
         }

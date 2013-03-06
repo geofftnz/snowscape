@@ -353,7 +353,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (this.frameCounter.Frames % 32 == 0)
             {
-                frameCounterText.Text = string.Format("FPS: {0:0.00} {1} updates: {2:0.0}ms {3} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+                frameCounterText.Text = string.Format("FPS: {0:0} {1:###0} updates: {2:0.0}ms {3:#,###,###,##0} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
                 textManager.AddOrUpdate(frameCounterText);
                 
                 float y = 0.1f;
