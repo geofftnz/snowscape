@@ -136,7 +136,7 @@ namespace TerrainGeneration
             // init parameters
 
             // Slump loose slopes - general case
-            this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
+            this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
             this.TerrainSlumpMovementAmount = 0.02f;
             this.TerrainSlumpSamplesPerFrame = 10000;
 
@@ -161,13 +161,13 @@ namespace TerrainGeneration
             this.WaterCarryingCapacityLowpass = 0.2f;
             this.WaterProportionToDropOnOverCapacity = 0.9f;  // 0.8
             this.WaterErosionSpeedCoefficient = 0.005f;  // 0.01
-            this.WaterErosionHardErosionFactor = 0.1f;
+            this.WaterErosionHardErosionFactor = 0.03f; //0.1
 
             this.WaterErosionCollapseToAmount = 0.002f;
             this.WaterErosionCollapseToThreshold = 0.0001f;
 
             this.WaterErosionMinSpeed = 0.001f;  // 0.01
-            this.WaterAccumulatePerFrame = 0.002f; //0.005 0.002f;
+            this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
@@ -288,7 +288,7 @@ namespace TerrainGeneration
 
             // fade water amount
             // 0.96
-            DecayWater(0.99f, 0.5f, 0.95f);
+            DecayWater(0.96f, 0.5f, 0.95f);
 
             this.Iterations++;
         }
