@@ -137,19 +137,19 @@ namespace TerrainGeneration
 
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 1.0f;  // 1.0
-            this.TerrainSlumpMovementAmount = 0.05f;
+            this.TerrainSlumpMovementAmount = 0.02f;
             this.TerrainSlumpSamplesPerFrame = 10000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.3f;
             this.TerrainSlump2MovementAmount = 0.05f;
-            this.TerrainSlump2SamplesPerFrame = 500;// 2000;
+            this.TerrainSlump2SamplesPerFrame = 0;// 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
             this.TerrainCollapseMovementAmount = 0.08f;
             this.TerrainCollapseLooseThreshold = 1f;
-            this.TerrainCollapseSamplesPerFrame = 100;// 500;
+            this.TerrainCollapseSamplesPerFrame = 0;// 500;
 
             // Water erosion
             this.WaterNumParticles = 5000;  // 4000
@@ -163,11 +163,11 @@ namespace TerrainGeneration
             this.WaterErosionSpeedCoefficient = 0.005f;  // 0.01
             this.WaterErosionHardErosionFactor = 0.1f;
 
-            this.WaterErosionCollapseToAmount = 0.01f;
-            this.WaterErosionCollapseToThreshold = 0.05f;
+            this.WaterErosionCollapseToAmount = 0.002f;
+            this.WaterErosionCollapseToThreshold = 0.0001f;
 
             this.WaterErosionMinSpeed = 0.001f;  // 0.01
-            this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
+            this.WaterAccumulatePerFrame = 0.002f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
             this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
@@ -904,6 +904,13 @@ namespace TerrainGeneration
         /// 
         public void Slump(float _threshold, float amount, int numIterations)
         {
+            // early exit if no iterations
+            if (numIterations == 0)
+            {
+                return;
+            }
+
+
             //float amount2 = amount * 0.707f;
             float _threshold2 = (float)(_threshold * Math.Sqrt(2.0));
             this.ClearTempDiffMap();
@@ -1003,6 +1010,12 @@ namespace TerrainGeneration
         /// <param name="numIterations"></param>
         public void Collapse(float _threshold, float amount, float looseThreshold, int numIterations)
         {
+            // early exit if no iterations
+            if (numIterations == 0)
+            {
+                return;
+            }
+
             //float amount2 = amount * 0.707f;
             float _threshold2 = (float)(_threshold * Math.Sqrt(2.0));
             this.ClearTempDiffMap();
