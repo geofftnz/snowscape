@@ -252,7 +252,7 @@ namespace TerrainGeneration
             */
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(25.0f);
+            this.AddLooseMaterial(50.0f);
             //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
 
