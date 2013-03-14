@@ -34,7 +34,7 @@ namespace TerrainGeneration
 
         public int WaterNumParticles { get; set; }
         public int WaterIterationsPerFrame { get; set; }
-        
+
         public float WaterDepositWaterCollapseAmount { get; set; }
         public float WaterSpeedLowpassAmount { get; set; }
         public float WaterCarryingCapacitySpeedCoefficient { get; set; } // 10.8
@@ -43,7 +43,7 @@ namespace TerrainGeneration
         public float WaterProportionToDropOnOverCapacity { get; set; } // 0.8
         public float WaterErosionSpeedCoefficient { get; set; } // 1.0
         public float WaterErosionHardErosionFactor { get; set; }  // 0.3
-        
+
         public float WaterErosionCollapseToAmount { get; set; } // 0.02f
         public float WaterErosionCollapseToThreshold { get; set; } // 0.02f
 
@@ -152,9 +152,9 @@ namespace TerrainGeneration
             this.TerrainCollapseSamplesPerFrame = 0;// 500;
 
             // Water erosion
-            this.WaterNumParticles = 5000;  // 4000
+            this.WaterNumParticles = 10000;  // 4000
             this.WaterIterationsPerFrame = 7;  // 20
-            
+
             this.WaterDepositWaterCollapseAmount = 0.02f;  // 0.05
             this.WaterCarryingCapacitySpeedCoefficient = 5.0f;  // 10 3
             this.WaterMaxCarryingCapacity = 20.0f;  // 100 50
@@ -224,6 +224,13 @@ namespace TerrainGeneration
             Array.Clear(this.TempDiffMap, 0, this.Width * this.Height);
         }
 
+
+        public void ResetTerrain()
+        {
+            this.InitTerrain1();
+            this.ResetAllWaterParticles();
+        }
+
         public void InitTerrain1()
         {
             this.Clear(0.0f);
@@ -231,30 +238,12 @@ namespace TerrainGeneration
             this.AddSimplexNoise(6, 0.25f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
             this.AddSimplexNoise(8, 1.1f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
 
-            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => Math.Abs(h), h => h);
-
-            //this.AddSimplexNoise(5, 7.3f / (float)this.Width, 600.0f, h => Math.Abs(h), h => h * h);
-
-
-            //this.AddSimplexNoise(8, 2.43f / (float)this.Width, 700.0f, h => Math.Abs(h), h => h * h);
-
-            //this.AddSimplexNoise(10, 7.7f / (float)this.Width, 50.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
-            //this.AddSimplexNoise(5, 37.7f / (float)this.Width, 5.0f, h => Math.Abs(h), h => (h * h * 2f).Clamp(0.1f, 10.0f) - 0.1f);
-
-            //this.AddSimplexNoise(3, 0.3f / (float)this.Width, 1300.0f, h => h, h => h);
-            /*
-            this.AddSimplexNoise(7, 1.3f / (float)this.Width, 800.0f, h => (h >= 0f ? h : -h), h => h * h);
-
-            this.AddMultipliedSimplexNoise(
-                3, 1.0f / (float)this.Width, h => h, 0.6f, 0.5f,
-                10, 1.7f / (float)this.Width, h => (h >= 0f ? h : -h), 0.1f, 1.0f,
-                h => h, 500.0f);
-            */
-
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(50.0f);
+            this.AddLooseMaterial(20.0f);
+            this.AddLooseMaterialBasedOnSlope(20.0f);
             //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
+            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => Math.Abs(h), h => h);
 
 
             this.SetBaseLevel();
@@ -339,8 +328,37 @@ namespace TerrainGeneration
         }
 
 
+        public void AddLooseMaterialBasedOnSlope(float amount)
+        {
+            ClearTempDiffMap();
+
+            var up = Vector3.UnitZ;
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                this.TempDiffMap[i] = amount * Utils.Utils.Max(0.0f, Vector3.Dot(CellNormal(x, y), up));
+            });
+
+            AddTempDiffMapToLoose();
+        }
+
+        public void AddTempDiffMapToLoose()
+        {
+            ParallelHelper.For2D(this.Width, this.Height, (i) => { this.Map[i].Loose += this.TempDiffMap[i]; });
+        }
+
+
         #region Water
 
+        public void ResetAllWaterParticles()
+        {
+            var rand = new Random();
+
+            foreach (var wp in this.WaterParticles)
+            {
+                wp.Reset(rand.Next(this.Width), rand.Next(this.Height), rand);// reset particle
+            }
+        }
 
         public void SortWater()
         {
@@ -362,8 +380,14 @@ namespace TerrainGeneration
 
             Func<int, float, float> LowestNeighbour = (i, h) => this.Map[i].WHeight < h ? this.Map[i].WHeight : h;
 
-            foreach (var wp in this.WaterParticles)
+            //foreach (var wp in this.WaterParticles)
+
+            int numParticles = this.WaterParticles.Count;
+
+            for (int wpi = 0; wpi < numParticles; wpi++)
             {
+                var wp = this.WaterParticles[wpi];
+
                 int cellx = wp.Pos.CellX(this.Width);
                 int celly = wp.Pos.CellY(this.Height);
                 int celli = C(cellx, celly);
@@ -1120,7 +1144,7 @@ namespace TerrainGeneration
         private Func<Cell[], int, int, float, float, float, float> CollapseToCellFunc = (m, collapseToCell, collapseFromCell, collapseToHeight, a, threshold) =>
         {
             float diff = (m[collapseFromCell].Height - collapseToHeight) - threshold;
-            
+
             if (diff > 0.0f)
             {
                 diff = Utils.Utils.Min(diff, m[collapseFromCell].Loose * 0.15f) * a;

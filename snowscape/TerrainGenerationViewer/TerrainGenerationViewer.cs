@@ -341,7 +341,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (Keyboard[Key.R])
             {
-                this.Terrain.InitTerrain1();
+                this.Terrain.ResetTerrain();
             }
 
 
