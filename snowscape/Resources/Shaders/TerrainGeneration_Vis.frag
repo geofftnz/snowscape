@@ -69,14 +69,15 @@ void main(void)
 	vec4 colW2 = vec4(1.2,1.3,1.4,1.0); // white water
 
 	colW = mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
-	colW = mix(colW,colW2,smoothstep(0.05,0.8,s.a)*0.8);  // speed -> white water
+
+	//colW = mix(colW,colW2,smoothstep(0.05,0.8,s.a)*0.8);  // speed -> white water
 
 	//col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
 	col = mix(col,colW,smoothstep(0.02,0.5,s.g) * 0.5); // water
 
     // misc vis
-	//vec4 colE = vec4(1.0,0.0,1.0,1.0);
-	//col += colE * clamp(s.a,0.0,1.0);
+	vec4 colE = vec4(0.4,0.6,0.9,1.0);
+	col += colE * clamp(s.a,0.0,1.0);
 
 
     vec3 n = getNormal(texcoord0.st);

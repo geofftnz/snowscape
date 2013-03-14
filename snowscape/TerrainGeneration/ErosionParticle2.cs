@@ -15,9 +15,7 @@ namespace TerrainGeneration
         public float CarryingCapacity;
         public float CarryingAmount;
         public float Speed;
-
-        // slowly degrades the carrying capacity of the particle - when it reaches 1, reset.
-        public float CarryingDecay;
+        public int Age;
 
         public WaterErosionParticle()
         {
@@ -48,10 +46,10 @@ namespace TerrainGeneration
             this.CarryingAmount = 0.0f;
             this.CarryingCapacity = 0.0f;
             this.Speed = 0f;
-            this.CarryingDecay = 0.001f;
             this.Vel.X = 0f;
             this.Vel.Y = 0f;
             this.Vel.Z = 0f;
+            this.Age = 0;
         }
 
         public void Reset(int x, int y)
