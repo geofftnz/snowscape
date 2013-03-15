@@ -46,6 +46,67 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Thread updateThread;
         private bool killThread = false;
+        private bool pauseThread = false;
+        private bool threadPaused = false;
+
+        private bool KillThread
+        {
+            get
+            {
+                bool temp;
+                lock (this)
+                {
+                    temp = this.killThread;
+                }
+                return temp;
+            }
+            set
+            {
+                lock (this)
+                {
+                    this.killThread = value;
+                }
+            }
+        }
+        private bool PauseThread
+        {
+            get
+            {
+                bool temp;
+                lock (this)
+                {
+                    temp = this.pauseThread;
+                }
+                return temp;
+            }
+            set
+            {
+                lock (this)
+                {
+                    this.pauseThread = value;
+                }
+            }
+        }
+        private bool ThreadPaused
+        {
+            get
+            {
+                bool temp;
+                lock (this)
+                {
+                    temp = this.threadPaused;
+                }
+                return temp;
+            }
+            set
+            {
+                lock (this)
+                {
+                    this.threadPaused = value;
+                }
+            }
+        }
+
         private TerrainGen.Cell[] threadCopyMap;
         private TerrainGen.Cell[] threadRenderMap;
         private uint updateThreadIterations;
@@ -200,7 +261,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void UpdateThreadProc()
         {
-            bool killMe = false;
+            //bool killMe = false;
+            bool pauseMe = false;
             uint iteration = 0;
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -211,29 +273,44 @@ namespace Snowscape.TerrainGenerationViewer
             while (true)
             {
                 // check for kill request.
-                lock (this)
-                {
-                    killMe = this.killThread;
-                }
-                if (killMe)
+                if (this.KillThread)
                 {
                     break;
                 }
+                //lock (this)
+                //{
+                //    killMe = this.killThread;
+                //}
+                //if (killMe)
+                //{
+                //    break;
+                //}
 
-                startTime = sw.Elapsed.TotalMilliseconds;
-                this.Terrain.ModifyTerrain();
-                updateTime = sw.Elapsed.TotalMilliseconds - startTime;
+                bool pauseRequest = this.PauseThread;
 
-                iteration++;
-
-                if (iteration % 2 == 0)
+                if (pauseMe != pauseRequest)
                 {
-                    lock (this)
+                    pauseMe = pauseRequest;
+                    this.ThreadPaused = pauseMe;
+                }
+
+                if (!pauseMe)
+                {
+                    startTime = sw.Elapsed.TotalMilliseconds;
+                    this.Terrain.ModifyTerrain();
+                    updateTime = sw.Elapsed.TotalMilliseconds - startTime;
+
+                    iteration++;
+
+                    if (iteration % 2 == 0)
                     {
-                        ParallelHelper.CopySingleThreadUnrolled(this.Terrain.Map,this.threadCopyMap, TileWidth * TileHeight);
-                        this.updateThreadIterations = iteration;
-                        this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
-                        this.waterIterations = this.Terrain.WaterIterations;
+                        lock (this)
+                        {
+                            ParallelHelper.CopySingleThreadUnrolled(this.Terrain.Map, this.threadCopyMap, TileWidth * TileHeight);
+                            this.updateThreadIterations = iteration;
+                            this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
+                            this.waterIterations = this.Terrain.WaterIterations;
+                        }
                     }
                 }
                 Thread.Sleep(1);
@@ -341,11 +418,28 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (Keyboard[Key.R])
             {
-                this.Terrain.ResetTerrain();
+                ResetTerrain();
             }
 
 
             updateCounter++;
+        }
+
+        private void ResetTerrain()
+        {
+            log.Info("Resetting Terrain - pausing thread");
+            this.PauseThread = true;
+
+            while (!this.ThreadPaused)
+            {
+                Thread.Sleep(1);
+            }
+            log.Info("Resetting Terrain - thread paused");
+
+            this.Terrain.ResetTerrain();
+
+            log.Info("Resetting Terrain - restarting thread");
+            this.PauseThread = false;
         }
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
@@ -390,7 +484,7 @@ namespace Snowscape.TerrainGenerationViewer
             quadShader.SetUniform("tex0_scale", this.view_scale);
             quadShader.SetUniform("heightTex", 0);
             quadShader.SetUniform("shadeTex", 1);
-            quadShader.SetUniform("resolution", new Vector2(this.ClientSize.Width,this.ClientSize.Height));
+            //quadShader.SetUniform("resolution", new Vector2(this.ClientSize.Width,this.ClientSize.Height));
             quadVertexVBO.Bind(quadShader.VariableLocation("vertex"));
             quadTexcoordVBO.Bind(quadShader.VariableLocation("in_texcoord0"));
             quadIndexVBO.Bind();
