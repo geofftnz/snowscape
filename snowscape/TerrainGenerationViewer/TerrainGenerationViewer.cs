@@ -200,7 +200,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
-            this.VSync = VSyncMode.On;
+            this.VSync = VSyncMode.Off;
 
             // create VBOs/Shaders etc
 

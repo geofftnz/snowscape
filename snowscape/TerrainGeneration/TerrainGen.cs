@@ -235,7 +235,7 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.25f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(6, 0.66f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
             this.AddSimplexNoise(8, 1.1f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);

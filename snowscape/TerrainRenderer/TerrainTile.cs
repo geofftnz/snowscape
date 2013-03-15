@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
+using OpenTKExtensions;
 
 namespace Snowscape.TerrainRenderer
 {
@@ -22,8 +25,24 @@ namespace Snowscape.TerrainRenderer
     /// </summary>
     public class TerrainTile
     {
-        public int Width { get; set; }
-        public int Height { get; set; }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+
+        public Texture HeightTexture { get; private set; }
+        public Texture NormalTexture { get; private set; }
+        public Texture ShadeTexture { get; private set; }
+
+        public float MinHeight { get; private set; }
+        public float MaxHeight { get; private set; }
+
+
+        public TerrainTile(int width, int height)
+        {
+            this.Width = width;
+            this.Height = height;    
+        }
+
+
 
     }
 }

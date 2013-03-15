@@ -44,11 +44,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Renderers\BoundingBoxRenderer.cs" />
+    <Compile Include="Renderers\ITileRenderer.cs" />
     <Compile Include="TerrainTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTKExtensions\OpenTKExtensions.csproj">
+      <Project>{DC685AA2-F46C-4525-9855-21CCD138E9D6}</Project>
+      <Name>OpenTKExtensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\Utils.csproj">
+      <Project>{E66023D1-358E-44B9-BC5B-51F6B205D60F}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
