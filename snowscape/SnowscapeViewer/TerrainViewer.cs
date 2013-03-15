@@ -8,6 +8,8 @@ using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
 using NLog;
 using Utils;
+using OpenTKExtensions.Camera;
+using OpenTK.Input;
 
 
 namespace Snowscape.Viewer
@@ -28,6 +30,8 @@ namespace Snowscape.Viewer
         private FrameCounter frameCounter = new FrameCounter();
         private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
         private PerfMonitor perfmon = new PerfMonitor();
+
+        private ICamera camera;
 
 
         public class CloseEventArgs : EventArgs { }
@@ -83,7 +87,13 @@ namespace Snowscape.Viewer
                 }
             }
 
+            this.camera.GetProjectionMatrix(out this.terrainProjection);
+            this.camera.GetModelviewMatrix(out this.terrainModelview);
 
+            textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+            textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+
+            GL.ClearColor(0.0f,0.0f,0.3f,1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 
@@ -105,7 +115,12 @@ namespace Snowscape.Viewer
 
         void TerrainViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
-            
+            this.camera.Update(e.Time);
+
+            if (Keyboard[Key.Escape])
+            {
+                this.Close();
+            }
         }
 
         void TerrainViewer_Closed(object sender, EventArgs e)
@@ -127,6 +142,9 @@ namespace Snowscape.Viewer
             // setup font
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
             textManager.Font = font;
+
+            // setup camera
+            this.camera = new QuaternionCamera(Mouse, Keyboard, this);
 
             this.frameCounter.Start();
         }
