@@ -418,11 +418,20 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (Keyboard[Key.R])
             {
-                ResetTerrain();
+                if (updateCounter > 10)
+                {
+                    ResetTerrain();
+                    ResetCounters();
+                }
             }
 
 
             updateCounter++;
+        }
+
+        private void ResetCounters()
+        {
+            this.updateCounter = 0;
         }
 
         private void ResetTerrain()
