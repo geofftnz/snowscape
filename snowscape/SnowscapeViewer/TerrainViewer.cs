@@ -44,7 +44,7 @@ namespace Snowscape.Viewer
         private VBO boxcoordVBO = new VBO("bbboxcoord");
         private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
         private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
-
+        private Texture heighttex = new Texture("height", 256, 256, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
 
 
 
@@ -143,6 +143,29 @@ namespace Snowscape.Viewer
                     new Variable(1, "in_boxcoord") 
                 });
 
+            // init texture parameters
+            this.heighttex
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+        }
+
+        private void SetupHeightTexSampleData()
+        {
+            float[] height = new float[256 * 256];
+
+            var r = new Random();
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+            ParallelHelper.For2D(256, 256, (x, y, i) =>
+            {
+                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, 256f, 256f, rx, ry, 10, 0.2f/256f, 200f, h => Math.Abs(h), h => h + h * h);
+            });
+
+            this.heighttex.Upload(height);
         }
 
         private void RenderBoundingBox(Matrix4 projection, Matrix4 modelview)
@@ -152,9 +175,11 @@ namespace Snowscape.Viewer
             GL.CullFace(CullFaceMode.Front);
 
             // todo: bind textures
+            this.heighttex.Bind(TextureUnit.Texture0);
             this.boundingBoxProgram.UseProgram();
             this.boundingBoxProgram.SetUniform("projection_matrix", projection);
             this.boundingBoxProgram.SetUniform("modelview_matrix", modelview);
+            this.boundingBoxProgram.SetUniform("heightTex", 0);
             this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
@@ -181,6 +206,7 @@ namespace Snowscape.Viewer
            // this.camera = new QuaternionCamera(Mouse, Keyboard, this, new Vector3(), new Quaternion(), true);
 
             this.SetupBoundingBox(0.0f, 128.0f);
+            this.SetupHeightTexSampleData(); 
 
             this.frameCounter.Start();
         }

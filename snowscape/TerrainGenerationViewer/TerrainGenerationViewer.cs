@@ -472,8 +472,6 @@ namespace Snowscape.TerrainGenerationViewer
             GL.ClearDepth(10.0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            
-
             perfmon.Start("RenderTerrain");
             this.heightTex.Bind(TextureUnit.Texture0);
             this.shadeTex.Bind(TextureUnit.Texture1);
