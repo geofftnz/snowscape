@@ -33,6 +33,8 @@ namespace Snowscape.Viewer
 
         private ICamera camera;
 
+        private double globalTime = 0.0;
+
 
         // bounding box
         // needs: 
@@ -82,8 +84,13 @@ namespace Snowscape.Viewer
 
         private void SetTerrainProjection()
         {
-            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.5f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
-            this.terrainModelview = Matrix4.LookAt(new Vector3(500.0f, 450f, 200f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.UnitY);
+            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
+
+            double r = 300.0f;
+            double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
+            Vector3 eye = new Vector3((float)(128.0+r * Math.Cos(a)), 200.0f, (float)(128.0+r * Math.Sin(a)));
+
+            this.terrainModelview = Matrix4.LookAt(eye, new Vector3(128.0f, 0.0f, 128.0f), Vector3.UnitY);
         }
 
         private void SetupBoundingBox(float minHeight, float maxHeight)
@@ -162,7 +169,7 @@ namespace Snowscape.Viewer
 
             ParallelHelper.For2D(256, 256, (x, y, i) =>
             {
-                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, 256f, 256f, rx, ry, 10, 0.2f/256f, 200f, h => Math.Abs(h), h => h + h * h);
+                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, 256f, 256f, rx, ry, 10, 0.2f / 256f, 200f, h => Math.Abs(h), h => h + h * h);
             });
 
             this.heighttex.Upload(height);
@@ -203,10 +210,10 @@ namespace Snowscape.Viewer
             textManager.Font = font;
 
             // setup camera
-           // this.camera = new QuaternionCamera(Mouse, Keyboard, this, new Vector3(), new Quaternion(), true);
+            // this.camera = new QuaternionCamera(Mouse, Keyboard, this, new Vector3(), new Quaternion(), true);
 
             this.SetupBoundingBox(0.0f, 128.0f);
-            this.SetupHeightTexSampleData(); 
+            this.SetupHeightTexSampleData();
 
             this.frameCounter.Start();
         }
@@ -214,6 +221,8 @@ namespace Snowscape.Viewer
         void TerrainViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
             //this.camera.Update(e.Time);
+
+            globalTime += e.Time;
 
             if (Keyboard[Key.Escape])
             {
@@ -241,6 +250,8 @@ namespace Snowscape.Viewer
             this.camera.GetModelviewMatrix(out this.terrainModelview);
              * */
 
+            SetTerrainProjection();
+
             textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
             textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
 
@@ -248,7 +259,7 @@ namespace Snowscape.Viewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderBox");
-            this.RenderBoundingBox(this.terrainProjection,this.terrainModelview);
+            this.RenderBoundingBox(this.terrainProjection, this.terrainModelview);
             perfmon.Stop("RenderBox");
 
             GL.Disable(EnableCap.DepthTest);
