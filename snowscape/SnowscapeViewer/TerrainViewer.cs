@@ -14,7 +14,7 @@ using OpenTK.Input;
 
 namespace Snowscape.Viewer
 {
-    public class TerrainViewer:GameWindow
+    public class TerrainViewer : GameWindow
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
@@ -34,11 +34,26 @@ namespace Snowscape.Viewer
         private ICamera camera;
 
 
+        // bounding box
+        // needs: 
+        // - Vertex VBO
+        // - Texcoord VBO (boxcoord)
+        // - Vertex Shader
+        // - Fragment Shader
+        private VBO vertexVBO = new VBO("bbvertex");
+        private VBO boxcoordVBO = new VBO("bbboxcoord");
+        private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
+        private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
+
+
+
+
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
         public event CloseEventHandler OnClose;
 
-        public TerrainViewer():base(640,480,new GraphicsMode(),"Snowscape",GameWindowFlags.Default,DisplayDevice.Default,3,0,GraphicsContextFlags.Default)
+        public TerrainViewer()
+            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 0, GraphicsContextFlags.Default)
         {
             this.Load += new EventHandler<EventArgs>(TerrainViewer_Load);
             this.Closed += new EventHandler<EventArgs>(TerrainViewer_Closed);
@@ -67,65 +82,84 @@ namespace Snowscape.Viewer
 
         private void SetTerrainProjection()
         {
-            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.5f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.01f, 10.0f);
-            //this.terrainModelview = Matrix4.LookAt(
+            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.5f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
+            this.terrainModelview = Matrix4.LookAt(new Vector3(500.0f, 450f, 200f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.UnitY);
         }
 
-        void TerrainViewer_RenderFrame(object sender, FrameEventArgs e)
+        private void SetupBoundingBox(float minHeight, float maxHeight)
         {
+            float minx, maxx, minz, maxz;
+            Vector3[] vertex = new Vector3[8];
+            Vector3[] boxcoord = new Vector3[8];
 
-            if (this.frameCounter.Frames % 32 == 0)
+            minx = minz = 0.0f;
+            maxx = 256.0f; // width of tile
+            maxz = 256.0f; // height of tile
+
+            for (int i = 0; i < 8; i++)
             {
-                frameCounterText.Text = string.Format("FPS: {0:0}", frameCounter.FPSSmooth);
-                textManager.AddOrUpdate(frameCounterText);
+                vertex[i].X = (i & 0x02) == 0 ? ((i & 0x01) == 0 ? minx : maxx) : ((i & 0x01) == 0 ? maxx : minx);
+                vertex[i].Y = ((i & 0x04) == 0 ? minHeight : maxHeight);
+                vertex[i].Z = (i & 0x02) == 0 ? minz : maxz;
 
-                float y = 0.1f;
-                foreach (var timer in this.perfmon.AllAverageTimes())
-                {
-                    textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
-                    y += 0.0125f;
-                }
+                //this.BoundingBoxRenderVertex[i].Color = new Color(this.BoundingBoxRenderVertex[i].Position.X, this.BoundingBoxRenderVertex[i].Position.Y, this.BoundingBoxRenderVertex[i].Position.Z, 255);
+                //this.BoundingBoxVertex[i].Position = this.BoundingBoxRenderVertex[i].Position;
+
+                boxcoord[i].X = (i & 0x02) == 0 ? ((i & 0x01) == 0 ? minx : maxx) : ((i & 0x01) == 0 ? maxx : minx);
+                boxcoord[i].Y = ((i & 0x04) == 0 ? minHeight : maxHeight);
+                boxcoord[i].Z = (i & 0x02) == 0 ? minz : maxz;
             }
 
-            this.camera.GetProjectionMatrix(out this.terrainProjection);
-            this.camera.GetModelviewMatrix(out this.terrainModelview);
+            // vertex VBO
+            this.vertexVBO.SetData(vertex);
+            // boxcoord VBO
+            this.boxcoordVBO.SetData(boxcoord);
 
-            textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
-            textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+            // cubeindex VBO
+            uint[] cubeindex = {
+                                  7,3,2,
+                                  7,2,6,
+                                  6,2,1,
+                                  6,1,5,
+                                  5,1,0,
+                                  5,0,4,
+                                  4,3,7,
+                                  4,0,3,
+                                  3,1,2,
+                                  3,0,1,
+                                  5,7,6,
+                                  5,4,7
+                              };
 
-            GL.ClearColor(0.0f,0.0f,0.3f,1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            indexVBO.SetData(cubeindex);
 
+            // setup shader
+            this.boundingBoxProgram.Init(
+                @"../../../Resources/Shaders/TerrainTile.vert".Load(),
+                @"../../../Resources/Shaders/TerrainTile_Debug1.frag".Load(),
+                new List<Variable> 
+                { 
+                    new Variable(0, "vertex"), 
+                    new Variable(1, "in_boxcoord") 
+                });
 
-            GL.Disable(EnableCap.DepthTest);
-            perfmon.Start("RefreshText");
-            if (textManager.NeedsRefresh) textManager.Refresh();
-            perfmon.Stop("RefreshText");
-
-            perfmon.Start("RenderText");
-            textManager.Render(overlayProjection, overlayModelview);
-            perfmon.Stop("RenderText");
-            GL.Enable(EnableCap.DepthTest);
-
-            GL.Flush();
-            SwapBuffers();
-
-            this.frameCounter.Frame();
         }
 
-        void TerrainViewer_UpdateFrame(object sender, FrameEventArgs e)
+        private void RenderBoundingBox(Matrix4 projection, Matrix4 modelview)
         {
-            this.camera.Update(e.Time);
+            GL.Disable(EnableCap.Texture2D);
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Front);
 
-            if (Keyboard[Key.Escape])
-            {
-                this.Close();
-            }
-        }
+            // todo: bind textures
+            this.boundingBoxProgram.UseProgram();
+            this.boundingBoxProgram.SetUniform("projection_matrix", projection);
+            this.boundingBoxProgram.SetUniform("modelview_matrix", modelview);
+            this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
+            this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
+            this.indexVBO.Bind();
+            GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
-        void TerrainViewer_Closed(object sender, EventArgs e)
-        {
-            OnClose(this, new CloseEventArgs());
         }
 
         void TerrainViewer_Load(object sender, EventArgs e)
@@ -144,9 +178,73 @@ namespace Snowscape.Viewer
             textManager.Font = font;
 
             // setup camera
-            this.camera = new QuaternionCamera(Mouse, Keyboard, this);
+           // this.camera = new QuaternionCamera(Mouse, Keyboard, this, new Vector3(), new Quaternion(), true);
+
+            this.SetupBoundingBox(0.0f, 128.0f);
 
             this.frameCounter.Start();
+        }
+
+        void TerrainViewer_UpdateFrame(object sender, FrameEventArgs e)
+        {
+            //this.camera.Update(e.Time);
+
+            if (Keyboard[Key.Escape])
+            {
+                this.Close();
+            }
+        }
+
+        void TerrainViewer_RenderFrame(object sender, FrameEventArgs e)
+        {
+            if (this.frameCounter.Frames % 32 == 0)
+            {
+                frameCounterText.Text = string.Format("FPS: {0:0}", frameCounter.FPSSmooth);
+                textManager.AddOrUpdate(frameCounterText);
+
+                float y = 0.1f;
+                foreach (var timer in this.perfmon.AllAverageTimes())
+                {
+                    textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+                    y += 0.0125f;
+                }
+            }
+
+            /*
+            this.camera.GetProjectionMatrix(out this.terrainProjection);
+            this.camera.GetModelviewMatrix(out this.terrainModelview);
+             * */
+
+            textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+            textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+
+            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            perfmon.Start("RenderBox");
+            this.RenderBoundingBox(this.terrainProjection,this.terrainModelview);
+            perfmon.Stop("RenderBox");
+
+            GL.Disable(EnableCap.DepthTest);
+            perfmon.Start("RefreshText");
+            if (textManager.NeedsRefresh) textManager.Refresh();
+            perfmon.Stop("RefreshText");
+
+            perfmon.Start("RenderText");
+            textManager.Render(overlayProjection, overlayModelview);
+            perfmon.Stop("RenderText");
+            GL.Enable(EnableCap.DepthTest);
+
+            GL.Flush();
+            SwapBuffers();
+
+            this.frameCounter.Frame();
+        }
+
+
+        void TerrainViewer_Closed(object sender, EventArgs e)
+        {
+            OnClose(this, new CloseEventArgs());
         }
 
 
