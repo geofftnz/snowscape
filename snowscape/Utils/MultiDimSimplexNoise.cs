@@ -405,22 +405,24 @@ namespace Utils
             return noise(nx, ny, nz, nw);
         }
 
-        /*
-        for x=0,bufferwidth-1,1 do
-        for y=0,bufferheight-1,1 do
-                local s=x/bufferwidth
-                local t=y/bufferheight
-                local dx=x2-x1
-                local dy=y2-y1
-                
-                local nx=x1+cos(s*2*pi)*dx/(2*pi)
-                local ny=y1+cos(t*2*pi)*dy/(2*pi)
-                local nz=x1+sin(s*2*pi)*dx/(2*pi)
-                local nw=y1+sin(t*2*pi)*dy/(2*pi)
-                
-                buffer:set(x,y,Noise4D(nx,ny,nz,nw))
-        end
-        end
-        */
+        public static float wrapfbm(float x, float y, float sx,float sy, float rx, float ry, int octaves, float scale, float amplitude, Func<float, float> transform, Func<float, float> postTransform)
+        {
+            float r = 0f;
+            float s = x / sx;
+            float t = y / sy;
+
+            for (int j = 1; j <= octaves; j++)
+            {
+                r += transform(SimplexNoise.wrapnoise(s, t, sx, sy, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1)));
+            }
+
+            if (postTransform != null)
+            {
+                return postTransform(r) * amplitude;
+            }
+
+            return r * amplitude;
+        }
+
     }
 }
