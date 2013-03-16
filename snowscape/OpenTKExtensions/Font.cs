@@ -542,6 +542,8 @@ namespace OpenTKExtensions
                 throw new InvalidOperationException("Font isn't fully loaded.");
             }
 
+            GL.Enable(EnableCap.Texture2D);
+            GL.Disable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
