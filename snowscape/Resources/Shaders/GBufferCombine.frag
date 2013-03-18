@@ -6,6 +6,8 @@ uniform sampler2D normalTex;
 uniform sampler2D shadeTex;
 uniform sampler2D paramTex;
 
+uniform vec3 eyePos;
+
 in vec2 texcoord0;
 out vec4 out_Colour;
 
@@ -20,7 +22,8 @@ void main(void)
 	{
 		if (p.y < 1.0)
 		{
-			c = texture2D(posTex,p);
+			vec3 pos = texture2D(posTex,p).xyz + eyePos;
+			c = vec4(pos.xyz/512.0,0.0) + vec4(0.5,0.5,0.5,0.5);
 		}
 		else
 		{

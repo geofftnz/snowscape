@@ -36,6 +36,8 @@ namespace Snowscape.Viewer
 
         private ICamera camera;
 
+        private Vector3 eyePos;
+
         private double globalTime = 0.0;
 
         private GBuffer gbuffer = new GBuffer("gbuffer1");
@@ -106,11 +108,11 @@ namespace Snowscape.Viewer
         {
             this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
 
-            double r = 300.0f;
+            double r = 200.0f;
             double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
-            Vector3 eye = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
+            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
 
-            this.terrainModelview = Matrix4.LookAt(eye, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
+            this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
         }
 
         private void SetupGBufferCombiner()
@@ -244,10 +246,13 @@ namespace Snowscape.Viewer
             GL.CullFace(CullFaceMode.Front);
 
             this.heighttex.Bind(TextureUnit.Texture0);
-            this.boundingBoxProgram.UseProgram();
-            this.boundingBoxProgram.SetUniform("projection_matrix", projection);
-            this.boundingBoxProgram.SetUniform("modelview_matrix", modelview);
-            this.boundingBoxProgram.SetUniform("heightTex", 0);
+            this.boundingBoxProgram
+                .UseProgram()
+                .SetUniform("projection_matrix", projection)
+                .SetUniform("modelview_matrix", modelview)
+                .SetUniform("heightTex", 0)
+                .SetUniform("eyePos", this.eyePos)
+                .SetUniform("tileOffset",new Vector3(0f,0f,0f));
             this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
@@ -267,6 +272,7 @@ namespace Snowscape.Viewer
                 .UseProgram()
                 .SetUniform("projection_matrix", projection)
                 .SetUniform("modelview_matrix", modelview)
+                .SetUniform("eyePos", this.eyePos)
                 .SetUniform("posTex", 0)
                 .SetUniform("normalTex", 1)
                 .SetUniform("shadeTex", 2)
