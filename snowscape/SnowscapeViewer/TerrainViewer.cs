@@ -110,7 +110,7 @@ namespace Snowscape.Viewer
             double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
             Vector3 eye = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
 
-            this.terrainModelview = Matrix4.LookAt(eye, new Vector3(128.0f, 0.0f, 128.0f), Vector3.UnitY);
+            this.terrainModelview = Matrix4.LookAt(eye, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
         }
 
         private void SetupGBufferCombiner()
@@ -122,16 +122,16 @@ namespace Snowscape.Viewer
             int i = 0;
 
             vertex[i] = new Vector3(0.0f, 0.0f, 0.0f);
-            texcoord[i] = new Vector2(0.0f, 1.0f);
+            texcoord[i] = new Vector2(0.0f, 0.0f);
             i++;
             vertex[i] = new Vector3(1.0f, 0.0f, 0.0f);
-            texcoord[i] = new Vector2(1.0f, 1.0f);
-            i++;
-            vertex[i] = new Vector3(1.0f, 1.0f, 0.0f);
             texcoord[i] = new Vector2(1.0f, 0.0f);
             i++;
+            vertex[i] = new Vector3(1.0f, 1.0f, 0.0f);
+            texcoord[i] = new Vector2(1.0f, 1.0f);
+            i++;
             vertex[i] = new Vector3(0.0f, 1.0f, 0.0f);
-            texcoord[i] = new Vector2(0.0f, 0.0f);
+            texcoord[i] = new Vector2(0.0f, 1.0f);
             i++;
 
             this.gbufferCombineVertexVBO.SetData(vertex);
