@@ -9,15 +9,17 @@ out vec3 boxcoord;
  
 void main() {
 
-	vertex.x *= boxparam.x;
-	vertex.z *= boxparam.y;
-	vertex.y = (vertex.y * (boxparam.w - boxparam.z)) + boxparam.z;
+	vec3 v = vertex;
+	v.x *= boxparam.x;
+	v.z *= boxparam.y;
+	v.y = (v.y * (boxparam.w - boxparam.z)) + boxparam.z;
 
-    gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
+    gl_Position = projection_matrix * modelview_matrix * vec4(v, 1.0);
 
-	in_boxcoord.x *= boxparam.x;
-	in_boxcoord.z *= boxparam.y;
-	in_boxcoord.y = (in_boxcoord.y * (boxparam.w - boxparam.z)) + boxparam.z;
+	vec3 b = in_boxcoord;
+	b.x *= boxparam.x;
+	b.z *= boxparam.y;
+	b.y = (b.y * (boxparam.w - boxparam.z)) + boxparam.z;
     
-    boxcoord = in_boxcoord;
+    boxcoord = b;
 }

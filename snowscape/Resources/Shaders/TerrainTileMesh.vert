@@ -18,15 +18,17 @@ void main() {
     //normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
     //shade = texture2D(shadeTex,texcoord);
 
-	vertex.x *= boxparam.x;
-	vertex.z *= boxparam.y;
-	vertex.y = h;
+	vec3 v = vertex;
+	v.x *= boxparam.x;
+	v.z *= boxparam.y;
+	v.y = h;
 
-    gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
+    gl_Position = projection_matrix * modelview_matrix * vec4(v, 1.0);
 
-	in_boxcoord.x *= boxparam.x;
-	in_boxcoord.z *= boxparam.y;
-	in_boxcoord.y = h;
+	vec3 b = in_boxcoord;
+	b.x *= boxparam.x;
+	b.z *= boxparam.y;
+	b.y = h;
     
-    boxcoord = in_boxcoord;
+    boxcoord = b;
 }
