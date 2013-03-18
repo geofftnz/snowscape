@@ -27,24 +27,31 @@ namespace Snowscape.TerrainRenderer.Renderers
 
         public void Load()
         {
-            SetupBoundingBox(256, 256, 0.0f, 200.0f);
+            SetupBoundingBox();
             InitShader();
         }
 
         public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eyePos)
         {
+            var boxparam = tile.GetBoxParam();
+
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
-
             tile.HeightTexture.Bind(TextureUnit.Texture0);
+            tile.NormalTexture.Bind(TextureUnit.Texture1);
+            tile.ShadeTexture.Bind(TextureUnit.Texture2);
+
             this.boundingBoxProgram
                 .UseProgram()
                 .SetUniform("projection_matrix", projection)
                 .SetUniform("modelview_matrix", tile.ModelMatrix * view)
                 .SetUniform("heightTex", 0)
+                .SetUniform("normalTex", 1)
+                .SetUniform("shadeTex", 2)
                 .SetUniform("eyePos", eyePos)
-                .SetUniform("tileOffset", new Vector3(0f, 0f, 0f));
+                .SetUniform("tileOffset", new Vector3(0f, 0f, 0f))
+                .SetUniform("boxparam", boxparam);
             this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
@@ -58,15 +65,18 @@ namespace Snowscape.TerrainRenderer.Renderers
 
 
 
-        private void SetupBoundingBox(int width, int height, float minHeight, float maxHeight)
+        private void SetupBoundingBox()
         {
             float minx, maxx, minz, maxz;
             Vector3[] vertex = new Vector3[8];
             Vector3[] boxcoord = new Vector3[8];
 
             minx = minz = 0.0f;
-            maxx = width; // width of tile
-            maxz = height; // height of tile
+            maxx = 1.0f; // width of tile
+            maxz = 1.0f; // height of tile
+
+             float minHeight = 0.0f;
+             float maxHeight = 1.0f;
 
             for (int i = 0; i < 8; i++)
             {

@@ -48,6 +48,7 @@
     <Compile Include="Renderers\ITileRenderer.cs" />
     <Compile Include="Renderers\MeshRenderer.cs" />
     <Compile Include="Renderers\RaycastRenderer.cs" />
+    <Compile Include="Renderers\RendererHelper.cs" />
     <Compile Include="TerrainTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
