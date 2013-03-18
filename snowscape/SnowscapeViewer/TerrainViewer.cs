@@ -35,8 +35,6 @@ namespace Snowscape.Viewer
         private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
         private PerfMonitor perfmon = new PerfMonitor();
 
-        private ICamera camera;
-
         private Vector3 eyePos;
 
         private double globalTime = 0.0;
@@ -46,19 +44,6 @@ namespace Snowscape.Viewer
 
         private TerrainTile tile = new TerrainTile(256, 256);
         private ITileRenderer renderer = new BoundingBoxRenderer();
-
-        // bounding box
-        // needs: 
-        // - Vertex VBO
-        // - Texcoord VBO (boxcoord)
-        // - Vertex Shader
-        // - Fragment Shader
-        //private VBO vertexVBO = new VBO("bbvertex");
-        //private VBO boxcoordVBO = new VBO("bbboxcoord");
-        //private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
-        //private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
-        //private Texture heighttex = new Texture("height", 256, 256, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
-
 
 
 
@@ -157,117 +142,6 @@ namespace Snowscape.Viewer
                 });
         }
 
-        /*
-        private void SetupBoundingBox(float minHeight, float maxHeight)
-        {
-            float minx, maxx, minz, maxz;
-            Vector3[] vertex = new Vector3[8];
-            Vector3[] boxcoord = new Vector3[8];
-
-            minx = minz = 0.0f;
-            maxx = 256.0f; // width of tile
-            maxz = 256.0f; // height of tile
-
-            for (int i = 0; i < 8; i++)
-            {
-                vertex[i].X = (i & 0x02) == 0 ? ((i & 0x01) == 0 ? minx : maxx) : ((i & 0x01) == 0 ? maxx : minx);
-                vertex[i].Y = ((i & 0x04) == 0 ? minHeight : maxHeight);
-                vertex[i].Z = (i & 0x02) == 0 ? minz : maxz;
-
-                //this.BoundingBoxRenderVertex[i].Color = new Color(this.BoundingBoxRenderVertex[i].Position.X, this.BoundingBoxRenderVertex[i].Position.Y, this.BoundingBoxRenderVertex[i].Position.Z, 255);
-                //this.BoundingBoxVertex[i].Position = this.BoundingBoxRenderVertex[i].Position;
-
-                boxcoord[i].X = (i & 0x02) == 0 ? ((i & 0x01) == 0 ? minx : maxx) : ((i & 0x01) == 0 ? maxx : minx);
-                boxcoord[i].Y = ((i & 0x04) == 0 ? minHeight : maxHeight);
-                boxcoord[i].Z = (i & 0x02) == 0 ? minz : maxz;
-            }
-
-            // vertex VBO
-            this.vertexVBO.SetData(vertex);
-            // boxcoord VBO
-            this.boxcoordVBO.SetData(boxcoord);
-
-            // cubeindex VBO
-            uint[] cubeindex = {
-                                  7,3,2,
-                                  7,2,6,
-                                  6,2,1,
-                                  6,1,5,
-                                  5,1,0,
-                                  5,0,4,
-                                  4,3,7,
-                                  4,0,3,
-                                  3,1,2,
-                                  3,0,1,
-                                  5,7,6,
-                                  5,4,7
-                              };
-
-            indexVBO.SetData(cubeindex);
-
-            // setup shader
-            this.boundingBoxProgram.Init(
-                @"../../../Resources/Shaders/TerrainTile.vert".Load(),
-                @"../../../Resources/Shaders/TerrainTile_Debug1.frag".Load(),
-                new List<Variable> 
-                { 
-                    new Variable(0, "vertex"), 
-                    new Variable(1, "in_boxcoord") 
-                },
-                new string[]
-                {
-                    "out_Pos",
-                    "out_Normal",
-                    "out_Shade",
-                    "out_Param"
-                });
-
-            // init texture parameters
-            this.heighttex
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-
-        }
-        */
-        /*
-        private void SetupHeightTexSampleData()
-        {
-            float[] height = new float[256 * 256];
-
-            var r = new Random();
-            float rx = (float)r.NextDouble();
-            float ry = (float)r.NextDouble();
-
-            ParallelHelper.For2D(256, 256, (x, y, i) =>
-            {
-                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, 256f, 256f, rx, ry, 10, 0.2f / 256f, 200f, h => Math.Abs(h), h => h + h * h);
-            });
-
-            this.heighttex.Upload(height);
-        }*/
-        /*
-        private void RenderBoundingBox(Matrix4 projection, Matrix4 modelview)
-        {
-            GL.Disable(EnableCap.Texture2D);
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Front);
-
-            this.heighttex.Bind(TextureUnit.Texture0);
-            this.boundingBoxProgram
-                .UseProgram()
-                .SetUniform("projection_matrix", projection)
-                .SetUniform("modelview_matrix", modelview)
-                .SetUniform("heightTex", 0)
-                .SetUniform("eyePos", this.eyePos)
-                .SetUniform("tileOffset",new Vector3(0f,0f,0f));
-            this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
-            this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
-            this.indexVBO.Bind();
-            GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
-        }*/
-
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
             // bind the FBO textures
@@ -296,22 +170,14 @@ namespace Snowscape.Viewer
         {
             this.VSync = VSyncMode.Off;
 
-            // create VBOs/Shaders etc
-
             // GL state
             GL.Enable(EnableCap.DepthTest);
             GL.ClearColor(new Color4(0, 24, 64, 255));
-
 
             // setup font
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
             textManager.Font = font;
 
-            // setup camera
-            // this.camera = new QuaternionCamera(Mouse, Keyboard, this, new Vector3(), new Quaternion(), true);
-
-            //this.SetupBoundingBox(0.0f, 128.0f);
-            //this.SetupHeightTexSampleData();
             this.tile.Init();
             this.tile.SetupTestData();
 
@@ -354,15 +220,7 @@ namespace Snowscape.Viewer
                 }
             }
 
-            /*
-            this.camera.GetProjectionMatrix(out this.terrainProjection);
-            this.camera.GetModelviewMatrix(out this.terrainModelview);
-             * */
-
             SetTerrainProjection();
-
-            //textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
-            //textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
 
 
             this.gbuffer.BindForWriting();
@@ -371,7 +229,6 @@ namespace Snowscape.Viewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderBox");
-            //this.RenderBoundingBox(this.terrainProjection, this.terrainModelview);
             this.renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
             perfmon.Stop("RenderBox");
 
