@@ -69,6 +69,14 @@ namespace OpenTKExtensions
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge))
                     .UploadEmpty();
             }
+            public void UnloadTexture()
+            {
+                if (Enabled && this.Texture != null)
+                {
+                    this.Texture.Unload();
+                    this.Texture = null;
+                }
+            }
             public void AttachToFramebuffer(FramebufferTarget target)
             {
                 GL.FramebufferTexture2D(target, this.FramebufferAttachmentSlot, TextureTarget.Texture2D, this.TextureID, 0);
@@ -126,6 +134,17 @@ namespace OpenTKExtensions
             }
         }
 
+        private void UnloadAndDestroyAllTextures()
+        {
+            for (int i = 0; i < MAXSLOTS; i++)
+            {
+                if (this.TextureSlots[i].Enabled)
+                {
+                    this.TextureSlots[i].UnloadTexture();
+                }
+            }
+        }
+
         private void SetDrawBuffers()
         {
             GL.DrawBuffers(this.TextureSlots.Where(s => s.Enabled).Count(), this.TextureSlots.Where(s => s.Enabled).Select(s => s.DrawBufferSlot).ToArray());
@@ -136,10 +155,13 @@ namespace OpenTKExtensions
             this.Width = width;
             this.Height = height;
 
+            log.Info("GBuffer.Init ({0}) creating G-Buffer of size {1}x{2}", this.Name, this.Width, this.Height);
+
             if (this.FBO.Init() != -1)
             {
                 this.FBO.Bind();
 
+                UnloadAndDestroyAllTextures();
                 InitAllTextures();
 
                 // dump old depth texture

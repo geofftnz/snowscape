@@ -79,6 +79,7 @@ namespace Snowscape.Viewer
         void TerrainViewer_Resize(object sender, EventArgs e)
         {
             SetProjection();
+            this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 
         private void SetProjection()
