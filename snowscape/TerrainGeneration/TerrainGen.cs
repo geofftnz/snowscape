@@ -235,15 +235,15 @@ namespace TerrainGeneration
         {
             this.Clear(0.0f);
 
-            this.AddSimplexNoise(6, 0.66f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
-            this.AddSimplexNoise(8, 1.1f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
+            this.AddSimplexNoise(6, 0.3f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
+            this.AddSimplexNoise(8, 0.82f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
 
             //this.AddSimplexNoise(5, 3.3f / (float)this.Width, 50.0f);
-            this.AddLooseMaterial(20.0f);
-            this.AddLooseMaterialBasedOnSlope(20.0f);
+            this.AddLooseMaterial(30.0f);
+            this.AddLooseMaterialBasedOnSlope(30.0f,8);
             //this.AddSimplexNoiseToLoose(5, 17.7f / (float)this.Width, 5.0f);
 
-            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => Math.Abs(h), h => h);
+            this.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => h, h => h);
 
 
             this.SetBaseLevel();
@@ -328,7 +328,7 @@ namespace TerrainGeneration
         }
 
 
-        public void AddLooseMaterialBasedOnSlope(float amount)
+        public void AddLooseMaterialBasedOnSlope(float amount, int normalWidth)
         {
             ClearTempDiffMap();
 
@@ -336,7 +336,7 @@ namespace TerrainGeneration
 
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
             {
-                this.TempDiffMap[i] = amount * Utils.Utils.Max(0.0f, Vector3.Dot(CellNormal(x, y), up));
+                this.TempDiffMap[i] = amount * Utils.Utils.Max(0.0f, Vector3.Dot(CellNormalWide(x, y, normalWidth), up));
             });
 
             AddTempDiffMapToLoose();
@@ -1219,6 +1219,16 @@ namespace TerrainGeneration
             float h4 = this.Map[C(cx + 1, cy)].Height;
 
             return Vector3.Normalize(new Vector3(h3 - h4, h1 - h2, 2f));
+        }
+
+        private Vector3 CellNormalWide(int cx, int cy,int width)
+        {
+            float h1 = this.Map[C(cx, cy - width)].Height;
+            float h2 = this.Map[C(cx, cy + width)].Height;
+            float h3 = this.Map[C(cx - width, cy)].Height;
+            float h4 = this.Map[C(cx + width, cy)].Height;
+
+            return Vector3.Normalize(new Vector3(h3 - h4, h1 - h2, (float)width * 2f));
         }
 
         // fall vector as the weighted sum of the vectors between cells
