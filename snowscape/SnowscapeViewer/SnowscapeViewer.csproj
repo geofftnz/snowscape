@@ -59,6 +59,10 @@
       <Project>{4694A2B7-DE02-4B97-B363-E21AAAE65A72}</Project>
       <Name>Resources</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TerrainRenderer\TerrainRenderer.csproj">
+      <Project>{72E4F361-90DB-4475-A045-BF358A81090F}</Project>
+      <Name>TerrainRenderer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Utils\Utils.csproj">
       <Project>{E66023D1-358E-44B9-BC5B-51F6B205D60F}</Project>
       <Name>Utils</Name>

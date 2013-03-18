@@ -10,7 +10,8 @@ using NLog;
 using Utils;
 using OpenTKExtensions.Camera;
 using OpenTK.Input;
-
+using Snowscape.TerrainRenderer;
+using Snowscape.TerrainRenderer.Renderers;
 
 namespace Snowscape.Viewer
 {
@@ -42,17 +43,23 @@ namespace Snowscape.Viewer
 
         private GBuffer gbuffer = new GBuffer("gbuffer1");
 
+
+        private TerrainTile tile = new TerrainTile(256, 256);
+        private ITileRenderer renderer = new BoundingBoxRenderer();
+
         // bounding box
         // needs: 
         // - Vertex VBO
         // - Texcoord VBO (boxcoord)
         // - Vertex Shader
         // - Fragment Shader
-        private VBO vertexVBO = new VBO("bbvertex");
-        private VBO boxcoordVBO = new VBO("bbboxcoord");
-        private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
-        private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
-        private Texture heighttex = new Texture("height", 256, 256, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
+        //private VBO vertexVBO = new VBO("bbvertex");
+        //private VBO boxcoordVBO = new VBO("bbboxcoord");
+        //private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
+        //private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
+        //private Texture heighttex = new Texture("height", 256, 256, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
+
+
 
 
         // gbuffer combine
@@ -150,6 +157,7 @@ namespace Snowscape.Viewer
                 });
         }
 
+        /*
         private void SetupBoundingBox(float minHeight, float maxHeight)
         {
             float minx, maxx, minz, maxz;
@@ -222,7 +230,8 @@ namespace Snowscape.Viewer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
         }
-
+        */
+        /*
         private void SetupHeightTexSampleData()
         {
             float[] height = new float[256 * 256];
@@ -237,8 +246,8 @@ namespace Snowscape.Viewer
             });
 
             this.heighttex.Upload(height);
-        }
-
+        }*/
+        /*
         private void RenderBoundingBox(Matrix4 projection, Matrix4 modelview)
         {
             GL.Disable(EnableCap.Texture2D);
@@ -257,8 +266,7 @@ namespace Snowscape.Viewer
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
-
-        }
+        }*/
 
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
@@ -302,8 +310,12 @@ namespace Snowscape.Viewer
             // setup camera
             // this.camera = new QuaternionCamera(Mouse, Keyboard, this, new Vector3(), new Quaternion(), true);
 
-            this.SetupBoundingBox(0.0f, 128.0f);
-            this.SetupHeightTexSampleData();
+            //this.SetupBoundingBox(0.0f, 128.0f);
+            //this.SetupHeightTexSampleData();
+            this.tile.Init();
+            this.tile.SetupTestData();
+
+            this.renderer.Load();
 
             this.SetupGBufferCombiner();
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
@@ -359,7 +371,8 @@ namespace Snowscape.Viewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderBox");
-            this.RenderBoundingBox(this.terrainProjection, this.terrainModelview);
+            //this.RenderBoundingBox(this.terrainProjection, this.terrainModelview);
+            this.renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
             perfmon.Stop("RenderBox");
 
             this.gbuffer.UnbindFromWriting();

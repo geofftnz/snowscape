@@ -17,7 +17,7 @@ namespace Utils
             return (x.CompareTo(min) >= 0) ? ((x.CompareTo(max) <= 0) ? x : max) : min;
         }
 
-        public static float Min(float a, float b) 
+        public static float Min(float a, float b)
         {
             return (a + b - Math.Abs(a - b)) / 2;
         }
@@ -34,7 +34,7 @@ namespace Utils
 
         public static Color4 ToColor(this Vector3 v)
         {
-            return new Color4(v.X * 0.5f + 0.5f, v.Y * 0.5f + 0.5f, v.Z * 0.5f + 0.5f,1.0f);
+            return new Color4(v.X * 0.5f + 0.5f, v.Y * 0.5f + 0.5f, v.Z * 0.5f + 0.5f, 1.0f);
         }
 
         public static Color4 NormalToSphericalColor(this Vector3 v)
@@ -43,10 +43,10 @@ namespace Utils
             float theta = (float)(Math.Acos(v.Y) / Math.PI);
             float rho = (float)((Math.Atan2(v.Z, v.X) + Math.PI) / (Math.PI));
 
-            return new Color4(theta,rho,0f,1f);
+            return new Color4(theta, rho, 0f, 1f);
         }
 
-        public static float Wrap(this float x, float max) 
+        public static float Wrap(this float x, float max)
         {
             while (x < 0f) x += max;
             while (x >= max) x -= max;
@@ -88,6 +88,11 @@ namespace Utils
         public static string Load(this string filename)
         {
             return File.ReadAllText(filename);
+        }
+
+        public static byte UnitToByte(this float f)
+        {
+            return (byte)((f * 127.0f) + 128.0f).Clamp(0.0f, 255.0f);
         }
 
     }

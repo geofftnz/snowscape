@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
+using Utils;
 
 namespace Snowscape.TerrainRenderer
 {
@@ -35,14 +36,123 @@ namespace Snowscape.TerrainRenderer
         public float MinHeight { get; private set; }
         public float MaxHeight { get; private set; }
 
+        public Matrix4 ModelMatrix { get; set; }
 
         public TerrainTile(int width, int height)
         {
             this.Width = width;
-            this.Height = height;    
+            this.Height = height;
+        }
+
+        public void Init()
+        {
+            // setup textures
+            this.HeightTexture = 
+                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+            
+            this.NormalTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
+
+            this.ShadeTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
         }
 
 
+        public void SetupTestData()
+        {
+            float[] height = new float[this.Width * this.Height];
+
+            var r = new Random();
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 10, 0.3f / (float)this.Width, 200f, h => Math.Abs(h), h => h + h * h);
+            });
+
+            // set base level to 0
+            float min = height.Min();
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
+            {
+                height[i] -= min;
+            });
+
+            this.MinHeight = height.Min();
+            this.MaxHeight = height.Max();
+            
+            // set height to texture
+            this.HeightTexture.Upload(height);
+
+            // calculate normals
+            byte[] normals = new byte[this.Width * this.Height * 4];
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                var n = GetNormal(height, x, y);
+                var ii = i * 4;
+                normals[ii + 0] = n.X.UnitToByte();
+                normals[ii + 1] = n.Y.UnitToByte();
+                normals[ii + 2] = n.Z.UnitToByte();
+                normals[ii + 3] = 0;
+            });
+
+            this.NormalTexture.Upload(normals);
+
+            // shade texture - write in some noise
+            byte[] shade = new byte[this.Width * this.Height * 4];
+
+            rx = (float)r.NextDouble();
+            ry = (float)r.NextDouble();
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                var ii = i * 4;
+                float s1 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 3, 5.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
+                float s2 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx+17.0f, ry+5.0f, 5, 25.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
+
+                shade[ii + 0] = s1.UnitToByte();
+                shade[ii + 1] = s2.UnitToByte();
+                shade[ii + 2] = 0;
+                shade[ii + 3] = 0;
+            });
+
+            this.ShadeTexture.Upload(shade);
+
+            this.ModelMatrix = Matrix4.Identity;
+
+        }
+
+        private Vector3 GetNormal(float[] height, int cx, int cy)
+        {
+            float h1 = height[C(cx, cy - 1)];
+            float h2 = height[C(cx, cy + 1)];
+            float h3 = height[C(cx - 1, cy)];
+            float h4 = height[C(cx + 1, cy)];
+            return Vector3.Normalize(new Vector3(h3 - h4, h1 - h2, 2f));
+        }
+
+        private int C(int x, int y)
+        {
+            while (x < 0) x += this.Width;
+            while (x >= this.Width) x -= this.Width;
+            while (y < 0) y += this.Height;
+            while (y >= this.Height) y -= this.Height;
+            return x + y * this.Width;
+        }
 
     }
 }
+
+
+
