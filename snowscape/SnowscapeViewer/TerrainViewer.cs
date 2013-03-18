@@ -225,7 +225,7 @@ namespace Snowscape.Viewer
 
             this.gbuffer.BindForWriting();
 
-            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderBox");

@@ -21,9 +21,9 @@ void main(void)
     vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
     vec4 shade = texture2D(shadeTex,texcoord);
 
-    out_Pos = vec4(worldPos.xzy,1.0);
+    out_Pos = vec4(worldPos.xyz,1.0);
     out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
     out_Shade = vec4(shade.xyz,1.0);
-    out_Param = vec4(h / 255.0,0.5,1.0-h / 255.0,1.0);
+    out_Param = vec4(h / 255.0,h / 512.0-0.3,0.4-h / 255.0,1.0);
     //out_Colour = vec4(boxcoord.xyz / 255.0,1.0);
 }

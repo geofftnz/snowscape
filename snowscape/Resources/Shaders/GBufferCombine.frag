@@ -23,7 +23,7 @@ void main(void)
 		if (p.y < 1.0)
 		{
 			vec3 pos = texture2D(posTex,p).xyz + eyePos;
-			c = vec4(pos.xyz/512.0,0.0) + vec4(0.5,0.5,0.5,0.5);
+			c = vec4(pos.xyz/512.0,0.0) + vec4(0.5,0.5,0.5,1.0);
 		}
 		else
 		{
