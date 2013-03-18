@@ -332,8 +332,8 @@ namespace Snowscape.Viewer
 
             SetTerrainProjection();
 
-            textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
-            textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+            //textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+            //textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
 
 
             this.gbuffer.BindForWriting();
