@@ -24,6 +24,9 @@ namespace Snowscape.Viewer
         private Matrix4 terrainProjection = Matrix4.Identity;
         private Matrix4 terrainModelview = Matrix4.Identity;
 
+        private Matrix4 gbufferCombineProjection = Matrix4.Identity;
+        private Matrix4 gbufferCombineModelview = Matrix4.Identity;
+
         private Font font = new Font();
         private TextManager textManager = new TextManager("DefaultText", null);
 
@@ -83,12 +86,19 @@ namespace Snowscape.Viewer
             GL.Viewport(this.ClientRectangle);
             SetOverlayProjection();
             SetTerrainProjection();
+            SetGBufferCombineProjection();
         }
 
         private void SetOverlayProjection()
         {
             this.overlayProjection = Matrix4.CreateOrthographicOffCenter(0.0f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 1.0f, 0.0f, 0.001f, 10.0f);
             this.overlayModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
+        }
+
+        private void SetGBufferCombineProjection()
+        {
+            this.gbufferCombineProjection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
+            this.gbufferCombineModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
         }
 
         private void SetTerrainProjection()
@@ -106,21 +116,21 @@ namespace Snowscape.Viewer
         {
             var vertex = new Vector3[4];
             var texcoord = new Vector2[4];
-            uint[] index = {0,1,3,1,2,3};
+            uint[] index = { 0, 1, 3, 1, 2, 3 };
 
             int i = 0;
 
-            vertex[i] = new Vector3(0.0f,0.0f,0.0f);
-            texcoord[i] = new Vector2(0.0f, 0.0f);
+            vertex[i] = new Vector3(0.0f, 0.0f, 0.0f);
+            texcoord[i] = new Vector2(0.0f, 1.0f);
             i++;
             vertex[i] = new Vector3(1.0f, 0.0f, 0.0f);
-            texcoord[i] = new Vector2(1.0f, 0.0f);
-            i++;
-            vertex[i] = new Vector3(1.0f, 1.0f, 0.0f);
             texcoord[i] = new Vector2(1.0f, 1.0f);
             i++;
+            vertex[i] = new Vector3(1.0f, 1.0f, 0.0f);
+            texcoord[i] = new Vector2(1.0f, 0.0f);
+            i++;
             vertex[i] = new Vector3(0.0f, 1.0f, 0.0f);
-            texcoord[i] = new Vector2(0.0f, 1.0f);
+            texcoord[i] = new Vector2(0.0f, 0.0f);
             i++;
 
             this.gbufferCombineVertexVBO.SetData(vertex);
@@ -231,7 +241,7 @@ namespace Snowscape.Viewer
             GL.Disable(EnableCap.Texture2D);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);
-            
+
             this.heighttex.Bind(TextureUnit.Texture0);
             this.boundingBoxProgram.UseProgram();
             this.boundingBoxProgram.SetUniform("projection_matrix", projection);
@@ -353,7 +363,7 @@ namespace Snowscape.Viewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderGBufferCombiner");
-            RenderGBufferCombiner(overlayProjection, overlayModelview);
+            RenderGBufferCombiner(gbufferCombineProjection, gbufferCombineModelview);
             perfmon.Stop("RenderGBufferCombiner");
 
             GL.Disable(EnableCap.DepthTest);
