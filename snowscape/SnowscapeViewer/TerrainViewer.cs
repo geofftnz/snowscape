@@ -43,7 +43,8 @@ namespace Snowscape.Viewer
 
 
         private TerrainTile tile = new TerrainTile(256, 256);
-        private ITileRenderer renderer = new BoundingBoxRenderer();
+        //private ITileRenderer renderer = new BoundingBoxRenderer();
+        private ITileRenderer renderer = new MeshRenderer(64,64);
 
 
 

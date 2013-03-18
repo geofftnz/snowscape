@@ -78,7 +78,7 @@ namespace Snowscape.TerrainRenderer
 
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
             {
-                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 10, 0.3f / (float)this.Width, 200f, h => Math.Abs(h), h => h + h * h);
+                height[i] = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 10, 0.3f / (float)this.Width, 60f, h => Math.Abs(h), h => h + h * h);
             });
 
             // set base level to 0
