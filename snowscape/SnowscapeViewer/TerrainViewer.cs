@@ -35,6 +35,7 @@ namespace Snowscape.Viewer
 
         private double globalTime = 0.0;
 
+        private GBuffer gbuffer = new GBuffer("gbuffer1");
 
         // bounding box
         // needs: 
@@ -47,6 +48,14 @@ namespace Snowscape.Viewer
         private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
         private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
         private Texture heighttex = new Texture("height", 256, 256, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
+
+
+        // gbuffer combine
+        private VBO gbufferCombineVertexVBO = new VBO("gbvertex");
+        private VBO gbufferCombineTexcoordVBO = new VBO("gbtexcoord");
+        private VBO gbufferCombineIndexVBO = new VBO("gbindex", BufferTarget.ElementArrayBuffer);
+        private ShaderProgram gbufferCombineProgram = new ShaderProgram("gb");
+
 
 
 
@@ -88,9 +97,44 @@ namespace Snowscape.Viewer
 
             double r = 300.0f;
             double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
-            Vector3 eye = new Vector3((float)(128.0+r * Math.Cos(a)), 200.0f, (float)(128.0+r * Math.Sin(a)));
+            Vector3 eye = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(eye, new Vector3(128.0f, 0.0f, 128.0f), Vector3.UnitY);
+        }
+
+        private void SetupGBufferCombiner()
+        {
+            var vertex = new Vector3[4];
+            var texcoord = new Vector2[4];
+            uint[] index = {0,1,3,1,2,3};
+
+            int i = 0;
+
+            vertex[i] = new Vector3(0.0f,0.0f,0.0f);
+            texcoord[i] = new Vector2(0.0f, 0.0f);
+            i++;
+            vertex[i] = new Vector3(1.0f, 0.0f, 0.0f);
+            texcoord[i] = new Vector2(1.0f, 0.0f);
+            i++;
+            vertex[i] = new Vector3(1.0f, 1.0f, 0.0f);
+            texcoord[i] = new Vector2(1.0f, 1.0f);
+            i++;
+            vertex[i] = new Vector3(0.0f, 1.0f, 0.0f);
+            texcoord[i] = new Vector2(0.0f, 1.0f);
+            i++;
+
+            this.gbufferCombineVertexVBO.SetData(vertex);
+            this.gbufferCombineTexcoordVBO.SetData(texcoord);
+            this.gbufferCombineIndexVBO.SetData(index);
+
+            this.gbufferCombineProgram.Init(
+                @"../../../Resources/Shaders/GBufferCombine.vert".Load(),
+                @"../../../Resources/Shaders/GBufferCombine.frag".Load(),
+                new List<Variable> 
+                { 
+                    new Variable(0, "vertex"), 
+                    new Variable(1, "in_texcoord0") 
+                });
         }
 
         private void SetupBoundingBox(float minHeight, float maxHeight)
@@ -148,6 +192,13 @@ namespace Snowscape.Viewer
                 { 
                     new Variable(0, "vertex"), 
                     new Variable(1, "in_boxcoord") 
+                },
+                new string[]
+                {
+                    "out_Pos",
+                    "out_Normal",
+                    "out_Shade",
+                    "out_Param"
                 });
 
             // init texture parameters
@@ -180,8 +231,7 @@ namespace Snowscape.Viewer
             GL.Disable(EnableCap.Texture2D);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);
-
-            // todo: bind textures
+            
             this.heighttex.Bind(TextureUnit.Texture0);
             this.boundingBoxProgram.UseProgram();
             this.boundingBoxProgram.SetUniform("projection_matrix", projection);
@@ -191,6 +241,29 @@ namespace Snowscape.Viewer
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
+
+        }
+
+        private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
+        {
+            // bind the FBO textures
+            this.gbuffer.GetTextureAtSlot(0).Bind(TextureUnit.Texture0);
+            this.gbuffer.GetTextureAtSlot(1).Bind(TextureUnit.Texture1);
+            this.gbuffer.GetTextureAtSlot(2).Bind(TextureUnit.Texture2);
+            this.gbuffer.GetTextureAtSlot(3).Bind(TextureUnit.Texture3);
+
+            this.gbufferCombineProgram
+                .UseProgram()
+                .SetUniform("projection_matrix", projection)
+                .SetUniform("modelview_matrix", modelview)
+                .SetUniform("posTex", 0)
+                .SetUniform("normalTex", 1)
+                .SetUniform("shadeTex", 2)
+                .SetUniform("paramTex", 3);
+            this.gbufferCombineVertexVBO.Bind(this.gbufferCombineProgram.VariableLocation("vertex"));
+            this.gbufferCombineTexcoordVBO.Bind(this.gbufferCombineProgram.VariableLocation("in_texcoord0"));
+            this.gbufferCombineIndexVBO.Bind();
+            GL.DrawElements(BeginMode.Triangles, this.gbufferCombineIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
         }
 
@@ -214,6 +287,13 @@ namespace Snowscape.Viewer
 
             this.SetupBoundingBox(0.0f, 128.0f);
             this.SetupHeightTexSampleData();
+
+            this.SetupGBufferCombiner();
+            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
+            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // shade
+            this.gbuffer.SetSlot(3, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
+            this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             this.frameCounter.Start();
         }
@@ -255,12 +335,26 @@ namespace Snowscape.Viewer
             textManager.AddOrUpdate(new TextBlock("pmat", this.terrainProjection.ToString(), new Vector3(0.01f, 0.2f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
             textManager.AddOrUpdate(new TextBlock("mvmat", this.terrainModelview.ToString(), new Vector3(0.01f, 0.25f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
 
-            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+
+            this.gbuffer.BindForWriting();
+
+            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderBox");
             this.RenderBoundingBox(this.terrainProjection, this.terrainModelview);
             perfmon.Stop("RenderBox");
+
+            this.gbuffer.UnbindFromWriting();
+
+
+            GL.Viewport(this.ClientRectangle);
+            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            perfmon.Start("RenderGBufferCombiner");
+            RenderGBufferCombiner(overlayProjection, overlayModelview);
+            perfmon.Stop("RenderGBufferCombiner");
 
             GL.Disable(EnableCap.DepthTest);
             perfmon.Start("RefreshText");

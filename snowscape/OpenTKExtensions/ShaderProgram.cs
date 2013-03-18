@@ -28,23 +28,14 @@ namespace OpenTKExtensions
         }
 
         private Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
-        public Dictionary<string, int> UniformLocations
-        {
-            get
-            {
-                return this.uniformLocations;
-            }
-        }
+        public Dictionary<string, int> UniformLocations { get { return this.uniformLocations; } }
 
         private Dictionary<string, int> variableLocations = new Dictionary<string, int>();
-        public Dictionary<string, int> VariableLocations
-        {
-            get
-            {
-                return this.variableLocations;
-            }
-        }
+        public Dictionary<string, int> VariableLocations { get { return this.variableLocations; } }
 
+        private Dictionary<int, string> fragDataLocation = new Dictionary<int, string>();
+        public Dictionary<int, string> FragDataLocation { get { return this.fragDataLocation; } }
+        
 
         public ShaderProgram(string name)
         {
@@ -58,7 +49,7 @@ namespace OpenTKExtensions
 
         }
 
-        public void Create()
+        public ShaderProgram Create()
         {
             if (this.Handle == -1)
             {
@@ -73,32 +64,37 @@ namespace OpenTKExtensions
                     log.Error("ShaderProgram.Create ({0}): could not create program.", this.Name);
                 }
             }
+            return this;
         }
 
-        public void AddShader(Shader s)
+        public ShaderProgram AddShader(Shader s)
         {
             this.Shaders.Add(s);
+            return this;
         }
 
-        public void AddShader(ShaderType type, string source)
+        public ShaderProgram AddShader(ShaderType type, string source)
         {
             Shader s = new Shader(string.Format("{0}:{1}", this.Name, type.ToString()));
             s.Type = type;
             s.Source = source;
             s.Compile();
             this.Shaders.Add(s);
+            return this;
         }
 
-        public void AddVertexShader(string source)
+        public ShaderProgram AddVertexShader(string source)
         {
             AddShader(ShaderType.VertexShader, source);
+            return this;
         }
-        public void AddFragmentShader(string source)
+        public ShaderProgram AddFragmentShader(string source)
         {
             AddShader(ShaderType.FragmentShader, source);
+            return this;
         }
 
-        public void AddVariable(int index, string name)
+        public ShaderProgram AddVariable(int index, string name)
         {
             if (this.VariableLocations.ContainsKey(name))
             {
@@ -108,7 +104,22 @@ namespace OpenTKExtensions
             {
                 this.VariableLocations.Add(name, index);
             }
+            return this;
         }
+
+        public ShaderProgram AddFragmentShaderOutput(int colourIndex, string name)
+        {
+            if (this.FragDataLocation.ContainsKey(colourIndex))
+            {
+                this.FragDataLocation[colourIndex] = name;
+            }
+            else
+            {
+                this.FragDataLocation.Add(colourIndex, name);
+            }
+            return this;
+        }
+
 
         public int VariableLocation(string name)
         {
@@ -118,6 +129,11 @@ namespace OpenTKExtensions
                 return location;
             }
             throw new InvalidOperationException(string.Format("Shader Program {0} could not find variable {1}", this.Name, name));
+        }
+
+        private void BindFragDataLocation(int colourSlot, string outputName)
+        {
+            GL.BindFragDataLocation(this.Handle, colourSlot, outputName);
         }
 
         public void Link()
@@ -144,6 +160,12 @@ namespace OpenTKExtensions
                 GL.BindAttribLocation(this.Handle, v.Value, v.Key);
             }
 
+            // bind frag data outputs (for MRT)
+            foreach (var colindex in this.FragDataLocation.Keys)
+            {
+                GL.BindFragDataLocation(this.Handle, colindex, this.FragDataLocation[colindex]);
+            }
+
 
             GL.LinkProgram(this.Handle);
 
@@ -163,7 +185,7 @@ namespace OpenTKExtensions
 
         }
 
-        public void Init(string vertexSource, string fragmentSource, IList<Variable> variables)
+        public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables, string[] fragDataOutputs)
         {
             this.AddVertexShader(vertexSource);
             this.AddFragmentShader(fragmentSource);
@@ -173,18 +195,35 @@ namespace OpenTKExtensions
                 this.AddVariable(v.Index, v.Name);
             }
 
+            if (fragDataOutputs != null)
+            {
+                for (int i = 0; i < fragDataOutputs.Length; i++)
+                {
+                    this.AddFragmentShaderOutput(i, fragDataOutputs[i]);
+                }
+            }
+
             this.Link();
+            return this;
+        }
+
+        public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables)
+        {
+            return Init(vertexSource, fragmentSource, variables, null);
         }
 
 
-        public void UseProgram()
+
+        public ShaderProgram UseProgram()
         {
             GL.UseProgram(this.Handle);
+            return this;
         }
 
-        public void ClearUniforms()
+        public ShaderProgram ClearUniforms()
         {
             this.uniformLocations.Clear();
+            return this;
         }
 
         private int LocateUniform(string name)
@@ -211,53 +250,59 @@ namespace OpenTKExtensions
             return location;
         }
 
-        public void SetUniform(string name, float value)
+        public ShaderProgram SetUniform(string name, float value)
         {
             int location = LocateUniform(name);
             if (location != -1)
             {
                 GL.Uniform1(location, value);
             }
+            return this;
         }
-        public void SetUniform(string name, int value)
+        public ShaderProgram SetUniform(string name, int value)
         {
             int location = LocateUniform(name);
             if (location != -1)
             {
                 GL.Uniform1(location, value);
             }
+            return this;
         }
-        public void SetUniform(string name, Vector2 value)
+        public ShaderProgram SetUniform(string name, Vector2 value)
         {
             int location = LocateUniform(name);
             if (location != -1)
             {
                 GL.Uniform2(location, value);
             }
+            return this;
         }
-        public void SetUniform(string name, Vector3 value)
+        public ShaderProgram SetUniform(string name, Vector3 value)
         {
             int location = LocateUniform(name);
             if (location != -1)
             {
                 GL.Uniform3(location, value);
             }
+            return this;
         }
-        public void SetUniform(string name, Vector4 value)
+        public ShaderProgram SetUniform(string name, Vector4 value)
         {
             int location = LocateUniform(name);
             if (location != -1)
             {
                 GL.Uniform4(location, value);
             }
+            return this;
         }
-        public void SetUniform(string name, Matrix4 value)
+        public ShaderProgram SetUniform(string name, Matrix4 value)
         {
             int location = LocateUniform(name);
             if (location != -1)
             {
                 GL.UniformMatrix4(location, false, ref value);
             }
+            return this;
         }
 
         //TODO: every other uniform type

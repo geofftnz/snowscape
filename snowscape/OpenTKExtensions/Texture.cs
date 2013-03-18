@@ -66,18 +66,20 @@ namespace OpenTKExtensions
             }
         }
 
-        public void Bind()
+        public Texture Bind()
         {
             if (Init() != -1)
             {
                 GL.BindTexture(this.Target, this.ID);
             }
+            return this;
         }
 
-        public void Bind(TextureUnit unit)
+        public Texture Bind(TextureUnit unit)
         {
             GL.ActiveTexture(unit);
             this.Bind();
+            return this;
         }
 
         public void Upload<T>(T[] data) where T : struct
@@ -87,6 +89,16 @@ namespace OpenTKExtensions
                 this.Bind();
                 this.ApplyParameters();
                 this.UploadImage(data);
+            }
+        }
+
+        public void UploadEmpty()
+        {
+            if (Init() != -1)
+            {
+                this.Bind();
+                this.ApplyParameters();
+                GL.TexImage2D(this.Target, 0, this.InternalFormat, this.Width, this.Height, 0, this.Format, this.Type, IntPtr.Zero);
             }
         }
 
@@ -128,7 +140,14 @@ namespace OpenTKExtensions
             if (this.ID != -1)
             {
                 GL.DeleteTexture(this.ID);
+                this.ID = -1;
             }
+        }
+
+        public void Resize(int width, int height)
+        {
+            this.Width = width;
+            this.Height = height;
         }
     }
 }
