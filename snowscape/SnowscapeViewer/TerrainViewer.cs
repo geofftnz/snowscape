@@ -109,7 +109,7 @@ namespace Snowscape.Viewer
 
             double r = 100.0f;
             double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
-            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 100.0f, (float)(128.0 + r * Math.Sin(a)));
+            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 50.0f, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
         }
