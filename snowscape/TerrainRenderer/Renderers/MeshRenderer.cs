@@ -69,9 +69,11 @@ namespace Snowscape.TerrainRenderer.Renderers
             Vector3[] vertex = new Vector3[this.Width * this.Height];
             Vector3[] boxcoord = new Vector3[this.Width * this.Height];
 
+            // this mesh will leave a gap that must be filled with a strip using data from adjacent tiles.
             float xscale = 1.0f / (float)this.Width;
             float zscale = 1.0f / (float)this.Height;
 
+            
             ParallelHelper.For2D(this.Width, this.Height, (x, z, i) =>
             {
                 vertex[i].X = (float)x * xscale;
@@ -82,6 +84,24 @@ namespace Snowscape.TerrainRenderer.Renderers
                 boxcoord[i].Y = 0f;
                 boxcoord[i].Z = (float)z * zscale;
             });
+
+            //for (int z = 0; z < this.Height; z++)
+            //{
+            //    for (int x = 0; x < this.Width; x++)
+            //    {
+            //        int i = x + z * this.Width;
+
+            //        vertex[i].X = (float)x * xscale;
+            //        vertex[i].Y = 0f;
+            //        vertex[i].Z = (float)z * zscale;
+
+            //        boxcoord[i].X = (float)x * xscale;
+            //        boxcoord[i].Y = 0f;
+            //        boxcoord[i].Z = (float)z * zscale;
+
+            //    }
+            //}
+
 
             // vertex VBO
             this.vertexVBO.SetData(vertex);

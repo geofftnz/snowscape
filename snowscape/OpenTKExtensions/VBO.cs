@@ -32,6 +32,7 @@ namespace OpenTKExtensions
         private int stride;
         private VertexAttribPointerType pointerType;
         private int fieldsPerElement;
+        private int length;
 
         public int Length
         {
@@ -39,12 +40,23 @@ namespace OpenTKExtensions
             {
                 if (this.Loaded)
                 {
-                    return arraySize;
+                    return length;
                 }
                 throw new InvalidOperationException("Length is not defined until the VBO has been filled with data");
             }
         }
 
+        public int Size
+        {
+            get
+            {
+                if (this.Loaded)
+                {
+                    return arraySize;
+                }
+                throw new InvalidOperationException("Size is not defined until the VBO has been filled with data");
+            }
+        }
 
         public VBO(string name, BufferTarget target, BufferUsageHint usageHint)
         {
@@ -85,8 +97,9 @@ namespace OpenTKExtensions
             {
                 GL.BindBuffer(this.Target, this.Handle);
 
+                this.length = data.Length;
                 this.stride = elementSizeInBytes;
-                this.arraySize = data.Length * stride;
+                this.arraySize = length * stride;
                 this.pointerType = pointerType;
                 this.fieldsPerElement = fieldsPerElement;
 
