@@ -44,7 +44,10 @@ namespace Snowscape.Viewer
 
         private TerrainTile tile = new TerrainTile(256, 256);
         //private ITileRenderer renderer = new BoundingBoxRenderer();
-        private ITileRenderer renderer = new MeshRenderer(64,64);
+        //private ITileRenderer renderer = new MeshRenderer(64,64);
+        private List<ITileRenderer> renderers = new List<ITileRenderer>();
+        private int currentRenderer = 0;
+        private double lastRendererChangeTime = 0.0;
 
 
 
@@ -101,9 +104,9 @@ namespace Snowscape.Viewer
         {
             this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
 
-            double r = 200.0f;
+            double r = 100.0f;
             double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
-            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
+            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 100.0f, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
         }
@@ -182,7 +185,13 @@ namespace Snowscape.Viewer
             this.tile.Init();
             this.tile.SetupTestData();
 
-            this.renderer.Load();
+            this.renderers.Add(new BoundingBoxRenderer());
+            this.renderers.Add(new MeshRenderer(256,256));
+
+            foreach (var renderer in renderers)
+            {
+                renderer.Load();
+            }
 
             this.SetupGBufferCombiner();
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
@@ -203,6 +212,13 @@ namespace Snowscape.Viewer
             if (Keyboard[Key.Escape])
             {
                 this.Close();
+            }
+
+            if (Keyboard[Key.R] && globalTime - lastRendererChangeTime > 0.5)
+            {
+                currentRenderer++;
+                currentRenderer %= this.renderers.Count;
+                lastRendererChangeTime = globalTime;
             }
         }
 
@@ -230,7 +246,7 @@ namespace Snowscape.Viewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderBox");
-            this.renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            this.renderers[currentRenderer].Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
             perfmon.Stop("RenderBox");
 
             this.gbuffer.UnbindFromWriting();
