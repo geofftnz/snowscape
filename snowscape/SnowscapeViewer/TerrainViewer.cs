@@ -47,8 +47,6 @@ namespace Snowscape.Viewer
         //private ITileRenderer renderer = new MeshRenderer(64,64);
         private List<ITileRenderer> renderers = new List<ITileRenderer>();
         private int currentRenderer = 0;
-        private double lastRendererChangeTime = 0.0;
-
 
 
         // gbuffer combine
@@ -57,6 +55,9 @@ namespace Snowscape.Viewer
         private VBO gbufferCombineIndexVBO = new VBO("gbindex", BufferTarget.ElementArrayBuffer);
         private ShaderProgram gbufferCombineProgram = new ShaderProgram("gb");
 
+
+        // key mappings
+        private Dictionary<Key, Action> keyDownActions = new Dictionary<Key, Action>();
 
 
 
@@ -72,7 +73,9 @@ namespace Snowscape.Viewer
             this.UpdateFrame += new EventHandler<FrameEventArgs>(TerrainViewer_UpdateFrame);
             this.RenderFrame += new EventHandler<FrameEventArgs>(TerrainViewer_RenderFrame);
             this.Resize += new EventHandler<EventArgs>(TerrainViewer_Resize);
+            this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
         }
+
 
         void TerrainViewer_Resize(object sender, EventArgs e)
         {
@@ -186,7 +189,7 @@ namespace Snowscape.Viewer
             this.tile.SetupTestData();
 
             this.renderers.Add(new BoundingBoxRenderer());
-            this.renderers.Add(new MeshRenderer(256,256));
+            this.renderers.Add(new MeshRenderer(256, 256));
 
             foreach (var renderer in renderers)
             {
@@ -200,7 +203,18 @@ namespace Snowscape.Viewer
             this.gbuffer.SetSlot(3, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
             this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
+            this.SetKeyMappings();
+
             this.frameCounter.Start();
+        }
+
+        private void SetKeyMappings()
+        {
+            AddKeyMapping(Key.R, () =>
+            {
+                currentRenderer++;
+                currentRenderer %= this.renderers.Count;
+            });
         }
 
         void TerrainViewer_UpdateFrame(object sender, FrameEventArgs e)
@@ -214,11 +228,28 @@ namespace Snowscape.Viewer
                 this.Close();
             }
 
-            if (Keyboard[Key.R] && globalTime - lastRendererChangeTime > 0.5)
+        }
+
+        void AddKeyMapping(Key key, Action action)
+        {
+            if (!this.keyDownActions.ContainsKey(key))
             {
-                currentRenderer++;
-                currentRenderer %= this.renderers.Count;
-                lastRendererChangeTime = globalTime;
+                this.keyDownActions.Add(key, action);
+            }
+            else
+            {
+                this.keyDownActions[key] = action;
+            }
+        }
+
+
+        void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
+        {
+            Action action;
+
+            if (this.keyDownActions.TryGetValue(e.Key, out action))
+            {
+                action();
             }
         }
 
