@@ -190,6 +190,7 @@ namespace Snowscape.Viewer
 
             this.renderers.Add(new BoundingBoxRenderer());
             this.renderers.Add(new MeshRenderer(256, 256));
+            this.renderers.Add(new RaycastRenderer());
 
             foreach (var renderer in renderers)
             {

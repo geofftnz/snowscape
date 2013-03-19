@@ -88,11 +88,7 @@ namespace Snowscape.TerrainRenderer
                 height[i] -= min;
             });
 
-            this.MinHeight = height.Min();
-            this.MaxHeight = height.Max();
-            
-            // set height to texture
-            this.HeightTexture.Upload(height);
+            UploadHeightTexture(height);
 
             // calculate normals
             byte[] normals = new byte[this.Width * this.Height * 4];
@@ -131,6 +127,40 @@ namespace Snowscape.TerrainRenderer
 
             this.ModelMatrix = Matrix4.Identity;
 
+        }
+
+        private void UploadHeightTexture(float[] height)
+        {
+            this.MinHeight = height.Min();
+            this.MaxHeight = height.Max();
+
+
+            int maxlevel = 0;
+            int x = this.Width;
+
+            x >>= 1;
+            while (x > 0)
+            {
+                maxlevel++;
+                x >>= 1;
+            }
+
+
+            float[] mipleveldata = new float[height.Length];
+            height.CopyTo(mipleveldata, 0);
+
+            if (this.HeightTexture.Init() != -1)
+            {
+                this.HeightTexture.Bind();
+                this.HeightTexture.ApplyParameters();
+
+                for (int level = 0; level <= maxlevel; level++)
+                {
+                    this.HeightTexture.UploadImage(mipleveldata, level);
+                    mipleveldata = mipleveldata.GenerateMaximumMipMapLevel(this.Width >> level, this.Width >> level);
+                }
+            }
+            
         }
 
         private Vector3 GetNormal(float[] height, int cx, int cy)
