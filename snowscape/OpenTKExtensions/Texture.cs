@@ -92,6 +92,16 @@ namespace OpenTKExtensions
             }
         }
 
+        public void Upload<T>(T[] data, int level) where T : struct
+        {
+            if (Init() != -1)
+            {
+                this.Bind();
+                this.ApplyParameters();
+                this.UploadImage(data,level);
+            }
+        }
+
         public void UploadEmpty()
         {
             if (Init() != -1)
@@ -102,10 +112,17 @@ namespace OpenTKExtensions
             }
         }
 
-        private void UploadImage<T>(T[] data) where T : struct
+        public void UploadImage<T>(T[] data) where T : struct
         {
             log.Trace("Texture.UploadImage ({0}) uploading...", this.Name);
             GL.TexImage2D<T>(this.Target, 0, this.InternalFormat, this.Width, this.Height, 0, this.Format, this.Type, data);
+            log.Trace("Texture.UploadImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
+        }
+
+        public void UploadImage<T>(T[] data, int level) where T : struct
+        {
+            log.Trace("Texture.UploadImage ({0}) uploading...", this.Name);
+            GL.TexImage2D<T>(this.Target, level, this.InternalFormat, this.Width >> level, this.Height >> level, 0, this.Format, this.Type, data);
             log.Trace("Texture.UploadImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
         }
 
@@ -114,6 +131,14 @@ namespace OpenTKExtensions
             log.Trace("Texture.RefreshImage ({0}) uploading...", this.Name);
             this.Bind();
             GL.TexSubImage2D<T>(this.Target, 0, 0, 0, this.Width, this.Height, this.Format, this.Type, data);
+            log.Trace("Texture.RefreshImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
+        }
+
+        public void RefreshImage<T>(T[] data, int level) where T : struct
+        {
+            log.Trace("Texture.RefreshImage ({0}) uploading...", this.Name);
+            this.Bind();
+            GL.TexSubImage2D<T>(this.Target, level, 0, 0, this.Width, this.Height, this.Format, this.Type, data);
             log.Trace("Texture.RefreshImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
         }
 
