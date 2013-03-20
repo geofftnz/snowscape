@@ -107,9 +107,9 @@ namespace Snowscape.Viewer
         {
             this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
 
-            double r = 100.0f;
+            double r = 200.0f;
             double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
-            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 50.0f, (float)(128.0 + r * Math.Sin(a)));
+            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
         }
@@ -187,6 +187,8 @@ namespace Snowscape.Viewer
 
             this.tile.Init();
             this.tile.SetupTestData();
+
+            this.tile.ModelMatrix = Matrix4.CreateTranslation(64f, -50f, 64f);
 
             this.renderers.Add(new BoundingBoxRenderer());
             this.renderers.Add(new MeshRenderer(256, 256));

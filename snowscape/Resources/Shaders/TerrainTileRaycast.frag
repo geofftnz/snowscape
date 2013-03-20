@@ -60,8 +60,10 @@ void main(void)
     // generate world coordinate from offset, relative to eye
 	vec3 worldPos = (model_matrix * vec4(boxcoord,1.0)).xyz - eyePos;
 	vec3 nboxcoord = boxcoord.xyz / boxparam.x; // translate boxcoords into normalised space for raycasting
-
+	
 	// TODO: translate eyepos into normalized box coord space.
+	vec3 neyepos = (inverse(model_matrix) * vec4(eyePos,1.0)).xyz;
+
 	// TODO: is eye inside box?
 	// TODO: - or get first scene intersection
     
@@ -72,7 +74,8 @@ void main(void)
 
     out_Pos = vec4(worldPos.xyz,1.0);
     out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
-    out_Shade = vec4(shade.xyz,1.0);
+    //out_Shade = vec4(shade.xyz,1.0);
+	out_Shade = vec4(neyepos.xyz / 512.0,1.0);
     out_Param = vec4(nboxcoord.xyz,1.0);
     //out_Colour = vec4(boxcoord.xyz / 255.0,1.0);
 }
