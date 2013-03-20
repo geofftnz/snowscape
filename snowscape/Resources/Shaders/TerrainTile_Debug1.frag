@@ -1,11 +1,11 @@
 ﻿#version 140
 precision highp float;
+uniform mat4 model_matrix;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D shadeTex;
 uniform vec4 boxparam;
 uniform vec3 eyePos;
-uniform vec3 tileOffset;
 in vec3 boxcoord;
 out vec4 out_Pos;
 out vec4 out_Normal;
@@ -14,7 +14,7 @@ out vec4 out_Param;
 void main(void)
 {
     // generate world coordinate from offset, relative to eye
-	vec3 worldPos = (boxcoord + tileOffset) - eyePos;
+	vec3 worldPos = (model_matrix * vec4(boxcoord,1.0)).xyz - eyePos;
     
 	vec2 texcoord = boxcoord.xz/256.0;
     float h = texture2D(heightTex,texcoord).r;

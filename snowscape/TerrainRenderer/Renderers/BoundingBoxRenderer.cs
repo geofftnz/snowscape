@@ -51,7 +51,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("normalTex", 1)
                 .SetUniform("shadeTex", 2)
                 .SetUniform("eyePos", eyePos)
-                .SetUniform("tileOffset", new Vector3(0f, 0f, 0f))
                 .SetUniform("boxparam", boxparam);
             this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
