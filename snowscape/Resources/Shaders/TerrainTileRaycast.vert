@@ -7,6 +7,7 @@ uniform vec4 boxparam;
 in vec3 vertex;
 in vec3 in_boxcoord;
 out vec3 boxcoord;
+//out vec3 nboxcoord;
  
 void main() {
 
@@ -16,6 +17,10 @@ void main() {
 	v.y = (v.y * (boxparam.w - boxparam.z)) + boxparam.z;
 
     gl_Position = projection_matrix * model_matrix * view_matrix * vec4(v, 1.0);
+
+	// normalised box coords (x,z: [0,1], y: world)
+	//nboxcoord = in_boxcoord;
+	//nboxcoord.y = ((nboxcoord.y * (boxparam.w - boxparam.z)) + boxparam.z);
 
 	vec3 b = in_boxcoord;
 	b.x *= boxparam.x;

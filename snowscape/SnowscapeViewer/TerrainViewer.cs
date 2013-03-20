@@ -38,6 +38,7 @@ namespace Snowscape.Viewer
         private Vector3 eyePos;
 
         private double globalTime = 0.0;
+        private double angle = 0.0;
 
         private GBuffer gbuffer = new GBuffer("gbuffer1");
 
@@ -108,7 +109,7 @@ namespace Snowscape.Viewer
             this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
 
             double r = 200.0f;
-            double a = Math.IEEERemainder(globalTime * 0.05, 1.0) * 2.0 * Math.PI;
+            double a = angle; // Math.IEEERemainder(globalTime * 0.02, 1.0) * 2.0 * Math.PI;
             this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
@@ -218,6 +219,11 @@ namespace Snowscape.Viewer
                 currentRenderer++;
                 currentRenderer %= this.renderers.Count;
             });
+
+            AddKeyMapping(Key.Escape, () => { this.Close(); });
+
+            //AddKeyMapping(Key.Z, () => { this.angle += 0.05; });
+            //AddKeyMapping(Key.X, () => { this.angle -= 0.05; });
         }
 
         void TerrainViewer_UpdateFrame(object sender, FrameEventArgs e)
@@ -226,9 +232,13 @@ namespace Snowscape.Viewer
 
             globalTime += e.Time;
 
-            if (Keyboard[Key.Escape])
+            if (Keyboard[Key.Z])
             {
-                this.Close();
+                this.angle += e.Time * 0.5;
+            }
+            if (Keyboard[Key.X])
+            {
+                this.angle -= e.Time * 0.5;
             }
 
         }
