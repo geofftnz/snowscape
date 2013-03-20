@@ -61,6 +61,9 @@ void main(void)
 	vec3 worldPos = (boxcoord + tileOffset) - eyePos;
 	vec3 nboxcoord = boxcoord.xyz / boxparam.x; // translate boxcoords into normalised space for raycasting
 
+	// TODO: translate eyepos into normalized box coord space.
+	// TODO: is eye inside box?
+	// TODO: - or get first scene intersection
     
 	vec2 texcoord = boxcoord.xz/256.0;
     float h = texture2DLod(heightTex,texcoord,4).r;

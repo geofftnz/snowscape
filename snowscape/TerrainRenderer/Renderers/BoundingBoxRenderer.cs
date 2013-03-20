@@ -45,7 +45,8 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.boundingBoxProgram
                 .UseProgram()
                 .SetUniform("projection_matrix", projection)
-                .SetUniform("modelview_matrix", tile.ModelMatrix * view)
+                .SetUniform("model_matrix", tile.ModelMatrix)
+                .SetUniform("view_matrix", view)
                 .SetUniform("heightTex", 0)
                 .SetUniform("normalTex", 1)
                 .SetUniform("shadeTex", 2)
