@@ -164,6 +164,7 @@ namespace Snowscape.Viewer
                 .SetUniform("projection_matrix", projection)
                 .SetUniform("modelview_matrix", modelview)
                 .SetUniform("eyePos", this.eyePos)
+                .SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f,0.8f,0.3f)))
                 .SetUniform("posTex", 0)
                 .SetUniform("normalTex", 1)
                 .SetUniform("shadeTex", 2)
