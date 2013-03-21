@@ -6,6 +6,7 @@ uniform sampler2D normalTex;
 uniform sampler2D shadeTex;
 uniform vec4 boxparam;  // dim of box
 uniform vec3 eyePos;
+uniform vec3 nEyePos;
 in vec3 boxcoord;   // current box coord of back face, not normalized to 0-1
 //in vec3 nboxcoord;
 
@@ -15,42 +16,18 @@ out vec4 out_Shade;
 out vec4 out_Param;
 
 
-// get entry point of ray into box, in normalized box coordinates (xz 0-1, y min-max
-float intersectBox(vec3 rayo, vec3 rayd)
+float intersectBox ( vec3 rayo, vec3 rayd)
 {
-	float t = -1;
-
-	// -X
-	if (rayd.x > 0.0)
-	{
-		t = max(t,(0.0-rayo.x)/rayd.x);
-	}
-	// +X
-	if (rayd.x < 0.0)
-	{
-		t = max(t,(boxparam.x-rayo.x)/rayd.x);
-	}
-	// -Y
-	if (rayd.y > 0.0)
-	{
-		t = max(t,(boxparam.z-rayo.y)/rayd.y);
-	}
-	// +Y
-	if (rayd.y < 0.0)
-	{
-		t = max(t,(boxparam.w-rayo.y)/rayd.y);
-	}
-	// -Z
-	if (rayd.z > 0.0)
-	{
-		t = max(t,(0-rayo.z)/rayd.z);
-	}
-	// +Z
-	if (rayd.z < 0.0)
-	{
-		t = max(t,(boxparam.y-rayo.z)/rayd.z);
-	}
-	return t;
+    vec3 omin = ( vec3(0.0,boxparam.z,0.0) - rayo ) / rayd;
+    vec3 omax = ( boxparam.xwy - rayo ) / rayd;
+    
+    vec3 tmax = max ( omax, omin );
+    vec3 tmin = min ( omax, omin );
+    
+    float t1 = min ( tmax.x, min ( tmax.y, tmax.z ) );
+    float t2 = max ( max ( tmin.x, 0.0 ), max ( tmin.y, tmin.z ) );    
+    
+	return min(t1,t2);
 }
 
 #define TEXDIM 256
@@ -150,46 +127,46 @@ void main(void)
 	vec3 worldPos = (model_matrix * vec4(boxcoord,1.0)).xyz - eyePos;
 	
 	// translate eyepos into normalized box coord space.
-	vec3 neyepos = (inverse(model_matrix) * vec4(eyePos,1.0)).xyz;
+	//vec3 nEyePos = (inverse(model_matrix) * vec4(eyePos,1.0)).xyz;
 
 	vec3 boxEnter;
 	vec3 boxExit = boxcoord;
-	vec3 raydir = normalize(boxExit-neyepos);
+	vec3 raydir = normalize(boxExit-nEyePos);
 	
 	// if eye is inside box, then boxenter=eye, else calculate intersection
-	if (neyepos.x >= 0.0 && neyepos.y >= boxparam.z && neyepos.z >= 0.0 &&
-        neyepos.x < boxparam.x && neyepos.y <= boxparam.w && neyepos.z < boxparam.y)
+	if (nEyePos.x >= 0.0 && nEyePos.y >= boxparam.z && nEyePos.z >= 0.0 &&
+        nEyePos.x < boxparam.x && nEyePos.y <= boxparam.w && nEyePos.z < boxparam.y)
 	{
-		boxEnter = neyepos;
+		boxEnter = nEyePos;
 	}
 	else
 	{
-		boxEnter = neyepos + intersectBox(neyepos,raydir) * raydir;
+		boxEnter = nEyePos + intersectBox(nEyePos,raydir) * raydir;
 	}
 
-	vec4 p = intersectHeightmap(boxEnter,raydir);
+	//vec4 p = intersectHeightmap(boxEnter,raydir);
 
-	if (p.w > 0.6)
-	{
+	//if (p.w > 0.6)
+	//{
 		vec2 texcoord = boxcoord.xz / boxparam.xy;
 		//float h = texture2DLod(heightTex,texcoord,4).r;
 		vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
 		vec4 shade = texture2D(shadeTex,texcoord);
 
-		//out_Pos = vec4(worldPos.xyz,1.0);
-		out_Pos = vec4(p.xyz,1.0);
+		out_Pos = vec4(worldPos.xyz,1.0);
+		//out_Pos = vec4(p.xyz,1.0);
 		//out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
 		//out_Shade = vec4(shade.xyz,1.0);
-		//out_Shade = vec4(neyepos.xyz / 512.0,1.0);
+		//out_Shade = vec4(nEyePos.xyz / 512.0,1.0);
 		out_Shade = vec4(boxEnter.xyz * vec3(1.0/255.0,1.0/64.0,1.0/255.0),1.0);  // scale nboxcoord.y
 		//out_Shade = vec4(0.1,t * 0.001 + 0.1,0.0,1.0);  // scale nboxcoord.y
 		out_Param = vec4(boxExit.xyz * vec3(1.0/255.0,1.0/64.0,1.0/255.0),1.0);  // scale nboxcoord.y
 		//out_Colour = vec4(boxcoord.xyz / 255.0,1.0);
-	}
-	else
-	{
-		discard;
-	}
-
+	//}
+	//else
+	//{
+		//discard;
+	//}
+//
 }

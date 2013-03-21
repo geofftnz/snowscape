@@ -31,6 +31,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             var boxparam = tile.GetBoxParam();
 
+            Vector3 eyePosTileCoords = Vector3.Transform(eyePos, tile.InverseModelMatrix);
+
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
@@ -47,6 +49,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("normalTex", 1)
                 .SetUniform("shadeTex", 2)
                 .SetUniform("eyePos", eyePos)
+                .SetUniform("nEyePos", eyePosTileCoords)
                 .SetUniform("boxparam", boxparam);
             this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
@@ -71,8 +74,8 @@ namespace Snowscape.TerrainRenderer.Renderers
             maxx = 1.0f; // width of tile
             maxz = 1.0f; // height of tile
 
-             float minHeight = 0.0f;
-             float maxHeight = 1.0f;
+            float minHeight = 0.0f;
+            float maxHeight = 1.0f;
 
             for (int i = 0; i < 8; i++)
             {

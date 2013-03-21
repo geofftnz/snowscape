@@ -16,7 +16,7 @@ void main() {
 	v.z *= boxparam.y;
 	v.y = (v.y * (boxparam.w - boxparam.z)) + boxparam.z;
 
-    gl_Position = projection_matrix * model_matrix * view_matrix * vec4(v, 1.0);
+    gl_Position = projection_matrix * view_matrix * model_matrix  * vec4(v, 1.0);
 
 	// normalised box coords (x,z: [0,1], y: world)
 	//nboxcoord = in_boxcoord;

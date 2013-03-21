@@ -36,7 +36,18 @@ namespace Snowscape.TerrainRenderer
         public float MinHeight { get; private set; }
         public float MaxHeight { get; private set; }
 
-        public Matrix4 ModelMatrix { get; set; }
+        private Matrix4 modelMatrix;
+        public Matrix4 ModelMatrix
+        {
+            get { return modelMatrix; }
+            set
+            {
+                modelMatrix = value;
+                this.InverseModelMatrix = Matrix4.Invert(modelMatrix);
+            }
+        }
+        public Matrix4 InverseModelMatrix { get; private set; }
+
 
         public TerrainTile(int width, int height)
         {
@@ -47,13 +58,13 @@ namespace Snowscape.TerrainRenderer
         public void Init()
         {
             // setup textures
-            this.HeightTexture = 
+            this.HeightTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-            
+
             this.NormalTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
@@ -115,7 +126,7 @@ namespace Snowscape.TerrainRenderer
             {
                 var ii = i * 4;
                 float s1 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 3, 5.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
-                float s2 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx+17.0f, ry+5.0f, 5, 25.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
+                float s2 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx + 17.0f, ry + 5.0f, 5, 25.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
 
                 shade[ii + 0] = s1.UnitToByte();
                 shade[ii + 1] = s2.UnitToByte();
@@ -160,7 +171,7 @@ namespace Snowscape.TerrainRenderer
                     mipleveldata = mipleveldata.GenerateMaximumMipMapLevel(this.Width >> level, this.Width >> level);
                 }
             }
-            
+
         }
 
         private Vector3 GetNormal(float[] height, int cx, int cy)

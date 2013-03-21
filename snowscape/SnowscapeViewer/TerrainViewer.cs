@@ -39,6 +39,7 @@ namespace Snowscape.Viewer
 
         private double globalTime = 0.0;
         private double angle = 0.0;
+        private double viewHeight = 100.0;
 
         private GBuffer gbuffer = new GBuffer("gbuffer1");
 
@@ -110,7 +111,7 @@ namespace Snowscape.Viewer
 
             double r = 200.0f;
             double a = angle; // Math.IEEERemainder(globalTime * 0.02, 1.0) * 2.0 * Math.PI;
-            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), 200.0f, (float)(128.0 + r * Math.Sin(a)));
+            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), (float)viewHeight, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
         }
@@ -189,7 +190,7 @@ namespace Snowscape.Viewer
             this.tile.Init();
             this.tile.SetupTestData();
 
-            this.tile.ModelMatrix = Matrix4.CreateTranslation(64f, -50f, 64f);
+            this.tile.ModelMatrix = Matrix4.CreateTranslation(16f, 0f, 0f);
 
             this.renderers.Add(new BoundingBoxRenderer());
             this.renderers.Add(new MeshRenderer(256, 256));
@@ -232,14 +233,16 @@ namespace Snowscape.Viewer
 
             globalTime += e.Time;
 
-            if (Keyboard[Key.Z])
+            if (Keyboard[Key.Z] || Keyboard[Key.Left])
             {
                 this.angle += e.Time * 0.5;
             }
-            if (Keyboard[Key.X])
+            if (Keyboard[Key.X] || Keyboard[Key.Right])
             {
                 this.angle -= e.Time * 0.5;
             }
+            if (Keyboard[Key.Up]) { this.viewHeight += 10.0; }
+            if (Keyboard[Key.Down]) { this.viewHeight -= 10.0; }
 
         }
 
