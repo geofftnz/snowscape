@@ -8,7 +8,6 @@ uniform vec4 boxparam;  // dim of box
 uniform vec3 eyePos;
 uniform vec3 nEyePos;
 in vec3 boxcoord;   // current box coord of back face, not normalized to 0-1
-//in vec3 nboxcoord;
 
 out vec4 out_Pos;
 out vec4 out_Normal;
@@ -49,7 +48,7 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 
 	highp int level = TEXLOG2-1;  // replace with log2(texdim)-1
 
-	float p2l = pow(2.0f,level); // 2^level
+	float p2l = exp2(level); // 2^level
 
 	// normalize boxcoords to 0-1
 	//boxEnter.xz /= boxparam.xy;
@@ -110,7 +109,7 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 			{
 				texEntry = p.xyz;  // advance ray to hit point
 				level--;  // drop level
-				p2l = pow(2.0,level);  // update quantization factor
+				p2l = exp2(level);  // update quantization factor
 			}
 		}
 		else // no intersection
@@ -124,7 +123,7 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 				? min(level + 1 - int(texExit2.x) ,TEXLOG2-1) 
 				: min(level + 1 - int(texExit2.y) ,TEXLOG2-1); // go up a level if we reach the edge of our current 2x2 block
 
-			p2l = pow(2.0,level);  // update quantization factor
+			p2l = exp2(level);  // update quantization factor
 		}
 	}  // end of while loop
 
