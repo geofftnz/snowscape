@@ -125,8 +125,8 @@ namespace Snowscape.TerrainRenderer
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
             {
                 var ii = i * 4;
-                float s1 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 3, 5.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
-                float s2 = Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx + 17.0f, ry + 5.0f, 5, 25.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
+                float s1 = 0.0f;// Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 3, 5.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
+                float s2 = 0.5f;//Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx + 17.0f, ry + 5.0f, 5, 25.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
 
                 shade[ii + 0] = s1.UnitToByte();
                 shade[ii + 1] = s2.UnitToByte();

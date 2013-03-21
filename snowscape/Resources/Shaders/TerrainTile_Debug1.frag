@@ -16,7 +16,7 @@ void main(void)
     // generate world coordinate from offset, relative to eye
 	vec3 worldPos = (model_matrix * vec4(boxcoord,1.0)).xyz - eyePos;
     
-	vec2 texcoord = boxcoord.xz/256.0;
+	vec2 texcoord = boxcoord.xz/boxparam.xy;
     float h = texture2D(heightTex,texcoord).r;
     vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
     vec4 shade = texture2D(shadeTex,texcoord);

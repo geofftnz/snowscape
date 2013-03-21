@@ -18,15 +18,23 @@ void main(void)
 	vec2 p = texcoord0.xy;
 	vec4 c = vec4(0.0,0.0,0.0,1.0);
 
-	vec4 normalTex = texture2D(normalTex,p);
-	vec4 posTex = texture2D(posTex,p);
+	vec4 normalT = texture2D(normalTex,p);
+	vec4 posT = texture2D(posTex,p);
+	vec4 shadeT = texture2D(shadeTex,p);
+	vec4 paramT = texture2D(paramTex,p);
 
-	vec3 pos = posTex.xyz + eyePos;
-	vec3 normal = normalize(normalTex.xyz - 0.5);
+	vec3 pos = posT.xyz + eyePos;
+	vec3 normal = normalize(normalT.xyz - 0.5);
 
 	float diffuse = dot(normal, sunVector) * 0.5 + 0.5;
 
 	c.rgb = vec3(1.0) * diffuse;
+	
+	c.rgb += pos * 0.0002;
+	c.rgb += shadeT * 0.001;
+	c.rgb += paramT * 0.001;
+
+	//c.g = posTex.w;
 
 	/*
 	vec2 p = texcoord0.xy * 2.0;

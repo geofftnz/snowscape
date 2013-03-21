@@ -29,11 +29,6 @@ float intersectBox ( vec3 rayo, vec3 rayd)
 	return min(t1,t2);
 }
 
-#define TEXDIM 256
-#define TEXLOG2 8
-
-// TODO: convert to full-scale coords.
-
 vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 {
 	vec4 p = vec4(0.0);
@@ -45,6 +40,8 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 	float t,tx,tz,qx,qz;
 
 	float umul=1.0f, uofs=0.0f, vmul=1.0f, vofs=0.0f;	// texture coordinate flipping
+
+	highp int TEXLOG2 = int(log2(boxparam.x));
 
 	highp int level = TEXLOG2-1;  // replace with log2(texdim)-1
 
@@ -164,7 +161,7 @@ void main(void)
 		vec4 shade = texture2D(shadeTex,texcoord);
 
 		// position in world, relative to eye
-		out_Pos = vec4(p.xyz- eyePos,1.0);
+		out_Pos = vec4(p.xyz- eyePos,p.w);
 
 		// normal at intersection
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);

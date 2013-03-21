@@ -17,6 +17,8 @@ namespace Snowscape.Viewer
 {
     public class TerrainViewer : GameWindow
     {
+        const int TILESIZE = 1024;
+
         private static Logger log = LogManager.GetCurrentClassLogger();
 
         private Matrix4 overlayProjection = Matrix4.Identity;
@@ -44,7 +46,7 @@ namespace Snowscape.Viewer
         private GBuffer gbuffer = new GBuffer("gbuffer1");
 
 
-        private TerrainTile tile = new TerrainTile(256, 256);
+        private TerrainTile tile = new TerrainTile(TILESIZE, TILESIZE);
         //private ITileRenderer renderer = new BoundingBoxRenderer();
         //private ITileRenderer renderer = new MeshRenderer(64,64);
         private List<ITileRenderer> renderers = new List<ITileRenderer>();
@@ -194,7 +196,7 @@ namespace Snowscape.Viewer
             this.tile.ModelMatrix = Matrix4.CreateTranslation(16f, 0f, 0f);
 
             //this.renderers.Add(new BoundingBoxRenderer());
-            this.renderers.Add(new MeshRenderer(256, 256));
+            this.renderers.Add(new MeshRenderer(TILESIZE, TILESIZE));
             this.renderers.Add(new RaycastRenderer());
 
             foreach (var renderer in renderers)
