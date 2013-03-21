@@ -140,9 +140,6 @@ void main(void)
     // generate world coordinate from offset, relative to eye
 	vec3 worldPos = (model_matrix * vec4(boxcoord,1.0)).xyz - eyePos;
 	
-	// translate eyepos into normalized box coord space.
-	//vec3 nEyePos = (inverse(model_matrix) * vec4(eyePos,1.0)).xyz;
-
 	vec3 boxEnter;
 	vec3 boxExit = boxcoord;
 	vec3 raydir = normalize(boxExit-nEyePos);
@@ -163,26 +160,22 @@ void main(void)
 	if (p.w > 0.6)
 	{
 		vec2 texcoord = p.xz / boxparam.xy;
-		//float h = texture2DLod(heightTex,texcoord,4).r;
+
 		vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
 		vec4 shade = texture2D(shadeTex,texcoord);
 
-		//out_Pos = vec4(worldPos.xyz,1.0);
+		// position in world, relative to eye
 		out_Pos = vec4(p.xyz- eyePos,1.0);
-		//out_Pos = vec4(vec3(0.0,1.0,0.0) * p.w * 20.0,1.0);
-		//out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
-		//out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
-		out_Normal = vec4(vec3(0.0,1.0,0.0) * p.w,1.0);
-		//out_Shade = vec4(shade.xyz,1.0);
-		//out_Shade = vec4(nEyePos.xyz / 512.0,1.0);
-		out_Shade = vec4(boxEnter.xyz * vec3(1.0/255.0,1.0/64.0,1.0/255.0),1.0);  // scale nboxcoord.y
-		//out_Shade = vec4(0.1,t * 0.001 + 0.1,0.0,1.0);  // scale nboxcoord.y
-		out_Param = vec4(boxExit.xyz * vec3(1.0/255.0,1.0/64.0,1.0/255.0),1.0);  // scale nboxcoord.y
-		//out_Colour = vec4(boxcoord.xyz / 255.0,1.0);
+
+		// normal at intersection
+		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
+
+		// shade at intersection
+		out_Shade = vec4(shade.xyz,1.0);
+
+		// aux params at intersection
+		out_Param = vec4(0.5,0.5,0.5,1.0);
+
 	}
-	//else
-	//{
-		//discard;
-	//}
-////
+
 }

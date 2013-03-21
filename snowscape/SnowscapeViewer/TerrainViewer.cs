@@ -192,7 +192,7 @@ namespace Snowscape.Viewer
 
             this.tile.ModelMatrix = Matrix4.CreateTranslation(16f, 0f, 0f);
 
-            this.renderers.Add(new BoundingBoxRenderer());
+            //this.renderers.Add(new BoundingBoxRenderer());
             this.renderers.Add(new MeshRenderer(256, 256));
             this.renderers.Add(new RaycastRenderer());
 
