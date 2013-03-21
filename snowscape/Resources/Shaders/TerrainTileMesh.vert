@@ -26,7 +26,7 @@ void main() {
 	v.z *= boxparam.y;
 	v.y = h;
 
-    gl_Position = projection_matrix * model_matrix * view_matrix * vec4(v, 1.0);
+    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(v, 1.0);
 
 	vec3 b = in_boxcoord;
 	b.x *= boxparam.x;
