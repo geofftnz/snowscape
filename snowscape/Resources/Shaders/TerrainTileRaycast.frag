@@ -133,9 +133,6 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 
 void main(void)
 {
-    // generate world coordinate from offset, relative to eye
-	vec3 worldPos = (model_matrix * vec4(boxcoord,1.0)).xyz - eyePos;
-	
 	vec3 boxEnter;
 	vec3 boxExit = boxcoord;
 	vec3 raydir = normalize(boxExit-nEyePos);
@@ -160,8 +157,11 @@ void main(void)
 		vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
 		vec4 shade = texture2D(shadeTex,texcoord);
 
+		// translate intersection from tile-space to world-space and offset by eye pos.
+		vec3 worldPos = (model_matrix * vec4(p.xyz,1.0)).xyz - eyePos;
+
 		// position in world, relative to eye
-		out_Pos = vec4(p.xyz- eyePos,p.w);
+		out_Pos = vec4(worldPos.xyz,p.w);
 
 		// normal at intersection
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);

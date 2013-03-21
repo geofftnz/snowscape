@@ -18,8 +18,6 @@ void main() {
 	vec2 texcoord = in_boxcoord.xz;
 	
 	float h = texture2D(heightTex,texcoord).r;
-    //normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
-    //shade = texture2D(shadeTex,texcoord);
 
 	vec3 v = vertex;
 	v.x *= boxparam.x;

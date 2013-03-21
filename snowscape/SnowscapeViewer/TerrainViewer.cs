@@ -109,7 +109,7 @@ namespace Snowscape.Viewer
 
         private void SetTerrainProjection()
         {
-            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 1000.0f);
+            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 4000.0f);
 
             double r = 200.0f;
             double a = angle; // Math.IEEERemainder(globalTime * 0.02, 1.0) * 2.0 * Math.PI;
@@ -294,6 +294,7 @@ namespace Snowscape.Viewer
 
             GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Disable(EnableCap.Blend);
 
             perfmon.Start("RenderBox");
             this.renderers[currentRenderer].Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
