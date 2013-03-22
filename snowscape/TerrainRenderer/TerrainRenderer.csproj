@@ -51,6 +51,7 @@
     <Compile Include="Renderers\RendererHelper.cs" />
     <Compile Include="TerrainTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TileMeshBorder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
