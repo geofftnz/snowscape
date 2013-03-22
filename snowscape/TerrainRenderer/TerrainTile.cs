@@ -89,16 +89,48 @@ namespace Snowscape.TerrainRenderer
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
             // height from cells
-            float[] height = new float[this.Width * this.Height];
+            UploadHeightTextureFromTerrain(terrain, offsetX, offsetY);
+
+            // calculate normals on the fly - for visualisation of generation, this will be done in the vertex shader.
+            CalculateAndUploadNormalsFromTerrain(terrain, offsetX, offsetY);
+
+            // shade texture - blank for generation vis, AO/shadowmap/scattermap otherwise
+            byte[] shade = new byte[this.Width * this.Height * 4];
+            this.ShadeTexture.Upload(shade);
+
+            // param texture - cell components
+            UploadVisParamTexture(terrain, offsetX, offsetY);
+
+        }
+
+        public void SetDataFromTerrainGeneration(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
+        {
+            // height from cells
+            UploadHeightTextureFromTerrain(terrain, offsetX, offsetY);
+
+            // param texture - cell components
+            UploadVisParamTexture(terrain, offsetX, offsetY);
+        }
+
+        private void UploadVisParamTexture(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
+        {
+            byte[] param = new byte[this.Width * this.Height * 4];
 
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
             {
-                height[i] = terrain.Map[terrain.C(x + offsetX, y + offsetY)].WHeight;
+                var ii = i * 4;
+                int ti = terrain.C(x + offsetX, y + offsetY);
+                param[ii + 0] = (byte)(terrain.Map[ti].Loose * 4.0f).Clamp(0f, 255f);
+                param[ii + 1] = (byte)(terrain.Map[ti].MovingWater * 2048.0f).Clamp(0f, 255f);
+                param[ii + 2] = (byte)(terrain.Map[ti].Carrying * 32.0f).Clamp(0f, 255f);
+                param[ii + 3] = (byte)(terrain.Map[ti].Erosion * 0.25f).Clamp(0f, 255f);
             });
 
-            UploadHeightTexture(height);
+            this.ParamTexture.Upload(param);
+        }
 
-            // calculate normals on the fly - for visualisation of generation, this will be done in the vertex shader.
+        private void CalculateAndUploadNormalsFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
+        {
             byte[] normals = new byte[this.Width * this.Height * 4];
 
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
@@ -112,26 +144,17 @@ namespace Snowscape.TerrainRenderer
             });
 
             this.NormalTexture.Upload(normals);
+        }
 
-            // shade texture - blank for generation vis, AO/shadowmap/scattermap otherwise
-            byte[] shade = new byte[this.Width * this.Height * 4];
-            this.ShadeTexture.Upload(shade);
-
-            // param texture - cell components
-            byte[] param = new byte[this.Width * this.Height * 4];
-
+        private void UploadHeightTextureFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
+        {
+            float[] height = new float[this.Width * this.Height];
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
             {
-                var ii = i * 4;
-                int ti = terrain.C(x + offsetX, y + offsetY);
-                param[ii + 0] = (byte)(terrain.Map[ti].Loose * 4.0f).Clamp(0f, 255f);
-                param[ii + 1] = (byte)(terrain.Map[ti].MovingWater * 2048.0f).Clamp(0f, 255f);
-                param[ii + 2] = (byte)(terrain.Map[ti].Carrying * 32.0f).Clamp(0f, 255f);
-                param[ii + 3] = (byte)(terrain.Map[ti].Erosion * 0.25f).Clamp(0f, 255f); 
+                height[i] = terrain.Map[terrain.C(x + offsetX, y + offsetY)].WHeight;
             });
 
-            this.ParamTexture.Upload(param);
-
+            UploadHeightTexture(height);
         }
 
 

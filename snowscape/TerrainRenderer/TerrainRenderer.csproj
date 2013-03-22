@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
+    <Compile Include="Renderers\GenerationVisMeshRenderer.cs" />
     <Compile Include="Renderers\ITileRenderer.cs" />
     <Compile Include="Renderers\MeshRenderer.cs" />
     <Compile Include="Renderers\RaycastRenderer.cs" />
