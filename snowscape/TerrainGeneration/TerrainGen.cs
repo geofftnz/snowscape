@@ -170,7 +170,7 @@ namespace TerrainGeneration
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
-            this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
+            this.WaterMomentumFactor = 0.05f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.0f; // 0  0.05f;
 
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
