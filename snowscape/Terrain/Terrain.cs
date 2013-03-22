@@ -369,6 +369,25 @@ namespace Snowscape.TerrainStorage
             });
         }
 
+        public float HeightAt(float x, float y)
+        {
+            x = x.Wrap(this.Width);
+            y = y.Wrap(this.Height);
+
+            int xx = (int)x;
+            int yy = (int)y;
+
+            float xfrac = (x ) - (float)xx;
+            float yfrac = (y ) - (float)yy;
+
+            float h00 = this.Map[C(xx, yy)].Height;
+            float h10 = this.Map[C(xx + 1, yy)].Height;
+            float h01 = this.Map[C(xx, yy + 1)].Height;
+            float h11 = this.Map[C(xx + 1, yy + 1)].Height;
+            
+            return yfrac.Lerp(xfrac.Lerp(h00, h10), xfrac.Lerp(h01, h11));
+        }
+
 
         private static Func<int, int, int> C1024 = (x, y) => ((x + 1024) & 1023) + (((y + 1024) & 1023) << 10);
         private static Func<int, int> CX1024 = (i) => i & 1023;

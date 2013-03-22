@@ -17,6 +17,7 @@ namespace Utils.Test
             Assert.AreEqual(0f, 4.0f.Wrap(4.0f));
             Assert.AreEqual(1f, 5.0f.Wrap(4.0f));
             Assert.AreEqual(3f, (-1.0f).Wrap(4.0f));
+            Assert.AreEqual(3f, (-5.0f).Wrap(4.0f));
         }
         [TestMethod]
         public void int_wrap_works()

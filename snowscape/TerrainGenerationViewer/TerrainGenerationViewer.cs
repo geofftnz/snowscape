@@ -419,6 +419,10 @@ namespace Snowscape.TerrainGenerationViewer
             this.view_offset.Y = this.view_offset.Y.Wrap(1.0f);
             */
 
+            var pos = (this.camera as WalkCamera).Position;
+            pos.Y = this.Terrain.Terrain.HeightAt(pos.X, pos.Z);
+            (this.camera as WalkCamera).Position = pos;
+
             this.camera.Update(e.Time);
             this.eyePos = (this.camera as WalkCamera).EyePos;
 
@@ -521,7 +525,9 @@ namespace Snowscape.TerrainGenerationViewer
             GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Disable(EnableCap.Blend);
-            this.tileRenderer.Render(this.terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            GL.ColorMask(true,true,true,true);
+
+            RenderTiles();
             this.gbuffer.UnbindFromWriting(); 
             perfmon.Stop("RenderTerrain");
 
@@ -552,6 +558,27 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.frameCounter.Frame();
             
+        }
+
+        private void RenderTiles()
+        {
+            RenderTile(this.terrainTile, -1f, -1f);
+            RenderTile(this.terrainTile, -1f, 0f);
+            RenderTile(this.terrainTile, -1f, 1f);
+
+            RenderTile(this.terrainTile, 0f, -1f);
+            RenderTile(this.terrainTile, 0f, 0f);
+            RenderTile(this.terrainTile, 0f, 1f);
+
+            RenderTile(this.terrainTile, 1f, -1f);
+            RenderTile(this.terrainTile, 1f, 0f);
+            RenderTile(this.terrainTile, 1f, 1f);            
+        }
+
+        private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset)
+        {
+            tile.ModelMatrix = Matrix4.CreateTranslation(TileXOffset * (float)tile.Width, 0f, TileZOffset * (float)tile.Height);
+            this.tileRenderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 
         protected string GetTerrainFileName(int index)

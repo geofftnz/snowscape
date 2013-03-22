@@ -138,8 +138,8 @@ namespace OpenTKExtensions.Camera
             int deltaX = mouseX - prevMouseX;
             int deltaY = mouseY - prevMouseY;
 
-            this.AngleLeftRight += (float)deltaX * -0.005f;
-            this.AngleUpDown += (float)deltaY * -0.005f;
+            this.AngleLeftRight += (float)deltaX * -0.01f;
+            this.AngleUpDown += (float)deltaY * -0.01f;
 
             prevMouseX = mouseX;
             prevMouseY = mouseY;

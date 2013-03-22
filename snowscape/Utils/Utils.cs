@@ -48,8 +48,8 @@ namespace Utils
 
         public static float Wrap(this float x, float max)
         {
-            while (x < 0f) x += max;
-            while (x >= max) x -= max;
+            x = (float)Math.IEEERemainder(x, max);
+            if (x < 0) x += max;
             return x;
         }
 

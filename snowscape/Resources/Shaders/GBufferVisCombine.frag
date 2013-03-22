@@ -62,8 +62,15 @@ void main(void)
 	vec4 paramT = texture2D(paramTex,p);
 	vec3 normal = normalize(normalT.xyz - 0.5);
 
+	float d = length(pos.xyz - eyePos);
+
 	c = generateCol(pos,normal,paramT);	
 	
+	vec4 fogcol = vec4(0.8, 0.88, 0.92,1.0);
+	d /= 1024.0;
+	float fogamount = 1.0 / (exp(d * d * 0.1));
+
+	c = mix(fogcol,c,fogamount);
 
 	/*
 	vec2 p = texcoord0.xy * 2.0;
@@ -92,5 +99,9 @@ void main(void)
 		}
 	}
 	*/
+
+	// fog
+
+
     out_Colour = vec4(c.rgb,1.0);
 }

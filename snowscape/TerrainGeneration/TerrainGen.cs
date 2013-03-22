@@ -136,7 +136,7 @@ namespace TerrainGeneration
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
-            this.WaterMomentumFactor = 0.05f; // 0.005 0 0.05f;  
+            this.WaterMomentumFactor = 0.0f; // 0.005 0 0.05f;  
             this.WaterTurbulence = 0.0f; // 0  0.05f;
 
             this.WaterParticleMaxAge = 100;  //min age of particle before it can be recycled
@@ -198,13 +198,16 @@ namespace TerrainGeneration
         {
             this.Terrain.Clear(0.0f);
 
-            this.Terrain.AddSimplexNoise(6, 0.3f / (float)this.Width, 200.0f, h => h, h => h + h * h);
-            this.Terrain.AddSimplexNoise(8, 0.82f / (float)this.Width, 20.0f, h => Math.Abs(h), h => h + h * h);
+            this.Terrain.AddSimplexNoise(10, 0.6f / (float)this.Width, 200.0f, h => h, h => h + h * h);
+            //this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 50.0f, h => Math.Abs(h), h => h + h * h);
+            //this.Terrain.AddSimplexNoise(6, 0.6f / (float)this.Width, 300.0f, h => h, h => h );
+            //this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 50.0f, h => h, h => h );
+
+            //this.Terrain.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => h, h => h);
 
             this.Terrain.AddLooseMaterial(20.0f);
             AddLooseMaterialBasedOnSlope(10.0f, 8);
 
-            this.Terrain.AddSimplexNoise(5, 27.0f / (float)this.Width, 2.0f, h => h, h => h);
 
 
             this.Terrain.SetBaseLevel();
