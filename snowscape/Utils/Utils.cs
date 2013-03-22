@@ -55,8 +55,8 @@ namespace Utils
 
         public static int Wrap(this int x, int max)
         {
-            while (x < 0) x += max;
-            while (x >= max) x -= max;
+            x %= max;
+            if (x < 0) x += max;
             return x;
         }
 
