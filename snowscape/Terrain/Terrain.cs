@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Utils;
 using System.Threading.Tasks;
+using OpenTK;
 
 namespace Snowscape.TerrainStorage
 {
@@ -287,6 +288,24 @@ namespace Snowscape.TerrainStorage
             );
         }
         #endregion
+
+        public Vector3 GetNormalFromWHeight(int cx, int cy)
+        {
+            float h1 = Map[C(cx, cy - 1)].WHeight;
+            float h2 = Map[C(cx, cy + 1)].WHeight;
+            float h3 = Map[C(cx - 1, cy)].WHeight;
+            float h4 = Map[C(cx + 1, cy)].WHeight;
+            return Vector3.Normalize(new Vector3(h3 - h4, h1 - h2, 2f));
+        }
+
+        public Vector3 GetNormalFromHeight(int cx, int cy)
+        {
+            float h1 = Map[C(cx, cy - 1)].Height;
+            float h2 = Map[C(cx, cy + 1)].Height;
+            float h3 = Map[C(cx - 1, cy)].Height;
+            float h4 = Map[C(cx + 1, cy)].Height;
+            return Vector3.Normalize(new Vector3(h3 - h4, h1 - h2, 2f));
+        }
 
         public void Clear(float height)
         {

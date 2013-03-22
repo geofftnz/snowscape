@@ -4,6 +4,7 @@ uniform mat4 model_matrix;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D shadeTex;
+uniform sampler2D paramTex;
 uniform vec4 boxparam;  // dim of box
 uniform vec3 eyePos;
 uniform vec3 nEyePos;
@@ -155,7 +156,8 @@ void main(void)
 		vec2 texcoord = p.xz / boxparam.xy;
 
 		vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
-		vec4 shade = texture2D(shadeTex,texcoord);
+		out_Shade = texture2D(shadeTex,texcoord);
+		out_Param = texture2D(paramTex,texcoord);
 
 		// translate intersection from tile-space to world-space and offset by eye pos.
 		vec3 worldPos = (model_matrix * vec4(p.xyz,1.0)).xyz - eyePos;
@@ -165,12 +167,6 @@ void main(void)
 
 		// normal at intersection
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
-
-		// shade at intersection
-		out_Shade = vec4(shade.xyz,1.0);
-
-		// aux params at intersection
-		out_Param = vec4(0.5,0.5,0.5,1.0);
 
 	}
 

@@ -40,7 +40,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
             tile.NormalTexture.Bind(TextureUnit.Texture1);
-            tile.ShadeTexture.Bind(TextureUnit.Texture2);
+            tile.ParamTexture.Bind(TextureUnit.Texture2);
 
             this.boundingBoxProgram
                 .UseProgram()

@@ -41,6 +41,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             tile.HeightTexture.Bind(TextureUnit.Texture0);
             tile.NormalTexture.Bind(TextureUnit.Texture1);
             tile.ShadeTexture.Bind(TextureUnit.Texture2);
+            tile.ParamTexture.Bind(TextureUnit.Texture3);
 
             this.boundingBoxProgram
                 .UseProgram()
@@ -50,6 +51,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("heightTex", 0)
                 .SetUniform("normalTex", 1)
                 .SetUniform("shadeTex", 2)
+                .SetUniform("paramTex", 3)
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("boxparam", boxparam);
             this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));

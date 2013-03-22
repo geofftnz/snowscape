@@ -32,6 +32,7 @@ namespace Snowscape.TerrainRenderer
         public Texture HeightTexture { get; private set; }
         public Texture NormalTexture { get; private set; }
         public Texture ShadeTexture { get; private set; }
+        public Texture ParamTexture { get; private set; }
 
         public float MinHeight { get; private set; }
         public float MaxHeight { get; private set; }
@@ -53,6 +54,7 @@ namespace Snowscape.TerrainRenderer
         {
             this.Width = width;
             this.Height = height;
+            this.ModelMatrix = Matrix4.Identity;
         }
 
         public void Init()
@@ -76,7 +78,62 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
+
+            this.ParamTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
         }
+
+        public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
+        {
+            // height from cells
+            float[] height = new float[this.Width * this.Height];
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                height[i] = terrain.Map[terrain.C(x + offsetX, y + offsetY)].WHeight;
+            });
+
+            UploadHeightTexture(height);
+
+            // calculate normals on the fly - for visualisation of generation, this will be done in the vertex shader.
+            byte[] normals = new byte[this.Width * this.Height * 4];
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                var n = terrain.GetNormalFromWHeight(x + offsetX, y + offsetY);
+                var ii = i * 4;
+                normals[ii + 0] = n.X.UnitToByte();
+                normals[ii + 1] = n.Y.UnitToByte();
+                normals[ii + 2] = n.Z.UnitToByte();
+                normals[ii + 3] = 0;
+            });
+
+            this.NormalTexture.Upload(normals);
+
+            // shade texture - blank for generation vis, AO/shadowmap/scattermap otherwise
+            byte[] shade = new byte[this.Width * this.Height * 4];
+            this.ShadeTexture.Upload(shade);
+
+            // param texture - cell components
+            byte[] param = new byte[this.Width * this.Height * 4];
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                var ii = i * 4;
+                int ti = terrain.C(x + offsetX, y + offsetY);
+                param[ii + 0] = (byte)(terrain.Map[ti].Loose * 4.0f).Clamp(0f, 255f);
+                param[ii + 1] = (byte)(terrain.Map[ti].MovingWater * 2048.0f).Clamp(0f, 255f);
+                param[ii + 2] = (byte)(terrain.Map[ti].Carrying * 32.0f).Clamp(0f, 255f);
+                param[ii + 3] = (byte)(terrain.Map[ti].Erosion * 0.25f).Clamp(0f, 255f); 
+            });
+
+            this.ParamTexture.Upload(param);
+
+        }
+
 
 
         public void SetupTestData()
@@ -117,7 +174,7 @@ namespace Snowscape.TerrainRenderer
             this.NormalTexture.Upload(normals);
 
             // shade texture - write in some noise
-            byte[] shade = new byte[this.Width * this.Height * 4];
+            byte[] param = new byte[this.Width * this.Height * 4];
 
             rx = (float)r.NextDouble();
             ry = (float)r.NextDouble();
@@ -128,15 +185,14 @@ namespace Snowscape.TerrainRenderer
                 float s1 = 0.0f;// Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx, ry, 3, 5.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
                 float s2 = 0.5f;//Utils.SimplexNoise.wrapfbm((float)x, (float)y, (float)this.Width, (float)this.Height, rx + 17.0f, ry + 5.0f, 5, 25.2f / (float)this.Width, 1f, h => Math.Abs(h), h => h + h * h);
 
-                shade[ii + 0] = s1.UnitToByte();
-                shade[ii + 1] = s2.UnitToByte();
-                shade[ii + 2] = 0;
-                shade[ii + 3] = 0;
+                param[ii + 0] = s1.UnitToByte();
+                param[ii + 1] = s2.UnitToByte();
+                param[ii + 2] = 0;
+                param[ii + 3] = 0;
             });
 
-            this.ShadeTexture.Upload(shade);
+            this.ParamTexture.Upload(param);
 
-            this.ModelMatrix = Matrix4.Identity;
 
         }
 
