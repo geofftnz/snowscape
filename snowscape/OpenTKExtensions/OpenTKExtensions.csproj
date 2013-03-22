@@ -59,6 +59,7 @@
     <Compile Include="FontMetaParser.cs" />
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="GBuffer.cs" />
+    <Compile Include="GBufferCombiner.cs" />
     <Compile Include="IDrawableComponent.cs" />
     <Compile Include="ITextRenderer.cs" />
     <Compile Include="ITextureParameter.cs" />

@@ -44,6 +44,7 @@ namespace Snowscape.Viewer
         private double viewHeight = 100.0;
 
         private GBuffer gbuffer = new GBuffer("gbuffer1");
+        private GBufferCombiner gbufferCombiner;
 
 
         private TerrainTile tile = new TerrainTile(TILESIZE, TILESIZE);
@@ -51,13 +52,6 @@ namespace Snowscape.Viewer
         //private ITileRenderer renderer = new MeshRenderer(64,64);
         private List<ITileRenderer> renderers = new List<ITileRenderer>();
         private int currentRenderer = 0;
-
-
-        // gbuffer combine
-        private VBO gbufferCombineVertexVBO = new VBO("gbvertex");
-        private VBO gbufferCombineTexcoordVBO = new VBO("gbtexcoord");
-        private VBO gbufferCombineIndexVBO = new VBO("gbindex", BufferTarget.ElementArrayBuffer);
-        private ShaderProgram gbufferCombineProgram = new ShaderProgram("gb");
 
 
         // key mappings
@@ -120,30 +114,10 @@ namespace Snowscape.Viewer
 
         private void SetupGBufferCombiner()
         {
-            var vertex = new Vector3[4];
-            var texcoord = new Vector2[4];
-            uint[] index = { 0, 1, 3, 1, 2, 3 };
 
-            int i = 0;
+            var program = new ShaderProgram("combiner");
 
-            vertex[i] = new Vector3(0.0f, 0.0f, 0.0f);
-            texcoord[i] = new Vector2(0.0f, 0.0f);
-            i++;
-            vertex[i] = new Vector3(1.0f, 0.0f, 0.0f);
-            texcoord[i] = new Vector2(1.0f, 0.0f);
-            i++;
-            vertex[i] = new Vector3(1.0f, 1.0f, 0.0f);
-            texcoord[i] = new Vector2(1.0f, 1.0f);
-            i++;
-            vertex[i] = new Vector3(0.0f, 1.0f, 0.0f);
-            texcoord[i] = new Vector2(0.0f, 1.0f);
-            i++;
-
-            this.gbufferCombineVertexVBO.SetData(vertex);
-            this.gbufferCombineTexcoordVBO.SetData(texcoord);
-            this.gbufferCombineIndexVBO.SetData(index);
-
-            this.gbufferCombineProgram.Init(
+            program.Init(
                 @"../../../Resources/Shaders/GBufferCombine.vert".Load(),
                 @"../../../Resources/Shaders/GBufferCombine.frag".Load(),
                 new List<Variable> 
@@ -151,31 +125,24 @@ namespace Snowscape.Viewer
                     new Variable(0, "vertex"), 
                     new Variable(1, "in_texcoord0") 
                 });
+
+            this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
+
         }
 
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
-            // bind the FBO textures
-            this.gbuffer.GetTextureAtSlot(0).Bind(TextureUnit.Texture0);
-            this.gbuffer.GetTextureAtSlot(1).Bind(TextureUnit.Texture1);
-            this.gbuffer.GetTextureAtSlot(2).Bind(TextureUnit.Texture2);
-            this.gbuffer.GetTextureAtSlot(3).Bind(TextureUnit.Texture3);
 
-            this.gbufferCombineProgram
-                .UseProgram()
-                .SetUniform("projection_matrix", projection)
-                .SetUniform("modelview_matrix", modelview)
-                .SetUniform("eyePos", this.eyePos)
-                .SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f,0.8f,0.3f)))
-                .SetUniform("posTex", 0)
-                .SetUniform("normalTex", 1)
-                .SetUniform("shadeTex", 2)
-                .SetUniform("paramTex", 3);
-            this.gbufferCombineVertexVBO.Bind(this.gbufferCombineProgram.VariableLocation("vertex"));
-            this.gbufferCombineTexcoordVBO.Bind(this.gbufferCombineProgram.VariableLocation("in_texcoord0"));
-            this.gbufferCombineIndexVBO.Bind();
-            GL.DrawElements(BeginMode.Triangles, this.gbufferCombineIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
-
+            this.gbufferCombiner.Render(projection, modelview, (sp) =>
+            {
+                sp
+                    .SetUniform("eyePos", this.eyePos)
+                    .SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
+                    .SetUniform("posTex", 0)
+                    .SetUniform("normalTex", 1)
+                    .SetUniform("shadeTex", 2)
+                    .SetUniform("paramTex", 3);
+            });
         }
 
         void TerrainViewer_Load(object sender, EventArgs e)
@@ -204,12 +171,15 @@ namespace Snowscape.Viewer
                 renderer.Load();
             }
 
-            this.SetupGBufferCombiner();
+            
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
             this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // shade
             this.gbuffer.SetSlot(3, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
             this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+
+            this.SetupGBufferCombiner();
+
 
             this.SetKeyMappings();
 

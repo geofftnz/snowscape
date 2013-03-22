@@ -83,7 +83,7 @@ namespace OpenTKExtensions
             }
         }
 
-        const int MAXSLOTS = 16;
+        public const int MAXSLOTS = 16;
 
         private TextureSlot[] TextureSlots = new TextureSlot[MAXSLOTS];
 
@@ -216,7 +216,20 @@ namespace OpenTKExtensions
             }
 
             return this.TextureSlots[slot].Texture;
+        }
 
+        public Texture GetTextureAtSlotOrNull(int slot)
+        {
+            if (slot < 0 || slot >= MAXSLOTS)
+            {
+                return null;
+            }
+            if (this.TextureSlots[slot] == null || !this.TextureSlots[slot].Enabled)
+            {
+                return null;
+            }
+
+            return this.TextureSlots[slot].Texture;
         }
 
     }
