@@ -198,13 +198,13 @@ namespace TerrainGeneration
         {
             this.Terrain.Clear(0.0f);
 
-            this.Terrain.AddSimplexNoise(6, 0.3f / (float)this.Width, 1200.0f, h => h, h => h + h * h);
-            this.Terrain.AddSimplexNoise(8, 0.82f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h + h * h);
+            this.Terrain.AddSimplexNoise(6, 0.3f / (float)this.Width, 200.0f, h => h, h => h + h * h);
+            this.Terrain.AddSimplexNoise(8, 0.82f / (float)this.Width, 20.0f, h => Math.Abs(h), h => h + h * h);
 
-            this.Terrain.AddLooseMaterial(30.0f);
-            AddLooseMaterialBasedOnSlope(30.0f, 8);
+            this.Terrain.AddLooseMaterial(20.0f);
+            AddLooseMaterialBasedOnSlope(10.0f, 8);
 
-            this.Terrain.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => h, h => h);
+            this.Terrain.AddSimplexNoise(5, 27.0f / (float)this.Width, 2.0f, h => h, h => h);
 
 
             this.Terrain.SetBaseLevel();

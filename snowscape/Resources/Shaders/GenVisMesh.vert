@@ -18,14 +18,14 @@ out vec3 normal;
 
 vec3 getNormal(vec2 pos)
 {
-	vec3 t = vec3(vec2(1.0,1.0) / boxparam.xy,0.0);  // 1 texel
+	float t = 1.0 / boxparam.x;
 
-    float h1 = texture2D(heightTex,pos - t.zy).r;
-	float h2 = texture2D(heightTex,pos + t.zy).r;
-    float h3 = texture2D(heightTex,pos - t.xz).r;
-	float h4 = texture2D(heightTex,pos + t.xz).r;
+    float h1 = texture2D(heightTex,vec2(pos.x, pos.y - t)).r;
+	float h2 = texture2D(heightTex,vec2(pos.x, pos.y + t)).r;
+    float h3 = texture2D(heightTex,vec2(pos.x - t, pos.y)).r;
+	float h4 = texture2D(heightTex,vec2(pos.x + t, pos.y)).r;
 
-    return normalize(vec3(h4-h3,h2-h1,2.0*t.x));
+    return normalize(vec3(h4-h3,2.0,h2-h1));
 }
 
  

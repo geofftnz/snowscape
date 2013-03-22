@@ -162,14 +162,14 @@ namespace OpenTKExtensions.Camera
             }
             if (this.Keyboard[Key.A])
             {
-                pos.X += (float)(Math.Cos(this.AngleLeftRight + Math.PI * 1.5) * speed);
-                pos.Z += (float)(Math.Sin(this.AngleLeftRight + Math.PI * 1.5) * speed);
+                pos.X += (float)(Math.Cos(this.AngleLeftRight + Math.PI * 0.5) * speed);
+                pos.Z += (float)(Math.Sin(this.AngleLeftRight + Math.PI * 0.5) * speed);
                 this.IsMoving = true;
             }
             if (this.Keyboard[Key.D])
             {
-                pos.X += (float)(Math.Cos(this.AngleLeftRight + Math.PI * 2.5) * speed);
-                pos.Z += (float)(Math.Sin(this.AngleLeftRight + Math.PI * 2.5) * speed);
+                pos.X += (float)(Math.Cos(this.AngleLeftRight + Math.PI * 1.5) * speed);
+                pos.Z += (float)(Math.Sin(this.AngleLeftRight + Math.PI * 1.5) * speed);
                 this.IsMoving = true;
             }
 
