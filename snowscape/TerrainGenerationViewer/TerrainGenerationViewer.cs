@@ -13,6 +13,7 @@ using System.IO;
 using NLog;
 using System.Diagnostics;
 using OpenTK.Input;
+using Snowscape.TerrainStorage;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -107,8 +108,8 @@ namespace Snowscape.TerrainGenerationViewer
             }
         }
 
-        private TerrainGen.Cell[] threadCopyMap;
-        private TerrainGen.Cell[] threadRenderMap;
+        private Cell[] threadCopyMap;
+        private Cell[] threadRenderMap;
         private uint updateThreadIterations;
         private uint prevThreadIterations;
         private double updateThreadUpdateTime = 0.0;
@@ -249,8 +250,8 @@ namespace Snowscape.TerrainGenerationViewer
                 this.Terrain.InitTerrain1();
             }
 
-            this.threadCopyMap = new TerrainGen.Cell[this.Terrain.Width * this.Terrain.Height];
-            this.threadRenderMap = new TerrainGen.Cell[this.Terrain.Width * this.Terrain.Height];
+            this.threadCopyMap = new Cell[this.Terrain.Width * this.Terrain.Height];
+            this.threadRenderMap = new Cell[this.Terrain.Width * this.Terrain.Height];
 
             this.frameCounter.Start();
 
@@ -306,7 +307,7 @@ namespace Snowscape.TerrainGenerationViewer
                     {
                         lock (this)
                         {
-                            ParallelHelper.CopySingleThreadUnrolled(this.Terrain.Map, this.threadCopyMap, TileWidth * TileHeight);
+                            ParallelHelper.CopySingleThreadUnrolled(this.Terrain.Terrain.Map, this.threadCopyMap, TileWidth * TileHeight);
                             this.updateThreadIterations = iteration;
                             this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
                             this.waterIterations = this.Terrain.WaterIterations;

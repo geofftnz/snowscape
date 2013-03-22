@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Utils;
+using System.Threading.Tasks;
 
-namespace Terrain
+namespace Snowscape.TerrainStorage
 {
     /// <summary>
     /// Terrain 
@@ -64,6 +65,268 @@ namespace Terrain
                 this.CY = (i) => i / this.Width;
             }
 
+        }
+
+        #region noise
+        public void AddSimplexNoise(int octaves, float scale, float amplitude)
+        {
+            var r = new Random();
+
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+
+            Parallel.For(0, this.Height,
+                (y) =>
+                {
+                    int i = (int)y * this.Width;
+                    float s = (float)y / (float)this.Height;
+                    for (int x = 0; x < this.Width; x++)
+                    {
+                        float h = 0.0f;
+                        float t = (float)x / (float)this.Width;
+                        for (int j = 1; j <= octaves; j++)
+                        {
+                            //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
+                            h += SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1));
+                        }
+                        this.Map[i].Hard += h * amplitude;
+                        i++;
+                    }
+                }
+            );
+        }
+        public void AddSimplexNoiseToLoose(int octaves, float scale, float amplitude)
+        {
+            var r = new Random();
+
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+
+            Parallel.For(0, this.Height,
+                (y) =>
+                {
+                    int i = (int)y * this.Width;
+                    float s = (float)y / (float)this.Height;
+                    for (int x = 0; x < this.Width; x++)
+                    {
+                        float h = 0.0f;
+                        float t = (float)x / (float)this.Width;
+                        for (int j = 1; j <= octaves; j++)
+                        {
+                            //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
+                            h += SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1));
+                        }
+                        this.Map[i].Loose += h * amplitude;
+                        i++;
+                    }
+                }
+            );
+        }
+
+        public void AddSimplexNoise(int octaves, float scale, float amplitude, Func<float, float> transform, Func<float, float> postTransform)
+        {
+            var r = new Random();
+
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+
+            Parallel.For(0, this.Height,
+                (y) =>
+                {
+                    int i = (int)y * this.Width;
+                    float s = (float)y / (float)this.Height;
+                    for (int x = 0; x < this.Width; x++)
+                    {
+                        float h = 0.0f;
+                        float t = (float)x / (float)this.Width;
+                        for (int j = 1; j <= octaves; j++)
+                        {
+                            h += transform(SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1)));
+                        }
+
+                        if (postTransform != null)
+                        {
+                            this.Map[i].Hard += postTransform(h) * amplitude;
+                        }
+                        else
+                        {
+                            this.Map[i].Hard += h * amplitude;
+                        }
+                        i++;
+                    }
+                }
+            );
+        }
+
+        public void AddSimplexPowNoise(int octaves, float scale, float amplitude, float power, Func<float, float> postTransform)
+        {
+            var r = new Random();
+
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+
+            Parallel.For(0, this.Height,
+                (y) =>
+                {
+                    int i = (int)y * this.Width;
+                    float s = (float)y / (float)this.Height;
+                    for (int x = 0; x < this.Width; x++)
+                    {
+                        float h = 0.0f;
+                        float t = (float)x / (float)this.Width;
+                        for (int j = 1; j <= octaves; j++)
+                        {
+                            //h += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
+                            h += SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale * (1 << j))) * (float)(1.0 / ((1 << j) + 1));
+                        }
+                        this.Map[i].Hard += postTransform((float)Math.Pow(h, power) * amplitude);
+                        i++;
+                    }
+                }
+            );
+        }
+
+        /// <summary>
+        /// One set of noise multiplied by another.
+        /// </summary>
+        /// <param name="octaves"></param>
+        /// <param name="scale"></param>
+        /// <param name="amplitude"></param>
+        /// <param name="transform"></param>
+        /// <param name="postTransform"></param>
+        public void AddMultipliedSimplexNoise(
+            int octaves1, float scale1, Func<float, float> transform1, float offset1, float mul1,
+            int octaves2, float scale2, Func<float, float> transform2, float offset2, float mul2,
+            Func<float, float> postTransform,
+            float amplitude)
+        {
+            var r = new Random();
+
+            float rx = (float)r.NextDouble();
+            float ry = (float)r.NextDouble();
+
+
+            Parallel.For(0, this.Height,
+                (y) =>
+                {
+                    int i = (int)y * this.Width;
+                    float s = (float)y / (float)this.Height;
+                    for (int x = 0; x < this.Width; x++)
+                    {
+                        float t = (float)x / (float)this.Width;
+
+                        float h = 0.0f;
+
+                        for (int j1 = 1; j1 <= octaves1; j1++)
+                        {
+                            h += transform1(SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale1 * (1 << j1))) * (float)(1.0 / ((1 << j1) + 1)));
+                        }
+
+                        h = h * mul1 + offset1;
+
+                        float h2 = 0f;
+
+                        for (int j2 = 1; j2 <= octaves2; j2++)
+                        {
+                            h2 += transform2(SimplexNoise.wrapnoise(s, t, (float)this.Width, (float)this.Height, rx, ry, (float)(scale2 * (1 << j2))) * (float)(1.0 / ((1 << j2) + 1)));
+                        }
+
+                        h2 = h2 * mul2 + offset2;
+
+                        h *= h2;
+
+
+                        if (postTransform != null)
+                        {
+                            this.Map[i].Hard += postTransform(h) * amplitude;
+                        }
+                        else
+                        {
+                            this.Map[i].Hard += h * amplitude;
+                        }
+                        i++;
+                    }
+                }
+            );
+        }
+
+
+        public void AddDiscontinuousNoise(int octaves, float scale, float amplitude, float threshold)
+        {
+            var r = new Random(1);
+
+            double rx = r.NextDouble();
+            double ry = r.NextDouble();
+
+            Parallel.For(0, this.Height,
+                (y) =>
+                {
+                    int i = y * this.Width;
+                    for (int x = 0; x < this.Width; x++)
+                    {
+                        //this.Map[i].Hard += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
+
+                        float a = 0.0f;
+                        for (int j = 1; j < octaves; j++)
+                        {
+                            a += SimplexNoise.noise((float)rx + x * scale * (1 << j), (float)ry + y * scale * (1 << j), j * 3.3f) * (amplitude / ((1 << j) + 1));
+                        }
+
+                        if (a > threshold)
+                        {
+                            this.Map[i].Hard += amplitude;
+                        }
+
+                        i++;
+                    }
+                }
+            );
+        }
+        #endregion
+
+        public void Clear(float height)
+        {
+            for (int i = 0; i < Width * Height; i++)
+            {
+                this.Map[i] = new Cell();
+            }
+        }
+
+        public void SetBaseLevel()
+        {
+            float min = this.Map.Select(c => c.Hard).Min();
+
+            for (int i = 0; i < Width * Height; i++)
+            {
+                this.Map[i].Hard -= min;
+            }
+        }
+
+        public void AddLooseMaterial(float amount)
+        {
+            for (int i = 0; i < Width * Height; i++)
+            {
+                this.Map[i].Loose += amount;
+            }
+        }
+
+        public void AddTempDiffMapToLoose(float[] TempDiffMap)
+        {
+            ParallelHelper.For2D(this.Width, this.Height, (i) => { this.Map[i].Loose += TempDiffMap[i]; });
+        }
+
+        public void DecayWater(float MovingWaterDecay, float WaterErosionDecay, float CarryingDecay)
+        {
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
+            {
+                this.Map[i].MovingWater *= MovingWaterDecay;
+                this.Map[i].Erosion *= WaterErosionDecay;
+                this.Map[i].Carrying *= CarryingDecay;
+            });
         }
 
 

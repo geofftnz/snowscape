@@ -8,7 +8,7 @@
     <ProjectGuid>{B8883642-EC54-42C3-83C6-CAC66444A5A2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Terrain</RootNamespace>
+    <RootNamespace>Snowscape.TerrainStorage</RootNamespace>
     <AssemblyName>Terrain</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

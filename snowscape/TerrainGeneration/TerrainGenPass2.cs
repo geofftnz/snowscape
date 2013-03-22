@@ -160,7 +160,7 @@ namespace TerrainGeneration
 
             for (int i = 0; i < this.Width * this.Height; i++)
             {
-                this.Map[i].Rock = pass1.Map[i].Height;
+                this.Map[i].Rock = pass1.Terrain[i].Height;
                 this.Map[i].Ice = 0f;
                 this.Map[i].Snow = 0f;
                 this.Map[i].Powder = 0f;

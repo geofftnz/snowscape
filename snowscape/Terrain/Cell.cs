@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace Terrain
+namespace Snowscape.TerrainStorage
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Cell

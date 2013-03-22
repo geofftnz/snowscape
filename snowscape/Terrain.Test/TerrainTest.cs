@@ -3,8 +3,9 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Snowscape.TerrainStorage;
 
-namespace Terrain.Test
+namespace Snowscape.TerrainStorage.Test
 {
     [TestClass]
     public class TerrainTest
