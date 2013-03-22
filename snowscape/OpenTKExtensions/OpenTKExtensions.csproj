@@ -54,6 +54,7 @@
     <Compile Include="Camera\CamMode.cs" />
     <Compile Include="Camera\ICamera.cs" />
     <Compile Include="Camera\QuaternionCamera.cs" />
+    <Compile Include="Camera\WalkCamera.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FontCharacter.cs" />
     <Compile Include="FontMetaParser.cs" />

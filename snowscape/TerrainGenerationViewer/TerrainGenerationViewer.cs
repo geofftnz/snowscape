@@ -16,6 +16,8 @@ using OpenTK.Input;
 using Snowscape.TerrainStorage;
 using Snowscape.TerrainRenderer;
 using Snowscape.TerrainRenderer.Renderers;
+using OpenTKExtensions.Camera;
+
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -58,6 +60,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Vector3 eyePos;
         private double angle = 0.0;
         private double viewHeight = 100.0;
+
+        private ICamera camera;
 
 
 
@@ -175,6 +179,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
 
+            this.camera = new WalkCamera(this.Keyboard, this.Mouse);
+
             this.UpdateFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_UpdateFrame);
             this.RenderFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_RenderFrame);
             this.Load += new EventHandler<EventArgs>(TerrainGenerationViewer_Load);
@@ -182,7 +188,17 @@ namespace Snowscape.TerrainGenerationViewer
             this.Resize += new EventHandler<EventArgs>(TerrainGenerationViewer_Resize);
             this.Closed += new EventHandler<EventArgs>(TerrainGenerationViewer_Closed);
             this.Closing += new EventHandler<System.ComponentModel.CancelEventArgs>(TerrainGenerationViewer_Closing);
+
+            this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
  
+        }
+
+        void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                this.Close();
+            }
         }
 
 
@@ -370,6 +386,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
             SetProjection();
             this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 
         private void SetProjection()
@@ -394,6 +411,9 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void SetTerrainProjection()
         {
+            this.terrainProjection = this.camera.Projection;
+            this.terrainModelview = this.camera.View;
+            /*
             this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 4000.0f);
 
             double r = 200.0f;
@@ -401,6 +421,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), (float)viewHeight, (float)(128.0 + r * Math.Sin(a)));
 
             this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
+             */
         }
 
 
@@ -475,6 +496,13 @@ namespace Snowscape.TerrainGenerationViewer
             this.view_offset.X = this.view_offset.X.Wrap(1.0f);
             this.view_offset.Y = this.view_offset.Y.Wrap(1.0f);
             */
+
+            this.camera.Update(e.Time);
+
+            if (Keyboard[Key.M])
+            {
+                System.Windows.Forms.Cursor.Position = new System.Drawing.Point(Location.X + Width / 2, Location.Y + Height / 2);
+            }
 
             if (Keyboard[Key.Z] || Keyboard[Key.Left])
             {

@@ -9,6 +9,7 @@ using OpenTK.Input;
 
 namespace OpenTKExtensions.Camera
 {
+    /*
     // credit: opcon, from http://www.opentk.com/node/3016
     public class QuaternionCamera : ICamera
     {
@@ -347,4 +348,5 @@ namespace OpenTKExtensions.Camera
         #endregion
 
     }
+     */ 
 }

@@ -7,6 +7,7 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform vec4 boxparam;
 uniform vec3 eyePos;
+
 in vec3 vertex;
 in vec3 in_boxcoord;
 
@@ -19,8 +20,8 @@ vec3 getNormal(vec2 pos)
 {
 	vec3 t = vec3(vec2(1.0,1.0) / boxparam.xy,0.0);  // 1 texel
 
-    float h1 = texture2D(heightTex,pos - t.yz).r;
-	float h2 = texture2D(heightTex,pos + t.yz).r;
+    float h1 = texture2D(heightTex,pos - t.zy).r;
+	float h2 = texture2D(heightTex,pos + t.zy).r;
     float h3 = texture2D(heightTex,pos - t.xz).r;
 	float h4 = texture2D(heightTex,pos + t.xz).r;
 

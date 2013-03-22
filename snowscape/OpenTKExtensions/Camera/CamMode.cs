@@ -5,10 +5,12 @@ using System.Text;
 
 namespace OpenTKExtensions.Camera
 {
+/*
     public enum CamMode
     {
         FlightCamera,
         FirstPerson,
         NoClip
     }
+ * */
 }
