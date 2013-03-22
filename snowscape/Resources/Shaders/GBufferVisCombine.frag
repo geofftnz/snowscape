@@ -57,7 +57,9 @@ void main(void)
 	vec4 c = vec4(0.0,0.0,0.0,1.0);
 	
 	vec2 p = texcoord0.xy;
-	vec4 pos = vec4(texture2D(posTex,p).xyz + eyePos,0.0);
+	vec4 posT = texture2D(posTex,p);
+	float hitType = posT.a;
+	vec4 pos = vec4(posT.xyz + eyePos,0.0);
 	vec4 normalT = texture2D(normalTex,p);
 	vec4 paramT = texture2D(paramTex,p);
 	vec3 normal = normalize(normalT.xyz - 0.5);
@@ -69,6 +71,10 @@ void main(void)
 	vec4 fogcol = vec4(0.8, 0.88, 0.92,1.0);
 	d /= 1024.0;
 	float fogamount = 1.0 / (exp(d * d * 0.1));
+
+	if (hitType < 0.5){
+		fogamount = 0.0;
+	}
 
 	c = mix(fogcol,c,fogamount);
 
