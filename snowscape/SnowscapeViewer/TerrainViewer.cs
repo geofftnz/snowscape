@@ -164,6 +164,7 @@ namespace Snowscape.Viewer
 
             //this.renderers.Add(new BoundingBoxRenderer());
             this.renderers.Add(new MeshRenderer(TILESIZE, TILESIZE));
+            this.renderers.Add(new GenerationVisMeshRenderer(TILESIZE, TILESIZE));
             this.renderers.Add(new RaycastRenderer());
 
             foreach (var renderer in renderers)

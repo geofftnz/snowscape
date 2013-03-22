@@ -34,7 +34,6 @@ namespace Snowscape.TerrainStorage
             set { this.Map[index] = value; }
         }
 
-
         public Terrain(int width, int height)
         {
             this.Width = width;
@@ -67,6 +66,28 @@ namespace Snowscape.TerrainStorage
             }
 
         }
+
+        public static Terrain Clone(Terrain src)
+        {
+            var dest = new Terrain(src.Width, src.Height);
+            dest.CopyFrom(src);
+            return dest;
+        }
+
+        public void CopyFrom(Terrain src)
+        {
+            if (src == null)
+            {
+                throw new InvalidOperationException("Cannot copy from null terrain");
+            }
+            if (this.Width != src.Width || this.Height != src.Height)
+            {
+                throw new InvalidOperationException("Cannot copy terrains of different size");
+            }
+
+            ParallelHelper.CopySingleThreadUnrolled(src.Map, this.Map, this.Width * this.Height);
+        }
+
 
         #region noise
         public void AddSimplexNoise(int octaves, float scale, float amplitude)

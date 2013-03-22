@@ -21,7 +21,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         private VBO vertexVBO = new VBO("bbvertex");
         private VBO boxcoordVBO = new VBO("bbboxcoord");
         private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
-        private ShaderProgram boundingBoxProgram = new ShaderProgram("tilemesh");
+        private ShaderProgram boundingBoxProgram = new ShaderProgram("vistilemesh");
 
         public int Width { get; private set; }
         public int Height { get; private set; }

@@ -100,7 +100,6 @@ namespace Snowscape.TerrainRenderer
 
             // param texture - cell components
             UploadVisParamTexture(terrain, offsetX, offsetY);
-
         }
 
         public void SetDataFromTerrainGeneration(TerrainStorage.Terrain terrain, int offsetX, int offsetY)

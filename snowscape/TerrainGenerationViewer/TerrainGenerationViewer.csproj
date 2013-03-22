@@ -65,6 +65,10 @@
       <Project>{9D035467-1C64-4D8A-995A-C4AA9A5C0BB2}</Project>
       <Name>TerrainGeneration</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TerrainRenderer\TerrainRenderer.csproj">
+      <Project>{72E4F361-90DB-4475-A045-BF358A81090F}</Project>
+      <Name>TerrainRenderer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Terrain\Terrain.csproj">
       <Project>{B8883642-EC54-42C3-83C6-CAC66444A5A2}</Project>
       <Name>Terrain</Name>

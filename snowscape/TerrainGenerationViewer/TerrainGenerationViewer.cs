@@ -14,6 +14,8 @@ using NLog;
 using System.Diagnostics;
 using OpenTK.Input;
 using Snowscape.TerrainStorage;
+using Snowscape.TerrainRenderer;
+using Snowscape.TerrainRenderer.Renderers;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -26,18 +28,39 @@ namespace Snowscape.TerrainGenerationViewer
 
         public TerrainGen Terrain { get; set; }
 
-        private Matrix4 projection = Matrix4.Identity;
-        private Matrix4 modelview = Matrix4.Identity;
-        private ShaderProgram quadShader = new ShaderProgram("QuadShader");
-        private VBO quadVertexVBO = new VBO("quadvertex", BufferTarget.ArrayBuffer);
-        private VBO quadTexcoordVBO = new VBO("quadtexcoord", BufferTarget.ArrayBuffer);
-        private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
+        //private Matrix4 projection = Matrix4.Identity;
+        //private Matrix4 modelview = Matrix4.Identity;
 
-        private Texture heightTex;
-        private Texture shadeTex;
+        private Matrix4 overlayProjection = Matrix4.Identity;
+        private Matrix4 overlayModelview = Matrix4.Identity;
 
-        float[] heightTexData = new float[TileWidth * TileHeight];
-        byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
+        private Matrix4 terrainProjection = Matrix4.Identity;
+        private Matrix4 terrainModelview = Matrix4.Identity;
+
+        private Matrix4 gbufferCombineProjection = Matrix4.Identity;
+        private Matrix4 gbufferCombineModelview = Matrix4.Identity;
+
+        //private ShaderProgram quadShader = new ShaderProgram("QuadShader");
+        //private VBO quadVertexVBO = new VBO("quadvertex", BufferTarget.ArrayBuffer);
+        //private VBO quadTexcoordVBO = new VBO("quadtexcoord", BufferTarget.ArrayBuffer);
+        //private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
+
+        //private Texture heightTex;
+        //private Texture shadeTex;
+
+        //float[] heightTexData = new float[TileWidth * TileHeight];
+        //byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
+
+        private GBuffer gbuffer = new GBuffer("gb");
+        private GBufferCombiner gbufferCombiner;
+        private TerrainTile terrainTile;
+        private ITileRenderer tileRenderer;
+        private Vector3 eyePos;
+        private double angle = 0.0;
+        private double viewHeight = 100.0;
+
+
+
         uint updateCounter = 0;
         private Font font = new Font();
         private TextManager textManager = new TextManager("DefaultText", null);
@@ -108,8 +131,9 @@ namespace Snowscape.TerrainGenerationViewer
             }
         }
 
-        private Cell[] threadCopyMap;
-        private Cell[] threadRenderMap;
+        private Terrain threadCopyMap;
+        private Terrain threadRenderMap;
+
         private uint updateThreadIterations;
         private uint prevThreadIterations;
         private double updateThreadUpdateTime = 0.0;
@@ -147,7 +171,9 @@ namespace Snowscape.TerrainGenerationViewer
         public TerrainGenerationViewer()
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
-            this.Terrain = new TerrainGen(1024, 1024);
+            this.Terrain = new TerrainGen(TileWidth, TileHeight);
+            this.terrainTile = new TerrainTile(TileWidth, TileHeight);
+            this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
 
             this.UpdateFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_UpdateFrame);
             this.RenderFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_RenderFrame);
@@ -189,15 +215,6 @@ namespace Snowscape.TerrainGenerationViewer
             OnClose(this, new CloseEventArgs());
         }
 
-        /*
-        protected override void OnClosed(EventArgs e)
-        {
-            OnClose(this, new CloseEventArgs());
-            base.OnClosed(e);
-        }*/
-
-
-
 
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
@@ -205,9 +222,32 @@ namespace Snowscape.TerrainGenerationViewer
 
             // create VBOs/Shaders etc
 
+            this.terrainTile.Init();
+            this.tileRenderer.Load();
+
+            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
+            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
+            this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+
+            var program = new ShaderProgram("combiner");
+
+            program.Init(
+                @"../../../Resources/Shaders/GBufferVisCombine.vert".Load(),
+                @"../../../Resources/Shaders/GBufferVisCombine.frag".Load(),
+                new List<Variable> 
+                { 
+                    new Variable(0, "vertex"), 
+                    new Variable(1, "in_texcoord0") 
+                });
+
+            this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
+
+
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
+            /*
             this.heightTex = new Texture("height", TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
             this.heightTex
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
@@ -223,15 +263,15 @@ namespace Snowscape.TerrainGenerationViewer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
                 .Upload(shadeTexData);
-
+            */
 
             // setup VBOs
-            this.quadVertexVBO.SetData(this.quadPos);
-            this.quadTexcoordVBO.SetData(this.quadTexCoord);
-            this.quadIndexVBO.SetData(this.quadIndex);
+            //this.quadVertexVBO.SetData(this.quadPos);
+            //this.quadTexcoordVBO.SetData(this.quadTexCoord);
+            //this.quadIndexVBO.SetData(this.quadIndex);
 
             // setup shader
-            quadShader.Init(@"../../../Resources/Shaders/TerrainGeneration.vert".Load(), @"../../../Resources/Shaders/TerrainGeneration_Vis.frag".Load(), new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
+            //quadShader.Init(@"../../../Resources/Shaders/TerrainGeneration.vert".Load(), @"../../../Resources/Shaders/TerrainGeneration_Vis.frag".Load(), new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
 
             // setup font
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
@@ -250,8 +290,8 @@ namespace Snowscape.TerrainGenerationViewer
                 this.Terrain.InitTerrain1();
             }
 
-            this.threadCopyMap = new Cell[this.Terrain.Width * this.Terrain.Height];
-            this.threadRenderMap = new Cell[this.Terrain.Width * this.Terrain.Height];
+            this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
+            this.threadRenderMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
 
             this.frameCounter.Start();
 
@@ -278,14 +318,6 @@ namespace Snowscape.TerrainGenerationViewer
                 {
                     break;
                 }
-                //lock (this)
-                //{
-                //    killMe = this.killThread;
-                //}
-                //if (killMe)
-                //{
-                //    break;
-                //}
 
                 bool pauseRequest = this.PauseThread;
 
@@ -307,7 +339,7 @@ namespace Snowscape.TerrainGenerationViewer
                     {
                         lock (this)
                         {
-                            ParallelHelper.CopySingleThreadUnrolled(this.Terrain.Terrain.Map, this.threadCopyMap, TileWidth * TileHeight);
+                            this.threadCopyMap.CopyFrom(this.Terrain.Terrain);
                             this.updateThreadIterations = iteration;
                             this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
                             this.waterIterations = this.Terrain.WaterIterations;
@@ -324,7 +356,7 @@ namespace Snowscape.TerrainGenerationViewer
             lock (this)
             {
                 perfmon.Start("Copy2");
-                ParallelHelper.CopySingleThreadUnrolled(this.threadCopyMap, this.threadRenderMap, TileWidth * TileHeight);
+                this.threadRenderMap.CopyFrom(this.threadCopyMap);
                 perfmon.Stop("Copy2");
             }
         }
@@ -337,55 +369,81 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Resize(object sender, EventArgs e)
         {
             SetProjection();
+            this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 
         private void SetProjection()
         {
             GL.Viewport(this.ClientRectangle);
-
-            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 1.0f, 0.0f, 0.001f, 10.0f);
-            this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
-
+            SetOverlayProjection();
+            SetTerrainProjection();
+            SetGBufferCombineProjection();
         }
 
-        protected void UpdateHeightTexture()
+        private void SetOverlayProjection()
         {
-            perfmon.Start("UpdateHeightTexture");
-            float m = 1.0f / 4096.0f;
-            ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
-            {
-                this.heightTexData[i] = (this.threadRenderMap[i].Height) * m;
-            });
-            perfmon.Stop("UpdateHeightTexture");
-            perfmon.Start("UploadHeightTexture");
-            this.heightTex.RefreshImage(this.heightTexData);
-            perfmon.Stop("UploadHeightTexture");
+            this.overlayProjection = Matrix4.CreateOrthographicOffCenter(0.0f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 1.0f, 0.0f, 0.001f, 10.0f);
+            this.overlayModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
         }
 
-        protected void UpdateShadeTexture()
+        private void SetGBufferCombineProjection()
         {
-            perfmon.Start("UpdateShadeTexture");
-            ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
-            {
-                int j = (i) << 2;
-
-                this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).Clamp(0.0f, 255.0f));
-                this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
-                this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying
-
-                //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 16f).Clamp(0.0f, 255.0f));  // misc - particle speed
-                //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 255f).Clamp(0.0f, 255.0f));  // misc - particle death
-
-                this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 0.25f).Clamp(0.0f, 255.0f)); // misc - age
-            });
-            perfmon.Stop("UpdateShadeTexture");
-            perfmon.Start("UploadShadeTexture");
-            this.shadeTex.RefreshImage(this.shadeTexData);
-            perfmon.Stop("UploadShadeTexture");
+            this.gbufferCombineProjection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
+            this.gbufferCombineModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
         }
+
+        private void SetTerrainProjection()
+        {
+            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 4000.0f);
+
+            double r = 200.0f;
+            double a = angle; // Math.IEEERemainder(globalTime * 0.02, 1.0) * 2.0 * Math.PI;
+            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), (float)viewHeight, (float)(128.0 + r * Math.Sin(a)));
+
+            this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
+        }
+
+
+
+        //protected void UpdateHeightTexture()
+        //{
+        //    perfmon.Start("UpdateHeightTexture");
+        //    float m = 1.0f / 4096.0f;
+        //    ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
+        //    {
+        //        this.heightTexData[i] = (this.threadRenderMap[i].Height) * m;
+        //    });
+        //    perfmon.Stop("UpdateHeightTexture");
+        //    perfmon.Start("UploadHeightTexture");
+        //    this.heightTex.RefreshImage(this.heightTexData);
+        //    perfmon.Stop("UploadHeightTexture");
+        //}
+
+        //protected void UpdateShadeTexture()
+        //{
+        //    perfmon.Start("UpdateShadeTexture");
+        //    ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
+        //    {
+        //        int j = (i) << 2;
+
+        //        this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).Clamp(0.0f, 255.0f));
+        //        this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
+        //        this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying
+
+        //        //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 16f).Clamp(0.0f, 255.0f));  // misc - particle speed
+        //        //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 255f).Clamp(0.0f, 255.0f));  // misc - particle death
+
+        //        this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 0.25f).Clamp(0.0f, 255.0f)); // misc - age
+        //    });
+        //    perfmon.Stop("UpdateShadeTexture");
+        //    perfmon.Start("UploadShadeTexture");
+        //    this.shadeTex.RefreshImage(this.shadeTexData);
+        //    perfmon.Stop("UploadShadeTexture");
+        //}
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
+            /*
             float moveRate = 0.02f * this.view_scale;
             if (Keyboard[Key.Plus])
             {
@@ -396,7 +454,7 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.view_scale *= 1.05f;
             }
-
+            
             if (Keyboard[Key.Left])
             {
                 this.view_offset.X -= moveRate;
@@ -416,6 +474,19 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.view_offset.X = this.view_offset.X.Wrap(1.0f);
             this.view_offset.Y = this.view_offset.Y.Wrap(1.0f);
+            */
+
+            if (Keyboard[Key.Z] || Keyboard[Key.Left])
+            {
+                this.angle += e.Time * 0.5;
+            }
+            if (Keyboard[Key.X] || Keyboard[Key.Right])
+            {
+                this.angle -= e.Time * 0.5;
+            }
+            if (Keyboard[Key.Up]) { this.viewHeight += 10.0; }
+            if (Keyboard[Key.Down]) { this.viewHeight -= 10.0; }
+
 
             if (Keyboard[Key.R])
             {
@@ -452,6 +523,21 @@ namespace Snowscape.TerrainGenerationViewer
             this.PauseThread = false;
         }
 
+
+        private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
+        {
+            this.gbufferCombiner.Render(projection, modelview, (sp) =>
+            {
+                sp
+                    .SetUniform("eyePos", this.eyePos)
+                    //.SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
+                    .SetUniform("posTex", 0)
+                    .SetUniform("normalTex", 1)
+                    .SetUniform("paramTex", 2);
+            });
+        }
+
+
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
 
@@ -472,32 +558,33 @@ namespace Snowscape.TerrainGenerationViewer
             if (prevThreadIterations != currentThreadIterations)
             {
                 CopyMapDataFromUpdateThread();
-                UpdateShadeTexture();
-                UpdateHeightTexture();
+                this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
             }
 
-            GL.ClearColor(new Color4(192, 208, 255, 255));
-            GL.ClearDepth(10.0);
+            SetTerrainProjection();
+
+            // render terrain to gbuffer
+            perfmon.Start("RenderTerrain");
+            this.gbuffer.BindForWriting();
+            GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Disable(EnableCap.Blend);
+            this.tileRenderer.Render(this.terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            this.gbuffer.UnbindFromWriting(); 
+            perfmon.Stop("RenderTerrain");
+
+            // render gbuffer to screen
+
+            GL.Viewport(this.ClientRectangle);
+            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            perfmon.Start("RenderTerrain");
-            this.heightTex.Bind(TextureUnit.Texture0);
-            this.shadeTex.Bind(TextureUnit.Texture1);
-            quadShader.UseProgram();
-            quadShader.SetUniform("projection_matrix", this.projection);
-            quadShader.SetUniform("modelview_matrix", this.modelview);
-            quadShader.SetUniform("tex0_offset", this.view_offset);
-            quadShader.SetUniform("tex0_scale", this.view_scale);
-            quadShader.SetUniform("heightTex", 0);
-            quadShader.SetUniform("shadeTex", 1);
-            //quadShader.SetUniform("resolution", new Vector2(this.ClientSize.Width,this.ClientSize.Height));
-            quadVertexVBO.Bind(quadShader.VariableLocation("vertex"));
-            quadTexcoordVBO.Bind(quadShader.VariableLocation("in_texcoord0"));
-            quadIndexVBO.Bind();
-            GL.DrawElements(BeginMode.TriangleStrip, quadIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
-            perfmon.Stop("RenderTerrain");
+            perfmon.Start("RenderGBufferCombiner");
+            RenderGBufferCombiner(gbufferCombineProjection, gbufferCombineModelview);
+            perfmon.Stop("RenderGBufferCombiner");
+
 
             GL.Disable(EnableCap.DepthTest);
             perfmon.Start("RefreshText");
@@ -505,7 +592,7 @@ namespace Snowscape.TerrainGenerationViewer
             perfmon.Stop("RefreshText");
 
             perfmon.Start("RenderText");
-            textManager.Render(projection, modelview);
+            textManager.Render(overlayProjection, overlayModelview);
             perfmon.Stop("RenderText");
             GL.Enable(EnableCap.DepthTest);
 
@@ -514,8 +601,7 @@ namespace Snowscape.TerrainGenerationViewer
             SwapBuffers();
 
             this.frameCounter.Frame();
-
-            Thread.Sleep(16);
+            
         }
 
         protected string GetTerrainFileName(int index)

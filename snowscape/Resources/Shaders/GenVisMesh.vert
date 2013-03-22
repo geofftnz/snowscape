@@ -12,12 +12,29 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec3 worldpos;
+out vec3 normal;
+
+
+vec3 getNormal(vec2 pos)
+{
+	vec3 t = vec3(vec2(1.0,1.0) / boxparam.xy,0.0);  // 1 texel
+
+    float h1 = texture2D(heightTex,pos - t.yz).r;
+	float h2 = texture2D(heightTex,pos + t.yz).r;
+    float h3 = texture2D(heightTex,pos - t.xz).r;
+	float h4 = texture2D(heightTex,pos + t.xz).r;
+
+    return normalize(vec3(h4-h3,h2-h1,2.0*t.x));
+}
+
  
 void main() {
 
 	vec2 texcoord = in_boxcoord.xz;
 	
 	float h = texture2D(heightTex,texcoord).r;
+
+	normal = getNormal(texcoord);
 
 	vec3 v = vertex;
 	v.x *= boxparam.x;
