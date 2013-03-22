@@ -1,6 +1,6 @@
 ﻿#version 140
 precision highp float;
-//uniform sampler2D heightTex;
+uniform sampler2D heightTex;
 uniform sampler2D paramTex;
 uniform vec4 boxparam;
 

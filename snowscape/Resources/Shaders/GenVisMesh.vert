@@ -25,7 +25,7 @@ vec3 getNormal(vec2 pos)
     float h3 = texture2D(heightTex,vec2(pos.x - t, pos.y)).r;
 	float h4 = texture2D(heightTex,vec2(pos.x + t, pos.y)).r;
 
-    return normalize(vec3(h4-h3,2.0,h2-h1));
+    return normalize(vec3(h4-h3,h2-h1,2.0));
 }
 
  
@@ -51,4 +51,5 @@ void main() {
     
     boxcoord = b;
 	worldpos = (model_matrix * vec4(b,1.0)).xyz - eyePos;
+
 }

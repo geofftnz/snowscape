@@ -21,7 +21,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         private VBO vertexVBO = new VBO("bbvertex");
         private VBO boxcoordVBO = new VBO("bbboxcoord");
         private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
-        private ShaderProgram boundingBoxProgram = new ShaderProgram("vistilemesh");
+        private ShaderProgram shader = new ShaderProgram("vistilemesh");
 
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -48,7 +48,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             tile.HeightTexture.Bind(TextureUnit.Texture0);
             tile.ParamTexture.Bind(TextureUnit.Texture1);
 
-            this.boundingBoxProgram
+            this.shader
                 .UseProgram()
                 .SetUniform("projection_matrix", projection)
                 .SetUniform("model_matrix", tile.ModelMatrix)
@@ -57,8 +57,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("paramTex", 1)
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("boxparam", boxparam);
-            this.vertexVBO.Bind(this.boundingBoxProgram.VariableLocation("vertex"));
-            this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
+            this.vertexVBO.Bind(this.shader.VariableLocation("vertex"));
+            this.boxcoordVBO.Bind(this.shader.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
@@ -120,7 +120,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         private void InitShader()
         {
             // setup shader
-            this.boundingBoxProgram.Init(
+            this.shader.Init(
                 @"../../../Resources/Shaders/GenVisMesh.vert".Load(),
                 @"../../../Resources/Shaders/GenVisMesh.frag".Load(),
                 new List<Variable> 
@@ -132,7 +132,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                 {
                     "out_Pos",
                     "out_Normal",
-                    "out_Shade",
                     "out_Param"
                 });
         }

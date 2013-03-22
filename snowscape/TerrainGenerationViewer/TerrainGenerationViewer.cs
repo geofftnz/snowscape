@@ -30,9 +30,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         public TerrainGen Terrain { get; set; }
 
-        //private Matrix4 projection = Matrix4.Identity;
-        //private Matrix4 modelview = Matrix4.Identity;
-
         private Matrix4 overlayProjection = Matrix4.Identity;
         private Matrix4 overlayModelview = Matrix4.Identity;
 
@@ -42,16 +39,6 @@ namespace Snowscape.TerrainGenerationViewer
         private Matrix4 gbufferCombineProjection = Matrix4.Identity;
         private Matrix4 gbufferCombineModelview = Matrix4.Identity;
 
-        //private ShaderProgram quadShader = new ShaderProgram("QuadShader");
-        //private VBO quadVertexVBO = new VBO("quadvertex", BufferTarget.ArrayBuffer);
-        //private VBO quadTexcoordVBO = new VBO("quadtexcoord", BufferTarget.ArrayBuffer);
-        //private VBO quadIndexVBO = new VBO("quadindex", BufferTarget.ElementArrayBuffer);
-
-        //private Texture heightTex;
-        //private Texture shadeTex;
-
-        //float[] heightTexData = new float[TileWidth * TileHeight];
-        //byte[] shadeTexData = new byte[TileWidth * TileHeight * 4];
 
         private GBuffer gbuffer = new GBuffer("gb");
         private GBufferCombiner gbufferCombiner;
@@ -62,7 +49,6 @@ namespace Snowscape.TerrainGenerationViewer
         private double viewHeight = 100.0;
 
         private ICamera camera;
-
 
 
         uint updateCounter = 0;
@@ -263,36 +249,8 @@ namespace Snowscape.TerrainGenerationViewer
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
-            /*
-            this.heightTex = new Texture("height", TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
-            this.heightTex
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
-                .Upload(heightTexData);
-
-            this.shadeTex = new Texture("shade", TileWidth, TileHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
-            this.shadeTex
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
-                .Upload(shadeTexData);
-            */
-
-            // setup VBOs
-            //this.quadVertexVBO.SetData(this.quadPos);
-            //this.quadTexcoordVBO.SetData(this.quadTexCoord);
-            //this.quadIndexVBO.SetData(this.quadIndex);
-
-            // setup shader
-            //quadShader.Init(@"../../../Resources/Shaders/TerrainGeneration.vert".Load(), @"../../../Resources/Shaders/TerrainGeneration_Vis.frag".Load(), new List<Variable> { new Variable(0, "vertex"), new Variable(1, "in_texcoord0") });
-
             // setup font
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
-            //font.Init(Resources.FontSegoeScript, Resources.FontSegoeScriptMeta);
-            //font.Init(Resources.FontOCR, Resources.FontOCRMeta);
             textManager.Font = font;
 
             SetProjection();
@@ -425,43 +383,7 @@ namespace Snowscape.TerrainGenerationViewer
         }
 
 
-
-        //protected void UpdateHeightTexture()
-        //{
-        //    perfmon.Start("UpdateHeightTexture");
-        //    float m = 1.0f / 4096.0f;
-        //    ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
-        //    {
-        //        this.heightTexData[i] = (this.threadRenderMap[i].Height) * m;
-        //    });
-        //    perfmon.Stop("UpdateHeightTexture");
-        //    perfmon.Start("UploadHeightTexture");
-        //    this.heightTex.RefreshImage(this.heightTexData);
-        //    perfmon.Stop("UploadHeightTexture");
-        //}
-
-        //protected void UpdateShadeTexture()
-        //{
-        //    perfmon.Start("UpdateShadeTexture");
-        //    ParallelHelper.For2D(TileWidth, TileHeight, (i) =>
-        //    {
-        //        int j = (i) << 2;
-
-        //        this.shadeTexData[j] = (byte)((this.threadRenderMap[i].Loose * 4.0f).Clamp(0.0f, 255.0f));
-        //        this.shadeTexData[j + 1] = (byte)((this.threadRenderMap[i].MovingWater * 2048.0f).Clamp(0.0f, 255.0f));
-        //        this.shadeTexData[j + 2] = (byte)((this.threadRenderMap[i].Carrying * 32f).Clamp(0.0f, 255.0f)); // carrying
-
-        //        //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 16f).Clamp(0.0f, 255.0f));  // misc - particle speed
-        //        //this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 255f).Clamp(0.0f, 255.0f));  // misc - particle death
-
-        //        this.shadeTexData[j + 3] = (byte)((this.threadRenderMap[i].Erosion * 0.25f).Clamp(0.0f, 255.0f)); // misc - age
-        //    });
-        //    perfmon.Stop("UpdateShadeTexture");
-        //    perfmon.Start("UploadShadeTexture");
-        //    this.shadeTex.RefreshImage(this.shadeTexData);
-        //    perfmon.Stop("UploadShadeTexture");
-        //}
-
+        
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
             /*
@@ -498,6 +420,7 @@ namespace Snowscape.TerrainGenerationViewer
             */
 
             this.camera.Update(e.Time);
+            this.eyePos = (this.camera as WalkCamera).EyePos;
 
             if (Keyboard[Key.M])
             {
@@ -556,12 +479,11 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
-                sp
-                    .SetUniform("eyePos", this.eyePos)
+                sp.SetUniform("eyePos", this.eyePos);
                     //.SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
-                    .SetUniform("posTex", 0)
-                    .SetUniform("normalTex", 1)
-                    .SetUniform("paramTex", 2);
+                sp.SetUniform("posTex", 0);
+                sp.SetUniform("normalTex", 1);
+                sp.SetUniform("paramTex", 2);
             });
         }
 

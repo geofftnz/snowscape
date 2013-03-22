@@ -96,14 +96,12 @@ namespace OpenTKExtensions
 
         private void BindTextures()
         {
-            int texunit = 0;
             for (int i = 0; i < GBuffer.MAXSLOTS; i++)
             {
                 var tex = this.GBuffer.GetTextureAtSlotOrNull(i);
                 if (tex != null)
                 {
-                    tex.Bind(TextureUnit.Texture0 + texunit);
-                    texunit++;
+                    tex.Bind(TextureUnit.Texture0 + i);
                 }
             }
         }

@@ -22,7 +22,7 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 
 	vec4 colW = vec4(0.7,0.8,1.0,1.0);
 
-	float h = p.y / 1024.0;
+	float h = 0.0;//p.y / 1024.0;
 
 	float looseblend = clamp(s.r * s.r * 2.0,0.0,1.0);
 	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
@@ -55,7 +55,7 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 void main(void)
 {
 	vec4 c = vec4(0.0,0.0,0.0,1.0);
-
+	
 	vec2 p = texcoord0.xy;
 	vec4 pos = vec4(texture2D(posTex,p).xyz + eyePos,0.0);
 	vec4 normalT = texture2D(normalTex,p);
@@ -73,7 +73,7 @@ void main(void)
 		if (p.y < 1.0)
 		{
 			vec3 pos = texture2D(posTex,p).xyz + eyePos;
-			c = vec4(pos.xyz/512.0,0.0) + vec4(0.5,0.5,0.5,1.0);
+			c.rgb = pos.xyz / 1024.0;
 		}
 		else
 		{
@@ -90,7 +90,7 @@ void main(void)
 		{
 			c = texture2D(paramTex,p-vec2(1.0,1.0));
 		}
-	}*/
-
+	}
+	*/
     out_Colour = vec4(c.rgb,1.0);
 }
