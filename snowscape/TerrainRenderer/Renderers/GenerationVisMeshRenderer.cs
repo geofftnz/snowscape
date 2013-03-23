@@ -104,12 +104,24 @@ namespace Snowscape.TerrainRenderer.Renderers
                 {
                     int i = (x + y * (this.Width - 1)) * 6;
 
-                    meshindex[i + 0] = (uint)(x + y * this.Width);  // 0
-                    meshindex[i + 1] = (uint)(x + 1 + y * this.Width);  // 1
-                    meshindex[i + 2] = (uint)(x + (y + 1) * this.Width); // 2
-                    meshindex[i + 3] = (uint)(x + 1 + y * this.Width); // 1
-                    meshindex[i + 4] = (uint)(x + 1 + (y + 1) * this.Width); // 3
-                    meshindex[i + 5] = (uint)(x + (y + 1) * this.Width); // 2
+                    if (y % 2 == 0)
+                    {
+                        meshindex[i + 0] = (uint)(x + y * this.Width);  // 0
+                        meshindex[i + 1] = (uint)(x + 1 + y * this.Width);  // 1
+                        meshindex[i + 2] = (uint)(x + (y + 1) * this.Width); // 2
+                        meshindex[i + 3] = (uint)(x + 1 + y * this.Width); // 1
+                        meshindex[i + 4] = (uint)(x + 1 + (y + 1) * this.Width); // 3
+                        meshindex[i + 5] = (uint)(x + (y + 1) * this.Width); // 2
+                    }
+                    else
+                    {
+                        meshindex[i + 0] = (uint)(x + y * this.Width);  // 0
+                        meshindex[i + 1] = (uint)(x + 1 + y * this.Width);  // 1
+                        meshindex[i + 2] = (uint)(x + 1 + (y + 1) * this.Width); // 3 
+                        meshindex[i + 3] = (uint)(x + y * this.Width);  // 0
+                        meshindex[i + 4] = (uint)(x + 1 + (y + 1) * this.Width); // 3 
+                        meshindex[i + 5] = (uint)(x + (y + 1) * this.Width); // 2
+                    }
                 }
             }
 

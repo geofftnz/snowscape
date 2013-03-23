@@ -119,7 +119,7 @@ namespace Snowscape.TerrainRenderer
             {
                 var ii = i * 4;
                 int ti = terrain.C(x + offsetX, y + offsetY);
-                param[ii + 0] = (byte)(terrain.Map[ti].Loose * 4.0f).Clamp(0f, 255f);
+                param[ii + 0] = (byte)(terrain.Map[ti].Loose * 16.0f).Clamp(0f, 255f);
                 param[ii + 1] = (byte)(terrain.Map[ti].MovingWater * 2048.0f).Clamp(0f, 255f);
                 param[ii + 2] = (byte)(terrain.Map[ti].Carrying * 32.0f).Clamp(0f, 255f);
                 param[ii + 3] = (byte)(terrain.Map[ti].Erosion * 0.25f).Clamp(0f, 255f);
