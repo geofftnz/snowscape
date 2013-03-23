@@ -44,6 +44,7 @@ namespace Snowscape.TerrainGenerationViewer
         private GBufferCombiner gbufferCombiner;
         private TerrainTile terrainTile;
         private ITileRenderer tileRenderer;
+        private ITileRenderer tileRendererRaycast;
         private Vector3 eyePos;
         private double angle = 0.0;
         private double viewHeight = 100.0;
@@ -164,6 +165,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Terrain = new TerrainGen(TileWidth, TileHeight);
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
+            this.tileRendererRaycast = new GenerationVisRaycastRenderer();
 
             this.camera = new WalkCamera(this.Keyboard, this.Mouse);
 
@@ -176,7 +178,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Closing += new EventHandler<System.ComponentModel.CancelEventArgs>(TerrainGenerationViewer_Closing);
 
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
- 
+
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -226,6 +228,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.terrainTile.Init();
             this.tileRenderer.Load();
+            this.tileRendererRaycast.Load();
 
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
@@ -383,7 +386,7 @@ namespace Snowscape.TerrainGenerationViewer
         }
 
 
-        
+
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
             /*
@@ -484,7 +487,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
                 sp.SetUniform("eyePos", this.eyePos);
-                    //.SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
+                //.SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
                 sp.SetUniform("posTex", 0);
                 sp.SetUniform("normalTex", 1);
                 sp.SetUniform("paramTex", 2);
@@ -499,7 +502,7 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 frameCounterText.Text = string.Format("FPS: {0:0} {1:###0} updates: {2:0.0}ms {3:#,###,###,##0} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
                 textManager.AddOrUpdate(frameCounterText);
-                
+
                 float y = 0.1f;
                 foreach (var timer in this.perfmon.AllAverageTimes())
                 {
@@ -525,10 +528,10 @@ namespace Snowscape.TerrainGenerationViewer
             GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Disable(EnableCap.Blend);
-            GL.ColorMask(true,true,true,true);
+            GL.ColorMask(true, true, true, true);
 
             RenderTiles();
-            this.gbuffer.UnbindFromWriting(); 
+            this.gbuffer.UnbindFromWriting();
             perfmon.Stop("RenderTerrain");
 
             // render gbuffer to screen
@@ -557,28 +560,28 @@ namespace Snowscape.TerrainGenerationViewer
             SwapBuffers();
 
             this.frameCounter.Frame();
-            
+
         }
 
         private void RenderTiles()
         {
-            RenderTile(this.terrainTile, -1f, -1f);
-            RenderTile(this.terrainTile, -1f, 0f);
-            RenderTile(this.terrainTile, -1f, 1f);
+            RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
 
-            RenderTile(this.terrainTile, 0f, -1f);
-            RenderTile(this.terrainTile, 0f, 0f);
-            RenderTile(this.terrainTile, 0f, 1f);
+            RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 0f, 0f, this.tileRenderer);
+            RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
 
-            RenderTile(this.terrainTile, 1f, -1f);
-            RenderTile(this.terrainTile, 1f, 0f);
-            RenderTile(this.terrainTile, 1f, 1f);            
+            RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
         }
 
-        private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset)
+        private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset, ITileRenderer renderer)
         {
             tile.ModelMatrix = Matrix4.CreateTranslation(TileXOffset * (float)tile.Width, 0f, TileZOffset * (float)tile.Height);
-            this.tileRenderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 
         protected string GetTerrainFileName(int index)
