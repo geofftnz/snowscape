@@ -103,13 +103,13 @@ namespace TerrainGeneration
 
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
-            this.TerrainSlumpMovementAmount = 0.05f;
-            this.TerrainSlumpSamplesPerFrame = 10000;
+            this.TerrainSlumpMovementAmount = 0.03f;
+            this.TerrainSlumpSamplesPerFrame = 5000;
 
             // Slump loose slopes - rare case
-            this.TerrainSlump2MaxHeightDifference = 0.3f;
-            this.TerrainSlump2MovementAmount = 0.05f;
-            this.TerrainSlump2SamplesPerFrame = 0;// 2000;
+            this.TerrainSlump2MaxHeightDifference = 0.2f;
+            this.TerrainSlump2MovementAmount = 0.01f;
+            this.TerrainSlump2SamplesPerFrame = 2000;// 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
@@ -129,7 +129,7 @@ namespace TerrainGeneration
             this.WaterErosionSpeedCoefficient = 0.005f;  // 0.01
             this.WaterErosionHardErosionFactor = 0.03f; //0.1
 
-            this.WaterErosionCollapseToAmount = 0.002f;
+            this.WaterErosionCollapseToAmount = 0.005f;
             this.WaterErosionCollapseToThreshold = 0.0001f;
 
             this.WaterErosionMinSpeed = 0.001f;  // 0.01
@@ -198,15 +198,15 @@ namespace TerrainGeneration
         {
             this.Terrain.Clear(0.0f);
 
-            this.Terrain.AddSimplexNoise(10, 0.6f / (float)this.Width, 200.0f, h => h, h => h + h * h);
-            //this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 50.0f, h => Math.Abs(h), h => h + h * h);
+            this.Terrain.AddSimplexNoise(10, 0.6f / (float)this.Width, 150.0f, h => h, h => h + h * h);
+            this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 30.0f, h => Math.Abs(h), h => h);
             //this.Terrain.AddSimplexNoise(6, 0.6f / (float)this.Width, 300.0f, h => h, h => h );
             //this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 50.0f, h => h, h => h );
 
             //this.Terrain.AddSimplexNoise(5, 27.0f / (float)this.Width, 10.0f, h => h, h => h);
 
             this.Terrain.AddLooseMaterial(20.0f);
-            AddLooseMaterialBasedOnSlope(10.0f, 8);
+            AddLooseMaterialBasedOnSlope(20.0f, 8);
 
 
 
