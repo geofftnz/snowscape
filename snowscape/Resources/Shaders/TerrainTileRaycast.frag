@@ -1,6 +1,8 @@
 ﻿#version 140
 precision highp float;
+uniform mat4 projection_matrix;
 uniform mat4 model_matrix;
+uniform mat4 view_matrix;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D shadeTex;
@@ -160,14 +162,17 @@ void main(void)
 		out_Param = texture2D(paramTex,texcoord);
 
 		// translate intersection from tile-space to world-space and offset by eye pos.
-		vec3 worldPos = (model_matrix * vec4(p.xyz,1.0)).xyz - eyePos;
+		vec4 worldPos = (model_matrix * vec4(p.xyz,1.0));
 
 		// position in world, relative to eye
-		out_Pos = vec4(worldPos.xyz,p.w);
+		out_Pos = vec4(worldPos.xyz - eyePos,p.w);
 
 		// normal at intersection
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
 
+		// transform intersection to screen coords
+		vec4 p_screen =  projection_matrix * view_matrix * worldPos;
+		gl_FragDepth = (p_screen.z / p_screen.w) * 0.5 + 0.5;
 	}
 
 }

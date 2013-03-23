@@ -21,4 +21,5 @@ void main(void)
     out_Pos = vec4(worldpos.xyz,1.0);
     out_Normal = vec4(n.xyz * 0.5 + 0.5,1.0);
 	out_Param = texture2D(paramTex,texcoord);
+
 }

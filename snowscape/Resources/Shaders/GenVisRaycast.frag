@@ -1,6 +1,9 @@
 ﻿#version 140
 precision highp float;
+uniform mat4 projection_matrix;
 uniform mat4 model_matrix;
+uniform mat4 view_matrix;
+
 uniform sampler2D heightTex;
 //uniform sampler2D normalTex;
 //uniform sampler2D shadeTex;
@@ -137,11 +140,12 @@ float sampleHeight(vec2 posTile)
 	vec2 fpos = fract(posTile);
 
 	float t = 1.0 / boxparam.x;
+	vec2 ofs = vec2(t*0.5,t*0.5);
 
-    float h00 = texture2D(heightTex,vec2(ipos.x, ipos.y)*t).r;
-	float h01 = texture2D(heightTex,vec2(ipos.x, ipos.y + 1)*t).r;
-    float h10 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y)*t).r;
-	float h11 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y + 1)*t).r;
+    float h00 = texture2D(heightTex,vec2(ipos.x, ipos.y)*t + ofs).r;
+	float h01 = texture2D(heightTex,vec2(ipos.x, ipos.y + 1)*t + ofs).r;
+    float h10 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y)*t + ofs).r;
+	float h11 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y + 1)*t + ofs).r;
 
 	return mix(
 		mix(h00,h01,fpos.y),
@@ -156,12 +160,12 @@ vec3 getNormal(vec2 pos)
 {
 	
 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - 1));
-	float h2 = sampleHeight(vec2(pos.x, pos.y + 1));
-    float h3 = sampleHeight(vec2(pos.x - 1, pos.y));
-	float h4 = sampleHeight(vec2(pos.x + 1, pos.y));
+    float h1 = sampleHeight(vec2(pos.x, pos.y - 0.5));
+	float h2 = sampleHeight(vec2(pos.x, pos.y + 0.5));
+    float h3 = sampleHeight(vec2(pos.x - 0.5, pos.y));
+	float h4 = sampleHeight(vec2(pos.x + 0.5, pos.y));
 
-    return normalize(vec3(h4-h3,h2-h1,2.0));
+    return normalize(vec3(h4-h3,h2-h1,1.0));
 }
 
 void main(void)
@@ -193,14 +197,23 @@ void main(void)
 		out_Param = texture2D(paramTex,texcoord);
 
 		// translate intersection from tile-space to world-space and offset by eye pos.
-		vec3 worldPos = (model_matrix * vec4(p.xyz,1.0)).xyz - eyePos;
+		vec4 worldPos = (model_matrix * vec4(p.xyz,1.0));
 
 		// position in world, relative to eye
-		out_Pos = vec4(worldPos.xyz,p.w);
+		out_Pos = vec4(worldPos.xyz- eyePos,p.w);
 
 		// normal at intersection
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
 
+		// write depth
+		// transform intersection to screen coords
+		vec4 p_screen =  projection_matrix * view_matrix * worldPos;
+		gl_FragDepth = (p_screen.z / p_screen.w) * 0.5 + 0.5;
+
+	}
+	else
+	{
+		gl_FragDepth = 1.0;
 	}
 
 }

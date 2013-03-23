@@ -312,7 +312,7 @@ namespace Snowscape.TerrainGenerationViewer
 
                     iteration++;
 
-                    if (iteration % 2 == 0)
+                    if (iteration % 10 == 0)
                     {
                         lock (this)
                         {
