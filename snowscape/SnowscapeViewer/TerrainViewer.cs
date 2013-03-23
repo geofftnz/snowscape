@@ -17,7 +17,7 @@ namespace Snowscape.Viewer
 {
     public class TerrainViewer : GameWindow
     {
-        const int TILESIZE = 1024;
+        const int TILESIZE = 256;
 
         private static Logger log = LogManager.GetCurrentClassLogger();
 
@@ -164,7 +164,7 @@ namespace Snowscape.Viewer
 
             //this.renderers.Add(new BoundingBoxRenderer());
             this.renderers.Add(new MeshRenderer(TILESIZE, TILESIZE));
-            this.renderers.Add(new GenerationVisMeshRenderer(TILESIZE, TILESIZE));
+            //this.renderers.Add(new GenerationVisMeshRenderer(TILESIZE, TILESIZE));
             this.renderers.Add(new RaycastRenderer());
 
             foreach (var renderer in renderers)

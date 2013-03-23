@@ -312,13 +312,13 @@ namespace Snowscape.TerrainGenerationViewer
 
                     iteration++;
 
-                    if (iteration % 10 == 0)
+                    if (iteration % 4 == 0)
                     {
                         lock (this)
                         {
                             this.threadCopyMap.CopyFrom(this.Terrain.Terrain);
                             this.updateThreadIterations = iteration;
-                            this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.5 + 0.5 * updateTime;
+                            this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.8 + 0.2 * updateTime;
                             this.waterIterations = this.Terrain.WaterIterations;
                         }
                     }
