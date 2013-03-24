@@ -575,19 +575,19 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderTiles()
         {
-            RenderTile(this.terrainTile, 0f, 0f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 0f, 0f, this.tileRendererRaycast);
 
-            //RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
 
-            //RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 0f, 0f, this.tileRenderer);
-            //RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 0f, 0f, this.tileRenderer);
+            RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
 
-            //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
         }
 
         private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset, ITileRenderer renderer)
