@@ -38,7 +38,9 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 	//colW = mix(colW,colW2,smoothstep(0.05,0.8,s.a)*0.8);  // speed -> white water
 
 	//col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
-	col = mix(col,colW,smoothstep(0.02,0.5,s.g) * 0.5); // water
+	float waterblend = smoothstep(0.02,0.1,s.g) * 0.1 + 0.4 * s.g * s.g;
+
+	col = mix(col,colW,waterblend); // water
 
     // misc vis
 	vec4 colE = vec4(0.4,0.6,0.9,1.0);

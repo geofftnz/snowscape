@@ -210,15 +210,16 @@ namespace TerrainGeneration
         {
             this.Terrain.Clear(0.0f);
 
-            this.Terrain.AddSimplexNoise(12, 0.3f / (float)this.Width, 400.0f, h => Math.Abs(h), h => h);
-            this.Terrain.AddSimplexNoise(8, 3.7f / (float)this.Width, 30.0f, h => Math.Abs(h), h => h);
-            //this.Terrain.AddSimplexNoise(6, 0.6f / (float)this.Width, 300.0f, h => h, h => h );
-            //this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 50.0f, h => h, h => h );
+            //this.Terrain.AddSimplexNoise(13, 0.5f / (float)this.Width, 300.0f, h => Math.Abs(h), h => h);
+            //this.Terrain.AddSimplexNoise(8, 23.7f / (float)this.Width, 10.0f, h => Math.Abs(h), h => h);
 
-            this.Terrain.AddLooseMaterial(20.0f);
-            AddLooseMaterialBasedOnSlope(30.0f, 8);
+            this.Terrain.AddSimplexNoise(10, 0.25f / (float)this.Width, 50.0f, h => h, h => h);
+            this.Terrain.AddSimplexNoise(13, 1.0f / (float)this.Width, 150.0f, h => Math.Abs(h), h => h);
 
-            this.Terrain.AddSimplexNoise(5, 63.0f / (float)this.Width, 1.0f, h => h, h => h);
+            this.Terrain.AddLooseMaterial(10.0f);
+            //AddLooseMaterialBasedOnSlope(10.0f, 8);
+
+            //this.Terrain.AddSimplexNoise(5, 63.0f / (float)this.Width, 1.0f, h => h, h => h);
 
 
             this.Terrain.SetBaseLevel();

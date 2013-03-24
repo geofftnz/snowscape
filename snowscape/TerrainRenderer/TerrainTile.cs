@@ -120,7 +120,7 @@ namespace Snowscape.TerrainRenderer
                 var ii = i * 4;
                 int ti = terrain.C(x + offsetX, y + offsetY);
                 param[ii + 0] = (byte)(terrain.Map[ti].Loose * 8.0f).Clamp(0f, 255f);
-                param[ii + 1] = (byte)(terrain.Map[ti].MovingWater * 2048.0f).Clamp(0f, 255f);
+                param[ii + 1] = (byte)(terrain.Map[ti].MovingWater * 8192.0f).Clamp(0f, 255f);
                 param[ii + 2] = (byte)(terrain.Map[ti].Carrying * 32.0f).Clamp(0f, 255f);
                 param[ii + 3] = (byte)(terrain.Map[ti].Erosion * 0.25f).Clamp(0f, 255f);
             });
@@ -150,7 +150,7 @@ namespace Snowscape.TerrainRenderer
             float[] height = new float[this.Width * this.Height];
             ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
             {
-                height[i] = terrain.Map[terrain.C(x + offsetX, y + offsetY)].WHeight;
+                height[i] = terrain.Map[terrain.C(x + offsetX, y + offsetY)].Height;
             });
 
             UploadHeightTexture(height);
