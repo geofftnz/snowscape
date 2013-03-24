@@ -45,14 +45,9 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 	float umul=1.0f, uofs=0.0f, vmul=1.0f, vofs=0.0f;	// texture coordinate flipping
 
 	highp int TEXLOG2 = int(log2(boxparam.x));
-
-	highp int level = TEXLOG2-1;  // replace with log2(texdim)-1
+	highp int level = TEXLOG2-1;  
 
 	float p2l = exp2(level); // 2^level
-
-	// normalize boxcoords to 0-1
-	//boxEnter.xz /= boxparam.xy;
-	//posRayDir.xz /= boxparam.xy;
 
 	if (posRayDir.x < 0.0f) // dx negative, invert x on texture sample
 	{
@@ -74,64 +69,124 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 	float n = 0.0f;
 	vec2 texScale = vec2(1.0,1.0) / boxparam.xy;
 
-	while ( texEntry.x < boxparam.x && texEntry.z < boxparam.y && p.w < 0.5f ) 
+	if (posRayDir.y < 0.0)  // ray pointing down
 	{
-		n = n + 0.01;
-
-		height = texture2DLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
-			
-		qx = (floor(texEntry.x / p2l) + 1.0f) * p2l;		
-		qz = (floor(texEntry.z / p2l) + 1.0f) * p2l;  // quantize texcoords for level
-			
-		tx = (qx - texEntry.x) / posRayDir.x; 
-		tz = (qz - texEntry.z) / posRayDir.z; // compute intersections
-			
-		t = min(tx,tz); // closest intersection
-
-		texExit = texEntry + posRayDir * t; // exit point
-		texExit = 
-			vec3(
-				(t == tx)? ((floor(texEntry.x / p2l)+1.0)* p2l) : texExit.x, 
-				texExit.y, 
-				(t == tz)?((floor(texEntry.z / p2l)+1.0)* p2l) : texExit.z
-				);  // correct for rounding errors
-			
-		if (  ( (posRayDir.y < 0.0f) ? texExit.y : texEntry.y) <= height) // intersection, hit point = texEntry
+		while ( texEntry.x < boxparam.x && texEntry.z < boxparam.y && p.w < 0.5f ) 
 		{
-			// actual hit location
-			p.xyz = (posRayDir.y < 0.0f) ? texEntry + posRayDir * max((height - texEntry.y) / posRayDir.y,0.0f) : texEntry;
+			n = n + 0.01;
 
-			if (level < 1)  // at actual intersection
+			height = texture2DLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
+			
+			qx = (floor(texEntry.x / p2l) + 1.0f) * p2l;		
+			qz = (floor(texEntry.z / p2l) + 1.0f) * p2l;  // quantize texcoords for level
+			
+			tx = (qx - texEntry.x) / posRayDir.x; 
+			tz = (qz - texEntry.z) / posRayDir.z; // compute intersections
+			
+			t = min(tx,tz); // closest intersection
+
+			texExit = texEntry + posRayDir * t; // exit point
+			texExit = 
+				vec3(
+					(t == tx)? ((floor(texEntry.x / p2l)+1.0)* p2l) : texExit.x, 
+					texExit.y, 
+					(t == tz)?((floor(texEntry.z / p2l)+1.0)* p2l) : texExit.z
+					);  // correct for rounding errors
+			
+			if ( texExit.y <= height) // intersection, hit point = texEntry
 			{
-				p.w = 0.61 + n;
+				// actual hit location
+				p.xyz = texEntry + posRayDir * max((height - texEntry.y) / posRayDir.y,0.0f);
+
+				if (level < 1)  // at actual intersection
+				{
+					p.w = 0.61 + n;
+				}
+				else // still walking through the mipmaps
+				{
+					texEntry = p.xyz;  // advance ray to hit point
+					level--;  // drop level
+					p2l = exp2(level);  // update quantization factor
+				}
 			}
-			else // still walking through the mipmaps
+			else // no intersection
 			{
-				texEntry = p.xyz;  // advance ray to hit point
-				level--;  // drop level
+				texEntry = texExit;  // move ray to exit point
+
+				vec2 texExit2 = mod(floor(texExit.xz / p2l),vec2(2.0,2.0));
+
+				level = 
+					(t == tx) 
+					? min(level + 1 - int(texExit2.x) ,TEXLOG2-1) 
+					: min(level + 1 - int(texExit2.y) ,TEXLOG2-1); // go up a level if we reach the edge of our current 2x2 block
+
 				p2l = exp2(level);  // update quantization factor
 			}
-		}
-		else // no intersection
+		}  // end of while loop
+	}
+	else  // ray pointing up
+	{
+		while ( texEntry.x < boxparam.x && texEntry.z < boxparam.y && p.w < 0.5f ) 
 		{
-			texEntry = texExit;  // move ray to exit point
+			n = n + 0.01;
 
-			vec2 texExit2 = mod(floor(texExit.xz / p2l),vec2(2.0,2.0));
+			height = texture2DLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
+			
+			qx = (floor(texEntry.x / p2l) + 1.0f) * p2l;		
+			qz = (floor(texEntry.z / p2l) + 1.0f) * p2l;  // quantize texcoords for level
+			
+			tx = (qx - texEntry.x) / posRayDir.x; 
+			tz = (qz - texEntry.z) / posRayDir.z; // compute intersections
+			
+			t = min(tx,tz); // closest intersection
 
-			level = 
-				(t == tx) 
-				? min(level + 1 - int(texExit2.x) ,TEXLOG2-1) 
-				: min(level + 1 - int(texExit2.y) ,TEXLOG2-1); // go up a level if we reach the edge of our current 2x2 block
+			texExit = texEntry + posRayDir * t; // exit point
+			texExit = 
+				vec3(
+					(t == tx)? ((floor(texEntry.x / p2l)+1.0)* p2l) : texExit.x, 
+					texExit.y, 
+					(t == tz)?((floor(texEntry.z / p2l)+1.0)* p2l) : texExit.z
+					);  // correct for rounding errors
+			
+			if (texEntry.y <= height) // intersection, hit point = texEntry
+			{
+				// actual hit location
+				p.xyz = texEntry;
 
-			p2l = exp2(level);  // update quantization factor
-		}
-	}  // end of while loop
+				if (level < 1)  // at actual intersection
+				{
+					p.w = 0.61 + n;
+				}
+				else // still walking through the mipmaps
+				{
+					texEntry = p.xyz;  // advance ray to hit point
+					level--;  // drop level
+					p2l = exp2(level);  // update quantization factor
+				}
+			}
+			else // no intersection
+			{
+				texEntry = texExit;  // move ray to exit point
+
+				vec2 texExit2 = mod(floor(texExit.xz / p2l),vec2(2.0,2.0));
+
+				level = 
+					(t == tx) 
+					? min(level + 1 - int(texExit2.x) ,TEXLOG2-1) 
+					: min(level + 1 - int(texExit2.y) ,TEXLOG2-1); // go up a level if we reach the edge of our current 2x2 block
+
+				p2l = exp2(level);  // update quantization factor
+			}
+		}  // end of while loop
+	}
+
 
 	p.x = umul * p.x + uofs;
 	p.z = vmul * p.z + vofs;
 
     return p;
 }
+
 
 
 void main(void)
