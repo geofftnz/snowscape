@@ -142,7 +142,7 @@ void main(void)
 
 	vec3 wpos = pos.xyz - eyePos;
 
-	float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 8.0;
+	float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 2.0;
 	vec3 normal = getNormalNoise(pos.xz,1.33,1.0 / (1.0+smoothness));
 
 	float d = length(wpos);
