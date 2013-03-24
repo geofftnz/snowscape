@@ -24,7 +24,7 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 
 	float h = 0.0;//p.y / 1024.0;
 
-	float looseblend = smoothstep(0.015,0.1,s.r) * s.r;
+	float looseblend = s.r*s.r;
 
 	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
     col *= 1.4;
