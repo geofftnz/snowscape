@@ -13,7 +13,7 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec3 worldpos;
-out vec3 normal;
+//out vec3 normal;
 
 
 vec3 getNormal(vec2 pos)
@@ -35,7 +35,7 @@ void main() {
 	
 	float h = texture2D(heightTex,texcoord).r;
 
-	normal = getNormal(texcoord);
+	//normal = getNormal(texcoord);
 
 	vec3 v = vertex;
 	v.x *= boxparam.x;

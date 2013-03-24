@@ -231,8 +231,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererRaycast.Load();
 
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
-            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
-            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
+            //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
+            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
             this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             var program = new ShaderProgram("combiner");
@@ -484,13 +484,23 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
+            this.terrainTile.HeightTexture
+                .Bind(TextureUnit.Texture2)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
+                .ApplyParameters();
+
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
                 sp.SetUniform("eyePos", this.eyePos);
                 //.SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
                 sp.SetUniform("posTex", 0);
-                sp.SetUniform("normalTex", 1);
-                sp.SetUniform("paramTex", 2);
+                //sp.SetUniform("normalTex", 1);
+                sp.SetUniform("paramTex", 1);
+                sp.SetUniform("heightTex", 2);
+                sp.SetUniform("boxparam",new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
         }
 
@@ -565,17 +575,19 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderTiles()
         {
-            RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
+            RenderTile(this.terrainTile, 0f, 0f, this.tileRendererRaycast);
 
-            RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, 0f, 0f, this.tileRenderer);
-            RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
 
-            RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 0f, 0f, this.tileRenderer);
+            //RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
+
+            //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
         }
 
         private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset, ITileRenderer renderer)

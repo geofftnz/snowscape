@@ -2,9 +2,11 @@
 precision highp float;
 
 uniform sampler2D posTex;
-uniform sampler2D normalTex;
+//uniform sampler2D normalTex;
 uniform sampler2D paramTex;
+uniform sampler2D heightTex;
 
+uniform vec4 boxparam;
 uniform vec3 eyePos;
 uniform vec3 sunVector;
 
@@ -48,6 +50,41 @@ float fbm( vec3 p )
     f += 0.0625*noise( p );
     return f;
 }
+
+float sampleHeight(vec2 posTile)
+{
+	vec2 ipos = floor(posTile);
+	vec2 fpos = fract(posTile);
+
+	float t = 1.0 / boxparam.x;
+	vec2 ofs = vec2(t*0.5,t*0.5);
+
+    float h00 = texture2D(heightTex,vec2(ipos.x, ipos.y)*t + ofs).r;
+	float h01 = texture2D(heightTex,vec2(ipos.x, ipos.y + 1)*t + ofs).r;
+    float h10 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y)*t + ofs).r;
+	float h11 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y + 1)*t + ofs).r;
+
+	return mix(
+		mix(h00,h01,fpos.y),
+		mix(h10,h11,fpos.y),
+		fpos.x);
+
+
+}
+
+// pos in tile coords (0-boxparam.xy)
+vec3 getNormal(vec2 pos)
+{
+	
+
+    float h1 = sampleHeight(vec2(pos.x, pos.y - 0.5));
+	float h2 = sampleHeight(vec2(pos.x, pos.y + 0.5));
+    float h3 = sampleHeight(vec2(pos.x - 0.5, pos.y));
+	float h4 = sampleHeight(vec2(pos.x + 0.5, pos.y));
+
+    return normalize(vec3(h4-h3,h2-h1,1.0));
+}
+
 
 
 vec4 generateCol(vec3 p, vec3 n, vec4 s)
@@ -101,11 +138,15 @@ void main(void)
 	vec4 posT = texture2D(posTex,p);
 	float hitType = posT.a;
 	vec4 pos = vec4(posT.xyz + eyePos,0.0);
-	vec4 normalT = texture2D(normalTex,p);
+	//vec4 normalT = texture2D(normalTex,p);
 	vec4 paramT = texture2D(paramTex,p);
-	vec3 normal = normalize(normalT.xyz - 0.5);
+	//vec3 normal = normalize(normalT.xyz - 0.5);
 
-	float d = length(pos.xyz - eyePos);
+	vec3 wpos = pos.xyz - eyePos;
+
+	vec3 normal = getNormal(pos.xz);
+
+	float d = length(wpos);
 
 	c = generateCol(pos,normal,paramT);	
 	

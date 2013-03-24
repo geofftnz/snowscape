@@ -22,8 +22,8 @@ namespace OpenTKExtensions
         public int Height { get; private set; }
         public string Name { get; set; }
 
-        private List<ITextureParameter> parameters = new List<ITextureParameter>();
-        public List<ITextureParameter> Parameters { get { return this.parameters; } }
+        private Dictionary<TextureParameterName, ITextureParameter> parameters = new Dictionary<TextureParameterName, ITextureParameter>();
+        public Dictionary<TextureParameterName, ITextureParameter> Parameters { get { return this.parameters; } }
 
         public Texture(string name, int width, int height, TextureTarget target, PixelInternalFormat internalFormat, PixelFormat format, PixelType type)
         {
@@ -44,7 +44,14 @@ namespace OpenTKExtensions
 
         public Texture SetParameter(ITextureParameter param)
         {
-            this.Parameters.Add(param);
+            if (this.Parameters.ContainsKey(param.ParameterName))
+            {
+                this.Parameters[param.ParameterName] = param;
+            }
+            else
+            {
+                this.Parameters.Add(param.ParameterName, param);
+            }
             return this;
         }
 
@@ -60,7 +67,7 @@ namespace OpenTKExtensions
 
         public void ApplyParameters()
         {
-            foreach (var param in this.Parameters)
+            foreach (var param in this.Parameters.Values)
             {
                 param.Apply(this.Target);
             }
@@ -98,7 +105,7 @@ namespace OpenTKExtensions
             {
                 this.Bind();
                 this.ApplyParameters();
-                this.UploadImage(data,level);
+                this.UploadImage(data, level);
             }
         }
 
@@ -150,7 +157,7 @@ namespace OpenTKExtensions
             log.Trace("Texture.RefreshImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
         }
 
-        public void RefreshImage(VBO buffer) 
+        public void RefreshImage(VBO buffer)
         {
             log.Trace("Texture.RefreshImage ({0}) uploading from buffer...", this.Name);
             buffer.Bind();

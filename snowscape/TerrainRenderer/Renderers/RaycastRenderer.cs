@@ -36,7 +36,13 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
-            tile.HeightTexture.Bind(TextureUnit.Texture0);
+            tile.HeightTexture
+                .Bind(TextureUnit.Texture0)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat))
+                .ApplyParameters();
             tile.NormalTexture.Bind(TextureUnit.Texture1);
             tile.ShadeTexture.Bind(TextureUnit.Texture2);
             tile.ParamTexture.Bind(TextureUnit.Texture3);
