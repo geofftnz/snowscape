@@ -51,32 +51,21 @@ float fbm( vec3 p )
     return f;
 }
 
+float texel = 1.0 / boxparam.x;
+
 float sampleHeight(vec2 posTile)
 {
-	vec2 ipos = floor(posTile);
-	vec2 fpos = fract(posTile);
+	return texture2D(heightTex,posTile * texel).r;
+}
 
-	float t = 1.0 / boxparam.x;
-	vec2 ofs = vec2(t*0.5,t*0.5);
-
-    float h00 = texture2D(heightTex,vec2(ipos.x, ipos.y)*t + ofs).r;
-	float h01 = texture2D(heightTex,vec2(ipos.x, ipos.y + 1)*t + ofs).r;
-    float h10 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y)*t + ofs).r;
-	float h11 = texture2D(heightTex,vec2(ipos.x + 1, ipos.y + 1)*t + ofs).r;
-
-	return mix(
-		mix(h00,h01,fpos.y),
-		mix(h10,h11,fpos.y),
-		fpos.x);
-
-
+float sampleHeightNoise(vec2 posTile, float f, float a)
+{
+	return sampleHeight(posTile) + fbm(vec3(posTile.xy*f,0.0)) * a;
 }
 
 // pos in tile coords (0-boxparam.xy)
 vec3 getNormal(vec2 pos)
 {
-	
-
     float h1 = sampleHeight(vec2(pos.x, pos.y - 0.5));
 	float h2 = sampleHeight(vec2(pos.x, pos.y + 0.5));
     float h3 = sampleHeight(vec2(pos.x - 0.5, pos.y));
@@ -85,6 +74,15 @@ vec3 getNormal(vec2 pos)
     return normalize(vec3(h4-h3,h2-h1,1.0));
 }
 
+vec3 getNormalNoise(vec2 pos, float f, float a)
+{
+    float h1 = sampleHeightNoise(vec2(pos.x, pos.y - 0.5),f,a);
+	float h2 = sampleHeightNoise(vec2(pos.x, pos.y + 0.5),f,a);
+    float h3 = sampleHeightNoise(vec2(pos.x - 0.5, pos.y),f,a);
+	float h4 = sampleHeightNoise(vec2(pos.x + 0.5, pos.y),f,a);
+
+    return normalize(vec3(h4-h3,h2-h1,1.0));
+}
 
 
 vec4 generateCol(vec3 p, vec3 n, vec4 s)
@@ -144,7 +142,8 @@ void main(void)
 
 	vec3 wpos = pos.xyz - eyePos;
 
-	vec3 normal = getNormal(pos.xz);
+	float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 8.0;
+	vec3 normal = getNormalNoise(pos.xz,1.33,1.0 / (1.0+smoothness));
 
 	float d = length(wpos);
 
