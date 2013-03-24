@@ -33,6 +33,11 @@ namespace TerrainGeneration
         public float TerrainCollapseLooseThreshold { get; set; }
         public int TerrainCollapseSamplesPerFrame { get; set; }
 
+        public float TerrainCliffCollapseHeightThresholdMin { get; set; }
+        public float TerrainCliffCollapseHeightThresholdMax { get; set; }
+        public float TerrainCliffCollapseAmount { get; set; }
+        public int TerrainCliffCollapseSamplesPerFrame { get; set; }
+
         public int WaterNumParticles { get; set; }
         public int WaterIterationsPerFrame { get; set; }
 
@@ -103,19 +108,26 @@ namespace TerrainGeneration
 
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
-            this.TerrainSlumpMovementAmount = 0.03f;
-            this.TerrainSlumpSamplesPerFrame = 5000;
+            this.TerrainSlumpMovementAmount = 0.05f;
+            this.TerrainSlumpSamplesPerFrame = 10000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.2f;
             this.TerrainSlump2MovementAmount = 0.01f;
-            this.TerrainSlump2SamplesPerFrame = 2000;// 2000;
+            this.TerrainSlump2SamplesPerFrame = 0;// 2000;
 
             // Collapse hard material - rare - used to simulate rockfall in slot canyons and cliffs
             this.TerrainCollapseMaxHeightDifference = 3.0f;
             this.TerrainCollapseMovementAmount = 0.08f;
             this.TerrainCollapseLooseThreshold = 1f;
             this.TerrainCollapseSamplesPerFrame = 0;// 500;
+
+            // cliff collapse
+            this.TerrainCliffCollapseHeightThresholdMin = 2.0f;
+            this.TerrainCliffCollapseHeightThresholdMax = 3.0f;
+            this.TerrainCliffCollapseAmount = 0.8f;
+            this.TerrainCliffCollapseSamplesPerFrame = 2000;
+
 
             // Water erosion
             this.WaterNumParticles = 10000;  // 4000
@@ -198,13 +210,13 @@ namespace TerrainGeneration
         {
             this.Terrain.Clear(0.0f);
 
-            this.Terrain.AddSimplexNoise(12, 0.3f / (float)this.Width, 300.0f, h => Math.Abs(h), h => h);
+            this.Terrain.AddSimplexNoise(12, 0.3f / (float)this.Width, 400.0f, h => Math.Abs(h), h => h);
             this.Terrain.AddSimplexNoise(8, 3.7f / (float)this.Width, 30.0f, h => Math.Abs(h), h => h);
             //this.Terrain.AddSimplexNoise(6, 0.6f / (float)this.Width, 300.0f, h => h, h => h );
             //this.Terrain.AddSimplexNoise(8, 1.3f / (float)this.Width, 50.0f, h => h, h => h );
 
-            this.Terrain.AddLooseMaterial(2.0f);
-            AddLooseMaterialBasedOnSlope(20.0f, 8);
+            this.Terrain.AddLooseMaterial(20.0f);
+            AddLooseMaterialBasedOnSlope(30.0f, 8);
 
             this.Terrain.AddSimplexNoise(5, 63.0f / (float)this.Width, 1.0f, h => h, h => h);
 
@@ -225,10 +237,13 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
+            /*
             if (this.Iterations % 64 == 0)
             {
                 this.SortWater();
-            }
+            }*/
+
+            var r = new Random();
 
 
             this.RunWater2(this.WaterIterationsPerFrame);
@@ -238,7 +253,8 @@ namespace TerrainGeneration
             this.Slump(this.TerrainSlump2MaxHeightDifference, this.TerrainSlump2MovementAmount, this.TerrainSlump2SamplesPerFrame);
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
-            this.CliffCollapse(3.0f, 0.8f, 2000);
+            float cliffCollapseThreshold = this.TerrainCliffCollapseHeightThresholdMin + (this.TerrainCliffCollapseHeightThresholdMax - this.TerrainCliffCollapseHeightThresholdMin) * (int)r.NextDouble();
+            this.CliffCollapse(cliffCollapseThreshold, this.TerrainCliffCollapseAmount, this.TerrainCliffCollapseSamplesPerFrame);
 
             // fade water amount
             // 0.96
@@ -731,6 +747,8 @@ namespace TerrainGeneration
                 return;
             }
 
+            var cascadeFrom = new List<int>();  // indexes of deposited material to collapse away from
+            var cascadeFrom2 = new List<int>();  // indexes of deposited material to collapse away from
             var collapseFrom = new List<int>();  // indexes of deposited material to collapse away from
             var collapseTo = new List<int>();  // indexes of holes to collapse towards
 
@@ -745,8 +763,30 @@ namespace TerrainGeneration
                 {
                     // add affected cells to list to collapse from/to
                     collapseTo.Add(result.Item1);
+                    cascadeFrom.Add(result.Item2);
                     collapseFrom.Add(result.Item2);
                 }
+            }
+
+            // cascade collapse
+            for (int i = 0; i < 8; i++)
+            {
+                cascadeFrom2 = new List<int>();
+                amount *= 0.8f;
+
+                foreach (var celli in cascadeFrom)
+                {
+                    var result = CliffCollapseFrom(CX(celli), CY(celli), _threshold, amount);
+                    if (result.Item1 != -1)
+                    {
+                        // add affected cells to list to collapse from/to
+                        collapseTo.Add(result.Item1);
+                        cascadeFrom2.Add(result.Item2);
+                        collapseFrom.Add(result.Item2);
+                    }
+                }
+
+                cascadeFrom = cascadeFrom2;
             }
 
             foreach (var celli in collapseFrom)
@@ -755,7 +795,7 @@ namespace TerrainGeneration
             }
             foreach (var celli in collapseTo)
             {
-                CollapseTo(CX(celli), CY(celli), 0.2f,0.5f);
+                CollapseTo(CX(celli), CY(celli), 0.2f, 0.2f);
             }
 
 
