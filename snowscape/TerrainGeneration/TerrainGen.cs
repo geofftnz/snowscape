@@ -238,6 +238,8 @@ namespace TerrainGeneration
             this.Slump(this.TerrainSlump2MaxHeightDifference, this.TerrainSlump2MovementAmount, this.TerrainSlump2SamplesPerFrame);
             this.Collapse(this.TerrainCollapseMaxHeightDifference, this.TerrainCollapseMovementAmount, 1f, this.TerrainCollapseSamplesPerFrame);
 
+            this.CliffCollapse(3.0f, 0.8f, 2000);
+
             // fade water amount
             // 0.96
             this.Terrain.DecayWater(0.96f, 0.5f, 0.95f);
@@ -705,17 +707,115 @@ namespace TerrainGeneration
             });
 
 
-            //Parallel.For(0, 8, j =>
-            //{
-            //    int ii = j * ((this.Width * this.Height) >> 3);
-            //    for (int i = 0; i < (this.Width * this.Height) >> 3; i++)
-            //    {
-            //        this.Map[ii].Loose += threadlocal.diffmap[ii];
-            //        ii++;
-            //    }
-            //});
+        }
 
 
+        /// <summary>
+        /// Collapse cliffs to soften the appearance of slot-canyons.
+        /// 
+        /// - pick a cell
+        /// - determine the cell's lowest neighbour
+        /// - if the cell's lowest neighbour is lower than the threshold:
+        ///   - move amount*difference material from one cell to the other
+        ///   - take material from hard as well as loose
+        ///   - deposit as loose
+        /// </summary>
+        /// <param name="_threshold"></param>
+        /// <param name="amount"></param>
+        /// <param name="numIterations"></param>
+        public void CliffCollapse(float _threshold, float amount, int numIterations)
+        {
+            // early exit if no iterations
+            if (numIterations == 0)
+            {
+                return;
+            }
+
+            var collapseFrom = new List<int>();  // indexes of deposited material to collapse away from
+            var collapseTo = new List<int>();  // indexes of holes to collapse towards
+
+            var r = new Random();
+            for (int i = 0; i < numIterations; i++)
+            {
+                int x = r.Next(this.Width);
+                int y = r.Next(this.Height);
+
+                var result = CliffCollapseFrom(x, y, _threshold, amount);
+                if (result.Item1 != -1)
+                {
+                    // add affected cells to list to collapse from/to
+                    collapseTo.Add(result.Item1);
+                    collapseFrom.Add(result.Item2);
+                }
+            }
+
+            foreach (var celli in collapseFrom)
+            {
+                CollapseFrom(CX(celli), CY(celli), 0.2f);
+            }
+            foreach (var celli in collapseTo)
+            {
+                CollapseTo(CX(celli), CY(celli), 0.2f,0.5f);
+            }
+
+
+        }
+
+
+        private Tuple<int, float> GetLowestNeighbourByHeight(int cellx, int celly)
+        {
+            Func<int, Tuple<int, float>, Tuple<int, float>> LowestNeighbourByHeightFunc = (celli, h) =>
+            {
+                return
+                    this.Terrain.Map[celli].Height < h.Item2
+                    ? new Tuple<int, float>(celli, this.Terrain.Map[celli].Height)
+                    : h;
+            };
+
+            int i = C(cellx, celly);
+            var lowestNeighbour = new Tuple<int, float>(i, this.Terrain.Map[i].Height);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx + 1, celly), lowestNeighbour);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx, celly - 1), lowestNeighbour);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx, celly + 1), lowestNeighbour);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx - 1, celly - 1), lowestNeighbour);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx - 1, celly + 1), lowestNeighbour);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx + 1, celly - 1), lowestNeighbour);
+            lowestNeighbour = LowestNeighbourByHeightFunc(C(cellx + 1, celly + 1), lowestNeighbour);
+
+            return lowestNeighbour;
+        }
+
+
+        public Tuple<int, int> CliffCollapseFrom(int x, int y, float threshold, float amount)
+        {
+            var lowestNeighbour = GetLowestNeighbourByHeight(x, y);
+
+            int celli = C(x, y);
+            float h = this.Terrain.Map[celli].Height;
+            float diff = h - lowestNeighbour.Item2;
+
+            if (diff > threshold)
+            {
+                diff *= amount;
+
+                // add material to destination as loose
+                this.Terrain.Map[lowestNeighbour.Item1].Loose += diff;
+
+                // remove material from celli as loose, then hard
+                if (this.Terrain.Map[celli].Loose < diff)
+                {
+                    diff -= this.Terrain.Map[celli].Loose;
+                    this.Terrain.Map[celli].Loose = 0f;
+                    this.Terrain.Map[celli].Hard -= diff;
+                }
+                else
+                {
+                    this.Terrain.Map[celli].Loose -= diff;
+                }
+
+                return new Tuple<int, int>(celli, lowestNeighbour.Item1);
+            }
+            return new Tuple<int, int>(-1, -1);
         }
 
 
@@ -740,10 +840,10 @@ namespace TerrainGeneration
             Func<int, int, float, float, float, float[], float> SlumpF = (pFrom, pTo, h, a, threshold, diffmap) =>
             {
 
-                if (this.Terrain.Map[pFrom].Loose > looseThreshold)
-                {
-                    return 0f;
-                }
+                //if (this.Terrain.Map[pFrom].Loose > looseThreshold)
+                //{
+                //    return 0f;
+                //}
 
                 float diff = this.Terrain.Map[pFrom].Hard - h;
                 if (diff > threshold)
@@ -914,7 +1014,7 @@ namespace TerrainGeneration
             return Vector3.Normalize(new Vector3(h3 - h4, h1 - h2, 2f));
         }
 
-        private Vector3 CellNormalWide(int cx, int cy,int width)
+        private Vector3 CellNormalWide(int cx, int cy, int width)
         {
             float h1 = this.Terrain.Map[C(cx, cy - width)].Height;
             float h2 = this.Terrain.Map[C(cx, cy + width)].Height;
