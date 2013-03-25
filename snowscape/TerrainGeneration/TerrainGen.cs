@@ -109,7 +109,7 @@ namespace TerrainGeneration
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 0.7f;  // 1.0
             this.TerrainSlumpMovementAmount = 0.05f;
-            this.TerrainSlumpSamplesPerFrame = 10000;
+            this.TerrainSlumpSamplesPerFrame = 5000;
 
             // Slump loose slopes - rare case
             this.TerrainSlump2MaxHeightDifference = 0.2f;
@@ -123,8 +123,8 @@ namespace TerrainGeneration
             this.TerrainCollapseSamplesPerFrame = 0;// 500;
 
             // cliff collapse
-            this.TerrainCliffCollapseHeightThresholdMin = 2.0f;
-            this.TerrainCliffCollapseHeightThresholdMax = 3.0f;
+            this.TerrainCliffCollapseHeightThresholdMin = 0.8f;
+            this.TerrainCliffCollapseHeightThresholdMax = 4.0f;
             this.TerrainCliffCollapseAmount = 0.8f;
             this.TerrainCliffCollapseSamplesPerFrame = 2000;
 
