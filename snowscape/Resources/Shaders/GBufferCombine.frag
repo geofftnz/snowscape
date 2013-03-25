@@ -31,8 +31,8 @@ void main(void)
 	c.rgb = vec3(1.0) * diffuse;
 	
 	c.rgb += pos * 0.0005;
-	c.rgb += shadeT * 0.000001;
-	c.rgb += paramT * 0.000001;
+	c.rgb += shadeT.rgb * 0.000001;
+	c.rgb += paramT.rgb * 0.000001;
 
 	//c.g = posTex.w;
 
