@@ -147,7 +147,7 @@ void main(void)
 
 	float d = length(wpos);
 
-	c = generateCol(pos,normal,paramT);	
+	c = generateCol(pos.xyz,normal,paramT);	
 	
 	vec4 fogcol = vec4(0.8, 0.88, 0.92,1.0);
 	d /= 1024.0;
