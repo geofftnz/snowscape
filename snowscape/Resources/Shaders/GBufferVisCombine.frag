@@ -71,7 +71,7 @@ vec3 getNormal(vec2 pos)
     float h3 = sampleHeight(vec2(pos.x - 0.5, pos.y));
 	float h4 = sampleHeight(vec2(pos.x + 0.5, pos.y));
 
-    return normalize(vec3(h4-h3,h2-h1,1.0));
+    return normalize(vec3(h4-h3,1.0,h2-h1));
 }
 
 vec3 getNormalNoise(vec2 pos, float f, float a)
@@ -81,7 +81,7 @@ vec3 getNormalNoise(vec2 pos, float f, float a)
     float h3 = sampleHeightNoise(vec2(pos.x - 0.5, pos.y),f,a);
 	float h4 = sampleHeightNoise(vec2(pos.x + 0.5, pos.y),f,a);
 
-    return normalize(vec3(h4-h3,h2-h1,1.0));
+    return normalize(vec3(h4-h3,1.0,h2-h1));
 }
 
 
@@ -100,7 +100,7 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 	float looseblend = s.r*s.r;
 
 	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
-    col *= 1.4;
+    col *= 1.3;
 
 	vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
 	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
@@ -119,10 +119,10 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 	vec4 colE = vec4(0.4,0.6,0.9,1.0);
 	col += colE * clamp(s.a,0.0,1.0);
 
-    vec3 l = normalize(vec3(0.4,0.6,0.2));
+    //vec3 l = normalize(vec3(0.4,0.6,0.2));
 
-	float diffuse = clamp(dot(n,l) * 0.5 + 0.5,0,1);
-	col *= (0.4 + 0.6 * diffuse);
+	float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
+	col *= (0.3 + 0.7 * diffuse);
 
 	return col;
 }
@@ -166,9 +166,10 @@ void main(void)
 		if (hitType > 0.05)
 		{
 
-			vec3 l = normalize(vec3(0.4,0.6,0.2));
-					
-			c = mix(vec4(0.1,0.1,0.4,1.0),vec4(1.0),dot(posT.xyz,-l));
+			//vec3 l = normalize(vec3(0.4,0.6,0.2));
+				
+			vec4 skycol = mix(vec4(0.6,0.8,1.0,1.0),vec4(0.1,0.1,0.4,1.0),clamp(dot(posT.xyz,vec3(0.0,-1.0,0.0)),0.0,1.0));
+			c = mix(skycol,vec4(1.0),pow(clamp(dot(posT.xyz,-sunVector),0.0,1.0),50.0));
 
 			//c = vec4(posT.xyz*0.5+0.5,1.0);
 		}

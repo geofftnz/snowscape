@@ -48,6 +48,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
+        private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.2f, 0.6f));
 
         private Vector3 eyePos;
         private double angle = 0.0;
@@ -503,12 +504,12 @@ namespace Snowscape.TerrainGenerationViewer
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
                 sp.SetUniform("eyePos", this.eyePos);
-                //.SetUniform("sunVector", Vector3.Normalize(new Vector3(0.2f, 0.8f, 0.3f)))
+                sp.SetUniform("sunVector", this.sunDirection);
                 sp.SetUniform("posTex", 0);
                 //sp.SetUniform("normalTex", 1);
                 sp.SetUniform("paramTex", 1);
                 sp.SetUniform("heightTex", 2);
-                sp.SetUniform("boxparam",new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
+                sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
             Sampler.Unbind(TextureUnit.Texture2);
