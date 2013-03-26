@@ -42,6 +42,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private GBuffer gbuffer = new GBuffer("gb");
         private GBufferCombiner gbufferCombiner;
+        private Sampler heightTexSampler = new Sampler("GBheightTexSampler");
         private TerrainTile terrainTile;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
@@ -247,6 +248,14 @@ namespace Snowscape.TerrainGenerationViewer
                 });
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
+
+            this.heightTexSampler.Init();
+            this.heightTexSampler
+                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.Repeat))
+                .ApplyParameters();
 
 
             // GL state
@@ -484,13 +493,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
-            this.terrainTile.HeightTexture
-                .Bind(TextureUnit.Texture2)
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat))
-                .ApplyParameters();
+            this.terrainTile.HeightTexture.Bind(TextureUnit.Texture2);
+            this.heightTexSampler.Bind(TextureUnit.Texture2);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -502,6 +506,8 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("heightTex", 2);
                 sp.SetUniform("boxparam",new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
+
+            Sampler.Unbind(TextureUnit.Texture2);
         }
 
 
