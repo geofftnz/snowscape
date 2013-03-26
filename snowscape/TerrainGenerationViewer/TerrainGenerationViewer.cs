@@ -17,6 +17,7 @@ using Snowscape.TerrainStorage;
 using Snowscape.TerrainRenderer;
 using Snowscape.TerrainRenderer.Renderers;
 using OpenTKExtensions.Camera;
+using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -46,6 +47,8 @@ namespace Snowscape.TerrainGenerationViewer
         private TerrainTile terrainTile;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
+        private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
+
         private Vector3 eyePos;
         private double angle = 0.0;
         private double viewHeight = 100.0;
@@ -257,6 +260,7 @@ namespace Snowscape.TerrainGenerationViewer
                 .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.Repeat))
                 .ApplyParameters();
 
+            this.skyRenderer.Load();
 
             // GL state
             GL.Enable(EnableCap.DepthTest);
@@ -539,16 +543,22 @@ namespace Snowscape.TerrainGenerationViewer
             SetTerrainProjection();
 
             // render terrain to gbuffer
-            perfmon.Start("RenderTerrain");
             this.gbuffer.BindForWriting();
             GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Disable(EnableCap.Blend);
             GL.ColorMask(true, true, true, true);
 
+            perfmon.Start("RenderTerrain");
             RenderTiles();
-            this.gbuffer.UnbindFromWriting();
             perfmon.Stop("RenderTerrain");
+
+            perfmon.Start("RenderSkyRays");
+            RenderSkyRayDirections();
+            perfmon.Stop("RenderSkyRays");
+            this.gbuffer.UnbindFromWriting();
+
 
             // render gbuffer to screen
 
@@ -562,6 +572,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             GL.Disable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
             perfmon.Start("RefreshText");
             if (textManager.NeedsRefresh) textManager.Refresh();
             perfmon.Stop("RefreshText");
@@ -577,6 +588,11 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.frameCounter.Frame();
 
+        }
+
+        private void RenderSkyRayDirections()
+        {
+            this.skyRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 
         private void RenderTiles()

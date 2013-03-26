@@ -147,17 +147,37 @@ void main(void)
 
 	float d = length(wpos);
 
-	c = generateCol(pos.xyz,normal,paramT);	
-	
-	vec4 fogcol = vec4(0.8, 0.88, 0.92,1.0);
-	d /= 1024.0;
-	float fogamount = 1.0 / (exp(d * d * 0.1));
+	if (hitType > 0.6)
+	{
+		c = generateCol(pos.xyz,normal,paramT);	
 
-	if (hitType < 0.5){
-		fogamount = 0.0;
+		vec4 fogcol = vec4(0.8, 0.88, 0.92,1.0);
+		d /= 1024.0;
+		float fogamount = 1.0 / (exp(d * d * 0.1));
+
+		if (hitType < 0.5){
+			fogamount = 0.0;
+		}
+
+		c = mix(fogcol,c,fogamount);
 	}
+	else
+	{
+		if (hitType > 0.05)
+		{
 
-	c = mix(fogcol,c,fogamount);
+			vec3 l = normalize(vec3(0.4,0.6,0.2));
+					
+			c = mix(vec4(0.1,0.1,0.4,1.0),vec4(1.0),dot(posT.xyz,-l));
+
+			//c = vec4(posT.xyz*0.5+0.5,1.0);
+		}
+		else
+		{
+			c = vec4(1.0,1.0,0.0,1.0);
+		}
+	}
+	
 
 	/*
 	vec2 p = texcoord0.xy * 2.0;

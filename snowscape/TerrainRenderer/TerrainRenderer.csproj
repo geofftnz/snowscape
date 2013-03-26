@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Atmosphere\RayDirectionRenderer.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
     <Compile Include="Renderers\GenerationVisRaycastRenderer.cs" />
     <Compile Include="Renderers\GenerationVisMeshRenderer.cs" />
