@@ -160,7 +160,7 @@ namespace Snowscape.TerrainGenerationViewer
         public event CloseEventHandler OnClose;
 
         public TerrainGenerationViewer()
-            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
+            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 3, GraphicsContextFlags.Default)
         {
             this.Terrain = new TerrainGen(TileWidth, TileHeight);
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);

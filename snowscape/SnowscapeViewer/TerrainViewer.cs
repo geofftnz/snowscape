@@ -64,7 +64,7 @@ namespace Snowscape.Viewer
         public event CloseEventHandler OnClose;
 
         public TerrainViewer()
-            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 0, GraphicsContextFlags.Default)
+            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 3, GraphicsContextFlags.Default)
         {
             this.Load += new EventHandler<EventArgs>(TerrainViewer_Load);
             this.Closed += new EventHandler<EventArgs>(TerrainViewer_Closed);
