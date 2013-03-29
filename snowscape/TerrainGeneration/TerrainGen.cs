@@ -110,7 +110,7 @@ namespace TerrainGeneration
 
             // Slump loose slopes - general case
             this.TerrainSlumpMaxHeightDifference = 0.6f;  // 1.0
-            this.TerrainSlumpMovementAmount = 0.05f;
+            this.TerrainSlumpMovementAmount = 0.08f;
             this.TerrainSlumpSamplesPerFrame = 5000;
 
             // Slump loose slopes - rare case
@@ -126,7 +126,7 @@ namespace TerrainGeneration
 
             // cliff collapse
             this.TerrainCliffCollapseHeightThresholdMin = 1.0f;
-            this.TerrainCliffCollapseHeightThresholdMax = 3.0f;
+            this.TerrainCliffCollapseHeightThresholdMax = 2.0f;
             this.TerrainCliffCollapseAmount = 0.05f;
             this.TerrainCliffCollapseSamplesPerFrame = 2000;
 
@@ -786,7 +786,8 @@ namespace TerrainGeneration
             for (int i = 0; i < 8; i++)
             {
                 cascadeFrom2 = new List<int>();
-                amount *= 0.8f;
+                amount *= 1.1f;
+                _threshold *= 0.9f;
 
                 foreach (var celli in cascadeFrom)
                 {
@@ -854,17 +855,25 @@ namespace TerrainGeneration
                 diff *= amount;
 
                 // add material to destination as loose
-                this.Terrain.Map[lowestNeighbour.Item1].Loose += diff;
+                //this.Terrain.Map[lowestNeighbour.Item1].Loose += diff;
 
                 // remove material from celli as loose, then hard
-                if (this.Terrain.Map[celli].Loose < diff)
+                if (diff > this.Terrain.Map[celli].Loose)
                 {
-                    diff -= this.Terrain.Map[celli].Loose;
+                    // move all loose
+                    this.Terrain.Map[lowestNeighbour.Item1].Loose += this.Terrain.Map[celli].Loose;
                     this.Terrain.Map[celli].Loose = 0f;
+
+                    // move a fraction of remainder from hard
+                    diff -= this.Terrain.Map[celli].Loose;
+                    diff *= 0.2f; // hard rock doesn't move as easily
+                    
                     this.Terrain.Map[celli].Hard -= diff;
+                    this.Terrain.Map[lowestNeighbour.Item1].Loose += diff;
                 }
                 else
                 {
+                    this.Terrain.Map[lowestNeighbour.Item1].Loose += diff;
                     this.Terrain.Map[celli].Loose -= diff;
                 }
 
