@@ -138,9 +138,10 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 
     //vec3 l = normalize(vec3(0.4,0.6,0.2));
 
-	//float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
-	float diffuse = clamp(dot(n,sunVector),0,1);
-	col *= diffuse + 0.4;  //ambient
+	float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
+	//float diffuse = clamp(dot(n,sunVector),0,1);
+	
+	col *= diffuse + 0.05;  //ambient
 
 	return col;
 }
