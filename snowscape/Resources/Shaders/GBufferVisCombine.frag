@@ -71,7 +71,7 @@ vec3 getNormal(vec2 pos)
     float h3 = sampleHeight(vec2(pos.x - 0.5, pos.y));
 	float h4 = sampleHeight(vec2(pos.x + 0.5, pos.y));
 
-    return normalize(vec3(h4-h3,1.0,h2-h1));
+    return normalize(vec3(h3-h4,1.0,h1-h2));
 }
 
 vec3 getNormalNoise(vec2 pos, float f, float a)
@@ -81,28 +81,45 @@ vec3 getNormalNoise(vec2 pos, float f, float a)
     float h3 = sampleHeightNoise(vec2(pos.x - 0.5, pos.y),f,a);
 	float h4 = sampleHeightNoise(vec2(pos.x + 0.5, pos.y),f,a);
 
-    return normalize(vec3(h4-h3,1.0,h2-h1));
+    return normalize(vec3(h3-h4,1.0,h1-h2));
 }
 
+vec3 getSkyColour(vec3 skyvector)
+{
+	vec3 skycol = 
+		mix(
+			vec3(0.02,0.03,0.2),
+			vec3(0.4,0.6,0.9),
+			pow(clamp(1.0-dot(skyvector,vec3(0.0,1.0,0.0)),0.0,1.0),2.0)
+			);
+
+	// scattering around the sun
+	skycol += vec3(1.0,0.9,0.3) * pow(clamp(dot(skyvector,sunVector),0.0,1.0),300.0) * 4.0;
+
+	// sun disk
+	skycol += vec3(1.0,0.9,0.6) * smoothstep(0.9998,0.99995,dot(skyvector,sunVector)) * 8.0;
+
+	return skycol;
+}
 
 vec4 generateCol(vec3 p, vec3 n, vec4 s)
 {
-	vec4 colH1 = vec4(0.3,0.247,0.223,1.0);
-	vec4 colH2 = vec4(0.3,0.247,0.223,1.0);
+	vec4 colH1 = pow(vec4(0.3,0.247,0.223,1.0),vec4(2.0));
+	vec4 colL1 = pow(vec4(0.41,0.39,0.16,1.0),vec4(2.0));
 
-	vec4 colL1 = vec4(0.41,0.39,0.16,1.0);
-	vec4 colL2 = vec4(0.41,0.39,0.16,1.0);
-
-	vec4 colW = vec4(0.7,0.8,1.0,1.0);
-
-	float h = 0.0;//p.y / 1024.0;
+	vec4 colW = pow(vec4(0.7,0.8,1.0,1.0),vec4(2.0));
 
 	float looseblend = s.r*s.r;
 
-	vec4 col = mix(mix(colH1,colH2,h),mix(colL1,colL2,h),looseblend);
-    col *= 1.3;
+	vec4 col = mix(colH1,colL1,looseblend);
+    //col *= 1.3;
 
-	vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
+
+	vec3 eyeDir = normalize(p-eyePos);
+	vec3 wCol = getSkyColour(reflect(eyeDir,n));
+
+	vec4 colW0 = vec4(wCol,1.0);  // blue water
+	//vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
 	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
 	vec4 colW2 = vec4(1.2,1.3,1.4,1.0); // white water
 
@@ -121,11 +138,13 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 
     //vec3 l = normalize(vec3(0.4,0.6,0.2));
 
-	float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
-	col *= (0.3 + 0.7 * diffuse);
+	//float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
+	float diffuse = clamp(dot(n,sunVector),0,1);
+	col *= diffuse + 0.4;  //ambient
 
 	return col;
 }
+
 
 
 void main(void)
@@ -143,23 +162,34 @@ void main(void)
 	vec3 wpos = pos.xyz - eyePos;
 
 	float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 2.0;
-	vec3 normal = getNormalNoise(pos.xz,1.33,1.0 / (1.0+smoothness));
+	
+	vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
+	//vec3 normal = getNormal(pos.xz);
 
 	float d = length(wpos);
 
 	if (hitType > 0.6)
 	{
+
+	
 		c = generateCol(pos.xyz,normal,paramT);	
 
-		vec4 fogcol = vec4(0.8, 0.88, 0.92,1.0);
+		vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
 		d /= 1024.0;
-		float fogamount = 1.0 / (exp(d * d * 0.1));
+		float fogamount = 1.0 / (exp(d * d * 0.2));
 
 		if (hitType < 0.5){
 			fogamount = 0.0;
 		}
 
 		c = mix(fogcol,c,fogamount);
+		
+
+		// visualize normal
+		//c = vec4(normal*0.5+0.5,1.0);
+
+		// visualize eye direction vector
+		//c = vec4(normalize(pos.xyz - eyePos)*0.5+0.5,1.0);
 	}
 	else
 	{
@@ -167,10 +197,14 @@ void main(void)
 		{
 
 			//vec3 l = normalize(vec3(0.4,0.6,0.2));
-				
-			vec4 skycol = mix(vec4(0.6,0.8,1.0,1.0),vec4(0.1,0.1,0.4,1.0),clamp(dot(posT.xyz,vec3(0.0,-1.0,0.0)),0.0,1.0));
-			c = mix(skycol,vec4(1.0),pow(clamp(dot(posT.xyz,-sunVector),0.0,1.0),50.0));
+			
+			vec3 skycol = getSkyColour(normalize(posT.xyz));
+			c = vec4(skycol,1.0);
+			
+			//vec4 skycol = mix(vec4(0.6,0.8,1.0,1.0),vec4(0.1,0.1,0.4,1.0),clamp(dot(posT.xyz,vec3(0.0,-1.0,0.0)),0.0,1.0));
+			//c = mix(skycol,vec4(1.0),pow(clamp(dot(posT.xyz,-sunVector),0.0,1.0),50.0));
 
+			// visualize eye direction vector
 			//c = vec4(posT.xyz*0.5+0.5,1.0);
 		}
 		else
@@ -210,6 +244,7 @@ void main(void)
 
 	// fog
 
-
-    out_Colour = vec4(c.rgb,1.0);
+	//out_Colour = vec4(c.rgb,1.0);
+    out_Colour = vec4(sqrt(c.rgb),1.0);
+	//out_Colour = vec4(pow(c.rgb,vec3(0.45)),1.0);
 }
