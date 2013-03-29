@@ -57,6 +57,8 @@ namespace TerrainGeneration
         public int WaterParticleMaxAge { get; set; }
         public float WaterParticleMinCarryingToSurvive { get; set; }
 
+        public float WaterErosionMinimumErosionFactor { get; set; }
+
         /// <summary>
         /// Amount we add to the "water height/density" component per frame, multiplied by crossdistance
         /// </summary>
@@ -145,6 +147,8 @@ namespace TerrainGeneration
             this.WaterErosionCollapseToThreshold = 0.0001f;
 
             this.WaterErosionMinSpeed = 0.001f;  // 0.01
+            this.WaterErosionMinimumErosionFactor = 0.01f; // always erode by this factor regardless of speed
+
             this.WaterAccumulatePerFrame = 0.01f; //0.005 0.002f;
 
             this.WaterSpeedLowpassAmount = 0.7f;  // 0.2 0.8 
@@ -530,7 +534,15 @@ namespace TerrainGeneration
                             // erosion rate goes up with the square of water velocity over the critical velocity (shear stress)
                             float erosionFactor = (wp.Speed - this.WaterErosionMinSpeed);
                             erosionFactor *= erosionFactor;
-                            erosionFactor *= crossdistance * this.WaterErosionSpeedCoefficient;
+                            erosionFactor *= this.WaterErosionSpeedCoefficient;
+
+                            // if we're not too old, erode anything we cross by a certain amount
+                            if (wp.Age < this.WaterParticleMaxAge)
+                            {
+                                erosionFactor += this.WaterErosionMinimumErosionFactor;
+                            }
+
+                            erosionFactor *= crossdistance;
 
                             float looseErodeAmount = erosionFactor; // erosion coefficient for loose material
 
