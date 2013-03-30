@@ -99,16 +99,29 @@ namespace OpenTKExtensions
         public int Width { get; private set; }
         public int Height { get; private set; }
         public string Name { get; private set; }
+        public bool WantDepth { get; set; }
 
-        public GBuffer(string name)
+        public GBuffer(string name, bool wantDepth)
         {
             this.Name = name;
+            this.WantDepth = wantDepth;
             this.FBO = new FrameBuffer(this.Name + "_GBuffer");
 
             for (int i = 0; i < MAXSLOTS; i++)
             {
                 this.TextureSlots[i] = new TextureSlot();
             }
+        }
+
+        public GBuffer(string name)
+            : this(name, true)
+        {
+
+        }
+        public GBuffer()
+            : this("unnamed")
+        {
+
         }
 
         public GBuffer SetSlot(int slot, TextureSlotParam texparam)
@@ -139,7 +152,7 @@ namespace OpenTKExtensions
             this.TextureSlots[slot].Slot = slot;
             this.TextureSlots[slot].Texture = texture;
             this.TextureSlots[slot].TextureParam = new TextureSlotParam(texture.InternalFormat, texture.Format, texture.Type);
-            
+
 
             log.Trace("GBuffer.SetSlot {0} = {1}", slot, this.TextureSlots[slot].TextureParam);
 
@@ -192,17 +205,10 @@ namespace OpenTKExtensions
                 UnloadAndDestroyAllTextures();
                 InitAllTextures();
 
-                // dump old depth texture
-                if (this.DepthTexture != null)
+                if (this.WantDepth)
                 {
-                    this.DepthTexture.Unload();
-                    this.DepthTexture = null;
+                    InitAndAttachDepthTexture();
                 }
-                // create & bind depth texture
-                this.DepthTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.DepthComponent32f, PixelFormat.DepthComponent, PixelType.Float);
-                this.DepthTexture.Init();
-                this.DepthTexture.UploadEmpty();
-                GL.FramebufferTexture2D(this.FBO.Target, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, this.DepthTexture.ID, 0);
 
                 SetDrawBuffers();
 
@@ -214,6 +220,21 @@ namespace OpenTKExtensions
                 return true;
             }
             return false;
+        }
+
+        private void InitAndAttachDepthTexture()
+        {
+            // dump old depth texture
+            if (this.DepthTexture != null)
+            {
+                this.DepthTexture.Unload();
+                this.DepthTexture = null;
+            }
+            // create & bind depth texture
+            this.DepthTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.DepthComponent32f, PixelFormat.DepthComponent, PixelType.Float);
+            this.DepthTexture.Init();
+            this.DepthTexture.UploadEmpty();
+            GL.FramebufferTexture2D(this.FBO.Target, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, this.DepthTexture.ID, 0);
         }
 
         public void BindForWriting()
