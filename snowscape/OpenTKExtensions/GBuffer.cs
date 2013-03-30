@@ -27,13 +27,14 @@ namespace OpenTKExtensions
             }
             public override string ToString()
             {
-                return string.Format("[{0},{1},{2}]",InternalFormat.ToString(), Format.ToString(), Type.ToString());
+                return string.Format("[{0},{1},{2}]", InternalFormat.ToString(), Format.ToString(), Type.ToString());
             }
         }
 
         public class TextureSlot
         {
             public bool Enabled { get; set; }
+            public bool External { get; set; }
             public int Slot { get; set; }
             public TextureSlotParam TextureParam { get; set; }
             public Texture Texture { get; set; }
@@ -54,6 +55,7 @@ namespace OpenTKExtensions
             public TextureSlot()
             {
                 this.Enabled = false;
+                this.External = false;
                 this.Slot = 0;
                 this.TextureParam = new TextureSlotParam();
                 this.Texture = null;
@@ -61,7 +63,10 @@ namespace OpenTKExtensions
 
             public void InitTexture(int Width, int Height)
             {
-                this.Texture = new Texture(Width, Height, TextureTarget.Texture2D, this.TextureParam.InternalFormat, this.TextureParam.Format, this.TextureParam.Type);
+                if (this.Texture == null && !this.External)
+                {
+                    this.Texture = new Texture(Width, Height, TextureTarget.Texture2D, this.TextureParam.InternalFormat, this.TextureParam.Format, this.TextureParam.Type);
+                }
                 this.Texture
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear))
@@ -71,7 +76,7 @@ namespace OpenTKExtensions
             }
             public void UnloadTexture()
             {
-                if (Enabled && this.Texture != null)
+                if (this.Enabled && !this.External && this.Texture != null)
                 {
                     this.Texture.Unload();
                     this.Texture = null;
@@ -122,13 +127,36 @@ namespace OpenTKExtensions
             return this;
         }
 
+        public GBuffer SetSlot(int slot, Texture texture)
+        {
+            if (slot < 0 || slot >= MAXSLOTS)
+            {
+                throw new InvalidOperationException("GBuffer.SetSlotTextureParams: slot out of range.");
+            }
+
+            this.TextureSlots[slot].Enabled = true;
+            this.TextureSlots[slot].External = true;
+            this.TextureSlots[slot].Slot = slot;
+            this.TextureSlots[slot].Texture = texture;
+            this.TextureSlots[slot].TextureParam = new TextureSlotParam(texture.InternalFormat, texture.Format, texture.Type);
+            
+
+            log.Trace("GBuffer.SetSlot {0} = {1}", slot, this.TextureSlots[slot].TextureParam);
+
+            return this;
+        }
+
+
         private void InitAllTextures()
         {
             for (int i = 0; i < MAXSLOTS; i++)
             {
                 if (this.TextureSlots[i].Enabled)
                 {
-                    this.TextureSlots[i].InitTexture(this.Width, this.Height);
+                    if (!this.TextureSlots[i].External)
+                    {
+                        this.TextureSlots[i].InitTexture(this.Width, this.Height);
+                    }
                     this.TextureSlots[i].AttachToFramebuffer(this.FBO.Target);
                 }
             }
@@ -138,7 +166,7 @@ namespace OpenTKExtensions
         {
             for (int i = 0; i < MAXSLOTS; i++)
             {
-                if (this.TextureSlots[i].Enabled)
+                if (this.TextureSlots[i].Enabled && !this.TextureSlots[i].External)
                 {
                     this.TextureSlots[i].UnloadTexture();
                 }
@@ -212,7 +240,7 @@ namespace OpenTKExtensions
             }
             if (this.TextureSlots[slot] == null || !this.TextureSlots[slot].Enabled)
             {
-                throw new InvalidOperationException(string.Format("GBuffer.SetSlotTextureParams: no texture at slot {0}",slot));
+                throw new InvalidOperationException(string.Format("GBuffer.SetSlotTextureParams: no texture at slot {0}", slot));
             }
 
             return this.TextureSlots[slot].Texture;
