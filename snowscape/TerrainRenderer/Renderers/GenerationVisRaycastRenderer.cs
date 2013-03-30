@@ -15,7 +15,6 @@ namespace Snowscape.TerrainRenderer.Renderers
         private VBO boxcoordVBO = new VBO("bbboxcoord");
         private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
         private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
-        private Sampler heightTexSampler = new Sampler("heightTexSampler");
 
         public GenerationVisRaycastRenderer()
         {
@@ -26,7 +25,6 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             SetupBoundingBox();
             InitShader();
-            InitSampler();
         }
 
         public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eyePos)
@@ -39,7 +37,6 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-            this.heightTexSampler.Bind(TextureUnit.Texture0);
 
             tile.ParamTexture.Bind(TextureUnit.Texture1);
 
@@ -132,17 +129,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                     //"out_Normal",
                     "out_Param"
                 });
-        }
-
-        private void InitSampler()
-        {
-            this.heightTexSampler.Init();
-            this.heightTexSampler
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.MirroredRepeat))
-                .ApplyParameters();
         }
 
     }

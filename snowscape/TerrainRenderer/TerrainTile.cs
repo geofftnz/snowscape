@@ -16,7 +16,7 @@ namespace Snowscape.TerrainRenderer
     /// 
     /// knows about:
     /// - its bounding box (VBO)
-    /// - its heightmap (texture)
+    /// - its heightmap (texture), in a state suitable for raycasting.
     /// - its normalmap (texture)
     /// - its shading data (textures)
     /// 

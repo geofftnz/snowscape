@@ -52,6 +52,7 @@
     <Compile Include="Renderers\MeshRenderer.cs" />
     <Compile Include="Renderers\RaycastRenderer.cs" />
     <Compile Include="Renderers\RendererHelper.cs" />
+    <Compile Include="TerrainGlobal.cs" />
     <Compile Include="TerrainTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TileMeshBorder.cs" />

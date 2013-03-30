@@ -15,7 +15,6 @@ namespace Snowscape.TerrainRenderer.Renderers
         private VBO boxcoordVBO = new VBO("bbboxcoord");
         private VBO indexVBO = new VBO("bbindex", BufferTarget.ElementArrayBuffer);
         private ShaderProgram boundingBoxProgram = new ShaderProgram("bb");
-        private Sampler heightTexSampler = new Sampler("heightTexSampler");
 
         public RaycastRenderer()
         {
@@ -26,7 +25,6 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             SetupBoundingBox();
             InitShader();
-            InitSampler();
         }
 
         public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eyePos)
@@ -39,7 +37,6 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-            this.heightTexSampler.Bind(TextureUnit.Texture0);
             tile.NormalTexture.Bind(TextureUnit.Texture1);
             tile.ShadeTexture.Bind(TextureUnit.Texture2);
             tile.ParamTexture.Bind(TextureUnit.Texture3);
@@ -60,7 +57,6 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.boxcoordVBO.Bind(this.boundingBoxProgram.VariableLocation("in_boxcoord"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
-            Sampler.Unbind(TextureUnit.Texture0);
         }
 
         public void Unload()
@@ -116,17 +112,6 @@ namespace Snowscape.TerrainRenderer.Renderers
 
             indexVBO.SetData(cubeindex);
 
-        }
-
-        private void InitSampler()
-        {
-            this.heightTexSampler.Init();
-            this.heightTexSampler
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.MirroredRepeat))
-                .ApplyParameters();
         }
 
         private void InitShader()

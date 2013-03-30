@@ -43,8 +43,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private GBuffer gbuffer = new GBuffer("gb");
         private GBufferCombiner gbufferCombiner;
-        private Sampler heightTexSampler = new Sampler("GBheightTexSampler");
         private TerrainTile terrainTile;
+        private TerrainGlobal terrainGlobal;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
@@ -141,7 +141,6 @@ namespace Snowscape.TerrainGenerationViewer
         private string terrainPath = @"../../../../terrains/";
 
         private Vector2 view_offset = Vector2.Zero;
-        private float view_scale = 1.0f;
 
 
         private Vector3[] quadPos = new Vector3[]{
@@ -169,6 +168,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.Terrain = new TerrainGen(TileWidth, TileHeight);
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
+            this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
 
@@ -232,11 +232,11 @@ namespace Snowscape.TerrainGenerationViewer
             // create VBOs/Shaders etc
 
             this.terrainTile.Init();
+            this.terrainGlobal.Init();
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
 
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
-            //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
             this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
@@ -252,14 +252,6 @@ namespace Snowscape.TerrainGenerationViewer
                 });
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
-
-            this.heightTexSampler.Init();
-            this.heightTexSampler
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMinFilter, (int)TextureMinFilter.Linear))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.Repeat))
-                .ApplyParameters();
 
             this.skyRenderer.Load();
 
@@ -388,53 +380,12 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainProjection = this.camera.Projection;
             this.terrainModelview = this.camera.View;
-            /*
-            this.terrainProjection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 0.1f, 4000.0f);
-
-            double r = 200.0f;
-            double a = angle; // Math.IEEERemainder(globalTime * 0.02, 1.0) * 2.0 * Math.PI;
-            this.eyePos = new Vector3((float)(128.0 + r * Math.Cos(a)), (float)viewHeight, (float)(128.0 + r * Math.Sin(a)));
-
-            this.terrainModelview = Matrix4.LookAt(this.eyePos, new Vector3(128.0f, 0.0f, 128.0f), -Vector3.UnitY);
-             */
         }
 
 
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
-            /*
-            float moveRate = 0.02f * this.view_scale;
-            if (Keyboard[Key.Plus])
-            {
-                this.view_scale *= 0.95f;
-            }
-
-            if (Keyboard[Key.Minus])
-            {
-                this.view_scale *= 1.05f;
-            }
-            
-            if (Keyboard[Key.Left])
-            {
-                this.view_offset.X -= moveRate;
-            }
-            if (Keyboard[Key.Right])
-            {
-                this.view_offset.X += moveRate;
-            }
-            if (Keyboard[Key.Up])
-            {
-                this.view_offset.Y -= moveRate;
-            }
-            if (Keyboard[Key.Down])
-            {
-                this.view_offset.Y += moveRate;
-            }
-
-            this.view_offset.X = this.view_offset.X.Wrap(1.0f);
-            this.view_offset.Y = this.view_offset.Y.Wrap(1.0f);
-            */
 
             var pos = (this.camera as WalkCamera).Position;
             pos.Y = this.Terrain.Terrain.HeightAt(pos.X, pos.Z);
@@ -498,15 +449,13 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
-            this.terrainTile.HeightTexture.Bind(TextureUnit.Texture2);
-            this.heightTexSampler.Bind(TextureUnit.Texture2);
+            this.terrainGlobal.HeightTexture.Bind(TextureUnit.Texture2);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
                 sp.SetUniform("eyePos", this.eyePos);
                 sp.SetUniform("sunVector", this.sunDirection);
                 sp.SetUniform("posTex", 0);
-                //sp.SetUniform("normalTex", 1);
                 sp.SetUniform("paramTex", 1);
                 sp.SetUniform("heightTex", 2);
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
@@ -537,6 +486,7 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 CopyMapDataFromUpdateThread();
                 this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
+                this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
             }
