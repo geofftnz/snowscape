@@ -194,6 +194,15 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.Close();
             }
+            if (e.Key == Key.R)
+            {
+                ResetTerrain();
+                ResetCounters();
+            }
+            if (e.Key == Key.P)
+            {
+                this.perfmon.ResetAll();
+            }
         }
 
 
@@ -412,16 +421,6 @@ namespace Snowscape.TerrainGenerationViewer
             }
             if (Keyboard[Key.Up]) { this.viewHeight += 10.0; }
             if (Keyboard[Key.Down]) { this.viewHeight -= 10.0; }
-
-
-            if (Keyboard[Key.R])
-            {
-                if (updateCounter > 10)
-                {
-                    ResetTerrain();
-                    ResetCounters();
-                }
-            }
 
 
             updateCounter++;
