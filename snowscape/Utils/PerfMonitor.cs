@@ -45,6 +45,11 @@ namespace Utils
                 totalTimeMS += sw.Elapsed.TotalMilliseconds;
                 sw.Reset();
             }
+            public void Reset()
+            {
+                this.count = 0;
+                this.totalTimeMS = 0.0;
+            }
 
         }
 
@@ -125,6 +130,14 @@ namespace Utils
                 {
                     yield return new Tuple<string, double>(k, this.Timers[k].averageTimeMS);
                 }
+            }
+        }
+
+        public void ResetAll()
+        {
+            foreach (var timer in this.Timers.Values)
+            {
+                timer.Reset();
             }
         }
 
