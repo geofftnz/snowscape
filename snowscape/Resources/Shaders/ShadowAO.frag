@@ -48,8 +48,37 @@ float getShadowHeight(vec2 p)
 }
 
 
+float getSliceVisibility(vec2 p, vec2 dp)
+{
+	float h0 = texture2D(heightTexture,p).r; // height at origin
+	float t = 0.0;
+	float dydx = 0.0;
+	
+	for(t = 1.0; t < 100.0; t += 1.0 + t*0.1)
+	{
+		dydx = max(dydx, (texture2D(heightTexture, p + dp * t ).r - h0) / t);
+	}
+
+	return 1.0 - atan(dydx) / 1.57079635;
+}
+
+
+// returns the proportion of sky visible over the up-facing hemisphere centred on this point
+float getSkyVisibility(vec2 p)
+{
+	float vis = 0.0;
+
+	for(float a = 0.0; a < 1.0; a += 1.0/8.0)
+	{
+		vis += getSliceVisibility(p,vec2(sin(a*6.2831854),cos(a*6.2831854))*texel);	
+	}
+
+	return vis / 8.0;
+}
+
+
 void main(void)
 {
 	out_ShadowAO.r = getShadowHeight(terraincoord);
-	out_ShadowAO.g = 0.0;
+	out_ShadowAO.g = getSkyVisibility(terraincoord);
 }

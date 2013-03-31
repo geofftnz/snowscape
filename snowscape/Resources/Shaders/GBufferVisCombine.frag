@@ -108,7 +108,8 @@ float directIllumination(vec3 p, vec3 n, float shadowHeight)
 	return smoothstep(-2.0,-0.1,p.y - shadowHeight) * clamp(dot(n,sunVector)*0.5+0.5,0,1);
 }
 
-vec4 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight)
+
+vec4 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight, float AO)
 {
 	vec4 colH1 = pow(vec4(0.3,0.247,0.223,1.0),vec4(2.0));
 	vec4 colL1 = pow(vec4(0.41,0.39,0.16,1.0),vec4(2.0));
@@ -122,7 +123,7 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight)
 
 
 	vec3 eyeDir = normalize(p-eyePos);
-	vec3 wCol = getSkyColour(reflect(eyeDir,n));
+	vec3 wCol = vec3(0.1,0.2,0.25) + getSkyColour(reflect(eyeDir,n)) * smoothstep(-2.0,-0.1,p.y - shadowHeight);
 
 	vec4 colW0 = vec4(wCol,1.0);  // blue water
 	//vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
@@ -148,7 +149,9 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight)
 	//float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
 	//float diffuse = clamp(dot(n,sunVector),0,1);
 	
-	col *= diffuse + 0.05;  //ambient
+	//col *= diffuse + 0.05;  //ambient
+
+	col = col * diffuse + col * vec4(0.8,0.9,1.0,1.0) * 0.7 * AO;
 
 	return col;
 }
@@ -182,7 +185,7 @@ void main(void)
 	{
 
 	
-		c = generateCol(pos.xyz,normal,paramT, shadowAO.r);	
+		c = generateCol(pos.xyz,normal,paramT, shadowAO.r, shadowAO.g);	
 
 		vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
 		d /= 1024.0;
@@ -196,7 +199,7 @@ void main(void)
 		
 		//c.r = shadowAO.r;
 		//c.g = shadowAO.g;
-		//c.rgb = vec3(shadowAO.r / 512.0);
+		//c.rgb = vec3(shadowAO.g);
 
 		// visualize normal
 		//c = vec4(normal*0.5+0.5,1.0);
