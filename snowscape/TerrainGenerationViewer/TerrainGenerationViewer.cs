@@ -48,6 +48,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
+        private TerrainLightingGenerator terrainLighting;
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.2f, 0.6f));
 
         private Vector3 eyePos;
@@ -171,6 +172,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
+            this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
             this.camera = new WalkCamera(this.Keyboard, this.Mouse);
 
@@ -235,6 +237,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.Init();
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
+            this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
 
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -450,6 +453,7 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
         {
             this.terrainGlobal.HeightTexture.Bind(TextureUnit.Texture2);
+            this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -458,10 +462,10 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("posTex", 0);
                 sp.SetUniform("paramTex", 1);
                 sp.SetUniform("heightTex", 2);
+                sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
-            Sampler.Unbind(TextureUnit.Texture2);
         }
 
 
@@ -489,6 +493,9 @@ namespace Snowscape.TerrainGenerationViewer
                 this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
+
+                // render lighting
+                this.RenderLighting(this.sunDirection);
             }
 
             SetTerrainProjection();
@@ -499,6 +506,7 @@ namespace Snowscape.TerrainGenerationViewer
             GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Disable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
             GL.ColorMask(true, true, true, true);
 
             perfmon.Start("RenderTerrain");
@@ -539,6 +547,11 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.frameCounter.Frame();
 
+        }
+
+        private void RenderLighting(Vector3 sunVector)
+        {
+            this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
         }
 
         private void RenderSkyRayDirections()

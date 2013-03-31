@@ -5,6 +5,7 @@ uniform sampler2D posTex;
 //uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D heightTex;
+uniform sampler2D shadeTex;
 
 uniform vec4 boxparam;
 uniform vec3 eyePos;
@@ -102,7 +103,12 @@ vec3 getSkyColour(vec3 skyvector)
 	return skycol;
 }
 
-vec4 generateCol(vec3 p, vec3 n, vec4 s)
+float directIllumination(vec3 p, vec3 n, float shadowHeight)
+{
+	return smoothstep(-2.0,-0.1,p.y - shadowHeight) * clamp(dot(n,sunVector)*0.5+0.5,0,1);
+}
+
+vec4 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight)
 {
 	vec4 colH1 = pow(vec4(0.3,0.247,0.223,1.0),vec4(2.0));
 	vec4 colL1 = pow(vec4(0.41,0.39,0.16,1.0),vec4(2.0));
@@ -138,7 +144,8 @@ vec4 generateCol(vec3 p, vec3 n, vec4 s)
 
     //vec3 l = normalize(vec3(0.4,0.6,0.2));
 
-	float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
+	float diffuse = directIllumination(p,n,shadowHeight);
+	//float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
 	//float diffuse = clamp(dot(n,sunVector),0,1);
 	
 	col *= diffuse + 0.05;  //ambient
@@ -167,13 +174,15 @@ void main(void)
 	vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
 	//vec3 normal = getNormal(pos.xz);
 
+	vec2 shadowAO = texture2D(shadeTex,pos.xz * texel).rg;
+
 	float d = length(wpos);
 
 	if (hitType > 0.6)
 	{
 
 	
-		c = generateCol(pos.xyz,normal,paramT);	
+		c = generateCol(pos.xyz,normal,paramT, shadowAO.r);	
 
 		vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
 		d /= 1024.0;
@@ -185,6 +194,9 @@ void main(void)
 
 		c = mix(fogcol,c,fogamount);
 		
+		//c.r = shadowAO.r;
+		//c.g = shadowAO.g;
+		//c.rgb = vec3(shadowAO.r / 512.0);
 
 		// visualize normal
 		//c = vec4(normal*0.5+0.5,1.0);
@@ -213,7 +225,8 @@ void main(void)
 			c = vec4(1.0,1.0,0.0,1.0);
 		}
 	}
-	
+
+
 
 	/*
 	vec2 p = texcoord0.xy * 2.0;
