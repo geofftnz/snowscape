@@ -105,7 +105,7 @@ vec3 getSkyColour(vec3 skyvector)
 
 float directIllumination(vec3 p, vec3 n, float shadowHeight)
 {
-	return smoothstep(-2.0,-0.1,p.y - shadowHeight) * clamp(dot(n,sunVector)*0.5+0.5,0,1);
+	return smoothstep(-2.0,-0.1,p.y - shadowHeight) * clamp(dot(n,sunVector)+0.2,0,1);
 }
 
 
@@ -199,7 +199,7 @@ void main(void)
 		
 		//c.r = shadowAO.r;
 		//c.g = shadowAO.g;
-		//c.rgb = vec3(shadowAO.g);
+		//c.rgb = vec3(shadowAO.g * 0.4 + 0.9 * directIllumination(pos.xyz,normal, shadowAO.r));
 
 		// visualize normal
 		//c = vec4(normal*0.5+0.5,1.0);

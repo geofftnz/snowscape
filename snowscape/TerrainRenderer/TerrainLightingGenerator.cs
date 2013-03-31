@@ -108,7 +108,7 @@ namespace Snowscape.TerrainRenderer
                 .UseProgram()
                 .SetUniform("heightTexture", 0)
                 .SetUniform("sunDirection", sunVector)
-                .SetUniform("minHeight", minHeight)
+                //.SetUniform("minHeight", minHeight)
                 .SetUniform("maxHeight", maxHeight);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();

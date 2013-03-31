@@ -495,7 +495,9 @@ namespace Snowscape.TerrainGenerationViewer
                 prevThreadIterations = currentThreadIterations;
 
                 // render lighting
+                perfmon.Start("Lighting");
                 this.RenderLighting(this.sunDirection);
+                perfmon.Stop("Lighting");
             }
 
             SetTerrainProjection();

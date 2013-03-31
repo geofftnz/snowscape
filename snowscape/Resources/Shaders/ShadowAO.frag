@@ -54,7 +54,7 @@ float getSliceVisibility(vec2 p, vec2 dp)
 	float t = 0.0;
 	float dydx = 0.0;
 	
-	for(t = 1.0; t < 100.0; t += 1.0 + t*0.1)
+	for(t = 1.0; t < 50.0; t += 1.0 + t*0.25)
 	{
 		dydx = max(dydx, (texture2D(heightTexture, p + dp * t ).r - h0) / t);
 	}
@@ -68,12 +68,12 @@ float getSkyVisibility(vec2 p)
 {
 	float vis = 0.0;
 
-	for(float a = 0.0; a < 1.0; a += 1.0/8.0)
+	for(float a = 0.0; a < 1.0; a += 1.0/19.0)
 	{
 		vis += getSliceVisibility(p,vec2(sin(a*6.2831854),cos(a*6.2831854))*texel);	
 	}
 
-	return vis / 8.0;
+	return vis / 19.0;
 }
 
 
