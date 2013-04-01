@@ -49,7 +49,11 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererRaycast;
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
+
+        private float sunElevation = 0.2f;
+        private float sunAzimuth = 0.3f;
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
+        private Vector3 prevSunDirection = Vector3.Zero;
 
         private Vector3 eyePos;
         private double angle = 0.0;
@@ -131,6 +135,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Terrain threadCopyMap;
         private Terrain threadRenderMap;
 
+        private bool pauseUpdate = false;
+
         private uint updateThreadIterations;
         private uint prevThreadIterations;
         private double updateThreadUpdateTime = 0.0;
@@ -202,6 +208,33 @@ namespace Snowscape.TerrainGenerationViewer
             if (e.Key == Key.P)
             {
                 this.perfmon.ResetAll();
+            }
+            if (e.Key == Key.Up) { this.sunElevation += 0.01f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Down) { this.sunElevation -= 0.01f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Left) { this.sunAzimuth += 0.01f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Right) { this.sunAzimuth -= 0.01f; this.CalculateSunDirection(); }
+
+            if (e.Key == Key.Space)
+            {
+                if (pauseUpdate) // currently paused
+                {
+                    // resume thread
+                    this.PauseThread = false;
+                    this.pauseUpdate = false;
+                }
+                else // currently running
+                {
+                    log.Info("Pausing Update - pausing thread");
+                    this.PauseThread = true;
+
+                    while (!this.ThreadPaused)
+                    {
+                        Thread.Sleep(1);
+                    }
+                    log.Info("Pausing Update - thread paused");
+                    this.pauseUpdate = true;
+
+                }
             }
         }
 
@@ -293,6 +326,8 @@ namespace Snowscape.TerrainGenerationViewer
             log.Trace("Starting update thread...");
             this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
             this.updateThread.Start();
+
+            this.CalculateSunDirection();
         }
 
         private void UpdateThreadProc()
@@ -406,24 +441,25 @@ namespace Snowscape.TerrainGenerationViewer
             this.camera.Update(e.Time);
             this.eyePos = (this.camera as WalkCamera).EyePos;
 
-            if (Keyboard[Key.M])
-            {
-                System.Windows.Forms.Cursor.Position = new System.Drawing.Point(Location.X + Width / 2, Location.Y + Height / 2);
-            }
 
-            if (Keyboard[Key.Z] || Keyboard[Key.Left])
-            {
-                this.angle += e.Time * 0.5;
-            }
-            if (Keyboard[Key.X] || Keyboard[Key.Right])
-            {
-                this.angle -= e.Time * 0.5;
-            }
-            if (Keyboard[Key.Up]) { this.viewHeight += 10.0; }
-            if (Keyboard[Key.Down]) { this.viewHeight -= 10.0; }
+             updateCounter++;
+        }
 
+        private void CalculateSunDirection()
+        {
+            //if (this.sunElevation < 0.0f)
+            this.sunElevation = this.sunElevation.Clamp(0.005f, 1.0f);
+            this.sunAzimuth = this.sunAzimuth.Wrap(1.0f);
 
-            updateCounter++;
+            double phi = this.sunAzimuth * Math.PI * 2.0;
+            double theta = (1.0 - this.sunElevation) * Math.PI * 0.5;
+            double r = 1.0;
+
+            this.sunDirection.X = (float)(r * Math.Sin(theta) * Math.Cos(phi));
+            this.sunDirection.Y = (float)(r * Math.Cos(theta));
+            this.sunDirection.Z = (float)(r * Math.Sin(theta) * Math.Sin(phi));
+
+            this.sunDirection.Normalize();
         }
 
         private void ResetCounters()
@@ -470,6 +506,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
+            bool needToRenderLighting = false;
 
             if (this.frameCounter.Frames % 32 == 0)
             {
@@ -493,10 +530,17 @@ namespace Snowscape.TerrainGenerationViewer
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
 
+                needToRenderLighting = true;
+            }
+
+            if (prevSunDirection != sunDirection || needToRenderLighting)
+            {
                 // render lighting
                 perfmon.Start("Lighting");
                 this.RenderLighting(this.sunDirection);
                 perfmon.Stop("Lighting");
+
+                this.prevSunDirection = this.sunDirection;
             }
 
             SetTerrainProjection();
