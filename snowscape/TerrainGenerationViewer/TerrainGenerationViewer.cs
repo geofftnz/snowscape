@@ -49,7 +49,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererRaycast;
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
-        private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.2f, 0.6f));
+        private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
 
         private Vector3 eyePos;
         private double angle = 0.0;

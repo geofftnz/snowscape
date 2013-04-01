@@ -14,6 +14,9 @@ uniform vec3 sunVector;
 in vec2 texcoord0;
 out vec4 out_Colour;
 
+// air absorbtion
+vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
+
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
               -0.60, -0.48,  0.64 );
@@ -85,6 +88,43 @@ vec3 getNormalNoise(vec2 pos, float f, float a)
     return normalize(vec3(h3-h4,1.0,h1-h2));
 }
 
+
+// mie phase - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
+float phase(float alpha, float g){
+	float gg = g*g;
+    float a = 3.0*(1.0-gg);
+    float b = 2.0*(2.0+gg);
+    float c = 1.0+alpha*alpha;
+    float d = pow(1.0+gg-2.0*g*alpha, 1.5);
+    return (a/b)*(c/d);
+}
+
+float adepthTerrain(vec3 eye, vec3 target)
+{
+	return length(target - eye);
+}
+
+// atmospheric depth for sky ray - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
+// returns in the range 0..1 for eye inside atmosphere
+float adepthSky(vec3 eye, vec3 dir)
+{
+    float a = dot(dir, dir);
+    float b = 2.0*dot(dir, eye);
+    float c = dot(eye, eye)-1.0;
+    float det = b*b-4.0*a*c;
+    float detSqrt = sqrt(det);
+    float q = (-b - detSqrt)/2.0;
+    float t1 = c/q;
+    return t1;
+}
+
+// exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
+vec3 absorb(float dist, vec3 col, float f)
+{
+	return col - col * pow(Kr, vec3(f / dist));
+}
+
+
 vec3 getSkyColour(vec3 skyvector)
 {
 	vec3 skycol = 
@@ -103,57 +143,99 @@ vec3 getSkyColour(vec3 skyvector)
 	return skycol;
 }
 
+float getShadowForGroundPos(vec3 p, float shadowHeight)
+{
+	return smoothstep(-2.0,-0.1,p.y - shadowHeight);
+}
+
+float getShadow(vec3 p)
+{
+	return smoothstep(-2.0,-0.1,p.y - texture2D(shadeTex,p.xz * texel).r);
+}
+
 float directIllumination(vec3 p, vec3 n, float shadowHeight)
 {
-	return smoothstep(-2.0,-0.1,p.y - shadowHeight) * clamp(dot(n,sunVector)+0.2,0,1);
+	return  getShadowForGroundPos(p, shadowHeight) * clamp(dot(n,sunVector)+0.2,0,1);
+}
+
+// this is assumed to be constant across the entire terrain, because the terrian is small compared to the atmosphere
+// this should be moved to a uniform
+vec3 sunIntensity()
+{
+	return absorb(adepthSky(vec3(0.0), sunVector), vec3(1.0), 28.0);
 }
 
 
-vec4 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight, float AO)
+vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 {
-	vec4 colH1 = pow(vec4(0.3,0.247,0.223,1.0),vec4(2.0));
-	vec4 colL1 = pow(vec4(0.41,0.39,0.16,1.0),vec4(2.0));
-
-	vec4 colW = pow(vec4(0.7,0.8,1.0,1.0),vec4(2.0));
+	vec3 colH1 = pow(vec3(0.3,0.247,0.223),vec3(2.0));
+	vec3 colL1 = pow(vec3(0.41,0.39,0.16),vec3(2.0));
+	vec3 colW = pow(vec3(0.7,0.8,1.0),vec3(2.0));
 
 	float looseblend = s.r*s.r;
 
-	vec4 col = mix(colH1,colL1,looseblend);
-    //col *= 1.3;
-
+	vec3 col = mix(colH1,colL1,looseblend);
 
 	vec3 eyeDir = normalize(p-eyePos);
 	vec3 wCol = vec3(0.1,0.2,0.25) + getSkyColour(reflect(eyeDir,n)) * smoothstep(-2.0,-0.1,p.y - shadowHeight);
 
-	vec4 colW0 = vec4(wCol,1.0);  // blue water
+	vec3 colW0 = wCol;  // blue water
 	//vec4 colW0 = vec4(0.4,0.7,0.95,1.0);  // blue water
-	vec4 colW1 = vec4(0.659,0.533,0.373,1.0);  // dirty water
-	vec4 colW2 = vec4(1.2,1.3,1.4,1.0); // white water
+	vec3 colW1 = vec3(0.659,0.533,0.373);  // dirty water
+	vec3 colW2 = vec3(1.2,1.3,1.4); // white water
 
 	colW = mix(colW0,colW1,clamp(s.b*1.5,0,1));  // make water dirty->clean
 
-	//colW = mix(colW,colW2,smoothstep(0.05,0.8,s.a)*0.8);  // speed -> white water
-
-	//col = mix(col,colW,clamp(s.g*s.g*16.0,0,0.6)); // water
 	float waterblend = smoothstep(0.02,0.1,s.g) * 0.1 + 0.4 * s.g * s.g;
 
 	col = mix(col,colW,waterblend); // water
 
     // misc vis
-	vec4 colE = vec4(0.4,0.6,0.9,1.0);
+	vec3 colE = vec3(0.4,0.6,0.9);
 	col += colE * clamp(s.a,0.0,1.0);
 
-    //vec3 l = normalize(vec3(0.4,0.6,0.2));
-
-	float diffuse = directIllumination(p,n,shadowHeight);
-	//float diffuse = clamp(dot(n,sunVector) * 0.5 + 0.5,0,1);
-	//float diffuse = clamp(dot(n,sunVector),0,1);
-	
-	//col *= diffuse + 0.05;  //ambient
-
-	col = col * diffuse + col * vec4(0.8,0.9,1.0,1.0) * 0.7 * AO;
-
 	return col;
+}
+
+
+vec3 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight, float AO)
+{
+	vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+
+	//float diffuse = directIllumination(p,n,shadowHeight);
+	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
+
+	return 
+		col * sunIntensity() * clamp(dot(n,sunVector)+0.2,0,1) * getShadowForGroundPos(p,shadowHeight) +
+		col * vec3(0.8,0.9,1.0) * 0.7 * AO;
+
+}
+
+
+
+
+
+
+// get the amount of light scattered towards the eye when looking at target
+// target is a terrain intersection
+vec3 getInscatterTerrain(vec3 eye, vec3 target)
+{
+	vec3 p = eye;
+	vec3 d = target-eye;
+	float l = length(target-eye);
+	vec3 c = vec3(0.0);
+
+	for(float t=0.0;t<1.0;t+=0.05)
+	{
+		p = eye + d * t;
+
+		// light / shadow factor
+		float s = getShadow(p);
+
+		c += vec3(0.4,0.6,0.9) * s * 0.0001;
+	}
+	
+	return c * l;
 }
 
 
@@ -183,20 +265,25 @@ void main(void)
 
 	if (hitType > 0.6)
 	{
-
 	
-		c = generateCol(pos.xyz,normal,paramT, shadowAO.r, shadowAO.g);	
+		c.rgb = generateCol(pos.xyz,normal,paramT, shadowAO.r, shadowAO.g);	
 
-		vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
-		d /= 1024.0;
-		float fogamount = 1.0 / (exp(d * d * 0.2));
+		//c = vec4(0.0,0.0,0.0,1.0);
+		//c.rgb += getInscatterTerrain(eyePos,pos.xyz);
 
-		if (hitType < 0.5){
-			fogamount = 0.0;
-		}
+		//vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
+		//c = mix(c,fogcol,getInscatterTerrain(eyePos,pos.xyz).r);
 
-		c = mix(fogcol,c,fogamount);
-		
+		//vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
+		//d /= 1024.0;
+		//float fogamount = 1.0 / (exp(d * d * 0.2));
+//
+		//if (hitType < 0.5){
+			//fogamount = 0.0;
+		//}
+//
+		//c = mix(fogcol,c,fogamount);
+		//
 		//c.r = shadowAO.r;
 		//c.g = shadowAO.g;
 		//c.rgb = vec3(shadowAO.g * 0.4 + 0.9 * directIllumination(pos.xyz,normal, shadowAO.r));
