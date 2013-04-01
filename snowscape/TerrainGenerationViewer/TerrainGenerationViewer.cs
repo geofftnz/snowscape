@@ -448,7 +448,7 @@ namespace Snowscape.TerrainGenerationViewer
         private void CalculateSunDirection()
         {
             //if (this.sunElevation < 0.0f)
-            this.sunElevation = this.sunElevation.Clamp(0.005f, 1.0f);
+            this.sunElevation = this.sunElevation.Clamp(-0.2f, 1.0f);
             this.sunAzimuth = this.sunAzimuth.Wrap(1.0f);
 
             double phi = this.sunAzimuth * Math.PI * 2.0;

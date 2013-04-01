@@ -39,7 +39,7 @@ float getShadowHeight(vec2 p)
 	float i = 0.0f;
 
 	pp += dpp;
-	while (pp.z < maxHeight && i < 1024.0f)
+	while (pp.z < maxHeight && i < 2048.0f)
 	{
 		maxH = max(maxH, texture2D(heightTexture,pp.xy).r - pp.z);
 		pp += dpp;

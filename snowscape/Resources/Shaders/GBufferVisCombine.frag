@@ -121,7 +121,10 @@ float adepthSky(vec3 eye, vec3 dir)
 // exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 vec3 absorb(float dist, vec3 col, float f)
 {
-	return col - col * pow(Kr, vec3(f / dist));
+	//return col - col * pow(Kr, vec3(f / dist));
+	vec3 k = pow(Kr, vec3(f / dist));
+	return col - col * k;
+	//return col - col * k;
 }
 
 
@@ -162,7 +165,7 @@ float directIllumination(vec3 p, vec3 n, float shadowHeight)
 // this should be moved to a uniform
 vec3 sunIntensity()
 {
-	return absorb(adepthSky(vec3(0.0,0.99,0.0), sunVector), vec3(1.0), 28.0); // 28.0
+	return absorb(adepthSky(vec3(0.0,0.9,0.0), sunVector), vec3(1.0), 1.0); // 28.0
 }
 
 
@@ -198,7 +201,7 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 }
 
 
-vec3 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight, float AO)
+vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
 	//vec3 col = terrainDiffuse(p,n,s,shadowHeight);
 	vec3 col = vec3(0.5);
@@ -206,10 +209,12 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight, float AO)
 	//float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
 
-	return 
-		col * sunIntensity() * clamp(dot(n,sunVector)+0.2,0,1) * getShadowForGroundPos(p,shadowHeight) +
-		col * vec3(0.8,0.9,1.0) * 0.5 * AO;
-
+	vec3 col2 = 
+			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight); //+
+			//col * vec3(0.8,0.9,1.0) * 0.5 * AO;
+		
+	// can probably ignore the aborption between point and eye
+	return absorb(adepthTerrain(eye, p) * 0.0009765625 * 0.5,col2,4.0);
 }
 
 
@@ -267,7 +272,11 @@ void main(void)
 	if (hitType > 0.6)
 	{
 	
-		c.rgb = generateCol(pos.xyz,normal,paramT, shadowAO.r, shadowAO.g);	
+		c.rgb = generateCol(pos.xyz,normal,paramT, eyePos, shadowAO.r, shadowAO.g);	
+		//c.rgb = sunIntensity();
+
+		//c.rb = 0.0;
+		//c.g = adepthSky(vec3(0.0,0.99,0.0), sunVector);
 
 		//c = vec4(0.0,0.0,0.0,1.0);
 		//c.rgb += getInscatterTerrain(eyePos,pos.xyz);
