@@ -36,12 +36,14 @@ float getShadowHeight(vec2 p)
 	}
 
 	float maxH = -1.0; // current max height of shadow-plane
+	float i = 0.0f;
 
 	pp += dpp;
-	while (pp.z < maxHeight)
+	while (pp.z < maxHeight && i < 1024.0f)
 	{
 		maxH = max(maxH, texture2D(heightTexture,pp.xy).r - pp.z);
 		pp += dpp;
+		i += 1.0f;
 	}
 
 	return maxH + h0;
