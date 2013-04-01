@@ -209,8 +209,8 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.perfmon.ResetAll();
             }
-            if (e.Key == Key.Up) { this.sunElevation += 0.01f; this.CalculateSunDirection(); }
-            if (e.Key == Key.Down) { this.sunElevation -= 0.01f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Up) { this.sunElevation *= 1.05f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Down) { this.sunElevation *= 0.95f; this.CalculateSunDirection(); }
             if (e.Key == Key.Left) { this.sunAzimuth += 0.01f; this.CalculateSunDirection(); }
             if (e.Key == Key.Right) { this.sunAzimuth -= 0.01f; this.CalculateSunDirection(); }
 

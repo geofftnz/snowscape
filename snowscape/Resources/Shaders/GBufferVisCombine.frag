@@ -138,7 +138,7 @@ vec3 getSkyColour(vec3 skyvector)
 			);
 
 	// scattering around the sun
-	skycol += vec3(1.0,0.9,0.3) * pow(clamp(dot(skyvector,sunVector),0.0,1.0),300.0) * 4.0;
+	//skycol += vec3(1.0,0.9,0.3) * pow(clamp(dot(skyvector,sunVector),0.0,1.0),300.0) * 4.0;
 
 	// sun disk
 	skycol += vec3(1.0,0.9,0.6) * smoothstep(0.9998,0.99995,dot(skyvector,sunVector)) * 8.0;
@@ -200,21 +200,23 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 	return col;
 }
 
+float sampleDistanceFactor = 0.0009765625 * 0.5;
+float sampleDistanceExponent = 4.0;
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-	//vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	vec3 col = vec3(0.5);
+	vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	//vec3 col = vec3(0.5);
 
 	//float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
 
 	vec3 col2 = 
-			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight); //+
-			//col * vec3(0.8,0.9,1.0) * 0.5 * AO;
+			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight) 
+			+ col * vec3(0.8,0.9,1.0) * 0.5 * AO;
 		
 	// can probably ignore the aborption between point and eye
-	return absorb(adepthTerrain(eye, p) * 0.0009765625 * 0.5,col2,4.0);
+	return absorb(adepthTerrain(eye, p) * sampleDistanceFactor,col2,sampleDistanceExponent);
 }
 
 
@@ -231,17 +233,37 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 	float l = length(target-eye);
 	vec3 c = vec3(0.0);
 
+	float alpha = dot(normalize(d), sunVector);
+	float mie_factor = phase(alpha,0.99) * 0.2;  // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * 0.5;  // mie brightness
+	//float adepth = adepthSky(vec3(0.0,0.9,0.0), sunVector);
+
+	vec3 influx = sunIntensity();
+
+	vec3 mie = vec3(0.0);
+	vec3 raleigh = vec3(0.0);
+
 	for(float t=0.0;t<1.0;t+=0.05)
 	{
 		p = eye + d * t;
 
-		// light / shadow factor
-		float s = getShadow(p);
+		float dist = l * t;
 
-		c += vec3(0.4,0.6,0.9) * s * 0.0001;
+		mie += absorb(dist * sampleDistanceFactor, influx, sampleDistanceExponent) * getShadow(p);
+		raleigh += absorb(dist * sampleDistanceFactor, Kr * influx, sampleDistanceExponent) * getShadow(p);
+		
+		// light / shadow factor
+		//float s = getShadow(p);
+		//c += vec3(0.4,0.6,0.9) * s * 0.0001;
 	}
+
+	mie *= 0.05;
+	mie *= mie_factor * l * sampleDistanceFactor;
+
+	raleigh *= 0.05;
+	raleigh *= raleigh_factor * l * sampleDistanceFactor;
 	
-	return c * l;
+	return mie + raleigh;
 }
 
 
@@ -279,7 +301,7 @@ void main(void)
 		//c.g = adepthSky(vec3(0.0,0.99,0.0), sunVector);
 
 		//c = vec4(0.0,0.0,0.0,1.0);
-		//c.rgb += getInscatterTerrain(eyePos,pos.xyz);
+		c.rgb += getInscatterTerrain(eyePos,pos.xyz);
 
 		//vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
 		//c = mix(c,fogcol,getInscatterTerrain(eyePos,pos.xyz).r);
