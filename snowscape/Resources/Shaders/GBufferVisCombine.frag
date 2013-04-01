@@ -11,6 +11,9 @@ uniform vec4 boxparam;
 uniform vec3 eyePos;
 uniform vec3 sunVector;
 
+uniform float minHeight;
+uniform float maxHeight;
+
 in vec2 texcoord0;
 out vec4 out_Colour;
 
@@ -20,6 +23,32 @@ vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
               -0.60, -0.48,  0.64 );
+
+
+float intersectBox ( vec3 rayo, vec3 rayd, vec3 boxMin, vec3 boxMax)
+{
+    vec3 omin = ( boxMin - rayo ) / rayd;
+    vec3 omax = ( boxMax - rayo ) / rayd;
+    
+    vec3 tmax = max ( omax, omin );
+    vec3 tmin = min ( omax, omin );
+    
+    float t1 = min ( tmax.x, min ( tmax.y, tmax.z ) );
+    float t2 = max ( max ( tmin.x, 0.0 ), max ( tmin.y, tmin.z ) );    
+    
+	return min(t1,t2);
+}
+
+float intersectBoxInside  ( vec3 rayo, vec3 rayd, vec3 boxMin, vec3 boxMax)
+{
+    vec3 omin = ( boxMin - rayo ) / rayd;
+    vec3 omax = ( boxMax - rayo ) / rayd;
+    
+    vec3 tmax = max ( omax, omin );
+    
+    return min ( tmax.x, min ( tmax.y, tmax.z ) );
+}
+
 
 // credit: iq/rgba
 float hash( float n )
@@ -235,7 +264,7 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 
 	float alpha = dot(normalize(d), sunVector);
 	float mie_factor = phase(alpha,0.99) * 0.2;  // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * 0.5;  // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * 0.5;  // raleigh brightness
 	//float adepth = adepthSky(vec3(0.0,0.9,0.0), sunVector);
 
 	vec3 influx = sunIntensity();
@@ -243,24 +272,32 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 	vec3 mie = vec3(0.0);
 	vec3 raleigh = vec3(0.0);
 
-	for(float t=0.0;t<1.0;t+=0.05)
+	float t = 0.0;
+	float dt = 0.001;
+
+	//for(float t=0.0;t<1.0;t+=dt)
+	while (t < 1.0)
 	{
 		p = eye + d * t;
 
 		float dist = l * t;
 
-		mie += absorb(dist * sampleDistanceFactor, influx, sampleDistanceExponent) * getShadow(p);
-		raleigh += absorb(dist * sampleDistanceFactor, Kr * influx, sampleDistanceExponent) * getShadow(p);
+		float s = getShadow(p) * dt;
+
+		mie += absorb(dist * sampleDistanceFactor, influx, sampleDistanceExponent) * s;
+		raleigh += absorb(dist * sampleDistanceFactor, Kr * influx, sampleDistanceExponent) * s;
 		
 		// light / shadow factor
 		//float s = getShadow(p);
 		//c += vec3(0.4,0.6,0.9) * s * 0.0001;
+		t+=dt;
+		dt *= 1.08;
 	}
 
-	mie *= 0.05;
+	//mie *= dt;
 	mie *= mie_factor * l * sampleDistanceFactor;
 
-	raleigh *= 0.05;
+	//raleigh *= dt;
 	raleigh *= raleigh_factor * l * sampleDistanceFactor;
 	
 	return mie + raleigh;
@@ -333,9 +370,25 @@ void main(void)
 
 			//vec3 l = normalize(vec3(0.4,0.6,0.2));
 			
-			vec3 skycol = getSkyColour(normalize(posT.xyz));
-			c = vec4(skycol,1.0);
-			
+			//vec3 skycol = getSkyColour(normalize(posT.xyz));
+			//c = vec4(skycol,1.0);
+
+
+			vec3 boxMin = vec3(-1024.0,minHeight,-1024.0);
+			vec3 boxMax = vec3(2048.0,maxHeight,2048.0);
+
+
+			if (eyePos.x >= boxMin.x && eyePos.y >= boxMin.y && eyePos.z >= boxMin.z &&
+				eyePos.x < boxMax.x && eyePos.y <= boxMax.y && eyePos.z < boxMax.z)
+			{
+
+				// intersect ray with bounds box
+				vec3 skyDir = normalize(posT.xyz);
+				float boxt = intersectBoxInside(eyePos, skyDir, boxMin,boxMax);
+
+				c.rgb += getInscatterTerrain(eyePos,eyePos + skyDir * boxt); // target a sphere around the terrain for the initial pass
+			}
+
 			//vec4 skycol = mix(vec4(0.6,0.8,1.0,1.0),vec4(0.1,0.1,0.4,1.0),clamp(dot(posT.xyz,vec3(0.0,-1.0,0.0)),0.0,1.0));
 			//c = mix(skycol,vec4(1.0),pow(clamp(dot(posT.xyz,-sunVector),0.0,1.0),50.0));
 

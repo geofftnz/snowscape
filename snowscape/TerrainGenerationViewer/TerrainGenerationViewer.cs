@@ -498,6 +498,8 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("paramTex", 1);
                 sp.SetUniform("heightTex", 2);
                 sp.SetUniform("shadeTex", 3);
+                sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
+                sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
