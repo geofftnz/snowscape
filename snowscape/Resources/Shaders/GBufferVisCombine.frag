@@ -162,7 +162,7 @@ float directIllumination(vec3 p, vec3 n, float shadowHeight)
 // this should be moved to a uniform
 vec3 sunIntensity()
 {
-	return absorb(adepthSky(vec3(0.0), sunVector), vec3(1.0), 28.0);
+	return absorb(adepthSky(vec3(0.0,0.99,0.0), sunVector), vec3(1.0), 28.0); // 28.0
 }
 
 
@@ -200,14 +200,15 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, float shadowHeight, float AO)
 {
-	vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	//vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	vec3 col = vec3(0.5);
 
 	//float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
 
 	return 
 		col * sunIntensity() * clamp(dot(n,sunVector)+0.2,0,1) * getShadowForGroundPos(p,shadowHeight) +
-		col * vec3(0.8,0.9,1.0) * 0.7 * AO;
+		col * vec3(0.8,0.9,1.0) * 0.5 * AO;
 
 }
 
