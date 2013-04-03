@@ -211,6 +211,8 @@ namespace Snowscape.TerrainGenerationViewer
             }
             if (e.Key == Key.Up) { this.sunElevation *= 1.05f; this.CalculateSunDirection(); }
             if (e.Key == Key.Down) { this.sunElevation *= 0.95f; this.CalculateSunDirection(); }
+            if (e.Key == Key.PageUp) { this.sunElevation += 0.05f; this.CalculateSunDirection(); }
+            if (e.Key == Key.PageDown) { this.sunElevation -= 0.05f; this.CalculateSunDirection(); }
             if (e.Key == Key.Left) { this.sunAzimuth += 0.01f; this.CalculateSunDirection(); }
             if (e.Key == Key.Right) { this.sunAzimuth -= 0.01f; this.CalculateSunDirection(); }
 
@@ -448,7 +450,7 @@ namespace Snowscape.TerrainGenerationViewer
         private void CalculateSunDirection()
         {
             //if (this.sunElevation < 0.0f)
-            this.sunElevation = this.sunElevation.Clamp(-0.2f, 1.0f);
+            this.sunElevation = this.sunElevation.Clamp(-0.5f, 1.0f);
             this.sunAzimuth = this.sunAzimuth.Wrap(1.0f);
 
             double phi = this.sunAzimuth * Math.PI * 2.0;

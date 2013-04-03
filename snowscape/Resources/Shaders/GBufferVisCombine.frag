@@ -20,6 +20,7 @@ out vec4 out_Colour;
 // air absorbtion
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
 
+// raleigh scattering constants - maybe
 vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.1;
 
 // inverse eye response - for mapping atmospheric scattering amounts to something more realistic
@@ -155,9 +156,9 @@ float adepthSky(vec3 eye, vec3 dir)
 // exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 vec3 absorb(float dist, vec3 col, float f)
 {
-	//return col - col * pow(Kr, vec3(f / dist));
-	vec3 k = pow(Kr, vec3(f / dist));
-	return col - col * k;
+	return col - col * pow(Kr, vec3(f / dist));
+	//vec3 k = pow(Kr, vec3(f / dist));
+	//return col - col * k;
 	//return col - col * k;
 }
 
@@ -267,7 +268,53 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 }
 
 
+vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor)
+{
 
+	//vec3 sd=sph[i].xyz-p;    
+    //b = dot ( rd,sd );
+    //disc = b*b + sph[i].w - dot ( sd,sd );
+    //if (disc>0.0) tnow = b - sqrt(disc);
+//
+
+	// intersect the eye-->dir ray with the radius=groundheight sphere centred on 0,0,0
+	float a = dot(dir, dir);
+	float b = 2.0 * dot(dir, eye);
+	float c = dot(eye, eye) - groundheight*groundheight;
+	float det = b*b - 4.0*a*c;	
+	
+	//float b = dot(dir, eye);
+	//float det = b*b - dot(eye,eye) + groundheight*groundheight;
+
+	// no intersection
+	if (det < 0.0)
+	{
+		return vec3(1.0);
+	}
+
+	// calculate intersections. If both are negative, then the ray escapes through space to the sun
+	// if one is positive and one is negative, we're under ground
+	// otherwise we're interested in the chord length
+	det = sqrt(det);
+	a += a;
+	float t1 = (-b - det) / a;
+	float t2 = (-b + det) / a;
+
+	float t = t2-t1;
+
+	if (t1 <= 0.0 && t2 <= 0.0)
+	{
+		return vec3(1.0);
+	}
+
+	if (t1 > 0.0 && t2 > 0.0)
+	{
+		return vec3(1.0 / (1.0+t * t * 50.0));
+	}
+
+
+	return vec3(0.0);
+}
 
 
 
@@ -326,11 +373,40 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 // dir is the direction of the ray
 vec3 getInscatterSky(vec3 eye, vec3 dir)
 {
+	vec3 p0 = vec3(0.0,0.99 + eye.y * 0.000001,0.0); // replace with scaled pos and height
 
+	float ray_length = adepthSky(p0, dir);
 
+	float alpha = dot(dir, sunVector);
+	float mie_factor = phase(alpha,0.99) * 0.2;  // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * 0.5;  // raleigh brightness
 
-	return vec3(0.0);
+	vec3 mie = vec3(0.0);
+	vec3 raleigh = vec3(0.0);
 
+	float nsteps = 50.0;
+	float stepsize = 1.0 / nsteps;
+	float step_length = ray_length / nsteps;
+	vec3 sunIntensity = vec3(1.0);
+
+	float scatteramount = 30.0;
+	float ralabsorbfactor = 140.0;
+	
+	for(float t = 0.0; t < 1.0; t += stepsize)
+	{
+		float sample_dist = ray_length * t;
+		vec3 p = p0 + dir * sample_dist;
+		
+		float sample_depth = adepthSky(p,sunVector);
+
+		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(p,sunVector,0.98,scatteramount);
+
+		raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
+	}
+
+	raleigh *= raleigh_factor * ray_length;
+
+	return vec3(raleigh);
 }
 
 
@@ -368,7 +444,9 @@ void main(void)
 		//c.g = adepthSky(vec3(0.0,0.99,0.0), sunVector);
 
 		//c = vec4(0.0,0.0,0.0,1.0);
-		c.rgb += getInscatterTerrain(eyePos,pos.xyz);
+		
+		
+		//c.rgb += getInscatterTerrain(eyePos,pos.xyz);
 
 		//vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
 		//c = mix(c,fogcol,getInscatterTerrain(eyePos,pos.xyz).r);
@@ -404,20 +482,26 @@ void main(void)
 			//c = vec4(skycol,1.0);
 
 
-			vec3 boxMin = vec3(-1024.0,minHeight,-1024.0);
-			vec3 boxMax = vec3(2048.0,maxHeight,2048.0);
+			//vec3 boxMin = vec3(-1024.0,minHeight,-1024.0);
+			//vec3 boxMax = vec3(2048.0,maxHeight,2048.0);
+//
+//
+			//if (eyePos.x >= boxMin.x && eyePos.y >= boxMin.y && eyePos.z >= boxMin.z &&
+				//eyePos.x < boxMax.x && eyePos.y <= boxMax.y && eyePos.z < boxMax.z)
+			//{
+//
+				//// intersect ray with bounds box
+				//vec3 skyDir = normalize(posT.xyz);
+				//float boxt = intersectBoxInside(eyePos, skyDir, boxMin,boxMax);
+//
+				//c.rgb += getInscatterTerrain(eyePos,eyePos + skyDir * boxt); // target a sphere around the terrain for the initial pass
+			//}
+//
+
+			c.rgb += getInscatterSky(eyePos, normalize(posT.xyz));
+			
 
 
-			if (eyePos.x >= boxMin.x && eyePos.y >= boxMin.y && eyePos.z >= boxMin.z &&
-				eyePos.x < boxMax.x && eyePos.y <= boxMax.y && eyePos.z < boxMax.z)
-			{
-
-				// intersect ray with bounds box
-				vec3 skyDir = normalize(posT.xyz);
-				float boxt = intersectBoxInside(eyePos, skyDir, boxMin,boxMax);
-
-				c.rgb += getInscatterTerrain(eyePos,eyePos + skyDir * boxt); // target a sphere around the terrain for the initial pass
-			}
 
 			//vec4 skycol = mix(vec4(0.6,0.8,1.0,1.0),vec4(0.1,0.1,0.4,1.0),clamp(dot(posT.xyz,vec3(0.0,-1.0,0.0)),0.0,1.0));
 			//c = mix(skycol,vec4(1.0),pow(clamp(dot(posT.xyz,-sunVector),0.0,1.0),50.0));
