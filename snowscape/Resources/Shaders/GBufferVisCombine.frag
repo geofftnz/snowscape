@@ -20,6 +20,11 @@ out vec4 out_Colour;
 // air absorbtion
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
 
+vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.1;
+
+// inverse eye response - for mapping atmospheric scattering amounts to something more realistic
+vec3 Er = vec3(0.6,0.6,1.0);
+
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
               -0.60, -0.48,  0.64 );
@@ -190,6 +195,19 @@ float directIllumination(vec3 p, vec3 n, float shadowHeight)
 	return  getShadowForGroundPos(p, shadowHeight) * clamp(dot(n,sunVector)+0.2,0,1);
 }
 
+vec3 eyeToSkyCoords(vec3 eye)
+{
+	float rearth = 6371000.0;
+	float hsky = 50000;
+	float hterrainunit = 4;
+
+	float terraintosky = hterrainunit / (rearth + hsky);
+	float groundbase = rearth / (rearth + hsky);
+
+	return eye * terraintosky + vec3(0.0,groundbase,0.0); // eye position scaled so that radius of earth + atmosphere = 1
+}
+
+
 // this is assumed to be constant across the entire terrain, because the terrian is small compared to the atmosphere
 // this should be moved to a uniform
 vec3 sunIntensity()
@@ -285,7 +303,7 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 		float s = getShadow(p) * dt;
 
 		mie += absorb(dist * sampleDistanceFactor, influx, sampleDistanceExponent) * s;
-		raleigh += absorb(dist * sampleDistanceFactor, Kr * influx, sampleDistanceExponent) * s;
+		raleigh += absorb(dist * sampleDistanceFactor, Kral * influx, sampleDistanceExponent) * s;
 		
 		// light / shadow factor
 		//float s = getShadow(p);
@@ -300,7 +318,19 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 	//raleigh *= dt;
 	raleigh *= raleigh_factor * l * sampleDistanceFactor;
 	
-	return mie + raleigh;
+	return (mie + raleigh);// * Er;
+}
+
+
+// eye is eye in world coordinates - this will be normalised for the sky sphere
+// dir is the direction of the ray
+vec3 getInscatterSky(vec3 eye, vec3 dir)
+{
+
+
+
+	return vec3(0.0);
+
 }
 
 
