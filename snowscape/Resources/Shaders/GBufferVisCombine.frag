@@ -14,14 +14,20 @@ uniform vec3 sunVector;
 uniform float minHeight;
 uniform float maxHeight;
 
+uniform float exposure;
+
 in vec2 texcoord0;
 out vec4 out_Colour;
 
+
+vec3 getInscatterSky(vec3 eye, vec3 dir);
+
 // air absorbtion
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
+vec3 Kr2 = vec3(0.2334,0.8947,0.9552); // just making shit up
 
 // raleigh scattering constants - maybe
-vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.1;
+vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
 
 // inverse eye response - for mapping atmospheric scattering amounts to something more realistic
 vec3 Er = vec3(0.6,0.6,1.0);
@@ -153,10 +159,47 @@ float adepthSky(vec3 eye, vec3 dir)
     return t1;
 }
 
+
+float adepthGround(vec3 eye, vec3 dir, float groundheight)
+{
+    float a = dot(dir, dir);
+    float b = 2.0*dot(dir, eye);
+    float c = dot(eye, eye) - groundheight*groundheight;
+    float det = b*b-4.0*a*c;
+
+	if (det<0.0) return 1000.0;
+
+    float detSqrt = sqrt(det);
+	a+=a;
+	float t1 = (-b - detSqrt) / a;
+	float t2 = (-b + detSqrt) / a;
+	float tmin = min(t1,t2);
+	float tmax = max(t1,t2);
+
+	if (tmin >= 0.0) // both in front of viewer
+	{
+		return tmin;
+	}
+
+	if (tmax >= 0.0) // one in front, one behind
+	{
+		return tmax;
+	}
+
+	return 1000.0;
+
+}
+
+float adepthSkyGround(vec3 eye, vec3 dir, float groundheight)
+{
+	return min(adepthSky(eye,dir),adepthGround(eye,dir,groundheight)); 
+}
+
+
 // exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 vec3 absorb(float dist, vec3 col, float f)
 {
-	return col - col * pow(Kr, vec3(f / dist));
+	return col - col * pow(Kr2, vec3(1.0 / dist));
 	//vec3 k = pow(Kr, vec3(f / dist));
 	//return col - col * k;
 	//return col - col * k;
@@ -251,23 +294,30 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 float sampleDistanceFactor = 0.0009765625 * 0.5;
 float sampleDistanceExponent = 4.0;
 
+vec3 getSkyLight(vec3 dir)
+{
+	return getInscatterSky(vec3(0.0,0.0,0.0),dir);
+}
+
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-	vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	//vec3 col = vec3(0.5);
+	//vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	vec3 col = vec3(0.5);
 
 	//float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
 
 	vec3 col2 = 
 			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight) 
-			+ col * vec3(0.8,0.9,1.0) * 0.5 * AO;
+			+ col * getSkyLight(n) * AO;
 		
+	return col2;
 	// can probably ignore the aborption between point and eye
-	return absorb(adepthTerrain(eye, p) * sampleDistanceFactor,col2,sampleDistanceExponent);
+	//return absorb(adepthTerrain(eye, p) * sampleDistanceFactor,col2,sampleDistanceExponent);
 }
 
 
+// fake refracted light
 vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor)
 {
 
@@ -310,11 +360,38 @@ vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor)
 	if (t1 > 0.0 && t2 > 0.0)
 	{
 		return vec3(1.0 / (1.0+t * t * 50.0));
+		//return vec3(1.0) - pow(Kr,vec3(1.0 / t));
 	}
-
 
 	return vec3(0.0);
 }
+
+float horizonBlock(vec3 eye, vec3 dir, float groundheight)
+{
+	float a = dot(dir, dir);
+	float b = 2.0 * dot(dir, eye);
+	float c = dot(eye, eye) - groundheight*groundheight;
+	float det = b*b - 4.0*a*c;	
+
+	if (det < 0.0) // no intersection
+	{
+		return 1.0; 
+	}
+
+	det = sqrt(det);
+	a += a;
+	float t1 = (-b - det) / a;
+	float t2 = (-b + det) / a;
+
+	if (t1 >= 0.0 || t2 >= 0.0)
+	{
+		return 1.0;
+	}
+
+
+	return 0.0;
+}
+
 
 
 
@@ -368,18 +445,28 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 	return (mie + raleigh);// * Er;
 }
 
+float groundlevel = 0.990;
 
 // eye is eye in world coordinates - this will be normalised for the sky sphere
 // dir is the direction of the ray
 vec3 getInscatterSky(vec3 eye, vec3 dir)
 {
-	vec3 p0 = vec3(0.0,0.99 + eye.y * 0.000001,0.0); // replace with scaled pos and height
+	highp float tscale = 0.004/6000.0;
+	vec3 p0 =  eye * tscale + vec3(0.0,0.991,0.0); // replace with scaled pos and height
 
-	float ray_length = adepthSky(p0, dir);
+	//if (horizonBlock(p0, -dir, groundlevel) < 0.5)
+	//{
+		//return vec3(0.0); // todo: raycast and scatter
+	//}
+
+	//return vec3(adepthSkyGround(p0,dir,groundlevel));
+
+
+	float ray_length = adepthSkyGround(p0,dir,groundlevel); //adepthSky(p0, dir);
 
 	float alpha = dot(dir, sunVector);
-	float mie_factor = phase(alpha,0.99) * 0.2;  // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * 0.5;  // raleigh brightness
+	float mie_factor = phase(alpha,0.99) * 0.01;  // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * 0.2;  // raleigh brightness
 
 	vec3 mie = vec3(0.0);
 	vec3 raleigh = vec3(0.0);
@@ -389,9 +476,11 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	float step_length = ray_length / nsteps;
 	vec3 sunIntensity = vec3(1.0);
 
-	float scatteramount = 30.0;
+	float scatteramount = 50.0;
 	float ralabsorbfactor = 140.0;
+	float mieabsorbfactor = 260.0;
 	
+
 	for(float t = 0.0; t < 1.0; t += stepsize)
 	{
 		float sample_dist = ray_length * t;
@@ -399,14 +488,16 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 		
 		float sample_depth = adepthSky(p,sunVector);
 
-		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(p,sunVector,0.98,scatteramount);
+		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount);// * horizonLight(p,sunVector,groundlevel,scatteramount);
 
 		raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
+		mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundlevel);
 	}
 
 	raleigh *= raleigh_factor * ray_length;
+	mie *= mie_factor * ray_length;
 
-	return vec3(raleigh);
+	return vec3(raleigh + mie);
 }
 
 
@@ -497,8 +588,9 @@ void main(void)
 				//c.rgb += getInscatterTerrain(eyePos,eyePos + skyDir * boxt); // target a sphere around the terrain for the initial pass
 			//}
 //
-
+//1.0 – exp(-fExposure x color)
 			c.rgb += getInscatterSky(eyePos, normalize(posT.xyz));
+			//c.rgb += vec3(1.0) - exp(getInscatterSky(eyePos, normalize(posT.xyz)) * -1.2f);
 			
 
 
@@ -546,6 +638,9 @@ void main(void)
 	*/
 
 	// fog
+
+	// exposure
+	c.rgb = vec3(1.0) - exp(c.rgb * exposure);  // -1.2
 
 	//out_Colour = vec4(c.rgb,1.0);
     out_Colour = vec4(sqrt(c.rgb),1.0);

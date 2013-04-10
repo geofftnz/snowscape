@@ -55,6 +55,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
 
+        private float exposure = -1.2f;
+
         private Vector3 eyePos;
         private double angle = 0.0;
         private double viewHeight = 100.0;
@@ -209,12 +211,15 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.perfmon.ResetAll();
             }
-            if (e.Key == Key.Up) { this.sunElevation *= 1.05f; this.CalculateSunDirection(); }
-            if (e.Key == Key.Down) { this.sunElevation *= 0.95f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Up) { this.sunElevation += 0.005f; this.CalculateSunDirection(); }
+            if (e.Key == Key.Down) { this.sunElevation -= 0.005f; this.CalculateSunDirection(); }
             if (e.Key == Key.PageUp) { this.sunElevation += 0.05f; this.CalculateSunDirection(); }
             if (e.Key == Key.PageDown) { this.sunElevation -= 0.05f; this.CalculateSunDirection(); }
             if (e.Key == Key.Left) { this.sunAzimuth += 0.01f; this.CalculateSunDirection(); }
             if (e.Key == Key.Right) { this.sunAzimuth -= 0.01f; this.CalculateSunDirection(); }
+
+            if (e.Key == Key.LBracket) { this.exposure += 0.05f; }
+            if (e.Key == Key.RBracket) { this.exposure -= 0.05f; }
 
             if (e.Key == Key.Space)
             {
@@ -502,6 +507,7 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
+                sp.SetUniform("exposure", this.exposure);
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
