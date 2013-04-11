@@ -24,7 +24,7 @@ vec3 getInscatterSky(vec3 eye, vec3 dir);
 
 // air absorbtion
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
-vec3 Kr2 = vec3(0.2334,0.8947,0.9552); // just making shit up
+vec3 Kr2 = vec3(0.7334,0.8947,0.9552); // just making shit up
 
 // raleigh scattering constants - maybe
 vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
@@ -465,7 +465,7 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	float ray_length = adepthSkyGround(p0,dir,groundlevel); //adepthSky(p0, dir);
 
 	float alpha = dot(dir, sunVector);
-	float mie_factor = phase(alpha,0.99) * 0.01;  // mie brightness
+	float mie_factor = phase(alpha,0.9) * 0.005;  // mie brightness
 	float raleigh_factor = phase(alpha,-0.01) * 0.2;  // raleigh brightness
 
 	vec3 mie = vec3(0.0);
