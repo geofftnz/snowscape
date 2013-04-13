@@ -15,22 +15,29 @@ uniform float minHeight;
 uniform float maxHeight;
 
 uniform float exposure;
+uniform float scatterAbsorb;
+uniform vec3 Kr;
+uniform float raleighBrightness;
+uniform float mieBrightness;
+uniform float groundLevel;
 
 in vec2 texcoord0;
 out vec4 out_Colour;
 
 
 vec3 getInscatterSky(vec3 eye, vec3 dir);
+vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor);
 
 // air absorbtion
-vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
+//vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
 
-//vec3 Kr2 = Kr;
-vec3 Kr2 = vec3(0.100,0.598,0.662) * 1.4; // just making shit up
+vec3 Kr2 = Kr;
+//vec3 Kr2 = vec3(0.100,0.598,0.662) * 1.4; // just making shit up
 //vec3 Kr2 = vec3(2.284, 3.897, 8.227) * 0.11;
 
 // raleigh scattering constants - maybe
-vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
+//vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
+vec3 Kral = Kr;
 
 // inverse eye response - for mapping atmospheric scattering amounts to something more realistic
 vec3 Er = vec3(0.6,0.6,1.0);
@@ -38,6 +45,8 @@ vec3 Er = vec3(0.6,0.6,1.0);
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
               -0.60, -0.48,  0.64 );
+
+vec3 sunLight = vec3(4.0);
 
 
 float intersectBox ( vec3 rayo, vec3 rayd, vec3 boxMin, vec3 boxMax)
@@ -259,7 +268,10 @@ vec3 eyeToSkyCoords(vec3 eye)
 // this should be moved to a uniform
 vec3 sunIntensity()
 {
-	return absorb(adepthSky(vec3(0.0,0.9,0.0), sunVector), vec3(1.0), 1.0); // 28.0
+	//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
+	//return absorb(adepthSky(vec3(0.0,0.9,0.0), sunVector), sunLight, scatterAbsorb); // 28.0
+	vec3 p = vec3(0.0,groundLevel * 1.001,0.0);
+	return absorb(adepthSky(p, sunVector), sunLight, scatterAbsorb) * horizonLight(p,sunVector,groundLevel,scatterAbsorb);
 }
 
 
@@ -294,8 +306,8 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 	return col;
 }
 
-float sampleDistanceFactor = 0.0009765625 * 0.5;
-float sampleDistanceExponent = 4.0;
+float sampleDistanceFactor = 0.004/6000.0; //0.0009765625 * 0.5;
+//float sampleDistanceExponent = 4.0;
 
 vec3 getSkyLight(vec3 dir)
 {
@@ -315,9 +327,9 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight) 
 			+ col * getSkyLight(n) * AO;
 		
-	return col2;
+	//return col2;
 	// can probably ignore the aborption between point and eye
-	//return absorb(adepthTerrain(eye, p) * sampleDistanceFactor,col2,sampleDistanceExponent);
+	return absorb(adepthTerrain(eye, p) * sampleDistanceFactor,col2,scatterAbsorb);
 }
 
 
@@ -409,8 +421,8 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 	vec3 c = vec3(0.0);
 
 	float alpha = dot(normalize(d), sunVector);
-	float mie_factor = phase(alpha,0.99) * 0.2;  // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * 0.5;  // raleigh brightness
+	float mie_factor = phase(alpha,0.99) * mieBrightness;  // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;  // raleigh brightness
 	//float adepth = adepthSky(vec3(0.0,0.9,0.0), sunVector);
 
 	vec3 influx = sunIntensity();
@@ -430,8 +442,8 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 
 		float s = getShadow(p) * dt;
 
-		mie += absorb(dist * sampleDistanceFactor, influx, sampleDistanceExponent) * s;
-		raleigh += absorb(dist * sampleDistanceFactor, Kral * influx, sampleDistanceExponent) * s;
+		mie += absorb(dist * sampleDistanceFactor, influx, scatterAbsorb) * s;
+		raleigh += absorb(dist * sampleDistanceFactor, Kral * influx, scatterAbsorb) * s;
 		
 		// light / shadow factor
 		//float s = getShadow(p);
@@ -449,28 +461,28 @@ vec3 getInscatterTerrain(vec3 eye, vec3 target)
 	return (mie + raleigh);// * Er;
 }
 
-float groundlevel = 0.990;
+
 
 // eye is eye in world coordinates - this will be normalised for the sky sphere
 // dir is the direction of the ray
 vec3 getInscatterSky(vec3 eye, vec3 dir)
 {
 	highp float tscale = 0.004/6000.0;
-	vec3 p0 =  eye * tscale + vec3(0.0,0.991,0.0); // replace with scaled pos and height
+	vec3 p0 =  eye * tscale + vec3(0.0,groundLevel + 0.001,0.0); // replace with scaled pos and height
 
-	//if (horizonBlock(p0, -dir, groundlevel) < 0.5)
+	//if (horizonBlock(p0, -dir, groundLevel) < 0.5)
 	//{
 		//return vec3(0.0); // todo: raycast and scatter
 	//}
 
-	//return vec3(adepthSkyGround(p0,dir,groundlevel));
+	//return vec3(adepthSkyGround(p0,dir,groundLevel));
 
 
-	float ray_length = adepthSkyGround(p0,dir,groundlevel); //adepthSky(p0, dir);
+	float ray_length = adepthSkyGround(p0,dir,groundLevel); //adepthSky(p0, dir);
 
 	float alpha = dot(dir, sunVector);
-	float mie_factor = phase(alpha,0.9) * 0.005;  // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * 0.2;  // raleigh brightness
+	float mie_factor = phase(alpha,0.99) * mieBrightness;  // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;  // raleigh brightness
 
 	vec3 mie = vec3(0.0);
 	vec3 raleigh = vec3(0.0);
@@ -478,9 +490,9 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	float nsteps = 50.0;
 	float stepsize = 1.0 / nsteps;
 	float step_length = ray_length / nsteps;
-	vec3 sunIntensity = vec3(1.0);
+	vec3 sunIntensity = sunLight;
 
-	float scatteramount = 1.5;
+	float scatteramount = scatterAbsorb;//1.5;
 	float ralabsorbfactor = 140.0;
 	float mieabsorbfactor = 260.0;
 
@@ -499,13 +511,13 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 		
 		vec3 psun = p0 + dir * (t * (1.0-refk) + refk * 1.0) * ray_length;
 		
-		float sample_depth = adepthSky(psun,sunVector) + pow(refk,3.0);// + sample_dist; // todo: + sample_dist ?
+		float sample_depth = adepthSky(psun,sunVector) + sample_dist; // todo: + sample_dist ?
 
-		//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonBlock(psun, -sunVector, groundlevel);// * horizonLight(p,sunVector,groundlevel,scatteramount);
-		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundlevel,scatteramount);
+		//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonBlock(psun, -sunVector, groundLevel);// * horizonLight(p,sunVector,groundLevel,scatteramount);
+		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
 
 		raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
-		mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundlevel);
+		mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
 	}
 
 	raleigh *= raleigh_factor * ray_length;
@@ -654,6 +666,7 @@ void main(void)
 	// fog
 
 	// exposure
+	//c.rgb *= Er;
 	c.rgb = vec3(1.0) - exp(c.rgb * exposure);  // -1.2
 
 	//out_Colour = vec4(c.rgb,1.0);

@@ -193,6 +193,19 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("exposure", -1.2f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
             parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f));
             parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
+
+            //vec3(0.100,0.598,0.662) * 1.4
+            //0.18867780436772762, 0.4978442963618773, 0.6616065586417131
+            parameters.Add(new Parameter<float>("Kr_r", 0.18867780436772762f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
+            parameters.Add(new Parameter<float>("Kr_g", 0.4978442963618773f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
+            parameters.Add(new Parameter<float>("Kr_b", 0.6616065586417131f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
+
+            parameters.Add(new Parameter<float>("scatterAbsorb", 0.028f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));
+
+            parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+
+            parameters.Add(new Parameter<float>("groundLevel", 0.997f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -232,14 +245,14 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    this.parameters.Current.Decrease();
+                    this.parameters.Current.Increase();
                 }
             }
             if (e.Key == Key.PageDown)
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    this.parameters.Current.Increase();
+                    this.parameters.Current.Decrease();
                 }
             }
 
@@ -535,6 +548,18 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
                 sp.SetUniform("exposure", (float)this.parameters["exposure"].GetValue());
+                sp.SetUniform("Kr", 
+                    new Vector3(
+                        (float)this.parameters["Kr_r"].GetValue(),
+                        (float)this.parameters["Kr_g"].GetValue(),
+                        (float)this.parameters["Kr_b"].GetValue()
+                    ));
+                sp.SetUniform("scatterAbsorb", (float)this.parameters["scatterAbsorb"].GetValue());
+                sp.SetUniform("mieBrightness", (float)this.parameters["mieBrightness"].GetValue());
+                sp.SetUniform("raleighBrightness", (float)this.parameters["raleighBrightness"].GetValue());
+                sp.SetUniform("groundLevel", (float)this.parameters["groundLevel"].GetValue());
+                
+                
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
