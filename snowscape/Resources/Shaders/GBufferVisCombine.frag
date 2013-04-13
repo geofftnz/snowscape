@@ -25,8 +25,9 @@ vec3 getInscatterSky(vec3 eye, vec3 dir);
 // air absorbtion
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
 
-vec3 Kr2 = Kr;
-//vec3 Kr2 = Kr;//vec3(0.7334,0.8947,0.9552); // just making shit up
+//vec3 Kr2 = Kr;
+vec3 Kr2 = vec3(0.4334,0.7947,0.9552); // just making shit up
+//vec3 Kr2 = vec3(2.284, 3.897, 8.227) * 0.11;
 
 // raleigh scattering constants - maybe
 vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
@@ -298,7 +299,8 @@ float sampleDistanceExponent = 4.0;
 
 vec3 getSkyLight(vec3 dir)
 {
-	return getInscatterSky(vec3(0.0,0.0,0.0),dir);
+	//return getInscatterSky(vec3(0.0,0.0,0.0),dir);
+	return vec3(0.1);
 }
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
@@ -478,7 +480,7 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	float step_length = ray_length / nsteps;
 	vec3 sunIntensity = vec3(1.0);
 
-	float scatteramount = 28.0;
+	float scatteramount = 1.5;
 	float ralabsorbfactor = 140.0;
 	float mieabsorbfactor = 260.0;
 
