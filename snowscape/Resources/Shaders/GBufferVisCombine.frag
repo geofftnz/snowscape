@@ -26,7 +26,7 @@ vec3 getInscatterSky(vec3 eye, vec3 dir);
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
 
 //vec3 Kr2 = Kr;
-vec3 Kr2 = vec3(0.4334,0.7947,0.9552); // just making shit up
+vec3 Kr2 = vec3(0.100,0.598,0.662) * 1.4; // just making shit up
 //vec3 Kr2 = vec3(2.284, 3.897, 8.227) * 0.11;
 
 // raleigh scattering constants - maybe

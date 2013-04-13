@@ -50,16 +50,12 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
-        private float sunElevation = 0.2f;
-        private float sunAzimuth = 0.3f;
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
 
-        private float exposure = -1.2f;
+        private ParameterCollection parameters = new ParameterCollection();
 
         private Vector3 eyePos;
-        private double angle = 0.0;
-        private double viewHeight = 100.0;
 
         private ICamera camera;
 
@@ -194,6 +190,9 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
 
+            parameters.Add(new Parameter<float>("exposure", -1.2f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
+            parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f));
+            parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -211,15 +210,41 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.perfmon.ResetAll();
             }
-            if (e.Key == Key.Up) { this.sunElevation += 0.005f; this.CalculateSunDirection(); }
-            if (e.Key == Key.Down) { this.sunElevation -= 0.005f; this.CalculateSunDirection(); }
-            if (e.Key == Key.PageUp) { this.sunElevation += 0.05f; this.CalculateSunDirection(); }
-            if (e.Key == Key.PageDown) { this.sunElevation -= 0.05f; this.CalculateSunDirection(); }
-            if (e.Key == Key.Left) { this.sunAzimuth += 0.01f; this.CalculateSunDirection(); }
-            if (e.Key == Key.Right) { this.sunAzimuth -= 0.01f; this.CalculateSunDirection(); }
 
-            if (e.Key == Key.LBracket) { this.exposure += 0.05f; }
-            if (e.Key == Key.RBracket) { this.exposure -= 0.05f; }
+            if (e.Key == Key.Up)
+            {
+                this.parameters.CurrentIndex--;
+            }
+            if (e.Key == Key.Down)
+            {
+                this.parameters.CurrentIndex++;
+            }
+
+            if (e.Key == Key.Left)
+            {
+                this.parameters.Current.Decrease();
+            }
+            if (e.Key == Key.Right)
+            {
+                this.parameters.Current.Increase();
+            }
+            if (e.Key == Key.PageUp)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    this.parameters.Current.Decrease();
+                }
+            }
+            if (e.Key == Key.PageDown)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    this.parameters.Current.Increase();
+                }
+            }
+
+
+
 
             if (e.Key == Key.Space)
             {
@@ -449,17 +474,19 @@ namespace Snowscape.TerrainGenerationViewer
             this.eyePos = (this.camera as WalkCamera).EyePos;
 
 
-             updateCounter++;
+            updateCounter++;
         }
 
         private void CalculateSunDirection()
         {
+            float sunElevation = (float)this.parameters["sunElevation"].GetValue();
+            float sunAzimuth = (float)this.parameters["sunAzimuth"].GetValue();
             //if (this.sunElevation < 0.0f)
-            this.sunElevation = this.sunElevation.Clamp(-0.5f, 1.0f);
-            this.sunAzimuth = this.sunAzimuth.Wrap(1.0f);
+            sunElevation = sunElevation.Clamp(-0.5f, 1.0f);
+            sunAzimuth = sunAzimuth.Wrap(1.0f);
 
-            double phi = this.sunAzimuth * Math.PI * 2.0;
-            double theta = (1.0 - this.sunElevation) * Math.PI * 0.5;
+            double phi = sunAzimuth * Math.PI * 2.0;
+            double theta = (1.0 - sunElevation) * Math.PI * 0.5;
             double r = 1.0;
 
             this.sunDirection.X = (float)(r * Math.Sin(theta) * Math.Cos(phi));
@@ -507,7 +534,7 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
-                sp.SetUniform("exposure", this.exposure);
+                sp.SetUniform("exposure", (float)this.parameters["exposure"].GetValue());
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
@@ -518,8 +545,8 @@ namespace Snowscape.TerrainGenerationViewer
         {
             bool needToRenderLighting = false;
 
-            if (this.frameCounter.Frames % 32 == 0)
-            {
+            //if (this.frameCounter.Frames % 32 == 0)
+            //{
                 frameCounterText.Text = string.Format("FPS: {0:0} {1:###0} updates: {2:0.0}ms {3:#,###,###,##0} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
                 textManager.AddOrUpdate(frameCounterText);
 
@@ -529,7 +556,22 @@ namespace Snowscape.TerrainGenerationViewer
                     textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
                     y += 0.0125f;
                 }
-            }
+
+                y += 0.02f;
+                for (int i = 0; i < this.parameters.Count; i++)
+                {
+                    textManager.AddOrUpdate(
+                        new TextBlock(
+                            "param_" + this.parameters[i].Name,
+                            this.parameters[i].ToString(),
+                            new Vector3(0.01f, y, 0.0f),
+                            0.0004f,
+                            new Vector4(1.0f, 1.0f, 1.0f, (i == this.parameters.CurrentIndex) ? 1.0f : 0.5f)
+                            )
+                        );
+                    y += 0.025f;
+                }
+            //}
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
@@ -543,6 +585,7 @@ namespace Snowscape.TerrainGenerationViewer
                 needToRenderLighting = true;
             }
 
+            this.CalculateSunDirection();
             if (prevSunDirection != sunDirection || needToRenderLighting)
             {
                 // render lighting

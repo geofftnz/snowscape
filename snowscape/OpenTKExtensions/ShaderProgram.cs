@@ -244,7 +244,7 @@ namespace OpenTKExtensions
                 }
                 else
                 {
-                    log.Warn("ShaderProgram.LocateUniform ({0}): Could not locate {1}", this.Name, name);
+                    log.Trace("ShaderProgram.LocateUniform ({0}): Could not locate {1}", this.Name, name);
                 }
             }
             return location;
