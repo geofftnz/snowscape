@@ -24,7 +24,9 @@ vec3 getInscatterSky(vec3 eye, vec3 dir);
 
 // air absorbtion
 vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
-vec3 Kr2 = vec3(0.7334,0.8947,0.9552); // just making shit up
+
+vec3 Kr2 = Kr;
+//vec3 Kr2 = Kr;//vec3(0.7334,0.8947,0.9552); // just making shit up
 
 // raleigh scattering constants - maybe
 vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
@@ -199,7 +201,7 @@ float adepthSkyGround(vec3 eye, vec3 dir, float groundheight)
 // exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 vec3 absorb(float dist, vec3 col, float f)
 {
-	return col - col * pow(Kr2, vec3(1.0 / dist));
+	return col - col * pow(Kr2, vec3(f / dist));
 	//vec3 k = pow(Kr, vec3(f / dist));
 	//return col - col * k;
 	//return col - col * k;
@@ -476,19 +478,29 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	float step_length = ray_length / nsteps;
 	vec3 sunIntensity = vec3(1.0);
 
-	float scatteramount = 50.0;
+	float scatteramount = 28.0;
 	float ralabsorbfactor = 140.0;
 	float mieabsorbfactor = 260.0;
+
+	// calculate fake refraction factor. This will be used to shift the sampling points along the ray to simulate light curving through the atmosphere.
+	float refk = pow(1.0 - clamp(  abs(0.05 + dot(dir,normalize(p0))) ,0.0,1.0),9.0) * 0.5;
+
+	//* clamp(dot(-dir,sunVector)*0.5+0.5,0.0,1.0)
 	
 
 	for(float t = 0.0; t < 1.0; t += stepsize)
 	{
 		float sample_dist = ray_length * t;
 		vec3 p = p0 + dir * sample_dist;
-		
-		float sample_depth = adepthSky(p,sunVector);
 
-		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount);// * horizonLight(p,sunVector,groundlevel,scatteramount);
+		// advance sun sample position along ray proportional to how shallow our eye ray is.
+		
+		vec3 psun = p0 + dir * (t * (1.0-refk) + refk * 1.0) * ray_length;
+		
+		float sample_depth = adepthSky(psun,sunVector) + pow(refk,3.0);// + sample_dist; // todo: + sample_dist ?
+
+		//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonBlock(psun, -sunVector, groundlevel);// * horizonLight(p,sunVector,groundlevel,scatteramount);
+		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundlevel,scatteramount);
 
 		raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
 		mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundlevel);
