@@ -24,6 +24,10 @@ uniform float groundLevel;
 in vec2 texcoord0;
 out vec4 out_Colour;
 
+// cloud layer
+float cloudLow = 100.0;
+float cloudHigh = 200.0;
+
 
 vec3 getInscatterSky(vec3 eye, vec3 dir);
 vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor);
@@ -526,6 +530,58 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	return vec3(raleigh + mie);
 }
 
+// returns rgb of cloud-scatter towards eye along -dir, a = attentuation of background.
+vec4 getCloudAgainstSky(vec3 eye, vec3 dir)
+{
+	vec4 c = vec4(0.0,0.0,0.0,1.0);
+
+	// determine entry and exit points of the cloud layer.
+	float t1,t2;
+
+	t1 = (cloudLow - eye.y) / dir.y;
+	t2 = (cloudHigh - eye.y) / dir.y;
+
+	vec3 p1 = eye + dir * t1;
+	vec3 p2 = eye + dir * t2;
+		
+	// determine whether we are above, below or inside the cloud layer.
+	if (t1>0.0 && abs(p1.x) < boxparam.x * 4.0 && abs(p1.z) < boxparam.y * 4.0 )
+	{
+		c.rg = mod(p1.xz * 4.0 / boxparam.x,1.0);
+		c.a = 0.5;
+	}
+
+
+
+	//
+	return c;//vec4(mod(p1.x * 4.0 / boxparam.x,1.0),mod(p1.z *4.0 / boxparam.y,1.0),0.0f,0.5f);
+}
+
+vec4 getCloudAgainstTerrain(vec3 eye, vec3 dir, float distanceToTerrain)
+{
+	vec4 c = vec4(0.0,0.0,0.0,1.0);
+
+	// determine entry and exit points of the cloud layer.
+	float t1,t2;
+
+	t1 = (cloudLow - eye.y) / dir.y;
+	t2 = (cloudHigh - eye.y) / dir.y;
+
+	vec3 p1 = eye + dir * t1;
+	vec3 p2 = eye + dir * t2;
+		
+	// determine whether we are above, below or inside the cloud layer.
+	if (t1>0.0 && t1 < distanceToTerrain && abs(p1.x) < boxparam.x * 4.0 && abs(p1.z) < boxparam.y * 4.0 )
+	{
+		c.rg = mod(p1.xz * 4.0 / boxparam.x,1.0);
+		c.a = 0.5;
+	}
+
+
+
+	//
+	return c;//vec4(mod(p1.x * 4.0 / boxparam.x,1.0),mod(p1.z *4.0 / boxparam.y,1.0),0.0f,0.5f);
+}
 
 
 void main(void)
@@ -564,6 +620,12 @@ void main(void)
 		
 		
 		//c.rgb += getInscatterTerrain(eyePos,pos.xyz);
+
+
+		vec4 cloud = getCloudAgainstTerrain(eyePos, normalize(wpos),d);
+		c.rgb *= cloud.a;
+		c.rgb += cloud.rgb;
+
 
 		//vec4 fogcol = vec4(0.6,0.8,1.0,1.0);
 		//c = mix(c,fogcol,getInscatterTerrain(eyePos,pos.xyz).r);
@@ -615,7 +677,15 @@ void main(void)
 			//}
 //
 //1.0 – exp(-fExposure x color)
+
 			c.rgb += getInscatterSky(eyePos, normalize(posT.xyz));
+
+
+			vec4 cloud = getCloudAgainstSky(eyePos, normalize(posT.xyz));
+			c.rgb *= cloud.a;
+			c.rgb += cloud.rgb;
+
+
 			//c.rgb += vec3(1.0) - exp(getInscatterSky(eyePos, normalize(posT.xyz)) * -1.2f);
 			
 
