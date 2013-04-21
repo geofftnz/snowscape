@@ -530,36 +530,99 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	return vec3(raleigh + mie);
 }
 
+float cloudtmax = 10000.0;
+
 // returns rgb of cloud-scatter towards eye along -dir, a = attentuation of background.
-vec4 getCloudAgainstSky(vec3 eye, vec3 dir)
+vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 {
 	vec4 c = vec4(0.0,0.0,0.0,1.0);
 
+	vec3 cloudEntry, cloudExit;
+	float cloudMid = (cloudHigh + cloudLow) * 0.5;
+	float cloudThickness = (cloudHigh - cloudLow) * 0.5;
+
 	// determine entry and exit points of the cloud layer.
 	float t1,t2;
-
 	t1 = (cloudLow - eye.y) / dir.y;
 	t2 = (cloudHigh - eye.y) / dir.y;
 
+	// both cloud planes behind us, exit
+	if (max(t1,t2) < 0.0)
+	{
+		return c;
+	}
+
+	// we've got at least one plane intersecting our ray
+
+	float tEntry = min(min(max(t1,0.0),max(t2,0.0)),maxDistance);
+	float tExit = min(max(t1,t2),maxDistance);
+
+	if (tEntry >= tExit)
+	{
+		return c;
+	}
+
+	// put a limit on ray length so we don't lose too much precision
+	//tExit = min(tExit - tEntry,cloudtmax) + tEntry;
+	
+	cloudEntry = eye + dir * tEntry;
+	cloudExit = eye + dir * tExit;
+
+	//c.rg = mod(cloudEntry.xz * 4.0 / boxparam.x,1.0);
+	//c.r = max(fbm(cloudEntry*0.03) * 2.0 - 0.7,0.0);
+	//c.b = mod((tExit - tEntry) * 0.002,1.0);
+	//c.a = 0.5;
+
+	float tt = min(tExit - tEntry,cloudtmax);//(tExit - tEntry);
+	float dt = 0.01;
+
+	// trace and accumulate absorbtion and scattering
+	for (float t = 0.0; t < 1.0; t += dt)
+	{
+		dt *= 1.05;
+
+		float sampleDistance = t * tt;
+		vec3 p = cloudEntry + dir * sampleDistance;
+
+		float density = sampleDistance * max(fbm(p*0.01) * 2.0 - 1.2,0.0) * (1.0 - abs(p.y - cloudMid) / cloudThickness);  // todo: exponential scale with dt
+
+		c.rgb = mix(c.rgb,vec3(0.9), min(density * 0.01,1.0));
+		c.a *= (1.0 - min(density * 0.1,1.0));
+		if (c.a < 0.002)
+		{
+			c.a = 0.0;
+			break;
+		}
+	}
+
+
+	/*
 	vec3 p1 = eye + dir * t1;
 	vec3 p2 = eye + dir * t2;
 		
 	// determine whether we are above, below or inside the cloud layer.
-	if (t1>0.0 && abs(p1.x) < boxparam.x * 4.0 && abs(p1.z) < boxparam.y * 4.0 )
+	if (t1>0.0) // && abs(p1.x) < boxparam.x * 4.0 && abs(p1.z) < boxparam.y * 4.0 )
 	{
 		c.rg = mod(p1.xz * 4.0 / boxparam.x,1.0);
 		c.a = 0.5;
 	}
 
-
+	if (t2>0.0) // && abs(p2.x) < boxparam.x * 4.0 && abs(p2.z) < boxparam.y * 4.0 )
+	{
+		c.gb += mod(p2.xz * 4.0 / boxparam.x,1.0);
+		c.a = 0.5;
+	}
+	*/
 
 	//
 	return c;//vec4(mod(p1.x * 4.0 / boxparam.x,1.0),mod(p1.z *4.0 / boxparam.y,1.0),0.0f,0.5f);
 }
-
+/*
 vec4 getCloudAgainstTerrain(vec3 eye, vec3 dir, float distanceToTerrain)
 {
 	vec4 c = vec4(0.0,0.0,0.0,1.0);
+
+	return c;
 
 	// determine entry and exit points of the cloud layer.
 	float t1,t2;
@@ -577,12 +640,16 @@ vec4 getCloudAgainstTerrain(vec3 eye, vec3 dir, float distanceToTerrain)
 		c.a = 0.5;
 	}
 
-
+	if (t2>0.0 && abs(p2.x) < boxparam.x * 4.0 && abs(p2.z) < boxparam.y * 4.0 )
+	{
+		c.gb += mod(p2.xz * 4.0 / boxparam.x,1.0);
+		c.a = 0.5;
+	}
 
 	//
 	return c;//vec4(mod(p1.x * 4.0 / boxparam.x,1.0),mod(p1.z *4.0 / boxparam.y,1.0),0.0f,0.5f);
 }
-
+*/
 
 void main(void)
 {
@@ -622,7 +689,8 @@ void main(void)
 		//c.rgb += getInscatterTerrain(eyePos,pos.xyz);
 
 
-		vec4 cloud = getCloudAgainstTerrain(eyePos, normalize(wpos),d);
+		//vec4 cloud = getCloudAgainstTerrain(eyePos, normalize(wpos),d);
+		vec4 cloud = getCloudAgainstSky(eyePos, normalize(wpos),d);
 		c.rgb *= cloud.a;
 		c.rgb += cloud.rgb;
 
@@ -681,7 +749,7 @@ void main(void)
 			c.rgb += getInscatterSky(eyePos, normalize(posT.xyz));
 
 
-			vec4 cloud = getCloudAgainstSky(eyePos, normalize(posT.xyz));
+			vec4 cloud = getCloudAgainstSky(eyePos, normalize(posT.xyz),10000.0);
 			c.rgb *= cloud.a;
 			c.rgb += cloud.rgb;
 
