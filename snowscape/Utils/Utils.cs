@@ -95,5 +95,24 @@ namespace Utils
             return (byte)((f * 127.0f) + 128.0f).Clamp(0.0f, 255.0f);
         }
 
+        public static float[] Normalize(this float[] x)
+        {
+            float xmin = x.Min();
+            float xmax = x.Max();
+            float scale = xmax - xmin;
+            if (scale != 0.0f)
+            {
+                scale = 1.0f / scale;
+            }
+
+            for (int i = 0; i < x.Length; i++)
+            {
+                x[i] -= xmin;
+                x[i] *= scale;
+            }
+
+            return x;
+        }
+
     }
 }

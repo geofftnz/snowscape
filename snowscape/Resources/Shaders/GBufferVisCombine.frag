@@ -6,6 +6,7 @@ uniform sampler2D posTex;
 uniform sampler2D paramTex;
 uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
+uniform sampler2D noiseTex;
 
 uniform vec4 boxparam;
 uniform vec3 eyePos;
@@ -26,7 +27,7 @@ out vec4 out_Colour;
 
 // cloud layer
 float cloudLow = 100.0;
-float cloudHigh = 200.0;
+float cloudHigh = 500.0;
 
 
 vec3 getInscatterSky(vec3 eye, vec3 dir);
@@ -574,20 +575,36 @@ vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 	//c.a = 0.5;
 
 	float tt = min(tExit - tEntry,cloudtmax);//(tExit - tEntry);
-	float dt = 0.01;
+	float dt = 1.2;
+
+	float lastDensity = 0.0;
 
 	// trace and accumulate absorbtion and scattering
-	for (float t = 0.0; t < 1.0; t += dt)
+	for (float t = 0.0; t < tt; t += dt)
 	{
 		dt *= 1.05;
 
-		float sampleDistance = t * tt;
+		float sampleDistance = t;
 		vec3 p = cloudEntry + dir * sampleDistance;
 
-		float density = sampleDistance * max(fbm(p*0.01) * 2.0 - 1.2,0.0) * (1.0 - abs(p.y - cloudMid) / cloudThickness);  // todo: exponential scale with dt
+		float nt = max(texture2D(noiseTex,p.xz * 0.0001).r - 0.3,0.0);
 
-		c.rgb = mix(c.rgb,vec3(0.9), min(density * 0.01,1.0));
-		c.a *= (1.0 - min(density * 0.1,1.0));
+		float ctop = cloudMid + nt * cloudThickness;
+		float cbottom = cloudMid - nt * cloudThickness;
+
+		float newDensity = max(smoothstep(0.0,5.0,min(ctop - p.y , p.y - cbottom)),0.0);
+
+		float clouddensity = (lastDensity + newDensity) * 0.5;
+		lastDensity = newDensity;
+
+		float density = dt * clouddensity; //nt * (1.0 - abs(p.y - cloudMid) / cloudThickness);
+
+		//float density = sampleDistance * max(fbm(p*0.01) * 2.0 - 1.2,0.0) * (1.0 - abs(p.y - cloudMid) / cloudThickness);  // todo: exponential scale with dt
+
+		c.rgb = mix(c.rgb,vec3(0.9), min(density * 0.001,1.0));
+		//c.r = nt;
+
+		c.a *= exp(density * -0.02);
 		if (c.a < 0.002)
 		{
 			c.a = 0.0;
