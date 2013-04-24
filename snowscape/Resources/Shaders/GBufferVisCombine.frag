@@ -26,8 +26,8 @@ in vec2 texcoord0;
 out vec4 out_Colour;
 
 // cloud layer
-float cloudLow = 100.0;
-float cloudHigh = 500.0;
+float cloudLow = -200.0;
+float cloudHigh = 200.0;
 
 
 vec3 getInscatterSky(vec3 eye, vec3 dir);
@@ -222,7 +222,19 @@ vec3 absorb(float dist, vec3 col, float f)
 	//return col - col * k;
 }
 
+vec3 absorb(float dist, vec3 col, vec3 K, float f)
+{
+	return col - col * pow(K, vec3(f / dist));
+	//vec3 k = pow(Kr, vec3(f / dist));
+	//return col - col * k;
+	//return col - col * k;
+}
 
+//float absorbflat(float dist, float x, float K, float f)
+//{
+	//return x - x * pow(K, f / dist);
+//}
+//
 vec3 getSkyColour(vec3 skyvector)
 {
 	vec3 skycol = 
@@ -533,6 +545,59 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 
 float cloudtmax = 10000.0;
 
+float cloudThickness(vec2 p)
+{
+	return max(texture2D(noiseTex,p * 0.0001).r - 0.3,0.0) * 1.4;
+}
+
+float cloudDensity(vec3 p)
+{
+	float cloudMid = (cloudHigh + cloudLow) * 0.5;
+	float cloudThickness = (cloudHigh - cloudLow) * 0.5;
+	float nt = cloudThickness(p.xz);
+	float ctop = cloudMid + nt * cloudThickness;
+	float cbottom = cloudMid - nt * cloudThickness;
+
+	//return max(smoothstep(0.0,50.0,min(ctop - p.y , p.y - cbottom)),0.0) * 0.5;
+	float d = clamp(max(min(ctop - p.y , p.y - cbottom),0.0) * 0.05,0.0,1.0);
+	return d*d*4.0;
+}
+
+// assumes eye is within cloud layer
+float cloudLightTransmission(vec3 eye, vec3 dir)
+{
+	float totalDensity = 0.0;
+
+	float tt;
+
+	if (dir.y < 0.0) // looking down, intersect against lower plane
+	{
+		tt = (cloudLow - eye.y) / dir.y;
+	}
+	else
+	{
+		tt = (cloudHigh - eye.y) / dir.y;
+	}
+
+	tt = min(tt,1000.0);
+	float dt = 5.0;
+
+	for (float t = 0.0; t < tt; t += dt)
+	{
+		vec3 p = eye + dir * t;
+
+		totalDensity += dt * cloudDensity(p);
+		dt *= 1.2;
+
+		if (totalDensity > 400.0){
+			break;
+		}
+	}
+
+	return exp(totalDensity * -0.02);
+}
+
+
 // returns rgb of cloud-scatter towards eye along -dir, a = attentuation of background.
 vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 {
@@ -563,6 +628,19 @@ vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 		return c;
 	}
 
+	// work out our mie scattering factor
+	float alpha = dot(dir, sunVector);
+	float mie_factor = phase(alpha,0.0) * mieBrightness;  // mie brightness
+	vec3 mie = vec3(0.0);
+	vec3 amb = vec3(0.0);
+	vec3 sunIntensity = sunLight;
+	float scatteramount = scatterAbsorb;//1.5;
+	float mieabsorbfactor = 0.4;
+
+	// work out incoming light at top of cloud
+	vec3 psun = vec3(0.0,groundLevel + 0.001,0.0);
+	vec3 influx = absorb(adepthSky(psun,sunVector), sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
+
 	// put a limit on ray length so we don't lose too much precision
 	//tExit = min(tExit - tEntry,cloudtmax) + tEntry;
 	
@@ -575,42 +653,54 @@ vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 	//c.a = 0.5;
 
 	float tt = min(tExit - tEntry,cloudtmax);//(tExit - tEntry);
-	float dt = 1.2;
+	float dt = 2.0;// + tEntry * 0.01;
 
+	float totalDensity = 0.0;
 	float lastDensity = 0.0;
+	float newDensity = 0.0;
 
 	// trace and accumulate absorbtion and scattering
 	for (float t = 0.0; t < tt; t += dt)
 	{
-		dt *= 1.05;
-
 		float sampleDistance = t;
 		vec3 p = cloudEntry + dir * sampleDistance;
 
-		float nt = max(texture2D(noiseTex,p.xz * 0.0001).r - 0.3,0.0);
-
-		float ctop = cloudMid + nt * cloudThickness;
-		float cbottom = cloudMid - nt * cloudThickness;
-
-		float newDensity = max(smoothstep(0.0,5.0,min(ctop - p.y , p.y - cbottom)),0.0);
-
-		float clouddensity = (lastDensity + newDensity) * 0.5;
 		lastDensity = newDensity;
+		newDensity = cloudDensity(p);
+		float sampleDensity = (lastDensity + newDensity) * dt * 0.5;
 
-		float density = dt * clouddensity; //nt * (1.0 - abs(p.y - cloudMid) / cloudThickness);
+		// total density from eye through to current point
+		totalDensity += sampleDensity; // todo: exp over dt?
+
+		if (totalDensity > 400.0)
+		{
+			break; // too much cloud in the way, bail out
+		}
+		// calculate absorbtion due to cloud between the current sample point and the sun (top/bottom of cloud layer)
+
+		//mie += absorb(totalDensity*0.01,influx * sampleDensity * cloudLightTransmission(p,sunVector),vec3(0.9),mieabsorbfactor);
+		//mie += influx * sampleDensity * cloudLightTransmission(p,sunVector) * exp(totalDensity * -0.02);
+		mie += influx * sampleDensity * 0.1 * exp(totalDensity * -0.02);
+		//amb = mix(amb,vec3(0.15),sampleDensity*0.05);
+		//float density = dt * clouddensity; //nt * (1.0 - abs(p.y - cloudMid) / cloudThickness);
 
 		//float density = sampleDistance * max(fbm(p*0.01) * 2.0 - 1.2,0.0) * (1.0 - abs(p.y - cloudMid) / cloudThickness);  // todo: exponential scale with dt
 
-		c.rgb = mix(c.rgb,vec3(0.9), min(density * 0.001,1.0));
+		//c.rgb = mix(c.rgb,vec3(0.9), min(density * 0.001,1.0));
 		//c.r = nt;
 
-		c.a *= exp(density * -0.02);
-		if (c.a < 0.002)
-		{
-			c.a = 0.0;
-			break;
-		}
+		//c.a *= exp(density * -0.02);
+		//if (c.a < 0.002)
+		//{
+		//	c.a = 0.0;
+		//	break;
+		//}
+		dt *= 1.05;
 	}
+
+	c.rgb = amb + mie * mie_factor;
+	//c.r = totalDensity * 0.001;
+	c.a = exp(totalDensity * -0.02);
 
 
 	/*
@@ -682,10 +772,10 @@ void main(void)
 
 	vec3 wpos = pos.xyz - eyePos;
 
-	float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 2.0;
+	//float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 2.0;
 	
-	vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
-	//vec3 normal = getNormal(pos.xz);
+	//vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
+	vec3 normal = getNormal(pos.xz);
 
 	vec2 shadowAO = texture2D(shadeTex,pos.xz * texel).rg;
 

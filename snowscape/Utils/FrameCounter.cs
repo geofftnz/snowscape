@@ -8,14 +8,14 @@ namespace Utils
 {
     public class FrameCounter
     {
-        const int BUFLEN = 5;
+        const int BUFLEN = 10;
         private Stopwatch sw = new Stopwatch();
         private long[] tickBuffer = new long[BUFLEN];
         private int bufferPos = 0;
         private long frameCount = 0;
 
         private double fpsSmoothed = 0.0;
-        private double fpsLowpassAmount = 0.3;
+        private double fpsLowpassAmount = 1.0;
 
         public double FPS
         {

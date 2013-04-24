@@ -202,7 +202,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("Kr_g", 0.1898f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
             parameters.Add(new Parameter<float>("Kr_b", 0.6616f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
 
-            parameters.Add(new Parameter<float>("scatterAbsorb", 0.028f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("scatterAbsorb", 0.1f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028
 
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
@@ -663,7 +663,10 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             perfmon.Start("RefreshText");
-            if (textManager.NeedsRefresh) textManager.Refresh();
+            if (textManager.NeedsRefresh)
+            {
+                textManager.Refresh();
+            }
             perfmon.Stop("RefreshText");
 
             perfmon.Start("RenderText");
@@ -671,7 +674,7 @@ namespace Snowscape.TerrainGenerationViewer
             perfmon.Stop("RenderText");
             GL.Enable(EnableCap.DepthTest);
 
-            GL.Flush();
+            //GL.Flush();
 
             SwapBuffers();
 
