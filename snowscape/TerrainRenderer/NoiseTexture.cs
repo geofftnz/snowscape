@@ -20,16 +20,22 @@ namespace Snowscape.TerrainRenderer
         public PixelType TexturePixelType { get; set; }
         public TextureTarget Target { get; set; }
 
-        public NoiseTextureFactory()
+        public NoiseTextureFactory(int width, int height)
         {
-            this.Width = 256;
-            this.Height = 256;
+            this.Width = width;
+            this.Height = height;
             this.Target = TextureTarget.Texture2D;
             this.TextureInternalFormat = PixelInternalFormat.Rgba;
             this.TexturePixelFormat = PixelFormat.Rgba;
             this.TexturePixelType = PixelType.UnsignedByte;
 
             //this.NoiseTex = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+        }
+
+        public NoiseTextureFactory()
+            : this(256, 256)
+        {
+
         }
 
         public Texture GenerateFloatTexture()
@@ -60,7 +66,7 @@ namespace Snowscape.TerrainRenderer
                     (float)this.Width, (float)this.Height,
                     rx, ry,
                     10, // octaves
-                    0.005f,  // scale
+                    0.001f,  // scale
                     2.0f, // amplitude
                     h => Math.Abs(h),
                     h => h);

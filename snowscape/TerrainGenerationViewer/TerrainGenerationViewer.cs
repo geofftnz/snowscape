@@ -29,6 +29,8 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileWidth = 1024;
         const int TileHeight = 1024;
 
+        const int CloudRes = 512;
+
         public TerrainGen Terrain { get; set; }
 
         private Matrix4 overlayProjection = Matrix4.Identity;
@@ -52,6 +54,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Texture cloudTexture;
         private Texture cloudDepthTexture;
+        private Atmosphere.CloudDepthRenderer cloudDepthRenderer = new Atmosphere.CloudDepthRenderer(CloudRes, CloudRes);
+        private Vector3 cloudScale = new Vector3(0.0001f,1.0f,0.0001f);
 
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
@@ -349,7 +353,16 @@ namespace Snowscape.TerrainGenerationViewer
             this.skyRenderer.Load();
 
             // create noise texture for clouds
-            this.cloudTexture = new NoiseTextureFactory().GenerateFloatTexture();
+            this.cloudTexture = new NoiseTextureFactory(CloudRes, CloudRes).GenerateFloatTexture();
+            // generate texture for cloud depth
+            this.cloudDepthTexture = new Texture(CloudRes, CloudRes, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
+            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
+            this.cloudDepthTexture.UploadEmpty();
+            // init cloud depth renderer
+            this.cloudDepthRenderer.Init(this.cloudDepthTexture);
 
             // GL state
             GL.Enable(EnableCap.DepthTest);
@@ -543,6 +556,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.HeightTexture.Bind(TextureUnit.Texture2);
             this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
             this.cloudTexture.Bind(TextureUnit.Texture4);
+            this.cloudDepthTexture.Bind(TextureUnit.Texture5);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -553,8 +567,10 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("heightTex", 2);
                 sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("noiseTex", 4);
+                sp.SetUniform("cloudDepthTex", 5);
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
+                sp.SetUniform("cloudScale", this.cloudScale);
                 sp.SetUniform("exposure", (float)this.parameters["exposure"].GetValue());
                 sp.SetUniform("Kr", 
                     new Vector3(
@@ -626,6 +642,10 @@ namespace Snowscape.TerrainGenerationViewer
                 this.RenderLighting(this.sunDirection);
                 perfmon.Stop("Lighting");
 
+                perfmon.Start("CloudDepth");
+                this.RenderCloudDepth(this.sunDirection);
+                perfmon.Stop("CloudDepth");
+
                 this.prevSunDirection = this.sunDirection;
             }
 
@@ -686,6 +706,11 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderLighting(Vector3 sunVector)
         {
             this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
+        }
+
+        private void RenderCloudDepth(Vector3 sunVector)
+        {
+            this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale );
         }
 
         private void RenderSkyRayDirections()

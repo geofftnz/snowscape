@@ -13,5 +13,7 @@ out vec4 out_CloudDepth;
 
 void main(void)
 {
-	out_CloudDepth = vec4(1.0,cloudcoord.x,cloudcoord.y,1.0);
+	float c = texture2D(cloudTexture,cloudcoord).r;	
+
+	out_CloudDepth = vec4(c,cloudcoord.x,cloudcoord.y,1.0);
 }

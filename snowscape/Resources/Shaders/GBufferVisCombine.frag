@@ -7,10 +7,13 @@ uniform sampler2D paramTex;
 uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
 uniform sampler2D noiseTex;
+uniform sampler2D cloudDepthTex;
 
 uniform vec4 boxparam;
 uniform vec3 eyePos;
 uniform vec3 sunVector;
+
+uniform vec3 cloudScale;
 
 uniform float minHeight;
 uniform float maxHeight;
@@ -26,8 +29,8 @@ in vec2 texcoord0;
 out vec4 out_Colour;
 
 // cloud layer
-float cloudLow = -200.0;
-float cloudHigh = 200.0;
+float cloudLow = 0.0;
+float cloudHigh = 600.0;
 
 
 vec3 getInscatterSky(vec3 eye, vec3 dir);
@@ -547,7 +550,7 @@ float cloudtmax = 10000.0;
 
 float cloudThickness(vec2 p)
 {
-	return max(texture2D(noiseTex,p * 0.0001).r - 0.3,0.0) * 1.4;
+	return max(texture2D(noiseTex,p * cloudScale.xz).r - 0.3,0.0) * 1.4;
 }
 
 float cloudDensity(vec3 p)
@@ -879,40 +882,42 @@ void main(void)
 	}
 
 
+	// exposure
+	//c.rgb *= Er;
+	c.rgb = vec3(1.0) - exp(c.rgb * exposure);  // -1.2
 
-	/*
-	vec2 p = texcoord0.xy * 2.0;
+	
+	//vec2 p = texcoord0.xy * 2.0;
+	p *= 2.0;
 	// split screen into 4
+	
 	if (p.x < 1.0)
 	{
 		if (p.y < 1.0)
 		{
-			vec3 pos = texture2D(posTex,p).xyz + eyePos;
-			c.rgb = pos.xyz / 1024.0;
+			//vec3 pos = texture2D(posTex,p).xyz + eyePos;
+			//c.rgb = pos.xyz / 1024.0;
 		}
 		else
 		{
-			c = texture2D(normalTex,p-vec2(0.0,1.0));
+			//c = texture2D(normalTex,p-vec2(0.0,1.0));
 		}
 	}
 	else
 	{
 		if (p.y < 1.0)
 		{
-			c = vec4(0.0);
+			//c = vec4(0.0);
 		}
 		else
 		{
-			c = texture2D(paramTex,p-vec2(1.0,1.0));
+			c = texture2D(cloudDepthTex,p-vec2(1.0,1.0));
 		}
 	}
-	*/
+	
 
 	// fog
 
-	// exposure
-	//c.rgb *= Er;
-	c.rgb = vec3(1.0) - exp(c.rgb * exposure);  // -1.2
 
 	//out_Colour = vec4(c.rgb,1.0);
     out_Colour = vec4(sqrt(c.rgb),1.0);
