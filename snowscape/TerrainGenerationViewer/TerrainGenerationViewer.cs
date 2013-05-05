@@ -50,7 +50,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
-        private Texture noiseTexture;
+        private Texture cloudTexture;
+        private Texture cloudDepthTexture;
 
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
@@ -348,7 +349,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.skyRenderer.Load();
 
             // create noise texture for clouds
-            this.noiseTexture = new NoiseTextureFactory().GenerateFloatTexture();
+            this.cloudTexture = new NoiseTextureFactory().GenerateFloatTexture();
 
             // GL state
             GL.Enable(EnableCap.DepthTest);
@@ -541,7 +542,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainGlobal.HeightTexture.Bind(TextureUnit.Texture2);
             this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
-            this.noiseTexture.Bind(TextureUnit.Texture4);
+            this.cloudTexture.Bind(TextureUnit.Texture4);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
