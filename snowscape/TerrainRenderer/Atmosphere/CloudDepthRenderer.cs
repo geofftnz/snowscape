@@ -10,86 +10,118 @@ using Utils;
 namespace Snowscape.TerrainRenderer.Atmosphere
 {
     /// <summary>
-    /// RayDirectionRenderer - renders the ray direction for each pixel into the gbuffer
+    /// CloudDepthRenderer - pre-calculates the optical depth of the cloud layer with respect to the light source.
     /// 
     /// Knows about:
     /// - nothing
     /// 
     /// Knows how to:
-    /// - render ray direction based on the given projection
+    /// - calculate the min, max and relative density of the cloud layer.
+    /// 
+    /// Needs:
+    /// - sun direction
+    /// - xz scale factor: cloudScale.xz
+    /// - cloud layer thickness: cloudScale.y
+    ///  (need to convert the 0-1 of texel-space into world space)
     /// 
     /// </summary>
     public class CloudDepthRenderer
     {
-        private VBO vertexVBO = new VBO("cloud-vertex");
-        //private VBO vcoordVBO = new VBO("sky-vcoord");
-        private VBO indexVBO = new VBO("cloud-index", BufferTarget.ElementArrayBuffer);
-        private ShaderProgram program = new ShaderProgram("cloud-prog");
+         // Needs:
+        // Quad vertex VBO
+        private VBO vertexVBO = new VBO("cloud-depth-vertex");
+        // Quad index VBO
+        private VBO indexVBO = new VBO("cloud-depth-index", BufferTarget.ElementArrayBuffer);
 
-        public CloudDepthRenderer()
+        // GBuffer to encapsulate our output texture.
+        private GBuffer gbuffer = new GBuffer("cloud-depth-gbuffer", false);
+
+        // shader
+        private ShaderProgram program = new ShaderProgram("cloud-depth");
+
+        public int Width { get; set; }
+        public int Height { get; set; }
+
+        public CloudDepthRenderer(int width, int height)
         {
-
+            this.Width = width;
+            this.Height = height;
         }
 
-        public void Load()
+        public void Init(Texture outputTexture)
         {
-            InitQuad();
-            InitShader();
-        }
+            // init VBOs
+            this.InitVBOs();
 
-        public void Render(Matrix4 projection, Matrix4 view, Vector3 eyePos)
-        {
-            Matrix4 invProjectionView = Matrix4.Invert(Matrix4.Mult(view, projection));
-            //Matrix4 invProjectionView = Matrix4.Mult(Matrix4.Invert(view), Matrix4.Invert(projection));
+            // init GBuffer
+            this.InitGBuffer(outputTexture);
 
-            GL.Disable(EnableCap.CullFace);
-            GL.Enable(EnableCap.DepthTest);
+            // init Shader
+            this.InitShader();
 
-            this.program
-                .UseProgram()
-                .SetUniform("inverse_projectionview_matrix", invProjectionView)
-                .SetUniform("eyePos", eyePos);
-            this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
-            //this.vcoordVBO.Bind(this.program.VariableLocation("vcoord"));
-            this.indexVBO.Bind();
-            GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
         }
 
         private void InitShader()
         {
             // setup shader
             this.program.Init(
-                @"../../../Resources/Shaders/SkyRayDirection.vert".Load(),
-                @"../../../Resources/Shaders/SkyRayDirection.frag".Load(),
+                @"../../../Resources/Shaders/CloudDepth.vert".Load(),
+                @"../../../Resources/Shaders/CloudDepth.frag".Load(),
                 new List<Variable> 
                 { 
-                    new Variable(0, "vertex"),
-                    new Variable(1, "vcoord")
+                    new Variable(0, "vertex")
                 },
                 new string[]
                 {
-                    "out_Pos"
-                });
-
+                    "out_CloudDepth"
+                });            
         }
 
-        private void InitQuad()
+        private void InitGBuffer(Texture outputTexture)
+        {
+            gbuffer.SetSlot(0, outputTexture);
+            gbuffer.Init(this.Width, this.Height);
+        }
+
+        private void InitVBOs()
         {
             Vector3[] vertex = {
-                                   new Vector3(-1f,1f,0f),
-                                   new Vector3(-1f,-1f,0f),
-                                   new Vector3(1f,1f,0f),
-                                   new Vector3(1f,-1f,0f)
-                               };
+                                    new Vector3(-1f,1f,0f),
+                                    new Vector3(-1f,-1f,0f),
+                                    new Vector3(1f,1f,0f),
+                                    new Vector3(1f,-1f,0f)
+                                };
             uint[] index = {
-                               0,1,2,
-                               1,3,2
-                           };
+                                0,1,2,
+                                1,3,2
+                            };
 
             this.vertexVBO.SetData(vertex);
-            //this.vcoordVBO.SetData(vertex);
             this.indexVBO.SetData(index);
         }
 
+        public void Render(Texture cloudTexture, Vector3 sunVector, Vector3 cloudScale)
+        {
+
+            // start gbuffer
+            this.gbuffer.BindForWriting();
+            
+            GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.DepthTest);
+
+            cloudTexture.Bind(TextureUnit.Texture0);
+
+            this.program
+                .UseProgram()
+                .SetUniform("cloudTexture", 0)
+                .SetUniform("sunDirection", sunVector)
+                .SetUniform("cloudScale", cloudScale);
+            this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
+            this.indexVBO.Bind();
+            GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
+
+            this.gbuffer.UnbindFromWriting();
+
+        }
     }
 }
