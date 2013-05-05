@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Atmosphere\CloudDepthRenderer.cs" />
     <Compile Include="Atmosphere\RayDirectionRenderer.cs" />
     <Compile Include="NoiseTexture.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
