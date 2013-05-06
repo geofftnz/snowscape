@@ -72,7 +72,7 @@ namespace Snowscape.TerrainGenerationViewer
         private TextManager textManager = new TextManager("DefaultText", null);
 
         private FrameCounter frameCounter = new FrameCounter();
-        private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0005f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+        private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
         private Thread updateThread;
         private bool killThread = false;
@@ -596,7 +596,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             //if (this.frameCounter.Frames % 32 == 0)
             //{
-                frameCounterText.Text = string.Format("FPS: {0:0} {1:###0} updates: {2:0.0}ms {3:#,###,###,##0} water iterations.", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+                frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
                 textManager.AddOrUpdate(frameCounterText);
 
                 float y = 0.1f;
@@ -620,7 +620,19 @@ namespace Snowscape.TerrainGenerationViewer
                         );
                     y += 0.025f;
                 }
-            //}
+
+                y += 0.02f;
+                textManager.AddOrUpdate(
+                    new TextBlock(
+                        "sunvector",
+                        this.sunDirection.ToString(),
+                        new Vector3(0.01f, y, 0.0f),
+                        0.0004f,
+                        new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+                        )
+                    );
+
+                //}
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
