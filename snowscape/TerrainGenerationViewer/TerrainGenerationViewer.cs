@@ -55,7 +55,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Texture cloudTexture;
         private Texture cloudDepthTexture;
         private Atmosphere.CloudDepthRenderer cloudDepthRenderer = new Atmosphere.CloudDepthRenderer(CloudRes, CloudRes);
-        private Vector3 cloudScale = new Vector3(0.0001f,1.0f,0.0001f);
+        //private Vector3 cloudScale = new Vector3(0.0001f,600.0f,0.0001f);
+        private Vector3 cloudScale = new Vector3(0.0002f, 600.0f, 0.0002f);
 
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
