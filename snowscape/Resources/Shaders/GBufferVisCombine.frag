@@ -911,7 +911,33 @@ void main(void)
 		}
 		else
 		{
-			c = texture2D(cloudDepthTex,p-vec2(1.0,1.0));
+			
+			p -= vec2(1.0,1.0);
+			p *= 2.0;
+
+			if (p.x < 1.0)
+			{
+				if (p.y < 1.0)
+				{
+					c.rgb = vec3(1.0,0.7,0.7) * texture2D(cloudDepthTex,p).r;
+				}
+				else
+				{
+					c.rgb = vec3(0.7,1.0,0.7) * texture2D(cloudDepthTex,p-vec2(0.0,1.0)).g;
+				}
+			}
+			else
+			{
+				if (p.y < 1.0)
+				{
+					c.rgb = vec3(0.7,0.7,1.0) * texture2D(cloudDepthTex,p-vec2(1.0,0.0)).b;
+				}
+				else
+				{
+					c.rgb = vec3(1.0) * texture2D(cloudDepthTex,p-vec2(1.0,1.0)).a;
+				}
+			}
+			
 		}
 	}
 	

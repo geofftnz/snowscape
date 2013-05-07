@@ -23,8 +23,8 @@ float cloudDensity(vec3 p)
 	float ctop = cloudMid + nt * cloudThickness;
 	float cbottom = cloudMid - nt * cloudThickness;
 
-	float d = clamp(max(min(ctop - p.y , p.y - cbottom),0.0) * 0.05,0.0,1.0);
-	return d*d*4.0;
+	float d = clamp(max(min(ctop - p.y , p.y - cbottom),0.0),0.0,1.0);
+	return d;
 }
 
 void main(void)
@@ -45,15 +45,15 @@ void main(void)
 
 	float cloudStart=1.0,cloudEnd=0.0;
 	float totalDensity=0.0;
-	float dt = 1.0 / 256.0;
+	float dt = 1.0 / 1024.0;
 
 	for(float t = 0.0; t <= 1.0; t += dt)
 	{
 		vec3 p = p0 + sunDirection * t * maxt;
 
-		//float d = cloudDensity(p);
-		float d = cloudThickness(p.xz);
-		if (d > 0.001)
+		float d = cloudDensity(p);
+		//float d = cloudThickness(p.xz);
+		if (d > 0.5)
 		{
 			cloudStart = min(t,cloudStart);
 			cloudEnd = t;
