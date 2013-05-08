@@ -11,14 +11,14 @@ out vec4 out_CloudDepth;
 
 float cloudThickness(vec2 p)
 {
-	return max(texture2D(cloudTexture,p * cloudScale.xz).r - 0.3,0.0) * 1.4;  // * cloudScale.xz
+	return max(texture2D(cloudTexture,p * cloudScale.xz).r - 0.3,0.0) / 0.7;  // * cloudScale.xz
 }
 
 float cloudDensity(vec3 p)
 {
 	float cloudMid = cloudScale.y * 0.5;
 	float cloudThickness = cloudScale.y;
-	float nt = cloudThickness(p.xz);
+	float nt = cloudThickness(p.xz) * 0.5;
 
 	float ctop = cloudMid + nt * cloudThickness;
 	float cbottom = cloudMid - nt * cloudThickness;
@@ -53,11 +53,11 @@ void main(void)
 
 		float d = cloudDensity(p);
 		//float d = cloudThickness(p.xz);
-		if (d > 0.5)
+		if (d > 0.0)
 		{
 			cloudStart = min(t,cloudStart);
 			cloudEnd = t;
-			totalDensity += dt * d;
+			totalDensity += dt;
 		}
 	}
 

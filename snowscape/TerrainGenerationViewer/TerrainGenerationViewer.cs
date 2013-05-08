@@ -214,6 +214,9 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
 
             parameters.Add(new Parameter<float>("groundLevel", 0.995f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f));
+
+            parameters.Add(new Parameter<float>("cloudLevel", 100.0f, -1000.0f, 1000.0f, v => v + 50f, v => v - 50f));
+            parameters.Add(new Parameter<float>("cloudThickness", 500.0f, 10.0f, 2000.0f, v => v + 10f, v => v - 10f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -583,6 +586,8 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("mieBrightness", (float)this.parameters["mieBrightness"].GetValue());
                 sp.SetUniform("raleighBrightness", (float)this.parameters["raleighBrightness"].GetValue());
                 sp.SetUniform("groundLevel", (float)this.parameters["groundLevel"].GetValue());
+                sp.SetUniform("cloudLevel", (float)this.parameters["cloudLevel"].GetValue());
+                sp.SetUniform("cloudThickness", (float)this.parameters["cloudThickness"].GetValue());
                 
                 
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
