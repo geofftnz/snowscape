@@ -39,13 +39,8 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         // shader
         private ShaderProgram program = new ShaderProgram("cloud-depth");
 
-        public int Width { get; set; }
-        public int Height { get; set; }
-
-        public CloudDepthRenderer(int width, int height)
+        public CloudDepthRenderer()
         {
-            this.Width = width;
-            this.Height = height;
         }
 
         public void Init(Texture outputTexture)
@@ -80,7 +75,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         private void InitGBuffer(Texture outputTexture)
         {
             gbuffer.SetSlot(0, outputTexture);
-            gbuffer.Init(this.Width, this.Height);
+            gbuffer.Init(outputTexture.Width, outputTexture.Height);
         }
 
         private void InitVBOs()
