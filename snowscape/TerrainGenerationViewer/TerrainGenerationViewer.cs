@@ -29,6 +29,7 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileWidth = 1024;
         const int TileHeight = 1024;
 
+        const int SkyRes = 1024;
         const int CloudRes = 512;
 
         public TerrainGen Terrain { get; set; }
@@ -49,8 +50,12 @@ namespace Snowscape.TerrainGenerationViewer
         private TerrainGlobal terrainGlobal;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
-        private Atmosphere.RayDirectionRenderer skyRenderer = new Atmosphere.RayDirectionRenderer();
+        private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
+
+
+        private Texture skyTexture;
+        private Atmosphere.SkyScatteringRenderer skyRenderer = new Atmosphere.SkyScatteringRenderer();
 
         private Texture cloudTexture;
         private Texture cloudDepthTexture;
@@ -354,7 +359,18 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
 
-            this.skyRenderer.Load();
+            this.skyRayDirectionRenderer.Load();
+
+
+            this.skyTexture = new Texture(SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
+            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
+            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
+            this.skyTexture.UploadEmpty();
+
+            this.skyRenderer.Init(this.skyTexture);
+
 
             // create noise texture for clouds
             this.cloudTexture = new NoiseTextureFactory(CloudRes, CloudRes).GenerateFloatTexture();
@@ -561,6 +577,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
             this.cloudTexture.Bind(TextureUnit.Texture4);
             this.cloudDepthTexture.Bind(TextureUnit.Texture5);
+            this.skyTexture.Bind(TextureUnit.Texture6);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -572,11 +589,12 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("noiseTex", 4);
                 sp.SetUniform("cloudDepthTex", 5);
+                sp.SetUniform("skyTex", 6);
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
                 sp.SetUniform("cloudScale", this.cloudScale);
                 sp.SetUniform("exposure", (float)this.parameters["exposure"].GetValue());
-                sp.SetUniform("Kr", 
+                sp.SetUniform("Kr",
                     new Vector3(
                         (float)this.parameters["Kr_r"].GetValue(),
                         (float)this.parameters["Kr_g"].GetValue(),
@@ -588,8 +606,8 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("groundLevel", (float)this.parameters["groundLevel"].GetValue());
                 sp.SetUniform("cloudLevel", (float)this.parameters["cloudLevel"].GetValue());
                 sp.SetUniform("cloudThickness", (float)this.parameters["cloudThickness"].GetValue());
-                
-                
+
+
                 sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
             });
 
@@ -602,43 +620,43 @@ namespace Snowscape.TerrainGenerationViewer
 
             //if (this.frameCounter.Frames % 32 == 0)
             //{
-                frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
-                textManager.AddOrUpdate(frameCounterText);
+            frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+            textManager.AddOrUpdate(frameCounterText);
 
-                float y = 0.1f;
-                foreach (var timer in this.perfmon.AllAverageTimes())
-                {
-                    textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
-                    y += 0.0125f;
-                }
+            float y = 0.1f;
+            foreach (var timer in this.perfmon.AllAverageTimes())
+            {
+                textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+                y += 0.0125f;
+            }
 
-                y += 0.02f;
-                for (int i = 0; i < this.parameters.Count; i++)
-                {
-                    textManager.AddOrUpdate(
-                        new TextBlock(
-                            "param_" + this.parameters[i].Name,
-                            this.parameters[i].ToString(),
-                            new Vector3(0.01f, y, 0.0f),
-                            0.0004f,
-                            new Vector4(1.0f, 1.0f, 1.0f, (i == this.parameters.CurrentIndex) ? 1.0f : 0.5f)
-                            )
-                        );
-                    y += 0.025f;
-                }
-
-                y += 0.02f;
+            y += 0.02f;
+            for (int i = 0; i < this.parameters.Count; i++)
+            {
                 textManager.AddOrUpdate(
                     new TextBlock(
-                        "sunvector",
-                        this.sunDirection.ToString(),
+                        "param_" + this.parameters[i].Name,
+                        this.parameters[i].ToString(),
                         new Vector3(0.01f, y, 0.0f),
                         0.0004f,
-                        new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+                        new Vector4(1.0f, 1.0f, 1.0f, (i == this.parameters.CurrentIndex) ? 1.0f : 0.5f)
                         )
                     );
+                y += 0.025f;
+            }
 
-                //}
+            y += 0.02f;
+            textManager.AddOrUpdate(
+                new TextBlock(
+                    "sunvector",
+                    this.sunDirection.ToString(),
+                    new Vector3(0.01f, y, 0.0f),
+                    0.0004f,
+                    new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+                    )
+                );
+
+            //}
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
@@ -663,6 +681,11 @@ namespace Snowscape.TerrainGenerationViewer
                 perfmon.Start("CloudDepth");
                 this.RenderCloudDepth(this.sunDirection);
                 perfmon.Stop("CloudDepth");
+
+                perfmon.Start("SkyPreCalc");
+                this.RenderSky(this.eyePos, this.sunDirection, (float)this.parameters["groundLevel"].GetValue());
+                perfmon.Stop("SkyPreCalc");
+
 
                 this.prevSunDirection = this.sunDirection;
             }
@@ -728,12 +751,29 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderCloudDepth(Vector3 sunVector)
         {
-            this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale );
+            this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale);
+        }
+
+        private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
+        {
+            this.skyRenderer.Render(
+                eyePos,
+                sunVector,
+                groundLevel,
+                (float)this.parameters["raleighBrightness"].GetValue(),
+                (float)this.parameters["mieBrightness"].GetValue(),
+                (float)this.parameters["scatterAbsorb"].GetValue(),
+                new Vector3(
+                    (float)this.parameters["Kr_r"].GetValue(),
+                    (float)this.parameters["Kr_g"].GetValue(),
+                    (float)this.parameters["Kr_b"].GetValue()
+                )
+                );
         }
 
         private void RenderSkyRayDirections()
         {
-            this.skyRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos);
+            this.skyRayDirectionRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 
         private void RenderTiles()
