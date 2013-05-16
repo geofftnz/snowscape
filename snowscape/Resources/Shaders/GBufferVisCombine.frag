@@ -1,4 +1,4 @@
-﻿#version 140
+﻿#version 330
 precision highp float;
 uniform sampler2D posTex;
 //uniform sampler2D normalTex;
@@ -8,6 +8,7 @@ uniform sampler2D shadeTex;
 uniform sampler2D noiseTex;
 uniform sampler2D cloudDepthTex;
 uniform sampler2D skyTex;
+uniform samplerCube skyCubeTex;
 uniform vec4 boxparam;
 uniform vec3 eyePos;
 uniform vec3 sunVector;
@@ -106,7 +107,7 @@ float fbm( vec3 p )
 float texel = 1.0 / boxparam.x;
 float sampleHeight(vec2 posTile)
 {
-    return texture2D(heightTex,posTile * texel).r;
+    return texture(heightTex,posTile * texel).r;
 }
 
 
@@ -248,6 +249,7 @@ vec3 getSkyColour(vec3 skyvector)
 	skyCoord.y = 0.5 - sin(a) * r * 0.45;
 	*/
 
+	/*
 	vec2 v = skyvector.xz;// / 0.9;
 
 	float theta = acos(skyvector.y);
@@ -257,7 +259,10 @@ vec3 getSkyColour(vec3 skyvector)
 	
 	skyCoord.xy = vec2(0.5) + vec2(sin(theta) * cos(phi), sin(theta) * sin(phi));
 
-	return texture2D(skyTex,skyCoord).rgb;
+	return texture(skyTex,skyCoord).rgb;
+	*/
+
+	return texture(skyCubeTex,skyvector).rgb + vec3(0.0,0.0,0.4);
 
 /*
     vec3 skycol = 
@@ -284,7 +289,7 @@ float getShadowForGroundPos(vec3 p, float shadowHeight)
 
 float getShadow(vec3 p)
 {
-    return smoothstep(-2.0,-0.1,p.y - texture2D(shadeTex,p.xz * texel).r);
+    return smoothstep(-2.0,-0.1,p.y - texture(shadeTex,p.xz * texel).r);
 }
 
 
@@ -457,7 +462,7 @@ float cloudtmax = 10000.0;
 /*
 float cloudThickness(vec2 p)
 {
-	return max(texture2D(noiseTex,p * cloudScale.xz).r - 0.3,0.0) * 1.4;
+	return max(texture(noiseTex,p * cloudScale.xz).r - 0.3,0.0) * 1.4;
 }
 
 float cloudDensity(vec3 p)
@@ -475,7 +480,7 @@ float cloudDensity(vec3 p)
 
 float getCloudThickness(vec2 p)
 {
-    return max(texture2D(noiseTex,p * cloudScale.xz).r - 0.3,0.0) / 0.7;
+    return max(texture(noiseTex,p * cloudScale.xz).r - 0.3,0.0) / 0.7;
     // * cloudScale.xz
 }
 
@@ -511,7 +516,7 @@ float cloudDensityToSun(vec3 p)
 
 	// get optical thickness of cloud layer, by referencing the clouddepth texture at the p + dir * t1 coordinates
 	// r = start_t, g = end_t, b = rel_density
-	vec4 cd = texture2D(cloudDepthTex,(p + dir * t1).xz * cloudScale.xz);
+	vec4 cd = texture(cloudDepthTex,(p + dir * t1).xz * cloudScale.xz);
     if (t<0.0)
 	{
         // below cloud layer - return entire thickness
@@ -909,11 +914,11 @@ void main(void)
 {
     vec4 c = vec4(0.0,0.0,0.0,1.0);
     vec2 p = texcoord0.xy;
-    vec4 posT = texture2D(posTex,p);
+    vec4 posT = texture(posTex,p);
     float hitType = posT.a;
     vec4 pos = vec4(posT.xyz + eyePos,0.0);
-    //vec4 normalT = texture2D(normalTex,p);
-	vec4 paramT = texture2D(paramTex,p);
+    //vec4 normalT = texture(normalTex,p);
+	vec4 paramT = texture(paramTex,p);
     //vec3 normal = normalize(normalT.xyz - 0.5);
 
 	vec3 wpos = pos.xyz - eyePos;
@@ -921,7 +926,7 @@ void main(void)
 	
 	//vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
 	vec3 normal = getNormal(pos.xz);
-    vec2 shadowAO = texture2D(shadeTex,pos.xz * texel).rg;
+    vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
     float d = length(wpos);
     if (hitType > 0.6)
 	{
@@ -1041,12 +1046,12 @@ void main(void)
 	{
         if (p.y < 1.0)
 		{
-            //vec3 pos = texture2D(posTex,p).xyz + eyePos;
+            //vec3 pos = texture(posTex,p).xyz + eyePos;
 			//c.rgb = pos.xyz / 1024.0;
 		}
 		else
 		{
-            //c = texture2D(normalTex,p-vec2(0.0,1.0));
+            //c = texture(normalTex,p-vec2(0.0,1.0));
 		}
 	}
 	else
@@ -1058,7 +1063,7 @@ void main(void)
 		else
 		{
             p -= vec2(1.0,1.0);
-            c.rgb = texture2D(skyTex,p).rgb;
+            c.rgb = texture(skyTex,p).rgb;
             /*
 			p *= 2.0;
 
@@ -1066,22 +1071,22 @@ void main(void)
 			{
 				if (p.y < 1.0)
 				{
-					c.rgb = vec3(1.0,0.7,0.7) * texture2D(cloudDepthTex,p).r;
+					c.rgb = vec3(1.0,0.7,0.7) * texture(cloudDepthTex,p).r;
 				}
 				else
 				{
-					c.rgb = vec3(0.7,1.0,0.7) * texture2D(cloudDepthTex,p-vec2(0.0,1.0)).g;
+					c.rgb = vec3(0.7,1.0,0.7) * texture(cloudDepthTex,p-vec2(0.0,1.0)).g;
 				}
 			}
 			else
 			{
 				if (p.y < 1.0)
 				{
-					c.rgb = vec3(0.7,0.7,1.0) * texture2D(cloudDepthTex,p-vec2(1.0,0.0)).b;
+					c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
 				}
 				else
 				{
-					c.rgb = vec3(1.0) * texture2D(cloudDepthTex,p-vec2(1.0,1.0)).a;
+					c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 				}
 			}*/
 			

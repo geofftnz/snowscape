@@ -119,6 +119,23 @@ namespace OpenTKExtensions
             }
         }
 
+        public void UploadEmpty(TextureTarget target)
+        {
+            if (Init() != -1)
+            {
+                this.Bind();
+                this.ApplyParameters();
+                GL.TexImage2D(target, 0, this.InternalFormat, this.Width, this.Height, 0, this.Format, this.Type, IntPtr.Zero);
+            }
+        }
+
+        public void UploadImage<T>(TextureTarget target, T[] data) where T : struct
+        {
+            log.Trace("Texture.UploadImage ({0}) uploading to target {1}...", this.Name, target.ToString());
+            GL.TexImage2D<T>(target, 0, this.InternalFormat, this.Width, this.Height, 0, this.Format, this.Type, data);
+            log.Trace("Texture.UploadImage ({0}) uploaded {1} texels of {2}", this.Name, data.Length, data.GetType().Name);
+        }
+
         public void UploadImage<T>(T[] data) where T : struct
         {
             log.Trace("Texture.UploadImage ({0}) uploading...", this.Name);

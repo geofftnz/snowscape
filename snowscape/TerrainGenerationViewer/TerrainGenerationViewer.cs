@@ -29,7 +29,7 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileWidth = 1024;
         const int TileHeight = 1024;
 
-        const int SkyRes = 1024;
+        const int SkyRes = 256;
         const int CloudRes = 512;
 
         public TerrainGen Terrain { get; set; }
@@ -56,6 +56,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Texture skyTexture;
         private Atmosphere.SkyScatteringRenderer skyRenderer = new Atmosphere.SkyScatteringRenderer();
+
+        private Texture skyCubeTexture;
 
         private Texture cloudTexture;
         private Texture cloudDepthTexture;
@@ -371,6 +373,17 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.skyRenderer.Init(this.skyTexture);
 
+            GL.Enable(EnableCap.TextureCubeMap);
+            GL.Enable(EnableCap.TextureCubeMapSeamless);
+            this.skyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest));
+
+            this.SetupCubeMap();
+
 
             // create noise texture for clouds
             this.cloudTexture = new NoiseTextureFactory(CloudRes, CloudRes).GenerateFloatTexture();
@@ -412,6 +425,29 @@ namespace Snowscape.TerrainGenerationViewer
             this.updateThread.Start();
 
             this.CalculateSunDirection();
+        }
+
+        private void SetupCubeMap()
+        {
+
+            var data = new byte[SkyRes * SkyRes * 4];
+            ParallelHelper.For2D(SkyRes, SkyRes, (x, y, i) =>
+            {
+                int j = i * 4;
+                data[j + 0] = (byte)x;
+                data[j + 1] = (byte)y;
+                data[j + 2] = (byte)0;
+                data[j + 3] = (byte)255;
+            });
+
+            this.skyCubeTexture.Bind();
+            this.skyCubeTexture.ApplyParameters();
+            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapNegativeX, data);
+            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapNegativeY, data);
+            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapNegativeZ, data);
+            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapPositiveX, data);
+            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapPositiveY, data);
+            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapPositiveZ, data);
         }
 
         private void UpdateThreadProc()
@@ -577,7 +613,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
             this.cloudTexture.Bind(TextureUnit.Texture4);
             this.cloudDepthTexture.Bind(TextureUnit.Texture5);
-            this.skyTexture.Bind(TextureUnit.Texture6);
+            this.skyTexture.Bind(TextureUnit.Texture7);
+            this.skyCubeTexture.Bind(TextureUnit.Texture6);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -589,7 +626,8 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("noiseTex", 4);
                 sp.SetUniform("cloudDepthTex", 5);
-                sp.SetUniform("skyTex", 6);
+                sp.SetUniform("skyTex", 7);
+                sp.SetUniform("skyCubeTex", 6); 
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
                 sp.SetUniform("cloudScale", this.cloudScale);
