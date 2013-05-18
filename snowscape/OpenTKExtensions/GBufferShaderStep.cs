@@ -18,13 +18,20 @@ namespace OpenTKExtensions
         {
             public string Name { get; set; }
             public Texture Texture { get; set; }
+            public TextureTarget Target { get; set; }
             public TextureSlot()
             {
             }
-            public TextureSlot(string name, Texture tex)
+            public TextureSlot(string name, Texture tex, TextureTarget target)
             {
                 this.Name = name;
                 this.Texture = tex;
+                this.Target = target;
+            }
+            public TextureSlot(string name, Texture tex)
+                : this(name, tex, TextureTarget.Texture2D)
+            {
+
             }
         }
 
@@ -59,13 +66,18 @@ namespace OpenTKExtensions
             this.program = new ShaderProgram(this.Name + "_sp");
         }
 
-        public void SetOutputTexture(int slot, string name, Texture tex)
+        public void SetOutputTexture(int slot, string name, Texture tex, TextureTarget target)
         {
             if (slot < 0 || slot >= MAXSLOTS)
             {
                 throw new ArgumentOutOfRangeException("slot");
             }
-            this.textureSlot[slot] = new TextureSlot(name, tex);
+            this.textureSlot[slot] = new TextureSlot(name, tex, target);
+        }
+
+        public void SetOutputTexture(int slot, string name, Texture tex)
+        {
+            SetOutputTexture(slot, name, tex, TextureTarget.Texture2D);
         }
 
         public void Init(string vertexShaderSource, string fragmentShaderSource)

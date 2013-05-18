@@ -33,11 +33,20 @@ namespace OpenTKExtensions
 
         public class TextureSlot
         {
+
+            /// <summary>
+            /// Slot has texture defined
+            /// </summary>
             public bool Enabled { get; set; }
+
+            /// <summary>
+            /// Texture is externally defined (does not need to be managed by GBuffer)
+            /// </summary>
             public bool External { get; set; }
             public int Slot { get; set; }
             public TextureSlotParam TextureParam { get; set; }
             public Texture Texture { get; set; }
+            public TextureTarget Target { get; set; }
             public int TextureID
             {
                 get
@@ -59,6 +68,7 @@ namespace OpenTKExtensions
                 this.Slot = 0;
                 this.TextureParam = new TextureSlotParam();
                 this.Texture = null;
+                this.Target = TextureTarget.Texture2D;
             }
 
             public void InitTexture(int Width, int Height)
@@ -84,7 +94,7 @@ namespace OpenTKExtensions
             }
             public void AttachToFramebuffer(FramebufferTarget target)
             {
-                GL.FramebufferTexture2D(target, this.FramebufferAttachmentSlot, TextureTarget.Texture2D, this.TextureID, 0);
+                GL.FramebufferTexture2D(target, this.FramebufferAttachmentSlot, this.Target, this.TextureID, 0);
             }
         }
 
