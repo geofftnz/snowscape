@@ -71,6 +71,21 @@ namespace OpenTKExtensions
                 this.Target = TextureTarget.Texture2D;
             }
 
+            public TextureSlot(int colourAttachmentSlot, Texture texture, TextureTarget target)
+            {
+                this.Enabled = true;
+                this.External = true;
+                this.Slot = colourAttachmentSlot;
+                this.TextureParam = new TextureSlotParam();
+                this.Texture = texture;
+                this.Target = target;
+            }
+
+            public TextureSlot(int colourAttachmentSlot, Texture texture)
+                : this(colourAttachmentSlot, texture, TextureTarget.Texture2D)
+            {
+            }
+
             public void InitTexture(int Width, int Height)
             {
                 if (this.Texture == null && !this.External)
@@ -198,7 +213,10 @@ namespace OpenTKExtensions
 
         private void SetDrawBuffers()
         {
-            GL.DrawBuffers(this.TextureSlots.Where(s => s.Enabled).Count(), this.TextureSlots.Where(s => s.Enabled).Select(s => s.DrawBufferSlot).ToArray());
+            if (this.TextureSlots.Any(s => s.Enabled))
+            {
+                GL.DrawBuffers(this.TextureSlots.Where(s => s.Enabled).Count(), this.TextureSlots.Where(s => s.Enabled).Select(s => s.DrawBufferSlot).ToArray());
+            }
         }
 
         public bool Init(int width, int height)
@@ -252,6 +270,25 @@ namespace OpenTKExtensions
             this.FBO.Bind(FramebufferTarget.DrawFramebuffer);
             GL.Viewport(0, 0, this.Width, this.Height);
             SetDrawBuffers();
+        }
+
+        /// <summary>
+        /// Bind GBuffer for writing to the supplied textures
+        /// </summary>
+        /// <param name="outputTextures"></param>
+        public void BindForWritingTo(params TextureSlot[] outputTextures)
+        {
+            // shouldn't call this if we've got any texture slots defined.
+
+            this.FBO.Bind(FramebufferTarget.DrawFramebuffer);
+            GL.Viewport(0, 0, this.Width, this.Height);
+
+            for (int i = 0; i < outputTextures.Length; i++)
+            {
+                outputTextures[i].AttachToFramebuffer(this.FBO.Target);
+            }
+
+            GL.DrawBuffers(outputTextures.Length, outputTextures.Select(t => t.DrawBufferSlot).ToArray());
         }
 
         public void UnbindFromWriting()

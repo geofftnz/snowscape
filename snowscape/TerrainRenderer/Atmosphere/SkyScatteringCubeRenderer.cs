@@ -20,20 +20,19 @@ namespace Snowscape.TerrainRenderer.Atmosphere
     public class SkyScatteringCubeRenderer
     {
         // Needs:
-        private GBufferShaderStep gb = new GBufferShaderStep("sky_scatter_cube");
+        private GBufferRedirectableShaderStep gb;
 
-        public SkyScatteringCubeRenderer()
+        public SkyScatteringCubeRenderer(int resolution)
         {
+            gb = new GBufferRedirectableShaderStep("sky_scatter_cube", resolution, resolution);
         }
 
-        public void Init(Texture outputTexture)
+        public void Init()
         {
-            gb.SetOutputTexture(0, "out_Sky", outputTexture);
             gb.Init(@"../../../Resources/Shaders/SkyScatterCube.vert".Load(), @"../../../Resources/Shaders/SkyScatterCube.frag".Load());
-
         }
 
-        public void Render(Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr)
+        public void Render(Texture cubeMapTex, Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr)
         {
             gb.Render(() =>
             {
@@ -47,7 +46,9 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                 sp.SetUniform("mieBrightness", mieBrightness);
                 sp.SetUniform("scatterAbsorb", scatterAbsorb);
                 sp.SetUniform("Kr", Kr);
-            });
+            },
+            new GBuffer.TextureSlot(0,cubeMapTex,TextureTarget.TextureCubeMapNegativeX)
+            );
 
         }
     }

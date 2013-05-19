@@ -39,17 +39,17 @@ namespace OpenTKExtensions
 
         // Needs:
         // Quad vertex VBO
-        private VBO vertexVBO;
+        protected VBO vertexVBO;
         // Quad index VBO
-        private VBO indexVBO;
+        protected VBO indexVBO;
         // GBuffer to encapsulate our output texture.
-        private GBuffer gbuffer;
+        protected GBuffer gbuffer;
         // Shader
-        private ShaderProgram program;
+        protected ShaderProgram program;
 
         // texture slots
-        const int MAXSLOTS = 16;
-        private TextureSlot[] textureSlot = new TextureSlot[MAXSLOTS];
+        protected const int MAXSLOTS = 16;
+        protected TextureSlot[] textureSlot = new TextureSlot[MAXSLOTS];
 
 
         public GBufferShaderStep()
@@ -88,7 +88,7 @@ namespace OpenTKExtensions
 
         }
 
-        public void Render(Action textureBinds, Action<ShaderProgram> setUniforms)
+        public virtual void Render(Action textureBinds, Action<ShaderProgram> setUniforms)
         {
             // start gbuffer
             this.gbuffer.BindForWriting();
@@ -131,7 +131,7 @@ namespace OpenTKExtensions
                 );
         }
 
-        private void InitGBuffer()
+        protected virtual void InitGBuffer()
         {
             if (!this.textureSlot.Any(ts => ts != null && ts.Texture != null))
             {

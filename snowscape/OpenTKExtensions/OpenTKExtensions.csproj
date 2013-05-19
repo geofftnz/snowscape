@@ -61,6 +61,7 @@
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="GBuffer.cs" />
     <Compile Include="GBufferCombiner.cs" />
+    <Compile Include="GBufferRedirectableShaderStep.cs" />
     <Compile Include="GBufferShaderStep.cs" />
     <Compile Include="IDrawableComponent.cs" />
     <Compile Include="ISamplerParameter.cs" />

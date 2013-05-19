@@ -55,7 +55,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
         private Texture skyTexture;
-        private Atmosphere.SkyScatteringRenderer skyRenderer = new Atmosphere.SkyScatteringRenderer();
+        private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
 
         private Texture skyCubeTexture;
 
@@ -371,7 +371,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
             this.skyTexture.UploadEmpty();
 
-            this.skyRenderer.Init(this.skyTexture);
+            this.skyRenderer.Init();
 
             GL.Enable(EnableCap.TextureCubeMap);
             GL.Enable(EnableCap.TextureCubeMapSeamless);
@@ -795,6 +795,7 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(
+                this.skyCubeTexture,
                 eyePos,
                 sunVector,
                 groundLevel,
