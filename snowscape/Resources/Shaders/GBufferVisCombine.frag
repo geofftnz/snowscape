@@ -262,7 +262,7 @@ vec3 getSkyColour(vec3 skyvector)
 	return texture(skyTex,skyCoord).rgb;
 	*/
 
-	return texture(skyCubeTex,skyvector).rgb + vec3(0.0,0.0,0.4);
+	return texture(skyCubeTex,skyvector).rgb;
 
 /*
     vec3 skycol = 
@@ -1063,7 +1063,7 @@ void main(void)
 		else
 		{
             p -= vec2(1.0,1.0);
-            c.rgb = texture(skyTex,p).rgb;
+            //c.rgb = texture(skyTex,p).rgb;
             /*
 			p *= 2.0;
 

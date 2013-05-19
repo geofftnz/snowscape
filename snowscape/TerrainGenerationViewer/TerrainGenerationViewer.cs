@@ -29,7 +29,7 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileWidth = 1024;
         const int TileHeight = 1024;
 
-        const int SkyRes = 256;
+        const int SkyRes = 512;
         const int CloudRes = 512;
 
         public TerrainGen Terrain { get; set; }
@@ -155,6 +155,8 @@ namespace Snowscape.TerrainGenerationViewer
         private double updateThreadUpdateTime = 0.0;
         private long waterIterations = 0;
         private int textureUpdateCount = 0;
+        private uint currentParamsVersion = 0;
+        private uint prevParamsVersion = 0;
 
         private PerfMonitor perfmon = new PerfMonitor();
 
@@ -254,10 +256,12 @@ namespace Snowscape.TerrainGenerationViewer
             if (e.Key == Key.Left)
             {
                 this.parameters.Current.Decrease();
+                currentParamsVersion++;
             }
             if (e.Key == Key.Right)
             {
                 this.parameters.Current.Increase();
+                currentParamsVersion++;
             }
             if (e.Key == Key.PageUp)
             {
@@ -265,6 +269,7 @@ namespace Snowscape.TerrainGenerationViewer
                 {
                     this.parameters.Current.Increase();
                 }
+                currentParamsVersion++;
             }
             if (e.Key == Key.PageDown)
             {
@@ -272,6 +277,7 @@ namespace Snowscape.TerrainGenerationViewer
                 {
                     this.parameters.Current.Decrease();
                 }
+                currentParamsVersion++;
             }
 
 
@@ -375,12 +381,12 @@ namespace Snowscape.TerrainGenerationViewer
 
             GL.Enable(EnableCap.TextureCubeMap);
             GL.Enable(EnableCap.TextureCubeMapSeamless);
-            this.skyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.skyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
 
             this.SetupCubeMap();
 
@@ -429,25 +435,14 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void SetupCubeMap()
         {
-
-            var data = new byte[SkyRes * SkyRes * 4];
-            ParallelHelper.For2D(SkyRes, SkyRes, (x, y, i) =>
-            {
-                int j = i * 4;
-                data[j + 0] = (byte)x;
-                data[j + 1] = (byte)y;
-                data[j + 2] = (byte)0;
-                data[j + 3] = (byte)255;
-            });
-
             this.skyCubeTexture.Bind();
             this.skyCubeTexture.ApplyParameters();
-            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapNegativeX, data);
-            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapNegativeY, data);
-            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapNegativeZ, data);
-            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapPositiveX, data);
-            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapPositiveY, data);
-            this.skyCubeTexture.UploadImage(TextureTarget.TextureCubeMapPositiveZ, data);
+            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeX);
+            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeY);
+            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeZ);
+            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveX);
+            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveY);
+            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveZ);
         }
 
         private void UpdateThreadProc()
@@ -709,7 +704,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             this.CalculateSunDirection();
-            if (prevSunDirection != sunDirection || needToRenderLighting)
+            if (prevSunDirection != sunDirection || prevParamsVersion != currentParamsVersion || needToRenderLighting)
             {
                 // render lighting
                 perfmon.Start("Lighting");
@@ -726,6 +721,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
                 this.prevSunDirection = this.sunDirection;
+                this.prevParamsVersion = this.currentParamsVersion;
             }
 
             SetTerrainProjection();

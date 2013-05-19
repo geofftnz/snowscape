@@ -10,6 +10,10 @@ uniform float scatterAbsorb;
 uniform vec3 Kr;
 uniform vec3 eye;
 
+uniform vec3 facenormal;
+uniform vec3 facexbasis;
+uniform vec3 faceybasis;
+
 in vec2 sky2d;
 
 out vec3 out_Sky;
@@ -223,38 +227,14 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 void main(void)
 {
 
-	//float l = length(sky2d.xy) * 1.1;
+	// let's assume we're looking down the z axis
+	// screen will be x,y
 
-	//vec3 dir = normalize(vec3(sky2d.x, sqrt(1.0 - sky2d.x * sky2d.x - sky2d.y * sky2d.y), sky2d.y));
-	//vec3 dir = normalize(vec3(sky2d.x, 1.0 - l, sky2d.y));
+	// we're in a cube of radius 1.0
+	// assume eye is at 0,0,0
 
-	//out_Sky = vec4(vec3(0.5) + dir * 0.5,1.0);
+	vec3 dir = (facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
 
-	float r = length(sky2d.xy); // radius of point
-	float a = atan(sky2d.y, sky2d.x);  // angle of point
+	out_Sky = getInscatterSky(eye, normalize(dir));
 
-	// spherical coordinates
-	float theta = r * 3.1415927 * 0.5;
-	float phi = a;
-
-	vec3 dir = 
-	vec3(
-		sin(theta) * cos(phi),
-		cos(theta),
-		sin(theta) * sin(phi)
-	);
-
-
-	out_Sky = getInscatterSky(eye, dir);
-
-	//if (l<=1.0)
-	//{
-//
-		//out_Sky = vec4(1.0,0.9,0.8,1.0);
-	//}
-	//else
-	//{
-		//out_Sky = vec4(0.0);
-	//}
-//
 }

@@ -34,10 +34,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
 
         public void Render(Texture cubeMapTex, Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr)
         {
-            gb.Render(() =>
-            {
-            },
-            (sp) =>
+            Action<ShaderProgram> uniforms = (sp) =>
             {
                 sp.SetUniform("eye", eye);
                 sp.SetUniform("sunVector", sunVector);
@@ -46,10 +43,31 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                 sp.SetUniform("mieBrightness", mieBrightness);
                 sp.SetUniform("scatterAbsorb", scatterAbsorb);
                 sp.SetUniform("Kr", Kr);
-            },
-            new GBuffer.TextureSlot(0,cubeMapTex,TextureTarget.TextureCubeMapNegativeX)
-            );
+            };
 
+            RenderFace(cubeMapTex, TextureTarget.TextureCubeMapPositiveX, Vector3.UnitX, -Vector3.UnitZ, -Vector3.UnitY, uniforms);
+            RenderFace(cubeMapTex, TextureTarget.TextureCubeMapPositiveY, Vector3.UnitY, Vector3.UnitX, Vector3.UnitZ, uniforms);
+            RenderFace(cubeMapTex, TextureTarget.TextureCubeMapPositiveZ, Vector3.UnitZ, Vector3.UnitX, -Vector3.UnitY, uniforms);
+            RenderFace(cubeMapTex, TextureTarget.TextureCubeMapNegativeX, -Vector3.UnitX, Vector3.UnitZ, -Vector3.UnitY, uniforms);
+            RenderFace(cubeMapTex, TextureTarget.TextureCubeMapNegativeY, -Vector3.UnitY, Vector3.UnitX, -Vector3.UnitZ, uniforms);
+            RenderFace(cubeMapTex, TextureTarget.TextureCubeMapNegativeZ, -Vector3.UnitZ, -Vector3.UnitX, -Vector3.UnitY, uniforms);
+
+        }
+
+        private void RenderFace(Texture cubeMapTex, TextureTarget target, Vector3 facenormal, Vector3 facexbasis, Vector3 faceybasis, Action<ShaderProgram> uniforms)
+        {
+            gb.Render(() =>
+            {
+            },
+            (sp) =>
+            {
+                uniforms(sp);
+                sp.SetUniform("facenormal", facenormal);
+                sp.SetUniform("facexbasis", facexbasis);
+                sp.SetUniform("faceybasis", faceybasis);
+            },
+            new GBuffer.TextureSlot(0, cubeMapTex, target)
+            );
         }
     }
 }
