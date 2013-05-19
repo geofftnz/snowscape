@@ -262,7 +262,8 @@ vec3 getSkyColour(vec3 skyvector)
 	return texture(skyTex,skyCoord).rgb;
 	*/
 
-	return texture(skyCubeTex,skyvector).rgb;
+	//return texture(skyCubeTex,skyvector).rgb;
+	return textureLod(skyCubeTex,skyvector,0).rgb;
 
 /*
     vec3 skycol = 
@@ -361,7 +362,19 @@ float sampleDistanceFactor = 0.004/6000.0;
 vec3 getSkyLight(vec3 dir)
 {
     //return getInscatterSky(vec3(0.0,0.0,0.0),dir);
-	return vec3(0.1);
+	//return vec3(0.1);
+	//return textureLod(skyCubeTex,sunVector,7).rgb;
+
+	return (
+		textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb +
+		textureLod(skyCubeTex,vec3(1.0,0.5,1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(-1.0,0.5,1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(1.0,0.5,-1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(-1.0,0.5,-1.0),9).rgb +
+		textureLod(skyCubeTex,dir,9).rgb
+		) * 0.2;
+
+	//return (textureLod(skyCubeTex,dir,9).rgb + textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb) * 0.5;
 }
 
 
@@ -1064,7 +1077,7 @@ void main(void)
 		{
             p -= vec2(1.0,1.0);
             //c.rgb = texture(skyTex,p).rgb;
-            /*
+            
 			p *= 2.0;
 
 			if (p.x < 1.0)
@@ -1088,7 +1101,7 @@ void main(void)
 				{
 					c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 				}
-			}*/
+			}
 			
 		}
 	}

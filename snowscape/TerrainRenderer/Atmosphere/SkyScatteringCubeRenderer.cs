@@ -52,6 +52,10 @@ namespace Snowscape.TerrainRenderer.Atmosphere
             RenderFace(cubeMapTex, TextureTarget.TextureCubeMapNegativeY, -Vector3.UnitY, Vector3.UnitX, -Vector3.UnitZ, uniforms);
             RenderFace(cubeMapTex, TextureTarget.TextureCubeMapNegativeZ, -Vector3.UnitZ, -Vector3.UnitX, -Vector3.UnitY, uniforms);
 
+            GL.Enable(EnableCap.TextureCubeMap);
+            cubeMapTex.Bind();
+            GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
+
         }
 
         private void RenderFace(Texture cubeMapTex, TextureTarget target, Vector3 facenormal, Vector3 facexbasis, Vector3 faceybasis, Action<ShaderProgram> uniforms)

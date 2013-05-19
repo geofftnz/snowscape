@@ -54,7 +54,7 @@ namespace Snowscape.TerrainGenerationViewer
         private TerrainLightingGenerator terrainLighting;
 
 
-        private Texture skyTexture;
+        //private Texture skyTexture;
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
 
         private Texture skyCubeTexture;
@@ -369,13 +369,14 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.skyRayDirectionRenderer.Load();
 
-
+            /*
             this.skyTexture = new Texture(SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
             this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
             this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
             this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
             this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
             this.skyTexture.UploadEmpty();
+            */
 
             this.skyRenderer.Init();
 
@@ -386,7 +387,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest));
 
             this.SetupCubeMap();
 
@@ -608,7 +609,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
             this.cloudTexture.Bind(TextureUnit.Texture4);
             this.cloudDepthTexture.Bind(TextureUnit.Texture5);
-            this.skyTexture.Bind(TextureUnit.Texture7);
+            //this.skyTexture.Bind(TextureUnit.Texture7);
             this.skyCubeTexture.Bind(TextureUnit.Texture6);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
@@ -621,7 +622,7 @@ namespace Snowscape.TerrainGenerationViewer
                 sp.SetUniform("shadeTex", 3);
                 sp.SetUniform("noiseTex", 4);
                 sp.SetUniform("cloudDepthTex", 5);
-                sp.SetUniform("skyTex", 7);
+                //sp.SetUniform("skyTex", 7);
                 sp.SetUniform("skyCubeTex", 6); 
                 sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
                 sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
