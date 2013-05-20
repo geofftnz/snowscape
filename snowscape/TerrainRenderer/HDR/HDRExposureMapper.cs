@@ -110,7 +110,7 @@ namespace Snowscape.TerrainRenderer.HDR
 
             // convert level data to luminance
             //var luminance = leveldata.Select(c=>Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f).ToArray();
-            var luminance = leveldata.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f).ToArray();
+            var luminance = leveldata.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp().Sqrt()).Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f).ToArray();
 
             // take off top and bottom 10%
             int totalPixels = luminance.Length;
