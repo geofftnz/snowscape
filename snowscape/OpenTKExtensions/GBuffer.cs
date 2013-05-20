@@ -47,6 +47,8 @@ namespace OpenTKExtensions
             public TextureSlotParam TextureParam { get; set; }
             public Texture Texture { get; set; }
             public TextureTarget Target { get; set; }
+            private List<ITextureParameter> textureParameters = new List<ITextureParameter>();
+            public List<ITextureParameter> TextureParameters { get { return textureParameters; } }
             public int TextureID
             {
                 get
@@ -69,9 +71,10 @@ namespace OpenTKExtensions
                 this.TextureParam = new TextureSlotParam();
                 this.Texture = null;
                 this.Target = TextureTarget.Texture2D;
+                this.TextureParameters.AddRange(GetDefaultTextureParameters());
             }
 
-            public TextureSlot(int colourAttachmentSlot, Texture texture, TextureTarget target)
+            public TextureSlot(int colourAttachmentSlot, Texture texture, TextureTarget target, IEnumerable<ITextureParameter> texParams)
             {
                 this.Enabled = true;
                 this.External = true;
@@ -79,11 +82,24 @@ namespace OpenTKExtensions
                 this.TextureParam = new TextureSlotParam();
                 this.Texture = texture;
                 this.Target = target;
+                this.TextureParameters.AddRange(texParams);
             }
 
-            public TextureSlot(int colourAttachmentSlot, Texture texture)
-                : this(colourAttachmentSlot, texture, TextureTarget.Texture2D)
+            public TextureSlot(int colourAttachmentSlot, Texture texture, TextureTarget target)
+                : this(colourAttachmentSlot, texture, target, GetDefaultTextureParameters())
             {
+            }
+            public TextureSlot(int colourAttachmentSlot, Texture texture)
+                : this(colourAttachmentSlot, texture, TextureTarget.Texture2D, GetDefaultTextureParameters())
+            {
+            }
+
+            private static IEnumerable<ITextureParameter> GetDefaultTextureParameters()
+            {
+                yield return new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                yield return new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
+                yield return new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                yield return new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             }
 
             public void InitTexture(int Width, int Height)
@@ -92,12 +108,16 @@ namespace OpenTKExtensions
                 {
                     this.Texture = new Texture(Width, Height, TextureTarget.Texture2D, this.TextureParam.InternalFormat, this.TextureParam.Format, this.TextureParam.Type);
                 }
-                this.Texture
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge))
-                    .UploadEmpty();
+
+                if (!this.External)
+                {
+                    foreach (var tp in this.TextureParameters)
+                    {
+                        this.Texture.SetParameter(tp);
+                    }
+
+                    this.Texture.UploadEmpty();
+                }
             }
             public void UnloadTexture()
             {
