@@ -198,5 +198,49 @@ namespace OpenTKExtensions
             this.Width = width;
             this.Height = height;
         }
+
+
+
+        public int GetLevelWidth(int level)
+        {
+            return GetTextureParameterInt(level, GetTextureParameter.TextureWidth);
+        }
+        public int GetLevelHeight(int level)
+        {
+            return GetTextureParameterInt(level, GetTextureParameter.TextureHeight);
+        }
+
+        private int GetTextureParameterInt(int level, GetTextureParameter p)
+        {
+            int n;
+            GL.GetTexLevelParameter(this.Target, level, p, out n);
+            return n;
+        }
+
+        public float[] GetLevelDataFloat(int level)
+        {
+            int width = this.GetLevelWidth(level);
+            int height = this.GetLevelHeight(level);
+
+            float[] data = new float[width * height * 4];
+
+            GL.GetTexImage(this.Target, level, PixelFormat.Rgba, PixelType.Float, data);
+
+            return data;
+        }
+
+        public Vector4[] GetLevelDataVector4(int level)
+        {
+            int width = this.GetLevelWidth(level);
+            int height = this.GetLevelHeight(level);
+
+            Vector4[] data = new Vector4[width * height];
+
+            GL.GetTexImage(this.Target, level, PixelFormat.Rgba, PixelType.Float, data);
+
+            return data;
+        }
+
+
     }
 }

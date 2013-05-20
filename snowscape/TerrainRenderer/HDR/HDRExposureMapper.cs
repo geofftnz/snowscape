@@ -17,14 +17,18 @@ namespace Snowscape.TerrainRenderer.HDR
         private Matrix4 projection = Matrix4.Identity;
         private Matrix4 modelview = Matrix4.Identity;
 
+        public Vector4 debugCol = Vector4.Zero;
+
         public int Width { get; private set; }
         public int Height { get; private set; }
 
         public float Exposure { get; set; }
+        public float TargetLuminance { get; set; }
 
         public HDRExposureMapper()
         {
             this.Exposure = -1.0f;
+            this.TargetLuminance = 0.11f;
         }
 
         public void Init(int width, int height)
@@ -81,11 +85,45 @@ namespace Snowscape.TerrainRenderer.HDR
         {
             this.gbuffer.UnbindFromWriting();
 
+            this.CalculateExposure();
+        }
+
+
+        private void CalculateExposure()
+        {
             // read into main memory
+            var tex = this.gbuffer.GetTextureAtSlot(0);
+
+            var leveldata = tex.GetLevelDataVector4(6);
+
+            //vec3(1.0) - exp(col.rgb * exposure);
+            //Vector3.One - 
+
+            // convert level data to luminance
+            var luminance = leveldata.Select(c=>Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f).ToArray();
+            //var luminance = leveldata.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f).OrderBy(a => a).ToArray();
+
+            // take off top and bottom 10%
+            int totalPixels = luminance.Length;
+
+            //var averageLuminance = luminance.Skip(totalPixels / 10).Take((totalPixels * 8) / 10).Average();
+            var averageLuminance = luminance.Average();
+
+            //float targetLuminance = 0.11f;
+            float deltaLuminance = (averageLuminance - this.TargetLuminance) * 0.05f;
+
+            this.Exposure += deltaLuminance;
+
+            debugCol.X = averageLuminance;
+            debugCol.Y = this.Exposure;
+
+            //debugCol = data[0];
+
             // do exposure calculation
             // lowpass
             // set final exposure
         }
+
 
 
         public void Render()

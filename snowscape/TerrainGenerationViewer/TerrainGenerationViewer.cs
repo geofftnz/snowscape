@@ -214,7 +214,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
 
-            parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
+            //parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
+            parameters.Add(new Parameter<float>("TargetLuminance", 0.2f, 0.01f, 1.0f, v => v += 0.01f, v => v -= 0.01f));
             parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f));
             parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
 
@@ -229,7 +230,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
 
-            parameters.Add(new Parameter<float>("groundLevel", 0.995f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f));
+            parameters.Add(new Parameter<float>("groundLevel", 0.98f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995
 
             parameters.Add(new Parameter<float>("cloudLevel", 100.0f, -1000.0f, 1000.0f, v => v + 50f, v => v - 50f));
             parameters.Add(new Parameter<float>("cloudThickness", 500.0f, 10.0f, 2000.0f, v => v + 10f, v => v - 10f));
@@ -630,7 +631,7 @@ namespace Snowscape.TerrainGenerationViewer
                 MinHeight = this.terrainGlobal.MinHeight,
                 MaxHeight = this.terrainGlobal.MaxHeight,
                 CloudScale = this.cloudScale,
-                Exposure = (float)this.parameters["exposure"].GetValue(),
+                //Exposure = (float)this.parameters["exposure"].GetValue(),
                 Kr = new Vector3(
                         (float)this.parameters["Kr_r"].GetValue(),
                         (float)this.parameters["Kr_g"].GetValue(),
@@ -734,6 +735,17 @@ namespace Snowscape.TerrainGenerationViewer
                     )
                 );
 
+            y += 0.02f;
+            textManager.AddOrUpdate(
+                new TextBlock(
+                    "hdrdebug",
+                    this.hdrExposure.debugCol.ToString(),
+                    new Vector3(0.01f, y, 0.0f),
+                    0.0004f,
+                    new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+                    )
+                );
+
             //}
 
             uint currentThreadIterations = updateThreadIterations;
@@ -792,6 +804,9 @@ namespace Snowscape.TerrainGenerationViewer
 
             //this.gbuffer.UnbindFromWriting();
             this.lightingStep.UnbindFromWriting();
+
+
+            this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
 
             // render gbuffer to hdr buffer
             this.hdrExposure.BindForWriting();
