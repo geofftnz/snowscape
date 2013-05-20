@@ -18,6 +18,7 @@ using Snowscape.TerrainRenderer;
 using Snowscape.TerrainRenderer.Renderers;
 using OpenTKExtensions.Camera;
 using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
+using Lighting = Snowscape.TerrainRenderer.Lighting;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -40,12 +41,15 @@ namespace Snowscape.TerrainGenerationViewer
         private Matrix4 terrainProjection = Matrix4.Identity;
         private Matrix4 terrainModelview = Matrix4.Identity;
 
-        private Matrix4 gbufferCombineProjection = Matrix4.Identity;
-        private Matrix4 gbufferCombineModelview = Matrix4.Identity;
+        //private Matrix4 gbufferCombineProjection = Matrix4.Identity;
+        //private Matrix4 gbufferCombineModelview = Matrix4.Identity;
 
 
-        private GBuffer gbuffer = new GBuffer("gb");
-        private GBufferCombiner gbufferCombiner;
+        //private GBuffer gbuffer = new GBuffer("gb");
+        //private GBufferCombiner gbufferCombiner;
+
+        private Lighting.LightingCombiner lightingStep = new Lighting.LightingCombiner();
+
         private TerrainTile terrainTile;
         private TerrainGlobal terrainGlobal;
         private ITileRenderer tileRenderer;
@@ -352,22 +356,24 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererRaycast.Load();
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
 
-            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
-            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
-            this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
+            //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
+            //this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
-            var program = new ShaderProgram("combiner");
+            //var program = new ShaderProgram("combiner");
 
-            program.Init(
-                @"../../../Resources/Shaders/GBufferVisCombine.vert".Load(),
-                @"../../../Resources/Shaders/GBufferVisCombine.frag".Load(),
-                new List<Variable> 
-                { 
-                    new Variable(0, "vertex"), 
-                    new Variable(1, "in_texcoord0") 
-                });
+            //program.Init(
+            //    @"../../../Resources/Shaders/GBufferVisCombine.vert".Load(),
+            //    @"../../../Resources/Shaders/GBufferVisCombine.frag".Load(),
+            //    new List<Variable> 
+            //    { 
+            //        new Variable(0, "vertex"), 
+            //        new Variable(1, "in_texcoord0") 
+            //    });
 
-            this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
+            //this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
+
+            this.lightingStep.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
 
             this.skyRayDirectionRenderer.Load();
@@ -518,7 +524,8 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Resize(object sender, EventArgs e)
         {
             SetProjection();
-            this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            //this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            this.lightingStep.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
             this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 
@@ -527,7 +534,7 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Viewport(this.ClientRectangle);
             SetOverlayProjection();
             SetTerrainProjection();
-            SetGBufferCombineProjection();
+            //SetGBufferCombineProjection();
         }
 
         private void SetOverlayProjection()
@@ -536,11 +543,11 @@ namespace Snowscape.TerrainGenerationViewer
             this.overlayModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
         }
 
-        private void SetGBufferCombineProjection()
-        {
-            this.gbufferCombineProjection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
-            this.gbufferCombineModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
-        }
+        //private void SetGBufferCombineProjection()
+        //{
+        //    this.gbufferCombineProjection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
+        //    this.gbufferCombineModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
+        //}
 
         private void SetTerrainProjection()
         {
@@ -606,47 +613,79 @@ namespace Snowscape.TerrainGenerationViewer
         }
 
 
-        private void RenderGBufferCombiner(Matrix4 projection, Matrix4 modelview)
+        private void RenderGBufferCombiner()
         {
-            this.terrainGlobal.HeightTexture.Bind(TextureUnit.Texture2);
-            this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
-            this.cloudTexture.Bind(TextureUnit.Texture4);
-            this.cloudDepthTexture.Bind(TextureUnit.Texture5);
-            //this.skyTexture.Bind(TextureUnit.Texture7);
-            this.skyCubeTexture.Bind(TextureUnit.Texture6);
 
-            this.gbufferCombiner.Render(projection, modelview, (sp) =>
+            var rp = new Lighting.LightingCombiner.RenderParams()
             {
-                sp.SetUniform("eyePos", this.eyePos);
-                sp.SetUniform("sunVector", this.sunDirection);
-                sp.SetUniform("posTex", 0);
-                sp.SetUniform("paramTex", 1);
-                sp.SetUniform("heightTex", 2);
-                sp.SetUniform("shadeTex", 3);
-                sp.SetUniform("noiseTex", 4);
-                sp.SetUniform("cloudDepthTex", 5);
-                //sp.SetUniform("skyTex", 7);
-                sp.SetUniform("skyCubeTex", 6); 
-                sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
-                sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
-                sp.SetUniform("cloudScale", this.cloudScale);
-                sp.SetUniform("exposure", (float)this.parameters["exposure"].GetValue());
-                sp.SetUniform("Kr",
-                    new Vector3(
+                HeightTexture = this.terrainGlobal.HeightTexture,
+                ShadeTexture = this.terrainGlobal.ShadeTexture,
+                CloudTexture = this.cloudTexture,
+                CloudDepthTexture = this.cloudDepthTexture,
+                SkyCubeTexture = this.skyCubeTexture,
+                EyePos = this.eyePos,
+                SunDirection = this.sunDirection,
+                MinHeight = this.terrainGlobal.MinHeight,
+                MaxHeight = this.terrainGlobal.MaxHeight,
+                CloudScale = this.cloudScale,
+                Exposure = (float)this.parameters["exposure"].GetValue(),
+                Kr = new Vector3(
                         (float)this.parameters["Kr_r"].GetValue(),
                         (float)this.parameters["Kr_g"].GetValue(),
                         (float)this.parameters["Kr_b"].GetValue()
-                    ));
-                sp.SetUniform("scatterAbsorb", (float)this.parameters["scatterAbsorb"].GetValue());
-                sp.SetUniform("mieBrightness", (float)this.parameters["mieBrightness"].GetValue());
-                sp.SetUniform("raleighBrightness", (float)this.parameters["raleighBrightness"].GetValue());
-                sp.SetUniform("groundLevel", (float)this.parameters["groundLevel"].GetValue());
-                sp.SetUniform("cloudLevel", (float)this.parameters["cloudLevel"].GetValue());
-                sp.SetUniform("cloudThickness", (float)this.parameters["cloudThickness"].GetValue());
+                    ),
+                ScatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
+                MieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
+                RaleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
+                GroundLevel = (float)this.parameters["groundLevel"].GetValue(),
+                CloudLevel = (float)this.parameters["cloudLevel"].GetValue(),
+                CloudThickness = (float)this.parameters["cloudThickness"].GetValue(),
+                TileWidth = this.terrainTile.Width,
+                TileHeight = this.terrainTile.Height
+            };
+
+            this.lightingStep.Render(rp);
 
 
-                sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
-            });
+            //this.terrainGlobal.HeightTexture.Bind(TextureUnit.Texture2);
+            //this.terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
+            //this.cloudTexture.Bind(TextureUnit.Texture4);
+            //this.cloudDepthTexture.Bind(TextureUnit.Texture5);
+            ////this.skyTexture.Bind(TextureUnit.Texture7);
+            //this.skyCubeTexture.Bind(TextureUnit.Texture6);
+
+            //this.gbufferCombiner.Render(projection, modelview, (sp) =>
+            //{
+            //    sp.SetUniform("eyePos", this.eyePos);
+            //    sp.SetUniform("sunVector", this.sunDirection);
+            //    sp.SetUniform("posTex", 0);
+            //    sp.SetUniform("paramTex", 1);
+            //    sp.SetUniform("heightTex", 2);
+            //    sp.SetUniform("shadeTex", 3);
+            //    sp.SetUniform("noiseTex", 4);
+            //    sp.SetUniform("cloudDepthTex", 5);
+            //    //sp.SetUniform("skyTex", 7);
+            //    sp.SetUniform("skyCubeTex", 6); 
+            //    sp.SetUniform("minHeight", this.terrainGlobal.MinHeight);
+            //    sp.SetUniform("maxHeight", this.terrainGlobal.MaxHeight);
+            //    sp.SetUniform("cloudScale", this.cloudScale);
+            //    sp.SetUniform("exposure", (float)this.parameters["exposure"].GetValue());
+            //    sp.SetUniform("Kr",
+            //        new Vector3(
+            //            (float)this.parameters["Kr_r"].GetValue(),
+            //            (float)this.parameters["Kr_g"].GetValue(),
+            //            (float)this.parameters["Kr_b"].GetValue()
+            //        ));
+            //    sp.SetUniform("scatterAbsorb", (float)this.parameters["scatterAbsorb"].GetValue());
+            //    sp.SetUniform("mieBrightness", (float)this.parameters["mieBrightness"].GetValue());
+            //    sp.SetUniform("raleighBrightness", (float)this.parameters["raleighBrightness"].GetValue());
+            //    sp.SetUniform("groundLevel", (float)this.parameters["groundLevel"].GetValue());
+            //    sp.SetUniform("cloudLevel", (float)this.parameters["cloudLevel"].GetValue());
+            //    sp.SetUniform("cloudThickness", (float)this.parameters["cloudThickness"].GetValue());
+
+
+            //    sp.SetUniform("boxparam", new Vector4((float)this.terrainTile.Width, (float)this.terrainTile.Height, 0.0f, 1.0f));
+            //});
 
         }
 
@@ -732,13 +771,14 @@ namespace Snowscape.TerrainGenerationViewer
 
             // TODO: replace with call to lighting combiner
             // render terrain to gbuffer
-            this.gbuffer.BindForWriting();
-            GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            GL.ClearDepth(1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.Disable(EnableCap.Blend);
-            GL.Enable(EnableCap.DepthTest);
-            GL.ColorMask(true, true, true, true);
+            //this.gbuffer.BindForWriting();
+            //GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            //GL.ClearDepth(1.0f);
+            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            //GL.Disable(EnableCap.Blend);
+            //GL.Enable(EnableCap.DepthTest);
+            //GL.ColorMask(true, true, true, true);
+            this.lightingStep.BindForWriting();
 
             perfmon.Start("RenderTerrain");
             RenderTiles();
@@ -747,7 +787,9 @@ namespace Snowscape.TerrainGenerationViewer
             perfmon.Start("RenderSkyRays");
             RenderSkyRayDirections();
             perfmon.Stop("RenderSkyRays");
-            this.gbuffer.UnbindFromWriting();
+
+            //this.gbuffer.UnbindFromWriting();
+            this.lightingStep.UnbindFromWriting();
 
             // render gbuffer to hdr buffer
 
@@ -760,7 +802,7 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             perfmon.Start("RenderGBufferCombiner");
-            RenderGBufferCombiner(gbufferCombineProjection, gbufferCombineModelview);
+            RenderGBufferCombiner();
             perfmon.Stop("RenderGBufferCombiner");
 
 

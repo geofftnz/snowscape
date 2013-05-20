@@ -55,7 +55,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             public Vector3 SunDirection { get; set; }
             public float MinHeight { get; set; }
             public float MaxHeight { get; set; }
-            public float CloudScale { get; set; }
+            public Vector3 CloudScale { get; set; }
             public float Exposure { get; set; }
             public Vector3 Kr { get; set; }
             public float ScatterAbsorb { get; set; }
@@ -131,33 +131,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         public void Render(RenderParams rp)
         {
             /*
-            var rp = new RenderParams()
-            {
-                HeightTexture = this.terrainGlobal.HeightTexture,
-                ShadeTexture = this.terrainGlobal.ShadeTexture,
-                CloudTexture = this.cloudTexture,
-                CloudDepthTexture = this.cloudDepthTexture,
-                SkyCubeTexture = this.skyCubeTexture,
-                EyePos = this.eyePos,
-                SunDirection = this.sunDirection,
-                MinHeight = this.terrainGlobal.MinHeight,
-                MaxHeight = this.terrainGlobal.MaxHeight,
-                CloudScale = this.cloudScale,
-                Exposure = (float)this.parameters["exposure"].GetValue(),
-                Kr = new Vector3(
-                        (float)this.parameters["Kr_r"].GetValue(),
-                        (float)this.parameters["Kr_g"].GetValue(),
-                        (float)this.parameters["Kr_b"].GetValue()
-                    ),
-                ScatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
-                MieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
-                RaleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
-                GroundLevel = (float)this.parameters["groundLevel"].GetValue(),
-                CloudLevel = (float)this.parameters["cloudLevel"].GetValue(),
-                CloudThickness = (float)this.parameters["cloudThickness"].GetValue(),
-                TileWidth = this.terrainTile.Width,
-                TileHeight = this.terrainTile.Height
-            };*/
+           */
 
 
             rp.HeightTexture.Bind(TextureUnit.Texture2);
