@@ -40,11 +40,11 @@ vec3 Kr2 = Kr;
 //vec3 Kral = vec3(2.284, 3.897, 8.227) * 0.2;
 vec3 Kral = Kr;
 // inverse eye response - for mapping atmospheric scattering amounts to something more realistic
-vec3 Er = vec3(0.6,0.6,1.0);
+//vec3 Er = vec3(0.6,0.6,1.0);
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
               -0.60, -0.48,  0.64 );
-vec3 sunLight = vec3(4.0);
+vec3 sunLight = vec3(8.0);
 float intersectBox ( vec3 rayo, vec3 rayd, vec3 boxMin, vec3 boxMax)
 {
     vec3 omin = ( boxMin - rayo ) / rayd;
@@ -326,8 +326,10 @@ vec3 sunIntensity()
 
 vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 {
-    vec3 colH1 = pow(vec3(0.3,0.247,0.223),vec3(2.0));
-    vec3 colL1 = pow(vec3(0.41,0.39,0.16),vec3(2.0));
+    vec3 colH1 = pow(vec3(182,180,196) / vec3(255.0),vec3(2.0));
+    vec3 colL1 = pow(vec3(158,136,79) / vec3(255.0),vec3(2.0));
+    //vec3 colH1 = pow(vec3(0.3,0.247,0.223),vec3(2.0));
+    //vec3 colL1 = pow(vec3(0.41,0.39,0.16),vec3(2.0));
     vec3 colW = pow(vec3(0.7,0.8,1.0),vec3(2.0));
     float looseblend = s.r*s.r;
     vec3 col = mix(colH1,colL1,looseblend);
@@ -380,13 +382,13 @@ vec3 getSkyLight(vec3 dir)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	vec3 col = vec3(0.5);
+    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	//vec3 col = vec3(0.95);
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
 	//min(getShadow(p),cloudSunAbsorb(p))
 	vec3 col2 = 
-			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * min(getShadowForGroundPos(p,shadowHeight),cloudSunAbsorb(p))
+			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight) //min(getShadowForGroundPos(p,shadowHeight),cloudSunAbsorb(p))
 			+ col * getSkyLight(n) * AO;
     //return col2;
 	// can probably ignore the aborption between point and eye

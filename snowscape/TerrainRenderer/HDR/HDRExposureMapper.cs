@@ -22,12 +22,21 @@ namespace Snowscape.TerrainRenderer.HDR
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public float Exposure { get; set; }
+        public float FastExposure { get; set; }
+        public float SlowExposure { get; set; }
+        public float Exposure
+        {
+            get
+            {
+                return 0.25f.Lerp(this.SlowExposure, this.FastExposure);
+            }
+        }
         public float TargetLuminance { get; set; }
 
         public HDRExposureMapper()
         {
-            this.Exposure = -1.0f;
+            this.FastExposure = -1.0f;
+            this.SlowExposure = -1.0f;
             this.TargetLuminance = 0.11f;
         }
 
@@ -100,8 +109,8 @@ namespace Snowscape.TerrainRenderer.HDR
             //Vector3.One - 
 
             // convert level data to luminance
-            var luminance = leveldata.Select(c=>Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f).ToArray();
-            //var luminance = leveldata.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f).OrderBy(a => a).ToArray();
+            //var luminance = leveldata.Select(c=>Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f).ToArray();
+            var luminance = leveldata.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f).ToArray();
 
             // take off top and bottom 10%
             int totalPixels = luminance.Length;
@@ -110,12 +119,15 @@ namespace Snowscape.TerrainRenderer.HDR
             var averageLuminance = luminance.Average();
 
             //float targetLuminance = 0.11f;
-            float deltaLuminance = (averageLuminance - this.TargetLuminance) * 0.05f;
+            float deltaLuminance = (averageLuminance - this.TargetLuminance) * 0.2f;
 
-            this.Exposure += deltaLuminance;
+            this.FastExposure += deltaLuminance;
+            this.SlowExposure += deltaLuminance * 0.1f;
 
             debugCol.X = averageLuminance;
             debugCol.Y = this.Exposure;
+            debugCol.Z = this.FastExposure;
+            debugCol.W = this.SlowExposure;
 
             //debugCol = data[0];
 
