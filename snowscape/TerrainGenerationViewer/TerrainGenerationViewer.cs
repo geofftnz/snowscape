@@ -53,6 +53,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
+        private GBufferShaderStep hdrExposureStep = new GBufferShaderStep("hdr");
+
 
         //private Texture skyTexture;
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
@@ -366,6 +368,7 @@ namespace Snowscape.TerrainGenerationViewer
                 });
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
+
 
             this.skyRayDirectionRenderer.Load();
 
@@ -727,6 +730,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             SetTerrainProjection();
 
+            // TODO: replace with call to lighting combiner
             // render terrain to gbuffer
             this.gbuffer.BindForWriting();
             GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -745,8 +749,11 @@ namespace Snowscape.TerrainGenerationViewer
             perfmon.Stop("RenderSkyRays");
             this.gbuffer.UnbindFromWriting();
 
+            // render gbuffer to hdr buffer
 
-            // render gbuffer to screen
+
+
+            // render hdr buffer to screen
 
             GL.Viewport(this.ClientRectangle);
             GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);

@@ -48,6 +48,8 @@
     <Compile Include="Atmosphere\SkyScatteringCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkyScatteringRenderer.cs" />
     <Compile Include="Atmosphere\RayDirectionRenderer.cs" />
+    <Compile Include="HDR\HDRExposureMapper.cs" />
+    <Compile Include="Lighting\LightingCombiner.cs" />
     <Compile Include="NoiseTexture.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
     <Compile Include="Renderers\GenerationVisRaycastRenderer.cs" />
@@ -79,6 +81,7 @@
       <Name>Utils</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
