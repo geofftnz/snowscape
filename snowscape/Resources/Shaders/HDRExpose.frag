@@ -8,7 +8,6 @@ in vec2 texcoord0;
 out vec4 out_Colour;
 
 
-
 void main(void)
 {
 	
