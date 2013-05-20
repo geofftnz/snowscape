@@ -56,7 +56,7 @@ namespace OpenTKExtensions
             private static IEnumerable<ITextureParameter> GetDefaultTextureParameters()
             {
                 yield return new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                yield return new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMagFilter.Linear);
+                yield return new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
                 yield return new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
                 yield return new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             }
@@ -332,6 +332,14 @@ namespace OpenTKExtensions
         public void UnbindFromWriting()
         {
             this.FBO.Unbind(FramebufferTarget.DrawFramebuffer);
+
+            // generate any requested mipmaps
+            foreach (var ts in this.TextureSlots.Where(s => s.Enabled && s.TextureParam.MipMaps))
+            {
+                GL.Enable(EnableCap.Texture2D);
+                ts.Texture.Bind();
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
         }
 
         public void BindForReading()

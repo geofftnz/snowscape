@@ -19,6 +19,7 @@ using Snowscape.TerrainRenderer.Renderers;
 using OpenTKExtensions.Camera;
 using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
 using Lighting = Snowscape.TerrainRenderer.Lighting;
+using HDR = Snowscape.TerrainRenderer.HDR;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -57,7 +58,7 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
-        private GBufferShaderStep hdrExposureStep = new GBufferShaderStep("hdr");
+        private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
 
         //private Texture skyTexture;
@@ -374,7 +375,7 @@ namespace Snowscape.TerrainGenerationViewer
             //this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
 
             this.lightingStep.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
-
+            this.hdrExposure.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             this.skyRayDirectionRenderer.Load();
 
@@ -526,6 +527,7 @@ namespace Snowscape.TerrainGenerationViewer
             SetProjection();
             //this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
             this.lightingStep.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            this.hdrExposure.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
             this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 
@@ -792,6 +794,13 @@ namespace Snowscape.TerrainGenerationViewer
             this.lightingStep.UnbindFromWriting();
 
             // render gbuffer to hdr buffer
+            this.hdrExposure.BindForWriting();
+
+            perfmon.Start("RenderGBufferCombiner");
+            RenderGBufferCombiner();
+            perfmon.Stop("RenderGBufferCombiner");
+
+            this.hdrExposure.UnbindFromWriting();
 
 
 
@@ -801,9 +810,9 @@ namespace Snowscape.TerrainGenerationViewer
             GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            perfmon.Start("RenderGBufferCombiner");
-            RenderGBufferCombiner();
-            perfmon.Stop("RenderGBufferCombiner");
+            perfmon.Start("HDR");
+            this.hdrExposure.Render();
+            perfmon.Stop("HDR");
 
 
             GL.Disable(EnableCap.DepthTest);

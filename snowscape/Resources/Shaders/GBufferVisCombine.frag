@@ -1047,7 +1047,7 @@ void main(void)
 
 	// exposure
 	//c.rgb *= Er;
-	c.rgb = vec3(1.0) - exp(c.rgb * exposure);
+	//c.rgb = vec3(1.0) - exp(c.rgb * exposure);
     // -1.2
 
 	
@@ -1110,8 +1110,8 @@ void main(void)
 	// fog
 
 
-	//out_Colour = vec4(c.rgb,1.0);
-    out_Colour = vec4(sqrt(c.rgb),1.0);
+	out_Colour = vec4(c.rgb,1.0);
+    //out_Colour = vec4(sqrt(c.rgb),1.0);
 
     //out_Colour = vec4(pow(c.rgb,vec3(0.45)),1.0);
 }

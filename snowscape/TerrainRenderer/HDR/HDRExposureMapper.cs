@@ -32,7 +32,14 @@ namespace Snowscape.TerrainRenderer.HDR
             this.Width = width;
             this.Height = height;
 
-            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // colour
+            this.gbuffer.SetSlot(0,
+                new GBuffer.TextureSlotParam(TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat, true, new List<ITextureParameter>
+                {
+                    new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear),
+                    new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest),
+                    new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge),
+                    new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge)
+                }));  // colour
             this.gbuffer.Init(this.Width, this.Height);
 
             program.Init(
@@ -46,7 +53,7 @@ namespace Snowscape.TerrainRenderer.HDR
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, this.program);
 
-            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
+            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 0.0f, 1.0f, 0.001f, 10.0f);
             this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
 
         }
@@ -74,7 +81,6 @@ namespace Snowscape.TerrainRenderer.HDR
         {
             this.gbuffer.UnbindFromWriting();
 
-            // generate mipmaps of resulting buffer
             // read into main memory
             // do exposure calculation
             // lowpass

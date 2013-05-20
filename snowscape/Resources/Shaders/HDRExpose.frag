@@ -11,7 +11,8 @@ out vec4 out_Colour;
 void main(void)
 {
 	
-	vec3 col = texture(colTex,texcoord0).rgb;
+	//vec3 col = texture(colTex,texcoord0).rgb;
+	vec3 col = textureLod(colTex,texcoord0,0).rgb;
 
 	// apply exposure
 	col.rgb = vec3(1.0) - exp(col.rgb * exposure);

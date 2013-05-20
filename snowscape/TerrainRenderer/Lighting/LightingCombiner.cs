@@ -130,8 +130,6 @@ namespace Snowscape.TerrainRenderer.Lighting
 
         public void Render(RenderParams rp)
         {
-            /*
-           */
 
 
             rp.HeightTexture.Bind(TextureUnit.Texture2);
