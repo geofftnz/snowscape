@@ -361,20 +361,41 @@ float sampleDistanceFactor = 0.004/6000.0;
 //0.0009765625 * 0.5;
 //float sampleDistanceExponent = 4.0;
 
+
+vec3 getSkyLightFromDirection(vec3 dir, vec3 base)
+{
+	vec3 col = textureLod(skyCubeTex,base,9).rgb;
+
+	return col * (dot(dir, base) * 0.5 + 0.5);
+}
+
 vec3 getSkyLight(vec3 dir)
 {
     //return getInscatterSky(vec3(0.0,0.0,0.0),dir);
 	//return vec3(0.1);
 	//return textureLod(skyCubeTex,sunVector,7).rgb;
 
+	vec3 col = vec3(0.0);
+
+	col += getSkyLightFromDirection(dir, vec3(0.0,1.0,0.0));  // straight up
+	col += getSkyLightFromDirection(dir, vec3(1.0,0.2,0.0));  // compass direction
+	col += getSkyLightFromDirection(dir, vec3(-1.0,0.2,0.0));  // compass direction
+	col += getSkyLightFromDirection(dir, vec3(0.0,0.2,1.0));  // compass direction
+	col += getSkyLightFromDirection(dir, vec3(0.0,0.2,-1.0));  // compass direction
+
+	return col * 0.2;
+
+
+	/*
 	return (
 		textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb +
-		textureLod(skyCubeTex,vec3(1.0,0.5,1.0),9).rgb +
-		textureLod(skyCubeTex,vec3(-1.0,0.5,1.0),9).rgb +
-		textureLod(skyCubeTex,vec3(1.0,0.5,-1.0),9).rgb +
-		textureLod(skyCubeTex,vec3(-1.0,0.5,-1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(1.0,0.7,1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(-1.0,0.7,1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(1.0,0.7,-1.0),9).rgb +
+		textureLod(skyCubeTex,vec3(-1.0,0.7,-1.0),9).rgb +
 		textureLod(skyCubeTex,dir,9).rgb
-		) * 0.2;
+		) / 6.0;
+	*/
 
 	//return (textureLod(skyCubeTex,dir,9).rgb + textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb) * 0.5;
 }
@@ -382,14 +403,22 @@ vec3 getSkyLight(vec3 dir)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	//vec3 col = vec3(0.95);
+    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	vec3 col = vec3(pow(1.0,2.2));
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
 	//min(getShadow(p),cloudSunAbsorb(p))
-	vec3 col2 = 
-			col * sunIntensity() * clamp(dot(n,sunVector)+0.1,0,1) * getShadowForGroundPos(p,shadowHeight) //min(getShadowForGroundPos(p,shadowHeight),cloudSunAbsorb(p))
-			+ col * getSkyLight(n) * AO;
+
+	vec3 light = vec3(0.0);
+	
+	// direct illumination from sun
+	light += sunIntensity() * clamp(dot(n,sunVector),0.0,1.0) * getShadowForGroundPos(p,shadowHeight);
+
+	// indirect illumination from sky-dome
+	light += getSkyLight(n) * AO;
+
+	vec3 col2 = col * light;
+
     //return col2;
 	// can probably ignore the aborption between point and eye
 	return absorb(adepthTerrain(eye, p) * sampleDistanceFactor,col2,scatterAbsorb);
@@ -1078,6 +1107,42 @@ void main(void)
 		else
 		{
             p -= vec2(1.0,1.0);
+
+			// draw some colour bars to test exposure
+
+			vec3 cbar = vec3(0.0);
+			if (p.y>=0.0 && p.y < 0.1)
+			{
+				cbar = vec3(1.0,0.2,0.5);  
+			}
+			if (p.y>=0.1 && p.y < 0.2)
+			{
+				cbar = vec3(1.0,0.6,0.2);  
+			}
+			if (p.y>=0.2 && p.y < 0.3)
+			{
+				cbar = vec3(0.3,1.0,0.05);  
+			}
+			if (p.y>=0.3 && p.y < 0.4)
+			{
+				cbar = vec3(0.1,0.8,1.0);  
+			}
+			if (p.y>=0.4 && p.y < 0.5)
+			{
+				cbar = vec3(0.2,0.4,1.0);  
+			}
+			if (p.y>=0.5 && p.y < 0.6)
+			{
+				cbar = vec3(1.0,0.1,1.0);  
+			}
+			if (p.y>=0.6 && p.y < 0.7)
+			{
+				cbar = vec3(1.0,1.0,1.0);  
+			}
+
+			c.rgb = cbar * (p.x * 2.0);
+
+
             //c.rgb = texture(skyTex,p).rgb;
             /*
 			p *= 2.0;
