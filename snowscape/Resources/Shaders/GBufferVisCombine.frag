@@ -294,7 +294,8 @@ float getShadowForGroundPos(vec3 p, float shadowHeight)
 
 float getShadow(vec3 p)
 {
-    return smoothstep(-2.0,-0.1,p.y - texture(shadeTex,p.xz * texel).r);
+    //return smoothstep(-2.0,-0.1,p.y - texture(shadeTex,p.xz * texel).r);
+	return step(0.0,p.y - texture(shadeTex,p.xz * texel).r);
 }
 
 
@@ -636,7 +637,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
     vec3 d = target-eye;
     float l = length(target-eye);
     vec3 c = vec3(0.0);
-    float distFactor = 1.0;
+    float distFactor = 0.01;
     float alpha = dot(normalize(d), sunVector);
     float mie_factor = phase(alpha,0.99) * mieBrightness;
     // mie brightness
@@ -651,27 +652,37 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
     vec3 cmie = vec3(0.0);
     vec3 raleigh = vec3(0.0);
     float t = 0.0;
-    float dt = 0.001;
+    float dt = 0.002;
     float totalCloudDistance = 0.0f;
-    float cloudAbsorb;
+    float cloudAbsorb = 1.0;
     //for(float t=0.0;t<1.0;t+=dt)
 	while (t < 1.0)
 	{
         p = eye + d * t;
         float dist = l * t;
+
+		// cloud influx
         // sample for cloud at this point
-		float cloudSampleLength = cloudDensity(p) * dt;
-        totalCloudDistance += cloudSampleLength * l;
-        cloudAbsorb = exp(totalCloudDistance * cloudAbsorbFactor);
-        float s = min(getShadow(p),cloudSunAbsorb(p));
+		//float cloudSampleLength = cloudDensity(p) * dt;
+        //totalCloudDistance += cloudSampleLength * l;
+        //cloudAbsorb = exp(totalCloudDistance * cloudAbsorbFactor);
+        //float s = min(getShadow(p),cloudSunAbsorb(p));
+        //vec3 pointInflux = influx * s;
+
+		// no cloud influx
+		float s = getShadow(p);
         vec3 pointInflux = influx * s;
-        //mie += absorb(dist * distFactor, influx, scatterAbsorb) * s;
-		//raleigh += absorb(dist * distFactor, Kral * influx, scatterAbsorb) * s;
-		cmie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * cloudSampleLength * 20.0;
-        mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * dt;
-        raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * cloudAbsorb * dt;
+
+
+        mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * dt;
+		raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * dt;
+		
+		//cmie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * cloudSampleLength * 20.0;
+        //mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * dt;
+        //raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * cloudAbsorb * dt;
+
         t+=dt;
-        dt *= 1.02;
+        dt *= 1.05;
     }
 
 
@@ -986,9 +997,9 @@ void main(void)
 
 		//c = vec4(0.0,0.0,0.0,1.0);
 		
-		//vec4 inst = getInscatterTerrain(eyePos,pos.xyz);
-        //c.rgb *= inst.a;
-        //c.rgb += inst.rgb;
+		vec4 inst = getInscatterTerrain(eyePos,pos.xyz);
+        c.rgb *= inst.a;
+        c.rgb += inst.rgb;
 
 
         //vec4 cloud = getCloudAgainstTerrain(eyePos, normalize(wpos),d);
@@ -1045,10 +1056,10 @@ void main(void)
 				vec3 skyDir = normalize(posT.xyz);
                 float boxt = intersectBoxInside(eyePos, skyDir, boxMin,boxMax);
                 //
-				//vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * boxt);
+				vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * boxt);
                 // target a sphere around the terrain for the initial pass
-				//c.rgb *= inst.a;
-                //c.rgb += inst.rgb;
+				c.rgb *= inst.a;
+                c.rgb += inst.rgb;
             }
 
 //
