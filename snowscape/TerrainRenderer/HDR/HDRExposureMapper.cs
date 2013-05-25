@@ -17,6 +17,8 @@ namespace Snowscape.TerrainRenderer.HDR
         private Matrix4 projection = Matrix4.Identity;
         private Matrix4 modelview = Matrix4.Identity;
 
+        public IToneMapper ToneMapper { get; set; }
+
         public Vector4 debugCol = Vector4.Zero;
 
         public int Width { get; private set; }
@@ -28,16 +30,21 @@ namespace Snowscape.TerrainRenderer.HDR
         {
             get
             {
-                return 0.25f.Lerp(this.SlowExposure, this.FastExposure);
+                return 0.8f.Lerp(this.SlowExposure, this.FastExposure);
             }
         }
         public float TargetLuminance { get; set; }
+        public float WhiteLevel { get; set; }
+
 
         public HDRExposureMapper()
         {
+            this.WhiteLevel = 1.0f;
             this.FastExposure = -1.0f;
             this.SlowExposure = -1.0f;
-            this.TargetLuminance = 0.11f;
+            this.TargetLuminance = 0.4f;
+            this.ToneMapper = new ReinhardToneMap() { WhiteLevel = 2.0f };
+            //this.ToneMapper = new Uncharted2ToneMap();
         }
 
         public void Init(int width, int height)
@@ -103,26 +110,42 @@ namespace Snowscape.TerrainRenderer.HDR
             // read into main memory
             var tex = this.gbuffer.GetTextureAtSlot(0);
 
-            var leveldata = tex.GetLevelDataVector4(6);
+            var leveldata = tex.GetLevelDataVector4(8);
 
-            //vec3(1.0) - exp(col.rgb * exposure);
-            //Vector3.One - 
+            //((Uncharted2ToneMap)this.ToneMapper).ExposureBias = this.Exposure;
 
             // convert level data to luminance
             //var luminance = leveldata.Select(c=>Vector3.One - (c.Xyz * this.Exposure).Exp()).Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f).ToArray();
-            var luminance = leveldata.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp().Sqrt()).Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f).ToArray();
+            //var luminance = leveldata
+            //    //.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp())
+            //    .Select(c => this.ToneMapper.Tonemap(c.Xyz))
+            //    //.Select(c => c.Pow(1.0f/2.2f))
+            //    //.Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f)
+            //    .Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f)
+            //    .ToArray();
+
+
+            var luminance = leveldata
+                .Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp())
+                .Select(c => this.ToneMapper.Tonemap(c))
+                .Select(c => c.Pow(1.0f/2.2f))
+                .Select(c => c.X * 0.3333f + c.Y * 0.3333f + c.Z * 0.3333f)
+                //.Select(c => c.X * 0.2126f + c.Y * 0.7152f + c.Z * 0.0722f)
+                .ToArray();
+
 
             // take off top and bottom 10%
-            int totalPixels = luminance.Length;
-
+            //int totalPixels = luminance.Length;
             //var averageLuminance = luminance.Skip(totalPixels / 10).Take((totalPixels * 8) / 10).Average();
+
             var averageLuminance = luminance.Average();
 
             //float targetLuminance = 0.11f;
-            float deltaLuminance = (averageLuminance - this.TargetLuminance) * 0.2f;
+            //float deltaLuminance = (this.TargetLuminance - averageLuminance) * 0.05f;
+            float deltaLuminance = (averageLuminance - this.TargetLuminance) * 0.05f;
 
             this.FastExposure += deltaLuminance;
-            this.SlowExposure += deltaLuminance * 0.1f;
+            this.SlowExposure += deltaLuminance;
 
             debugCol.X = averageLuminance;
             debugCol.Y = this.Exposure;
@@ -143,6 +166,7 @@ namespace Snowscape.TerrainRenderer.HDR
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
                 sp.SetUniform("exposure", this.Exposure);
+                sp.SetUniform("whitelevel", this.WhiteLevel);
             });
         }
     }

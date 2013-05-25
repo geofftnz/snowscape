@@ -216,6 +216,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             //parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
             parameters.Add(new Parameter<float>("TargetLuminance", 0.2f, 0.01f, 1.0f, v => v += 0.01f, v => v -= 0.01f));
+            parameters.Add(new Parameter<float>("WhiteLevel", 4.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
             parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f));
             parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
 
@@ -223,7 +224,7 @@ namespace Snowscape.TerrainGenerationViewer
             //0.18867780436772762, 0.4978442963618773, 0.6616065586417131
             parameters.Add(new Parameter<float>("Kr_r", 0.1287f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
             parameters.Add(new Parameter<float>("Kr_g", 0.1898f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
-            parameters.Add(new Parameter<float>("Kr_b", 0.5f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));  // 0.6616
+            parameters.Add(new Parameter<float>("Kr_b", 0.6616f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));  // 0.6616
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.15f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028  0.1
 
@@ -807,6 +808,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
+            this.hdrExposure.WhiteLevel = (float)this.parameters["WhiteLevel"].GetValue();
 
             // render gbuffer to hdr buffer
             this.hdrExposure.BindForWriting();

@@ -263,8 +263,12 @@ vec3 getSkyColour(vec3 skyvector)
 	*/
 
 	//return texture(skyCubeTex,skyvector).rgb;
-	return textureLod(skyCubeTex,skyvector,0).rgb;
+	vec3 skycol =  textureLod(skyCubeTex,skyvector,0).rgb;
 
+	// sun disk
+	//skycol += vec3(1.0,0.9,0.6) * smoothstep(0.9998,0.99995,dot(skyvector,sunVector)) * 80.0;
+
+	return skycol;
 /*
     vec3 skycol = 
 		mix(
@@ -1108,8 +1112,8 @@ void main(void)
 		{
             p -= vec2(1.0,1.0);
 
+			/*
 			// draw some colour bars to test exposure
-
 			vec3 cbar = vec3(0.0);
 			if (p.y>=0.0 && p.y < 0.1)
 			{
@@ -1140,8 +1144,8 @@ void main(void)
 				cbar = vec3(1.0,1.0,1.0);  
 			}
 
-			c.rgb = cbar * (p.x * 2.0);
-
+			c.rgb = cbar * (p.x * 1.0);
+			*/
 
             //c.rgb = texture(skyTex,p).rgb;
             /*
