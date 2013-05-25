@@ -2,6 +2,7 @@
 precision highp float;
 
 uniform sampler2D colTex;
+uniform sampler2D histogramTex;
 uniform float exposure;
 uniform float whitelevel;
 
@@ -54,6 +55,18 @@ void main(void)
 	col = pow(col.rgb,vec3(1.0/2.2));
 
 	// TODO: Anti-alias
+
+	// render histogram
+	vec2 p = (texcoord0 - vec2(0.5,0.75)) * vec2(2.2,4.4);
+	if (p.x >= 0.0 && p.y >= 0.0 && p.x < 1.0 && p.y < 1.0)
+	{
+		vec4 h = texture(histogramTex,vec2(p.x,0.0));
+
+		col *= 0.5;
+		col.rgb += (vec3(1.0)-step(h.rgb,vec3(p.y))) * 0.2;
+		col.rgb += vec3((1.0 - step(h.a,p.y)) * 0.5);
+	}
+	
 
 	// output
 	out_Colour = vec4(col,1.0);
