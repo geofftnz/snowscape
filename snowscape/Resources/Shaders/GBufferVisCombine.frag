@@ -20,7 +20,9 @@ uniform float scatterAbsorb;
 uniform vec3 Kr;
 uniform float raleighBrightness;
 uniform float mieBrightness;
+uniform float skylightBrightness;
 uniform float groundLevel;
+uniform vec3 sunLight;
 // cloud layer
 uniform float cloudLevel;
 uniform float cloudThickness;
@@ -44,7 +46,7 @@ vec3 Kral = Kr;
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
               -0.60, -0.48,  0.64 );
-vec3 sunLight = vec3(8.0);
+//vec3 sunLight = vec3(8.0);
 float intersectBox ( vec3 rayo, vec3 rayd, vec3 boxMin, vec3 boxMax)
 {
     vec3 omin = ( boxMin - rayo ) / rayd;
@@ -409,8 +411,8 @@ vec3 getSkyLight(vec3 dir)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	//vec3 col = vec3(pow(1.0,2.2));
+    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	vec3 col = vec3(pow(1.0,2.2));
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
@@ -648,11 +650,18 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
     // raleigh brightness
 	//float adepth = adepthSky(vec3(0.0,0.9,0.0), sunVector);
+	float skylight_factor = skylightBrightness;
+
+	// get intensity of sky-light
+	vec3 skyLight = textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb;//getSkyLight(vec3(0.0,1.0,0.0));
+
 
 	vec3 influx = sunIntensity();
     vec3 mie = vec3(0.0);
     vec3 cmie = vec3(0.0);
     vec3 raleigh = vec3(0.0);
+	vec3 skyLightScatter = vec3(0.0);
+
     float t = 0.0;
     float dt = 0.002;
     float totalCloudDistance = 0.0f;
@@ -678,6 +687,8 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 
         mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * dt;
 		raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * dt;
+
+		skyLightScatter += skyLight * dt;
 		
 		//cmie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * cloudSampleLength * 20.0;
         //mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * dt;
@@ -693,7 +704,9 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
     cmie *= (0.6 + 0.4 * cloud_mie_factor) * l * distFactor;
     //raleigh *= dt;
 	raleigh *= raleigh_factor * l * distFactor;
-    return vec4((mie + cmie + raleigh),cloudAbsorb);
+	skyLightScatter *= skylight_factor * l * distFactor;
+
+    return vec4((mie + cmie + raleigh + skyLightScatter),cloudAbsorb);
     // * Er;
 }
 
@@ -1161,7 +1174,7 @@ void main(void)
 			*/
 
             //c.rgb = texture(skyTex,p).rgb;
-            
+            /*
 			p *= 2.0;
 
 			if (p.x < 1.0)
@@ -1185,7 +1198,7 @@ void main(void)
 				{
 					c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 				}
-			}
+			}*/
 			
 		}
 	}
