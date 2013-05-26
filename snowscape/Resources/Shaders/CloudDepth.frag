@@ -11,7 +11,12 @@ out vec4 out_CloudDepth;
 
 float cloudThickness(vec2 p)
 {
-	return max(texture2D(cloudTexture,p * cloudScale.xz).r - 0.3,0.0) / 0.7;  // * cloudScale.xz
+	return max(texture(cloudTexture,p * cloudScale.xz).r - 0.3,0.0) / 0.7;  // * cloudScale.xz
+}
+
+float cloudThicknessNoScale(vec2 p)
+{
+	return max(texture(cloudTexture,p).r - 0.3,0.0) / 0.7;  // * cloudScale.xz
 }
 
 float cloudDensity(vec3 p)
@@ -26,6 +31,41 @@ float cloudDensity(vec3 p)
 	float d = clamp(max(min(ctop - p.y , p.y - cbottom),0.0),0.0,1.0);
 	return d;
 }
+
+float texel = 1.0 / 1024.0;
+
+float cloudShadow(vec2 p)
+{
+
+	return cloudThicknessNoScale(p);
+
+	float cloudHalfThickness = cloudScale.y * 0.5;
+	vec2 d = normalize(sunDirection.xz) * (vec2(1.0) / cloudScale.xz);  // amount to move each step
+	float dh = sunDirection.y;  // change in height on each step
+	float h0 = cloudThickness(p) * cloudHalfThickness; // current height}
+
+	vec3 pp = vec3(p.x,h0,p.y);
+	vec3 dpp = vec3(d.x,dh,d.y);
+	float light = 1.0;
+	float i = 0.0f;
+
+	// starting at current position, move towards sun until we hit something or the top of the cloud layer
+	while (pp.z < cloudHalfThickness && i < 2048.0)
+	{
+		pp += dpp;
+		i += 1.0f;
+
+		float c = cloudThickness(pp.xz) * cloudHalfThickness * 0.5;
+		if (c > pp.y)
+		{
+			light = 0.0;
+			break;
+		}
+	}
+	return light;
+}
+
+
 
 void main(void)
 {
@@ -61,5 +101,7 @@ void main(void)
 		}
 	}
 
-	out_CloudDepth = vec4(cloudStart,cloudEnd,totalDensity,1.0);
+	float topLight = cloudShadow(cloudcoord.xy);
+
+	out_CloudDepth = vec4(cloudStart,cloudEnd,totalDensity,topLight);
 }

@@ -1161,7 +1161,7 @@ void main(void)
 			*/
 
             //c.rgb = texture(skyTex,p).rgb;
-            /*
+            
 			p *= 2.0;
 
 			if (p.x < 1.0)
@@ -1185,7 +1185,7 @@ void main(void)
 				{
 					c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 				}
-			}*/
+			}
 			
 		}
 	}
