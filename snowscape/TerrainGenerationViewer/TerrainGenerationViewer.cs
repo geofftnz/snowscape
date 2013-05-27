@@ -235,6 +235,8 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("skylightBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
 
+            parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.01f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
+
             parameters.Add(new Parameter<float>("groundLevel", 0.992f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
             parameters.Add(new Parameter<float>("cloudLevel", 100.0f, -1000.0f, 1000.0f, v => v + 50f, v => v - 50f));
@@ -655,7 +657,8 @@ namespace Snowscape.TerrainGenerationViewer
                 CloudLevel = (float)this.parameters["cloudLevel"].GetValue(),
                 CloudThickness = (float)this.parameters["cloudThickness"].GetValue(),
                 TileWidth = this.terrainTile.Width,
-                TileHeight = this.terrainTile.Height
+                TileHeight = this.terrainTile.Height,
+                SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue()
             };
 
             this.lightingStep.Render(rp);
