@@ -31,7 +31,7 @@ uniform float nearScatterDistance;
 
 in vec2 texcoord0;
 out vec4 out_Colour;
-vec3 getInscatterSky(vec3 eye, vec3 dir);
+
 vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor);
 float cloudSunAbsorb(vec3 p);
 // air absorbtion
@@ -243,70 +243,18 @@ vec3 inscatter(float dist, vec3 col, float f)
 //
 vec3 getSkyColour(vec3 skyvector)
 {
-	vec2 skyCoord;
-
-	// calculate coordinates to query sky texture
-	/*
-	// work out angle
-	float a = atan(skyvector.z,skyvector.x);
-	float r = length(skyvector.xz);
-
-	if (skyvector.y < 0.0)
-	{
-		r = 2.0 - r;
-	}
-
-	skyCoord.x = 0.5 + cos(a) * r * 0.45;
-	skyCoord.y = 0.5 - sin(a) * r * 0.45;
-	*/
-
-	/*
-	vec2 v = skyvector.xz;// / 0.9;
-
-	float theta = acos(skyvector.y);
-	float phi = atan(skyvector.z, skyvector.y);
-
-
-	
-	skyCoord.xy = vec2(0.5) + vec2(sin(theta) * cos(phi), sin(theta) * sin(phi));
-
-	return texture(skyTex,skyCoord).rgb;
-	*/
-
-	//return texture(skyCubeTex,skyvector).rgb;
-	vec3 skycol =  textureLod(skyCubeTex,skyvector,0).rgb;
-
-	// sun disk
-	//skycol += vec3(1.0,0.9,0.6) * smoothstep(0.9998,0.99995,dot(skyvector,sunVector)) * 80.0;
-
-	return skycol;
-/*
-    vec3 skycol = 
-		mix(
-			vec3(0.02,0.03,0.2),
-			vec3(0.4,0.6,0.9),
-			pow(clamp(1.0-dot(skyvector,vec3(0.0,1.0,0.0)),0.0,1.0),2.0)
-			);
-    // scattering around the sun
-	//skycol += vec3(1.0,0.9,0.3) * pow(clamp(dot(skyvector,sunVector),0.0,1.0),300.0) * 4.0;
-
-	// sun disk
-	skycol += vec3(1.0,0.9,0.6) * smoothstep(0.9998,0.99995,dot(skyvector,sunVector)) * 8.0;
-    return skycol;
-*/
+	return textureLod(skyCubeTex,skyvector,0).rgb;
 }
 
 
 float getShadowForGroundPos(vec3 p, float shadowHeight)
 {
     return smoothstep(-0.1,-0.02,p.y - shadowHeight);
-	//return step(0.0,p.y - shadowHeight);
 }
 
 
 float getShadow(vec3 p)
 {
-    //return smoothstep(-2.0,-0.1,p.y - texture(shadeTex,p.xz * texel).r);
 	return step(0.0,p.y - texture(shadeTex,p.xz * texel).r);
 }
 
@@ -373,25 +321,14 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
     return col;
 }
 
-
-//float sampleDistanceFactor = 0.004/6000.0;
-//0.0009765625 * 0.5;
-//float sampleDistanceExponent = 4.0;
-
-
 vec3 getSkyLightFromDirection(vec3 dir, vec3 base)
 {
 	vec3 col = textureLod(skyCubeTex,base,9).rgb;
-
 	return col * (dot(dir, base) * 0.5 + 0.5);
 }
 
 vec3 getSkyLight(vec3 dir)
 {
-    //return getInscatterSky(vec3(0.0,0.0,0.0),dir);
-	//return vec3(0.1);
-	//return textureLod(skyCubeTex,sunVector,7).rgb;
-
 	vec3 col = vec3(0.0);
 
 	col += getSkyLightFromDirection(dir, vec3(0.0,1.0,0.0));  // straight up
@@ -401,20 +338,6 @@ vec3 getSkyLight(vec3 dir)
 	col += getSkyLightFromDirection(dir, vec3(0.0,0.2,-1.0));  // compass direction
 
 	return col * 0.2;
-
-
-	/*
-	return (
-		textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb +
-		textureLod(skyCubeTex,vec3(1.0,0.7,1.0),9).rgb +
-		textureLod(skyCubeTex,vec3(-1.0,0.7,1.0),9).rgb +
-		textureLod(skyCubeTex,vec3(1.0,0.7,-1.0),9).rgb +
-		textureLod(skyCubeTex,vec3(-1.0,0.7,-1.0),9).rgb +
-		textureLod(skyCubeTex,dir,9).rgb
-		) / 6.0;
-	*/
-
-	//return (textureLod(skyCubeTex,dir,9).rgb + textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb) * 0.5;
 }
 
 
@@ -731,71 +654,6 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
     return vec4((mie + cmie + raleigh + skyLightScatter),cloudAbsorb);
     // * Er;
 }
-
-
-
-// eye is eye in world coordinates - this will be normalised for the sky sphere
-// dir is the direction of the ray
-vec3 getInscatterSky(vec3 eye, vec3 dir)
-{
-    highp float tscale = 0.004/6000.0;
-    vec3 p0 =  eye * tscale + vec3(0.0,groundLevel + 0.001,0.0);
-    // replace with scaled pos and height
-
-	//if (horizonBlock(p0, -dir, groundLevel) < 0.5)
-	//{
-		//return vec3(0.0); // todo: raycast and scatter
-	//}
-
-	//return vec3(adepthSkyGround(p0,dir,groundLevel));
-
-
-	float ray_length = adepthSkyGround(p0,dir,groundLevel);
-    //adepthSky(p0, dir);
-
-	float alpha = dot(dir, sunVector);
-    float mie_factor = phase(alpha,0.99) * mieBrightness;
-    // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
-    // raleigh brightness
-
-	vec3 mie = vec3(0.0);
-    vec3 raleigh = vec3(0.0);
-    float nsteps = 50.0;
-    float stepsize = 1.0 / nsteps;
-    float step_length = ray_length / nsteps;
-    vec3 sunIntensity = sunLight;
-    float scatteramount = scatterAbsorb;
-    //1.5;
-	float ralabsorbfactor = 140.0;
-    float mieabsorbfactor = 260.0;
-    // calculate fake refraction factor. This will be used to shift the sampling points along the ray to simulate light curving through the atmosphere.
-	float refk = pow(1.0 - clamp(  abs(0.05 + dot(dir,normalize(p0))) ,0.0,1.0),9.0) * 0.5;
-    //* clamp(dot(-dir,sunVector)*0.5+0.5,0.0,1.0)
-	
-
-	for(float t = 0.0; t < 1.0; t += stepsize)
-	{
-        float sample_dist = ray_length * t;
-        vec3 p = p0 + dir * sample_dist;
-        // advance sun sample position along ray proportional to how shallow our eye ray is.
-		
-		vec3 psun = p0 + dir * (t * (1.0-refk) + refk * 1.0) * ray_length;
-        float sample_depth = adepthSky(psun,sunVector) + sample_dist;
-        // todo: + sample_dist ?
-
-		//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonBlock(psun, -sunVector, groundLevel);// * horizonLight(p,sunVector,groundLevel,scatteramount);
-		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
-        raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
-        mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
-    }
-
-
-	raleigh *= raleigh_factor * ray_length;
-    mie *= mie_factor * ray_length;
-    return vec3(raleigh + mie);
-}
-
 
 
 
