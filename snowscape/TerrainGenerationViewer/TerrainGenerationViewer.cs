@@ -241,6 +241,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("cloudLevel", 100.0f, -1000.0f, 1000.0f, v => v + 50f, v => v - 50f));
             parameters.Add(new Parameter<float>("cloudThickness", 500.0f, 10.0f, 2000.0f, v => v + 10f, v => v - 10f));
+
+            parameters.Add(new Parameter<float>("NearScatterDistance", 2000.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -658,7 +660,8 @@ namespace Snowscape.TerrainGenerationViewer
                 CloudThickness = (float)this.parameters["cloudThickness"].GetValue(),
                 TileWidth = this.terrainTile.Width,
                 TileHeight = this.terrainTile.Height,
-                SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue()
+                SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue(),
+                NearScatterDistance = (float)this.parameters["NearScatterDistance"].GetValue()
             };
 
             this.lightingStep.Render(rp);

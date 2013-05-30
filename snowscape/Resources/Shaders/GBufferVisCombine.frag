@@ -27,6 +27,8 @@ uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scat
 // cloud layer
 uniform float cloudLevel;
 uniform float cloudThickness;
+uniform float nearScatterDistance;
+
 in vec2 texcoord0;
 out vec4 out_Colour;
 vec3 getInscatterSky(vec3 eye, vec3 dir);
@@ -1076,9 +1078,16 @@ void main(void)
 			//c = vec4(skycol,1.0);
 
 			//c.rgb += getInscatterSky(eyePos, normalize(posT.xyz));
+			vec3 skyDir = normalize(posT.xyz);
+			c.rgb += getSkyColour(skyDir);
 
-			c.rgb += getSkyColour(normalize(posT.xyz));
+			// scattering within near distance
+			vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * nearScatterDistance);
+			c.rgb *= inst.a;
+            c.rgb += inst.rgb;
 
+			/*
+			// scattering within box
             vec3 boxMin = vec3(-1024.0,-1000.0,-1024.0);
             vec3 boxMax = vec3(2048.0,6000.0,2048.0);
             //
@@ -1095,7 +1104,7 @@ void main(void)
                 // target a sphere around the terrain for the initial pass
 				c.rgb *= inst.a;
                 c.rgb += inst.rgb;
-            }
+            }*/
 
 //
 //1.0 – exp(-fExposure x color)
