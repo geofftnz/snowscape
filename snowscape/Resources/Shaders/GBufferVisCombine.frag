@@ -20,6 +20,7 @@ uniform float scatterAbsorb;
 uniform vec3 Kr;
 uniform float raleighBrightness;
 uniform float mieBrightness;
+uniform float nearMieBrightness;
 uniform float skylightBrightness;
 uniform float groundLevel;
 uniform vec3 sunLight;
@@ -261,7 +262,7 @@ float getShadow(vec3 p)
 
 float directIllumination(vec3 p, vec3 n, float shadowHeight)
 {
-    return  getShadowForGroundPos(p, shadowHeight) * clamp(dot(n,sunVector)+0.2,0,1);
+    return  getShadowForGroundPos(p, shadowHeight) * clamp(dot(n,sunVector),0,1);
 }
 
 
@@ -582,7 +583,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 	float distFactor = sampleDistanceFactor;
 
     float alpha = dot(normalize(d), sunVector);
-    float mie_factor = phase(alpha,0.99) * mieBrightness;
+    float mie_factor = phase(alpha,0.99) * mieBrightness * nearMieBrightness;
     // mie brightness
 	float cloud_mie_factor = phase(alpha,0.5) * mieBrightness * 10.0;
     // mie brightness for cloud samples

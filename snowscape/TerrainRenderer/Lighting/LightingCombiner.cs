@@ -70,9 +70,11 @@ namespace Snowscape.TerrainRenderer.Lighting
             public Vector3 SunLight { get; set; }
             public float SampleDistanceFactor { get; set; }
             public float NearScatterDistance { get; set; }
+            public float NearMieBrightness { get; set; }
             public RenderParams()
             {
             }
+
         }
 
 
@@ -168,6 +170,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("cloudThickness", rp.CloudThickness);
                 sp.SetUniform("sampleDistanceFactor", rp.SampleDistanceFactor);
                 sp.SetUniform("nearScatterDistance", rp.NearScatterDistance);
+                sp.SetUniform("nearMieBrightness", rp.NearMieBrightness);
                 sp.SetUniform("boxparam", new Vector4((float)rp.TileWidth, (float)rp.TileHeight, 0.0f, 1.0f));
             });
         }
