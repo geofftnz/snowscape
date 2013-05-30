@@ -225,24 +225,24 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("Kr_r", 0.1287f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
             parameters.Add(new Parameter<float>("Kr_g", 0.1898f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));
             parameters.Add(new Parameter<float>("Kr_b", 0.6616f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f));  // 0.6616
-            parameters.Add(new Parameter<float>("Sun_r", 4.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f));
-            parameters.Add(new Parameter<float>("Sun_g", 4.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f));
+            parameters.Add(new Parameter<float>("Sun_r", 5.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f));
+            parameters.Add(new Parameter<float>("Sun_g", 4.4f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f));
             parameters.Add(new Parameter<float>("Sun_b", 4.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f));  // 0.6616
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.15f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028  0.1
 
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
-            parameters.Add(new Parameter<float>("skylightBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("skylightBrightness", 3.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.01f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
 
-            parameters.Add(new Parameter<float>("groundLevel", 0.992f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
+            parameters.Add(new Parameter<float>("groundLevel", 0.996f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
             parameters.Add(new Parameter<float>("cloudLevel", 100.0f, -1000.0f, 1000.0f, v => v + 50f, v => v - 50f));
             parameters.Add(new Parameter<float>("cloudThickness", 500.0f, 10.0f, 2000.0f, v => v + 10f, v => v - 10f));
 
-            parameters.Add(new Parameter<float>("NearScatterDistance", 2000.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
+            parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -894,7 +894,12 @@ namespace Snowscape.TerrainGenerationViewer
                     (float)this.parameters["Kr_r"].GetValue(),
                     (float)this.parameters["Kr_g"].GetValue(),
                     (float)this.parameters["Kr_b"].GetValue()
-                )
+                ),
+                new Vector3(
+                        (float)this.parameters["Sun_r"].GetValue(),
+                        (float)this.parameters["Sun_g"].GetValue(),
+                        (float)this.parameters["Sun_b"].GetValue()
+                    )
                 );
         }
 

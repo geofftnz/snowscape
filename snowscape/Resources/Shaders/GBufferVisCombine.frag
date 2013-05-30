@@ -249,7 +249,7 @@ vec3 getSkyColour(vec3 skyvector)
 
 float getShadowForGroundPos(vec3 p, float shadowHeight)
 {
-    return smoothstep(-0.1,-0.02,p.y - shadowHeight);
+    return smoothstep(-1.0,-0.02,p.y - shadowHeight);
 }
 
 
@@ -566,7 +566,7 @@ vec4 getInscatterTerrain2(vec3 eye, vec3 target)
 // get the air density for a given height. Used 
 float getAirDensity(float h)
 {
-	return exp(-h/300.0);
+	return exp(-h/200.0);
 }
 
 // get the amount of light scattered towards the eye when looking at target

@@ -9,6 +9,7 @@ uniform float mieBrightness;
 uniform float scatterAbsorb;
 uniform vec3 Kr;
 uniform vec3 eye;
+uniform vec3 sunLight;
 
 uniform vec3 facenormal;
 uniform vec3 facexbasis;
@@ -17,10 +18,6 @@ uniform vec3 faceybasis;
 in vec2 sky2d;
 
 out vec3 out_Sky;
-
-
-// constants that probably should be turned into uniforms
-vec3 sunLight = vec3(4.0);
 
 
 // other vars
