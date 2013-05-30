@@ -563,8 +563,11 @@ vec4 getInscatterTerrain2(vec3 eye, vec3 target)
 	return c;
 }
 
-
-
+// get the air density for a given height. Used 
+float getAirDensity(float h)
+{
+	return exp(-h/300.0);
+}
 
 // get the amount of light scattered towards the eye when looking at target
 // target is a terrain intersection
@@ -623,7 +626,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 		float s = getShadow(p);
         vec3 pointInflux = influx * s;
 
-		float scatter_factor = dt * (1.0 / (p.y * 0.02)); // scatter less as we go higher.
+		float scatter_factor = dt * getAirDensity(p.y); // scatter less as we go higher.
 
         mie += absorb(dist, pointInflux, scatterAbsorb) * scatter_factor;
 		raleigh += absorb(dist, Kral * pointInflux, scatterAbsorb) * scatter_factor;
