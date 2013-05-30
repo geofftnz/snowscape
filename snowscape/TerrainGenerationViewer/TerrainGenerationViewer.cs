@@ -744,24 +744,24 @@ namespace Snowscape.TerrainGenerationViewer
             y += 0.02f;
             textManager.AddOrUpdate(
                 new TextBlock(
-                    "sunvector",
-                    this.sunDirection.ToString(),
+                    "eye",
+                    this.eyePos.ToString(),
                     new Vector3(0.01f, y, 0.0f),
                     0.0004f,
                     new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
                     )
                 );
 
-            y += 0.02f;
-            textManager.AddOrUpdate(
-                new TextBlock(
-                    "hdrdebug",
-                    this.hdrExposure.debugCol.ToString(),
-                    new Vector3(0.01f, y, 0.0f),
-                    0.0004f,
-                    new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
-                    )
-                );
+            //y += 0.02f;
+            //textManager.AddOrUpdate(
+            //    new TextBlock(
+            //        "hdrdebug",
+            //        this.hdrExposure.debugCol.ToString(),
+            //        new Vector3(0.01f, y, 0.0f),
+            //        0.0004f,
+            //        new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
+            //        )
+            //    );
 
             //}
 
