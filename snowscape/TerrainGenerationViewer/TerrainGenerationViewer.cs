@@ -215,8 +215,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
 
             //parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
-            parameters.Add(new Parameter<float>("TargetLuminance", 0.2f, 0.01f, 1.0f, v => v += 0.01f, v => v -= 0.01f));
-            parameters.Add(new Parameter<float>("WhiteLevel", 4.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
+            //parameters.Add(new Parameter<float>("TargetLuminance", 0.2f, 0.01f, 1.0f, v => v += 0.01f, v => v -= 0.01f));
+            parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
             parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f));
             parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
 
@@ -234,6 +234,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("skylightBrightness", 3.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.01f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
 
@@ -244,6 +245,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));
+            
             
         }
 
@@ -664,7 +666,9 @@ namespace Snowscape.TerrainGenerationViewer
                 TileHeight = this.terrainTile.Height,
                 SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue(),
                 NearScatterDistance = (float)this.parameters["NearScatterDistance"].GetValue(),
-                NearMieBrightness = (float)this.parameters["NearMieBrightness"].GetValue()
+                NearMieBrightness = (float)this.parameters["NearMieBrightness"].GetValue(),
+                AOInfluenceHeight = (float)this.parameters["AOInfluenceHeight"].GetValue()
+                
             };
 
             this.lightingStep.Render(rp);
@@ -826,7 +830,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.lightingStep.UnbindFromWriting();
 
 
-            this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
+            //this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
             this.hdrExposure.WhiteLevel = (float)this.parameters["WhiteLevel"].GetValue();
 
             // render gbuffer to hdr buffer

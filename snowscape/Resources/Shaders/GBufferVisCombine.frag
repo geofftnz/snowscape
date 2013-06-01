@@ -25,6 +25,7 @@ uniform float skylightBrightness;
 uniform float groundLevel;
 uniform vec3 sunLight;
 uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scattering coordinates for absorb(). Started at 0.004/6000.0 to match skybox
+uniform float aoInfluenceHeight; // height above the terrain to blend influence of AO when raymarching scattering
 // cloud layer
 uniform float cloudLevel;
 uniform float cloudThickness;
@@ -37,6 +38,8 @@ vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor);
 float cloudSunAbsorb(vec3 p);
 // air absorbtion
 //vec3 Kr = vec3(0.18867780436772762, 0.4978442963618773, 0.6616065586417131);
+
+
 
 vec3 Kr2 = Kr;
 //vec3 Kr2 = vec3(0.100,0.598,0.662) * 1.4; // just making shit up
@@ -257,6 +260,16 @@ float getShadowForGroundPos(vec3 p, float shadowHeight)
 float getShadow(vec3 p)
 {
 	return step(0.0,p.y - texture(shadeTex,p.xz * texel).r);
+}
+
+// this reduces the contribution of skylight scatter in areas close to the ground that see less sky.
+// this is so subtle it might as well get left out
+float getAOInfluence(vec3 p)
+{
+	float influence = clamp((p.y - sampleHeight(p.xz)) / aoInfluenceHeight,0.0,1.0);
+	float ao = texture(shadeTex,p.xz * texel).g;
+	ao *= ao;
+	return mix(ao,1.0,influence);
 }
 
 
@@ -632,7 +645,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
         mie += absorb(dist, pointInflux, scatterAbsorb) * scatter_factor;
 		raleigh += absorb(dist, Kral * pointInflux, scatterAbsorb) * scatter_factor;
 
-		skyLightScatter += inscatter(dist, skyLight, scatterAbsorb) * scatter_factor;
+		skyLightScatter += inscatter(dist, skyLight, scatterAbsorb) * scatter_factor * getAOInfluence(p);
 		//skyLightScatter += absorb(dist, skyLight, scatterAbsorb) * scatter_factor;
 		//skyLightScatter += skyLight * scatter_factor;
 		
