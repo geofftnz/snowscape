@@ -233,7 +233,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
-            parameters.Add(new Parameter<float>("skylightBrightness", 3.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("skylightBrightness", 1.5f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.01f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
@@ -245,9 +245,9 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));
-            
-            parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.002f, 0.0001f, 10.0f, v => v * 1.02f, v => v * 0.98f));
-            parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.05f, 1.0f, 4.0f, v => v + 0.01f, v => v - 0.01f));
+
+            parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.001f, 0.0001f, 10.0f, v => v + 0.0001f, v => v - 0.0001f));
+            parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.1f, 1.0f, 2.0f, v => v + 0.001f, v => v - 0.001f));
 
         }
 
@@ -671,7 +671,8 @@ namespace Snowscape.TerrainGenerationViewer
                 NearMieBrightness = (float)this.parameters["NearMieBrightness"].GetValue(),
                 AOInfluenceHeight = (float)this.parameters["AOInfluenceHeight"].GetValue(),
                 ScatteringInitialStepSize = (float)this.parameters["ScatteringInitialStepSize"].GetValue(),
-                ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue()
+                ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue(),
+                Time = (float)(this.frameCounter.Frames % 65536)
             };
 
             this.lightingStep.Render(rp);

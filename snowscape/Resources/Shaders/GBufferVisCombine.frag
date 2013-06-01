@@ -26,6 +26,7 @@ uniform float groundLevel;
 uniform vec3 sunLight;
 uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scattering coordinates for absorb(). Started at 0.004/6000.0 to match skybox
 uniform float aoInfluenceHeight; // height above the terrain to blend influence of AO when raymarching scattering
+uniform float time;
 // cloud layer
 uniform float cloudLevel;
 uniform float cloudThickness;
@@ -81,6 +82,13 @@ float intersectBoxInside  ( vec3 rayo, vec3 rayd, vec3 boxMin, vec3 boxMax)
 }
 
 
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+float rand(vec3 co){
+    return fract(sin(dot(co.xyz ,vec3(12.9898,78.233,47.985))) * 43758.5453);
+}
 
 // credit: iq/rgba
 float hash( float n )
@@ -266,6 +274,7 @@ float getShadowForGroundPos(vec3 p, float shadowHeight)
 float getShadow(vec3 p)
 {
 	return step(0.0,p.y - texture(shadeTex,p.xz * texel).r);
+	//return smoothstep(0.0,0.01,p.y - texture(shadeTex,p.xz * texel).r);
 }
 
 // this reduces the contribution of skylight scatter in areas close to the ground that see less sky.
@@ -625,6 +634,12 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
     float dt = scatteringInitialStepSize;
     float totalCloudDistance = 0.0f;
     float cloudAbsorb = 1.0;
+
+	vec3 rp = vec3(texcoord0.xy * 497.0, hash(time*7.117));
+	// dither start position
+	t += dt * 2.0 * rand(rp);
+	// offset eye by a small amount
+	//eye += (vec3( hash(dot(rp, vec3(14.7, 13.5, 99.2))), hash(dot(rp, vec3(14.7, 13.5, 99.2)) * 391.7), hash(dot(rp, vec3(14.7, 13.5, 99.2)) * 173.1) ) - vec3(0.5)) * 0.2;
 
 	//float height_scale = 6000.0;
 

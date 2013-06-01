@@ -74,7 +74,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float AOInfluenceHeight { get; set; }
             public float ScatteringInitialStepSize { get; set; }
             public float ScatteringStepGrowthFactor { get; set; }
-
+            public float Time { get; set; }
 
             public RenderParams()
             {
@@ -179,6 +179,8 @@ namespace Snowscape.TerrainRenderer.Lighting
 
                 sp.SetUniform("scatteringInitialStepSize", rp.ScatteringInitialStepSize);
                 sp.SetUniform("scatteringStepGrowthFactor", rp.ScatteringStepGrowthFactor);
+
+                sp.SetUniform("time", rp.Time);
 
                 sp.SetUniform("boxparam", new Vector4((float)rp.TileWidth, (float)rp.TileHeight, 0.0f, 1.0f));
             });
