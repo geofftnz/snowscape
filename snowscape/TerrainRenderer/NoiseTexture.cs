@@ -66,7 +66,7 @@ namespace Snowscape.TerrainRenderer
                     (float)this.Width, (float)this.Height,
                     rx, ry,
                     10, // octaves
-                    0.001f,  // scale
+                    0.005f,  // scale
                     2.0f, // amplitude
                     h => Math.Abs(h),
                     h => h);

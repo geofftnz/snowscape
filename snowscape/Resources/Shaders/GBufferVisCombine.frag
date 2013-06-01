@@ -316,15 +316,19 @@ vec3 sunIntensity()
     return absorb(adepthSky(p, sunVector), sunLight, scatterAbsorb) * horizonLight(p,sunVector,groundLevel,scatterAbsorb);
 }
 
+vec3 gc(float r, float g, float b)
+{
+	return pow(vec3(r,g,b) / vec3(255.0),vec3(2.2));
+}
 
 
 vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 {
-    vec3 colH1 = pow(vec3(182,180,196) / vec3(255.0),vec3(2.0));
-    vec3 colL1 = pow(vec3(158,136,79) / vec3(255.0),vec3(2.0));
+    vec3 colH1 = gc(100,105,110);//  pow(vec3(182,180,196) / vec3(255.0),vec3(2.2));
+    vec3 colL1 = gc(30,64,5); //pow(vec3(158,136,79) / vec3(255.0),vec3(2.2));
     //vec3 colH1 = pow(vec3(0.3,0.247,0.223),vec3(2.0));
     //vec3 colL1 = pow(vec3(0.41,0.39,0.16),vec3(2.0));
-    vec3 colW = pow(vec3(0.7,0.8,1.0),vec3(2.0));
+    vec3 colW = gc(150,150,200); //pow(vec3(0.7,0.8,1.0),vec3(2.0));
     float looseblend = s.r*s.r;
     vec3 col = mix(colH1,colL1,looseblend);
     vec3 eyeDir = normalize(p-eyePos);
@@ -372,8 +376,8 @@ vec3 getSkyLight(vec3 dir)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	vec3 col = vec3(pow(1.0,2.2));
+    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	//vec3 col = vec3(pow(1.0,2.2));
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
@@ -658,7 +662,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
         //vec3 pointInflux = influx * s;
 
 		// no cloud influx
-		float s = getShadow(p);
+		float s = getShadow(p);// * cloudSunAbsorb(p);
         vec3 pointInflux = influx * s;
 
 		float scatter_factor = dt * getAirDensity(p.y); // scatter less as we go higher.
@@ -670,7 +674,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 		//skyLightScatter += absorb(dist, skyLight, scatterAbsorb) * scatter_factor;
 		//skyLightScatter += skyLight * scatter_factor;
 		
-		//cmie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * cloudSampleLength * 20.0;
+		//cmie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * cloudSampleLength;
         //mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * dt;
         //raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * cloudAbsorb * dt;
 
@@ -681,7 +685,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 
 	//mie *= dt;
 	mie *= mie_factor * l * distFactor;
-    cmie *= (0.6 + 0.4 * cloud_mie_factor) * l * distFactor;
+    //cmie *= (0.6 + 0.4 * cloud_mie_factor) * l * distFactor;
     //raleigh *= dt;
 	raleigh *= raleigh_factor * l * distFactor;
 	skyLightScatter *= skylight_factor * l * distFactor;
