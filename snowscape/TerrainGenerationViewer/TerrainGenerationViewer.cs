@@ -246,7 +246,9 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));
             
-            
+            parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.002f, 0.0001f, 10.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.05f, 1.0f, 4.0f, v => v + 0.01f, v => v - 0.01f));
+
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -667,8 +669,9 @@ namespace Snowscape.TerrainGenerationViewer
                 SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue(),
                 NearScatterDistance = (float)this.parameters["NearScatterDistance"].GetValue(),
                 NearMieBrightness = (float)this.parameters["NearMieBrightness"].GetValue(),
-                AOInfluenceHeight = (float)this.parameters["AOInfluenceHeight"].GetValue()
-                
+                AOInfluenceHeight = (float)this.parameters["AOInfluenceHeight"].GetValue(),
+                ScatteringInitialStepSize = (float)this.parameters["ScatteringInitialStepSize"].GetValue(),
+                ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue()
             };
 
             this.lightingStep.Render(rp);

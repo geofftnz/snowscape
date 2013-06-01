@@ -72,10 +72,13 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float NearScatterDistance { get; set; }
             public float NearMieBrightness { get; set; }
             public float AOInfluenceHeight { get; set; }
+            public float ScatteringInitialStepSize { get; set; }
+            public float ScatteringStepGrowthFactor { get; set; }
+
+
             public RenderParams()
             {
             }
-
         }
 
 
@@ -173,6 +176,10 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("nearScatterDistance", rp.NearScatterDistance);
                 sp.SetUniform("nearMieBrightness", rp.NearMieBrightness);
                 sp.SetUniform("aoInfluenceHeight", rp.AOInfluenceHeight);
+
+                sp.SetUniform("scatteringInitialStepSize", rp.ScatteringInitialStepSize);
+                sp.SetUniform("scatteringStepGrowthFactor", rp.ScatteringStepGrowthFactor);
+
                 sp.SetUniform("boxparam", new Vector4((float)rp.TileWidth, (float)rp.TileHeight, 0.0f, 1.0f));
             });
         }

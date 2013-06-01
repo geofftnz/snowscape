@@ -31,6 +31,12 @@ uniform float cloudLevel;
 uniform float cloudThickness;
 uniform float nearScatterDistance;
 
+// scattering performance
+uniform float scatteringInitialStepSize;
+uniform float scatteringStepGrowthFactor;
+
+
+
 in vec2 texcoord0;
 out vec4 out_Colour;
 
@@ -616,7 +622,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 	vec3 skyLightScatter = vec3(0.0);
 
     float t = 0.0;
-    float dt = 0.002;
+    float dt = scatteringInitialStepSize;
     float totalCloudDistance = 0.0f;
     float cloudAbsorb = 1.0;
 
@@ -654,7 +660,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
         //raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * cloudAbsorb * dt;
 
         t+=dt;
-        dt *= 1.05;
+        dt *= scatteringStepGrowthFactor;
     }
 
 
