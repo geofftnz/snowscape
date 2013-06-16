@@ -190,10 +190,13 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 
 float sampleHeight(vec2 posTile)
 {
+	float t = 1.0 / boxparam.x;
+
+	return texture2D(heightTex,posTile*t).r;
+/*
 	vec2 ipos = floor(posTile);
 	vec2 fpos = fract(posTile);
 
-	float t = 1.0 / boxparam.x;
 	vec2 ofs = vec2(t*0.5,t*0.5);
 
     float h00 = texture2D(heightTex,vec2(ipos.x, ipos.y)*t + ofs).r;
@@ -205,7 +208,7 @@ float sampleHeight(vec2 posTile)
 		mix(h00,h01,fpos.y),
 		mix(h10,h11,fpos.y),
 		fpos.x);
-
+	*/
 
 }
 
@@ -213,13 +216,14 @@ float sampleHeight(vec2 posTile)
 vec3 getNormal(vec2 pos)
 {
 	
+	float t = 1.0;
+    float h1 = sampleHeight(vec2(pos.x, pos.y - t));
+	float h2 = sampleHeight(vec2(pos.x, pos.y + t));
+    float h3 = sampleHeight(vec2(pos.x - t, pos.y));
+	float h4 = sampleHeight(vec2(pos.x + t, pos.y));
 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - 0.5));
-	float h2 = sampleHeight(vec2(pos.x, pos.y + 0.5));
-    float h3 = sampleHeight(vec2(pos.x - 0.5, pos.y));
-	float h4 = sampleHeight(vec2(pos.x + 0.5, pos.y));
-
-    return normalize(vec3(h4-h3,h2-h1,1.0));
+    //return normalize(vec3(h4-h3,h2-h1,1.0));
+    return normalize(vec3(h3-h4,t * 2.0,h1-h2));
 }
 
 void main(void)
@@ -254,7 +258,7 @@ void main(void)
 		vec4 worldPos = (model_matrix * vec4(p.xyz,1.0));
 
 		// position in world, relative to eye
-		out_Pos = vec4(worldPos.xyz- eyePos,p.w);
+		out_Pos = vec4(worldPos.xyz - eyePos,p.w);
 
 		// normal at intersection
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);

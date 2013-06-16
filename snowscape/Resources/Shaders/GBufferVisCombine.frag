@@ -1,7 +1,7 @@
 ﻿#version 330
 precision highp float;
 uniform sampler2D posTex;
-//uniform sampler2D normalTex;
+uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
@@ -139,7 +139,7 @@ float sampleHeightNoise(vec2 posTile, float f, float a)
     return sampleHeight(posTile) + fbm(vec3(posTile.xy*f,0.0)) * a;
 }
 
-
+/*
 // pos in tile coords (0-boxparam.xy)
 vec3 getNormal(vec2 pos)
 {
@@ -158,7 +158,7 @@ vec3 getNormalNoise(vec2 pos, float f, float a)
     float h3 = sampleHeightNoise(vec2(pos.x - 0.5, pos.y),f,a);
     float h4 = sampleHeightNoise(vec2(pos.x + 0.5, pos.y),f,a);
     return normalize(vec3(h3-h4,1.0,h1-h2));
-}
+}*/
 
 
 
@@ -835,20 +835,23 @@ vec4 getCloudAgainstSky2(vec3 eye, vec3 dir, float maxDistance)
 
 void main(void)
 {
-    vec4 c = vec4(0.0,0.0,0.0,1.0);
     vec2 p = texcoord0.xy;
     vec4 posT = texture(posTex,p);
+	vec4 paramT = texture(paramTex,p);
+    vec4 normalT = texture(normalTex,p);
+
+    vec4 c = vec4(0.0,0.0,0.0,1.0);
     float hitType = posT.a;
     vec4 pos = vec4(posT.xyz + eyePos,0.0);
-    //vec4 normalT = texture(normalTex,p);
-	vec4 paramT = texture(paramTex,p);
-    //vec3 normal = normalize(normalT.xyz - 0.5);
+    vec3 normal = normalize(normalT.xyz - vec3(0.5));
+
 
 	vec3 wpos = pos.xyz - eyePos;
     //float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 2.0;
 	
 	//vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
-	vec3 normal = getNormal(pos.xz);
+	//vec3 normal = getNormal(pos.xz);
+
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
     float d = length(wpos);
     if (hitType > 0.6)
@@ -982,85 +985,62 @@ void main(void)
         if (p.y < 1.0)
 		{
             //vec3 pos = texture(posTex,p).xyz + eyePos;
-			//c.rgb = pos.xyz / 1024.0;
+			//c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
 		}
 		else
 		{
-            //c = texture(normalTex,p-vec2(0.0,1.0));
+            //c = texture(paramTex,p-vec2(0.0,1.0));
 		}
 	}
 	else
 	{
         if (p.y < 1.0)
 		{
+            //c = texture(shadeTex,p-vec2(1.0,0.0));
             //c = vec4(0.0);
 		}
 		else
 		{
             p -= vec2(1.0,1.0);
-
-			/*
-			// draw some colour bars to test exposure
-			vec3 cbar = vec3(0.0);
-			if (p.y>=0.0 && p.y < 0.1)
-			{
-				cbar = vec3(1.0,0.2,0.5);  
-			}
-			if (p.y>=0.1 && p.y < 0.2)
-			{
-				cbar = vec3(1.0,0.6,0.2);  
-			}
-			if (p.y>=0.2 && p.y < 0.3)
-			{
-				cbar = vec3(0.3,1.0,0.05);  
-			}
-			if (p.y>=0.3 && p.y < 0.4)
-			{
-				cbar = vec3(0.1,0.8,1.0);  
-			}
-			if (p.y>=0.4 && p.y < 0.5)
-			{
-				cbar = vec3(0.2,0.4,1.0);  
-			}
-			if (p.y>=0.5 && p.y < 0.6)
-			{
-				cbar = vec3(1.0,0.1,1.0);  
-			}
-			if (p.y>=0.6 && p.y < 0.7)
-			{
-				cbar = vec3(1.0,1.0,1.0);  
-			}
-
-			c.rgb = cbar * (p.x * 1.0);
-			*/
-
-            //c.rgb = texture(skyTex,p).rgb;
-            /*
+            
 			p *= 2.0;
 
 			if (p.x < 1.0)
 			{
 				if (p.y < 1.0)
 				{
-					c.rgb = vec3(1.0,0.7,0.7) * texture(cloudDepthTex,p).r;
+					vec3 pos = texture(posTex,p).xyz + eyePos;
+					//c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
+					c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
 				}
 				else
 				{
-					c.rgb = vec3(0.7,1.0,0.7) * texture(cloudDepthTex,p-vec2(0.0,1.0)).g;
+					c.rgb = texture(paramTex,p-vec2(0.0,1.0)).rgb * 0.2;
 				}
 			}
 			else
 			{
 				if (p.y < 1.0)
 				{
-					c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
+					c.rgb = texture(normalTex,p-vec2(1.0,0.0)).rgb;
+					//c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
+					//c.rgb = vec3(texture(shadeTex,p-vec2(1.0,0.0)).rg,0.0);
 				}
 				else
 				{
-					c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
+					//c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
+
+					// sky dome
+					vec3 skyp = vec3(0.0);
+					skyp.xy = (p.xy - vec2(1.0,1.0)) * 2.0 - vec2(1.0);
+					if (dot(skyp.xy,skyp.xy) <= 1.0)
+					{
+						skyp.z = 1.0 - length(skyp.xy);
+					}
+					c.rgb = getSkyColour(skyp.xzy);
 				}
 			}
-			*/
+			
 		}
 	}
 	

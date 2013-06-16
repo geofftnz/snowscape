@@ -94,6 +94,7 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
             this.gbuffer.Init(this.Width, this.Height);
 
             program.Init(
@@ -142,10 +143,10 @@ namespace Snowscape.TerrainRenderer.Lighting
         {
 
 
-            rp.HeightTexture.Bind(TextureUnit.Texture2);
-            rp.ShadeTexture.Bind(TextureUnit.Texture3);
-            rp.CloudTexture.Bind(TextureUnit.Texture4);
-            rp.CloudDepthTexture.Bind(TextureUnit.Texture5);
+            rp.HeightTexture.Bind(TextureUnit.Texture3);
+            rp.ShadeTexture.Bind(TextureUnit.Texture4);
+            //rp.CloudTexture.Bind(TextureUnit.Texture4);
+            //rp.CloudDepthTexture.Bind(TextureUnit.Texture5);
             rp.SkyCubeTexture.Bind(TextureUnit.Texture6);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
@@ -154,10 +155,11 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("sunVector", rp.SunDirection);
                 sp.SetUniform("posTex", 0);
                 sp.SetUniform("paramTex", 1);
-                sp.SetUniform("heightTex", 2);
-                sp.SetUniform("shadeTex", 3);
-                sp.SetUniform("noiseTex", 4);
-                sp.SetUniform("cloudDepthTex", 5);
+                sp.SetUniform("normalTex", 2);
+                sp.SetUniform("heightTex", 3);
+                sp.SetUniform("shadeTex", 4);
+                //sp.SetUniform("noiseTex", 4);
+                //sp.SetUniform("cloudDepthTex", 5);
                 sp.SetUniform("skyCubeTex", 6);
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);

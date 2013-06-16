@@ -143,8 +143,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 new string[]
                 {
                     "out_Pos",
-                    //"out_Normal",
-                    "out_Param"
+                    "out_Param",
+                    "out_Normal"
                 });
         }
     }
