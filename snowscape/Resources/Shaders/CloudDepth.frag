@@ -103,5 +103,7 @@ void main(void)
 
 	float topLight = cloudShadow(cloudcoord.xy);
 
-	out_CloudDepth = vec4(cloudStart,cloudEnd,totalDensity,topLight);
+	float attenuation = exp(-totalDensity * 100.0);
+
+	out_CloudDepth = vec4(cloudStart,cloudEnd,attenuation,topLight);
 }

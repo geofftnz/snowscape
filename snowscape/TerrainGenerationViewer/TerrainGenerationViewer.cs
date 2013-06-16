@@ -240,8 +240,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("groundLevel", 0.996f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
-            parameters.Add(new Parameter<float>("cloudLevel", 100.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
-            parameters.Add(new Parameter<float>("cloudThickness", 200.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
+            parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
+            parameters.Add(new Parameter<float>("cloudThickness", 50.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
 
             parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));

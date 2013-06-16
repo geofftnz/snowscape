@@ -264,18 +264,35 @@ vec3 getSkyColour(vec3 skyvector)
 	return textureLod(skyCubeTex,skyvector,0).rgb;
 }
 
+float getCloudShadow(vec3 p)
+{
+	if (p.y>cloudLevel)
+	{
+		return 1.0;
+	}
+
+	// cast ray torwards sun until we hit the cloud layer
+    float t = (cloudLevel - p.y) / sunVector.y;
+
+	if (abs(t) > 10000.0) return 1.0;
+
+	// query for attenuation
+	return texture(cloudDepthTex,(p + sunVector * t).xz * cloudScale.xz).b;
+}
+
 
 float getShadowForGroundPos(vec3 p, float shadowHeight)
 {
-    return smoothstep(-1.0,-0.02,p.y - shadowHeight);
+    return smoothstep(-1.0,-0.02,p.y - shadowHeight);// * getCloudShadow(p);
 }
 
 
 float getShadow(vec3 p)
 {
-	return step(0.0,p.y - texture(shadeTex,p.xz * texel).r);
+	return step(0.0,p.y - texture(shadeTex,p.xz * texel).r);// * getCloudShadow(p);
 	//return smoothstep(0.0,0.01,p.y - texture(shadeTex,p.xz * texel).r);
 }
+
 
 // this reduces the contribution of skylight scatter in areas close to the ground that see less sky.
 // this is so subtle it might as well get left out
@@ -522,11 +539,10 @@ float cloudDensityToSun(vec3 p)
 	// if t < 0 we're passing through the entire cloud
 	// if t > 1 we're above the cloud layer
 	vec3 dir = sunVector;
-    float t1,t2;
-    t1 = (cloudLevel - p.y) / dir.y;
-    t2 = (cloudLevel + cloudThickness - p.y) / dir.y;
-    float t = -t1 / (t2-t1);
-    if (t>1.0)
+    float t;//,t2;
+    t = (cloudLevel - p.y) / dir.y;
+    //t2 = (cloudLevel + cloudThickness - p.y) / dir.y;
+    if (t<0.0)
 	{
         // above cloud layer
 		return 0.0;
@@ -535,25 +551,10 @@ float cloudDensityToSun(vec3 p)
 
 	// get optical thickness of cloud layer, by referencing the clouddepth texture at the p + dir * t1 coordinates
 	// r = start_t, g = end_t, b = rel_density
-	vec4 cd = texture(cloudDepthTex,(p + dir * t1).xz * cloudScale.xz);
-    if (t<0.0)
-	{
-        // below cloud layer - return entire thickness
-		return cd.b / dir.y;
-    }
+	vec4 cd = texture(cloudDepthTex,(p + dir * t).xz * cloudScale.xz);
 
+	return cd.b / dir.y;
 
-	// no cloud along ray
-	if (cd.g < cd.r)
-	{
-        return 0.0;
-    }
-
-
-	// in the middle of the cloud, so apply a step function _/- between cloud start and end 
-
-	t = clamp((t - cd.r) / (cd.g-cd.r),0.0,1.0);
-    return (cd.b * (1.0-t)) / dir.y;
 }
 
 
@@ -565,36 +566,6 @@ float cloudSunAbsorb(vec3 p)
 
 
 
-// get the amount of light scattered towards the eye when looking at target
-// target is a terrain intersection
-// 2nd attempt
-vec4 getInscatterTerrain2(vec3 eye, vec3 target)
-{
-    vec3 p0 = eye;
-    vec3 d = target-eye;
-    float l = length(target-eye);
-    vec4 c = vec4(0.0);
-    c.a = 1.0;
-    vec3 influx = sunIntensity();
-    float t = 0.0;
-    float dt = 0.005;
-    //float totalAbsorbMultiplier = 1.0;
-
-	while (t < 1.0)
-	{
-        vec3 p = p0 + d * t;
-        // position on ray
-		float sampleLength = dt * l;
-        float sampleAbsorbToEye = exp(t*l*-0.002);
-        float shadowAndCloud = min(getShadow(p),cloudSunAbsorb(p));
-        c.rgb += vec3(0.6,0.7,0.9) * 0.002 * sampleLength * sampleAbsorbToEye * shadowAndCloud;
-        dt *= 1.03;
-        t += dt;
-    }
-
-
-	return c;
-}
 
 // get the air density for a given height. Used 
 float getAirDensity(float h)
@@ -701,41 +672,72 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 
 
 // assumes eye is within cloud layer
-float cloudLightTransmission(vec3 eye, vec3 dir)
+//float cloudLightTransmission(vec3 eye, vec3 dir)
+//{
+    //float totalDensity = 0.0;
+    //float tt;
+    //if (dir.y < 0.0) // looking down, intersect against lower plane
+	//{
+        //tt = (cloudLevel - eye.y) / dir.y;
+    //}
+//
+	//else
+	//{
+        //tt = (cloudLevel - eye.y) / dir.y;
+    //}
+//
+//
+	//tt = min(tt,1000.0);
+    //float dt = 5.0;
+    //for (float t = 0.0; t < tt; t += dt)
+	//{
+        //vec3 p = eye + dir * t;
+        //totalDensity += dt * cloudDensity(p);
+        //dt *= 1.2;
+        //if (totalDensity > 400.0){
+            //break;
+        //}
+//
+	//}
+//
+	//return exp(totalDensity * -0.02);
+//}
+//
+
+
+vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 {
-    float totalDensity = 0.0;
-    float tt;
-    if (dir.y < 0.0) // looking down, intersect against lower plane
+	
+    // determine entry and exit points of the cloud layer.
+	float t1,t2;
+    t1 = (cloudLevel - eye.y) / dir.y;
+    t2 = (cloudLevel + cloudThickness - eye.y) / dir.y;
+    // both cloud planes behind us, exit
+	if (max(t1,t2) < 0.0)
 	{
-        tt = (cloudLevel - eye.y) / dir.y;
+        return vec4(0.0,0.0,0.0,1.0);
+    }
+	
+	// we've got at least one plane intersecting our ray
+
+	float tEntry = min(min(max(t1,0.0),max(t2,0.0)),maxDistance);
+    float tExit = min(max(t1,t2),maxDistance);
+    if (tEntry >= tExit)
+	{
+        return vec4(0.0,0.0,0.0,1.0);
     }
 
-	else
-	{
-        tt = (cloudLevel - eye.y) / dir.y;
-    }
+	// assume we're always below the cloud - tEntry is t1, bottom layer of cloud.
 
+	// sample our cloud pre-calc texture
+	vec4 cd = texture(cloudDepthTex,(eye + dir * tEntry).xz * cloudScale.xz);
 
-	tt = min(tt,1000.0);
-    float dt = 5.0;
-    for (float t = 0.0; t < tt; t += dt)
-	{
-        vec3 p = eye + dir * t;
-        totalDensity += dt * cloudDensity(p);
-        dt *= 1.2;
-        if (totalDensity > 400.0){
-            break;
-        }
+	return vec4(vec3(0.0),1.0-cd.b);
 
-	}
-
-	return exp(totalDensity * -0.02);
 }
 
-
-
 // returns rgb of cloud-scatter towards eye along -dir, a = attentuation of background.
-vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
+vec4 getCloudAgainstSky2(vec3 eye, vec3 dir, float maxDistance)
 {
     vec4 c = vec4(0.0,0.0,0.0,1.0);
     vec3 cloudEntry, cloudExit;
@@ -749,8 +751,7 @@ vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 	{
         return c;
     }
-
-
+	
 	// we've got at least one plane intersecting our ray
 
 	float tEntry = min(min(max(t1,0.0),max(t2,0.0)),maxDistance);
@@ -779,10 +780,6 @@ vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 	
 	cloudEntry = eye + dir * tEntry;
     cloudExit = eye + dir * tExit;
-    //c.rg = mod(cloudEntry.xz * 4.0 / boxparam.x,1.0);
-	//c.r = max(fbm(cloudEntry*0.03) * 2.0 - 0.7,0.0);
-	//c.b = mod((tExit - tEntry) * 0.002,1.0);
-	//c.a = 0.5;
 
 	float tt = min(tExit - tEntry,cloudtmax);
     //(tExit - tEntry);
@@ -824,87 +821,17 @@ vec4 getCloudAgainstSky(vec3 eye, vec3 dir, float maxDistance)
 
 		float cds = cloudDensityToSun(p) * cloudThickness;
         mie += newDensity * influx * exp(totalDensity * -0.02) * exp(cds * -0.02);
-        //mie += influx * sampleDensity * exp(totalDensity * -0.02) * exp(cds * -0.01);
-		// calculate absorbtion due to cloud between the current sample point and the sun (top/bottom of cloud layer)
 
-		//mie += absorb(totalDensity*0.01,influx * sampleDensity * cloudLightTransmission(p,sunVector),vec3(0.9),mieabsorbfactor);
-		//mie += influx * sampleDensity * cloudLightTransmission(p,sunVector) * exp(totalDensity * -0.02);
-		//amb = mix(amb,vec3(0.15),sampleDensity*0.05);
-		//float density = dt * clouddensity; //nt * (1.0 - abs(p.y - cloudMid) / cloudThickness);
-
-		//float density = sampleDistance * max(fbm(p*0.01) * 2.0 - 1.2,0.0) * (1.0 - abs(p.y - cloudMid) / cloudThickness);  // todo: exponential scale with dt
-
-		//c.rgb = mix(c.rgb,vec3(0.9), min(density * 0.001,1.0));
-		//c.r = nt;
-
-		//c.a *= exp(density * -0.02);
-		//if (c.a < 0.002)
-		//{
-		//	c.a = 0.0;
-		//	break;
-		//}
 		dt *= 1.05;
     }
 
 
 	c.rgb = mie * (mie_factor + 0.5);
-    //c.r = totalDensity * 0.001;
 	c.a = exp(totalDensity * -0.05);
-    /*
-	vec3 p1 = eye + dir * t1;
-	vec3 p2 = eye + dir * t2;
-		
-	// determine whether we are above, below or inside the cloud layer.
-	if (t1>0.0) // && abs(p1.x) < boxparam.x * 4.0 && abs(p1.z) < boxparam.y * 4.0 )
-	{
-		c.rg = mod(p1.xz * 4.0 / boxparam.x,1.0);
-		c.a = 0.5;
-	}
-
-	if (t2>0.0) // && abs(p2.x) < boxparam.x * 4.0 && abs(p2.z) < boxparam.y * 4.0 )
-	{
-		c.gb += mod(p2.xz * 4.0 / boxparam.x,1.0);
-		c.a = 0.5;
-	}
-	*/
-
-	//
-	return c;
-    //vec4(mod(p1.x * 4.0 / boxparam.x,1.0),mod(p1.z *4.0 / boxparam.y,1.0),0.0f,0.5f);
-}
-/*
-vec4 getCloudAgainstTerrain(vec3 eye, vec3 dir, float distanceToTerrain)
-{
-	vec4 c = vec4(0.0,0.0,0.0,1.0);
 
 	return c;
-
-	// determine entry and exit points of the cloud layer.
-	float t1,t2;
-
-	t1 = (cloudLow - eye.y) / dir.y;
-	t2 = (cloudHigh - eye.y) / dir.y;
-
-	vec3 p1 = eye + dir * t1;
-	vec3 p2 = eye + dir * t2;
-		
-	// determine whether we are above, below or inside the cloud layer.
-	if (t1>0.0 && t1 < distanceToTerrain && abs(p1.x) < boxparam.x * 4.0 && abs(p1.z) < boxparam.y * 4.0 )
-	{
-		c.rg = mod(p1.xz * 4.0 / boxparam.x,1.0);
-		c.a = 0.5;
-	}
-
-	if (t2>0.0 && abs(p2.x) < boxparam.x * 4.0 && abs(p2.z) < boxparam.y * 4.0 )
-	{
-		c.gb += mod(p2.xz * 4.0 / boxparam.x,1.0);
-		c.a = 0.5;
-	}
-
-	//
-	return c;//vec4(mod(p1.x * 4.0 / boxparam.x,1.0),mod(p1.z *4.0 / boxparam.y,1.0),0.0f,0.5f);
 }
-*/
+
 
 void main(void)
 {
@@ -980,6 +907,11 @@ void main(void)
 			//c.rgb += getInscatterSky(eyePos, normalize(posT.xyz));
 			vec3 skyDir = normalize(posT.xyz);
 			c.rgb += getSkyColour(skyDir);
+
+			//vec4 cloud = getCloudAgainstSky(eyePos, skyDir, cloudtmax);
+			//c.rgb *= cloud.a;
+			//c.rgb += cloud.rgb;
+
 
 			// scattering within near distance
 			vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * nearScatterDistance);
@@ -1127,8 +1059,8 @@ void main(void)
 				{
 					c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 				}
-			}*/
-			
+			}
+			*/
 		}
 	}
 	
