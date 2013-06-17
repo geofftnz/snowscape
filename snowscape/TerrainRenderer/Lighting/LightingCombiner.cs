@@ -48,14 +48,12 @@ namespace Snowscape.TerrainRenderer.Lighting
         {
             public Texture HeightTexture { get; set; }
             public Texture ShadeTexture { get; set; }
-            public Texture CloudTexture { get; set; }
-            public Texture CloudDepthTexture { get; set; }
+            public Texture NoiseTexture { get; set; }
             public Texture SkyCubeTexture { get; set; }
             public Vector3 EyePos { get; set; }
             public Vector3 SunDirection { get; set; }
             public float MinHeight { get; set; }
             public float MaxHeight { get; set; }
-            public Vector3 CloudScale { get; set; }
             public float Exposure { get; set; }
             public Vector3 Kr { get; set; }
             public float ScatterAbsorb { get; set; }
@@ -63,8 +61,6 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float RaleighBrightness { get; set; }
             public float SkylightBrightness { get; set; }
             public float GroundLevel { get; set; }
-            public float CloudLevel { get; set; }
-            public float CloudThickness { get; set; }
             public int TileWidth { get; set; }
             public int TileHeight { get; set; }
             public Vector3 SunLight { get; set; }
@@ -159,11 +155,9 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("heightTex", 3);
                 sp.SetUniform("shadeTex", 4);
                 //sp.SetUniform("noiseTex", 4);
-                //sp.SetUniform("cloudDepthTex", 5);
                 sp.SetUniform("skyCubeTex", 6);
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);
-                sp.SetUniform("cloudScale", rp.CloudScale);
                 sp.SetUniform("exposure", rp.Exposure);
                 sp.SetUniform("Kr",rp.Kr);
                 sp.SetUniform("sunLight", rp.SunLight);
@@ -172,8 +166,6 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("raleighBrightness", rp.RaleighBrightness);
                 sp.SetUniform("skylightBrightness", rp.SkylightBrightness);
                 sp.SetUniform("groundLevel", rp.GroundLevel);
-                sp.SetUniform("cloudLevel", rp.CloudLevel);
-                sp.SetUniform("cloudThickness", rp.CloudThickness);
                 sp.SetUniform("sampleDistanceFactor", rp.SampleDistanceFactor);
                 sp.SetUniform("nearScatterDistance", rp.NearScatterDistance);
                 sp.SetUniform("nearMieBrightness", rp.NearMieBrightness);

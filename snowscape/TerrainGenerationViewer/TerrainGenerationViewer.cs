@@ -66,11 +66,11 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Texture skyCubeTexture;
 
-        private Texture cloudTexture;
-        private Texture cloudDepthTexture;
-        private Atmosphere.CloudDepthRenderer cloudDepthRenderer = new Atmosphere.CloudDepthRenderer();
+        //private Texture cloudTexture;
+        //private Texture cloudDepthTexture;
+        //private Atmosphere.CloudDepthRenderer cloudDepthRenderer = new Atmosphere.CloudDepthRenderer();
         //private Vector3 cloudScale = new Vector3(0.0001f,600.0f,0.0001f);
-        private Vector3 cloudScale = new Vector3(0.0002f, 600.0f, 0.0002f);
+        //private Vector3 cloudScale = new Vector3(0.0002f, 600.0f, 0.0002f);
 
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
@@ -240,8 +240,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("groundLevel", 0.996f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
-            parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
-            parameters.Add(new Parameter<float>("cloudThickness", 50.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
+            //parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
+            //parameters.Add(new Parameter<float>("cloudThickness", 50.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
 
             parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));
@@ -417,7 +417,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.SetupCubeMap();
 
-
+            /*
             // create noise texture for clouds
             this.cloudTexture = new NoiseTextureFactory(CloudRes, CloudRes).GenerateFloatTexture();
             // generate texture for cloud depth
@@ -429,7 +429,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.cloudDepthTexture.UploadEmpty();
             // init cloud depth renderer
             this.cloudDepthRenderer.Init(this.cloudDepthTexture);
-
+            */
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
@@ -638,14 +638,12 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
-                CloudTexture = this.cloudTexture,
-                CloudDepthTexture = this.cloudDepthTexture,
+                //NoiseTexture = this.cloudTexture,
                 SkyCubeTexture = this.skyCubeTexture,
                 EyePos = this.eyePos,
                 SunDirection = this.sunDirection,
                 MinHeight = this.terrainGlobal.MinHeight,
                 MaxHeight = this.terrainGlobal.MaxHeight,
-                CloudScale = this.cloudScale,
                 //Exposure = (float)this.parameters["exposure"].GetValue(),
                 Kr = new Vector3(
                         (float)this.parameters["Kr_r"].GetValue(),
@@ -662,8 +660,6 @@ namespace Snowscape.TerrainGenerationViewer
                 RaleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
                 SkylightBrightness = (float)this.parameters["skylightBrightness"].GetValue(),
                 GroundLevel = (float)this.parameters["groundLevel"].GetValue(),
-                CloudLevel = (float)this.parameters["cloudLevel"].GetValue(),
-                CloudThickness = (float)this.parameters["cloudThickness"].GetValue(),
                 TileWidth = this.terrainTile.Width,
                 TileHeight = this.terrainTile.Height,
                 SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue(),
@@ -796,9 +792,9 @@ namespace Snowscape.TerrainGenerationViewer
                 this.RenderLighting(this.sunDirection);
                 perfmon.Stop("Lighting");
 
-                perfmon.Start("CloudDepth");
-                this.RenderCloudDepth(this.sunDirection);
-                perfmon.Stop("CloudDepth");
+                //perfmon.Start("CloudDepth");
+                //this.RenderCloudDepth(this.sunDirection);
+                //perfmon.Stop("CloudDepth");
 
                 perfmon.Start("SkyPreCalc");
                 this.RenderSky(this.eyePos, this.sunDirection, (float)this.parameters["groundLevel"].GetValue());
@@ -885,12 +881,12 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
         }
-
+/*
         private void RenderCloudDepth(Vector3 sunVector)
         {
             this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale);
         }
-
+        */
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(
