@@ -216,7 +216,7 @@ float sampleHeight(vec2 posTile)
 vec3 getNormal(vec2 pos)
 {
 	
-	float t = 1.0;
+	float t = 0.99;
     float h1 = sampleHeight(vec2(pos.x, pos.y - t));
 	float h2 = sampleHeight(vec2(pos.x, pos.y + t));
     float h3 = sampleHeight(vec2(pos.x - t, pos.y));
@@ -250,7 +250,7 @@ void main(void)
 		vec2 texcoord = p.xz / boxparam.xy;
 
 		// todo: compute normal from heightmap
-		vec3 normal = getNormal(p.xz); //normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
+		vec3 normal = getNormal(floor(p.xz) + vec2(0.5)); //normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
 		//out_Shade = texture2D(shadeTex,texcoord);
 		out_Param = texture2D(paramTex,texcoord);
 

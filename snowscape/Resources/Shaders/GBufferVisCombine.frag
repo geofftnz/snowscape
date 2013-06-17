@@ -1022,7 +1022,7 @@ void main(void)
 			{
 				if (p.y < 1.0)
 				{
-					c.rgb = texture(normalTex,p-vec2(1.0,0.0)).rgb;
+					c.rgb = pow(texture(normalTex,p-vec2(1.0,0.0)).xzy,vec3(2.2));
 					//c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
 					//c.rgb = vec3(texture(shadeTex,p-vec2(1.0,0.0)).rg,0.0);
 				}
