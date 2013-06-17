@@ -187,17 +187,18 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 
     return p;
 }
-
+//
+/*
 float sampleHeight(vec2 posTile)
 {
 	float t = 1.0 / boxparam.x;
+//
+	//return texture2D(heightTex,posTile*t).r;
 
-	return texture2D(heightTex,posTile*t).r;
-/*
 	vec2 ipos = floor(posTile);
 	vec2 fpos = fract(posTile);
 
-	vec2 ofs = vec2(t*0.5,t*0.5);
+	vec2 ofs = vec2(0.0); //vec2(t*0.5,t*0.5);
 
     float h00 = texture2D(heightTex,vec2(ipos.x, ipos.y)*t + ofs).r;
 	float h01 = texture2D(heightTex,vec2(ipos.x, ipos.y + 1)*t + ofs).r;
@@ -208,10 +209,8 @@ float sampleHeight(vec2 posTile)
 		mix(h00,h01,fpos.y),
 		mix(h10,h11,fpos.y),
 		fpos.x);
-	*/
-
-}
-
+}*/
+/*
 // pos in tile coords (0-boxparam.xy)
 vec3 getNormal(vec2 pos)
 {
@@ -225,6 +224,25 @@ vec3 getNormal(vec2 pos)
     //return normalize(vec3(h4-h3,h2-h1,1.0));
     return normalize(vec3(h3-h4,t * 2.0,h1-h2));
 }
+*/
+
+float texel = 1.0 / boxparam.x;
+float sampleHeight(vec2 posTile)
+{
+	return texture(heightTex,(posTile + vec2(0.5)) * texel).r;
+}
+//
+// pos in tile coords (0-boxparam.xy)
+vec3 getNormal(vec2 pos)
+{
+	float t = 1.0;
+    float h1 = sampleHeight(vec2(pos.x, pos.y - t));
+    float h2 = sampleHeight(vec2(pos.x, pos.y + t));
+    float h3 = sampleHeight(vec2(pos.x - t, pos.y));
+    float h4 = sampleHeight(vec2(pos.x + t, pos.y));
+    return normalize(vec3(h3-h4,t* 2.0,h1-h2));
+}
+
 
 void main(void)
 {
@@ -250,7 +268,7 @@ void main(void)
 		vec2 texcoord = p.xz / boxparam.xy;
 
 		// todo: compute normal from heightmap
-		vec3 normal = getNormal(floor(p.xz) + vec2(0.5)); //normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
+		//vec3 normal = getNormal(floor(p.xz) + vec2(0.5)); //normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
 		//out_Shade = texture2D(shadeTex,texcoord);
 		out_Param = texture2D(paramTex,texcoord);
 
@@ -261,7 +279,9 @@ void main(void)
 		out_Pos = vec4(worldPos.xyz - eyePos,p.w);
 
 		// normal at intersection
+		vec3 normal = getNormal(mod(worldPos.xz,vec2(boxparam.x)));
 		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
+		//out_Normal = vec4(1.0);  // special value to indicate that normal should be computed from heightmap in lighting pass.
 
 		// write depth
 		// transform intersection to screen coords

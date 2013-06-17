@@ -71,6 +71,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float ScatteringInitialStepSize { get; set; }
             public float ScatteringStepGrowthFactor { get; set; }
             public float Time { get; set; }
+            public float AmbientBias { get; set; }
 
             public RenderParams()
             {
@@ -170,6 +171,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("nearScatterDistance", rp.NearScatterDistance);
                 sp.SetUniform("nearMieBrightness", rp.NearMieBrightness);
                 sp.SetUniform("aoInfluenceHeight", rp.AOInfluenceHeight);
+                sp.SetUniform("ambientBias", rp.AmbientBias);
 
                 sp.SetUniform("scatteringInitialStepSize", rp.ScatteringInitialStepSize);
                 sp.SetUniform("scatteringStepGrowthFactor", rp.ScatteringStepGrowthFactor);

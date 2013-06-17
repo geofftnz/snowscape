@@ -37,7 +37,6 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-
             tile.ParamTexture.Bind(TextureUnit.Texture1);
 
             this.boundingBoxProgram
@@ -126,8 +125,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 new string[]
                 {
                     "out_Pos",
-                    //"out_Normal",
-                    "out_Param"
+                    "out_Param",
+                    "out_Normal",
                 });
         }
 

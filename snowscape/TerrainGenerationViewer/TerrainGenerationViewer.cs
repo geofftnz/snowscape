@@ -240,6 +240,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("groundLevel", 0.996f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
+            parameters.Add(new Parameter<float>("AmbientBias", 0.1f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
+
             //parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
             //parameters.Add(new Parameter<float>("cloudThickness", 50.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
 
@@ -666,6 +668,8 @@ namespace Snowscape.TerrainGenerationViewer
                 NearScatterDistance = (float)this.parameters["NearScatterDistance"].GetValue(),
                 NearMieBrightness = (float)this.parameters["NearMieBrightness"].GetValue(),
                 AOInfluenceHeight = (float)this.parameters["AOInfluenceHeight"].GetValue(),
+                AmbientBias = (float)this.parameters["AmbientBias"].GetValue(),
+
                 ScatteringInitialStepSize = (float)this.parameters["ScatteringInitialStepSize"].GetValue(),
                 ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue(),
                 Time = (float)(this.frameCounter.Frames % 65536)
