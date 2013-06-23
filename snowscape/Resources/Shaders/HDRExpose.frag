@@ -5,6 +5,7 @@ uniform sampler2D colTex;
 uniform sampler2D histogramTex;
 uniform float exposure;
 uniform float whitelevel;
+uniform float blacklevel;
 
 in vec2 texcoord0;
 out vec4 out_Colour;
@@ -37,8 +38,11 @@ void main(void)
 	//vec3 col = texture(colTex,texcoord0).rgb;
 	vec3 col = textureLod(colTex,texcoord0,0).rgb;
 
+	// set black level
+	col.rgb -= vec3(blacklevel);
+
 	// apply exposure
-	//col.rgb = vec3(1.0) - exp(col.rgb * exposure);
+	col.rgb = vec3(1.0) - exp(col.rgb * exposure);
 
 	// reinhard tone map
 	//float whitelevel = 2.0;

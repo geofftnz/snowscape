@@ -214,9 +214,12 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
 
-            //parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
-            //parameters.Add(new Parameter<float>("TargetLuminance", 0.2f, 0.01f, 1.0f, v => v += 0.01f, v => v -= 0.01f));
+            parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
+            parameters.Add(new Parameter<float>("BlackLevel", 0.0f, 0.0f, 100.0f, v => v += 0.01f, v => v -= 0.01f));
+
+
+
             parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f));
             parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
 
@@ -836,6 +839,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             //this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
             this.hdrExposure.WhiteLevel = (float)this.parameters["WhiteLevel"].GetValue();
+            this.hdrExposure.BlackLevel = (float)this.parameters["BlackLevel"].GetValue();
+            this.hdrExposure.Exposure = (float)this.parameters["exposure"].GetValue();
 
             // render gbuffer to hdr buffer
             this.hdrExposure.BindForWriting();

@@ -28,25 +28,33 @@ namespace Snowscape.TerrainRenderer.HDR
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public float FastExposure { get; set; }
-        public float SlowExposure { get; set; }
-        public float Exposure
-        {
-            get
-            {
-                return 0.8f.Lerp(this.SlowExposure, this.FastExposure);
-            }
-        }
-        public float TargetLuminance { get; set; }
+        //public float FastExposure { get; set; }
+        //public float SlowExposure { get; set; }
+        //public float Exposure
+        //{
+        //    get
+        //    {
+        //        return 0.8f.Lerp(this.SlowExposure, this.FastExposure);
+        //    }
+        //}
+
+        //public float TargetLuminance { get; set; }
+
         public float WhiteLevel { get; set; }
+        public float BlackLevel { get; set; }
+        public float Exposure { get; set; }
+
 
 
         public HDRExposureMapper()
         {
             this.WhiteLevel = 1.0f;
-            this.FastExposure = -1.0f;
-            this.SlowExposure = -1.0f;
-            this.TargetLuminance = 0.4f;
+            //this.FastExposure = -1.0f;
+            //this.SlowExposure = -1.0f;
+            //this.TargetLuminance = 0.4f;
+            this.Exposure = -1.0f;
+            this.BlackLevel = 0.0f;
+
             this.ToneMapper = new ReinhardToneMap() { WhiteLevel = 2.0f };
             //this.ToneMapper = new Uncharted2ToneMap();
         }
@@ -184,7 +192,7 @@ namespace Snowscape.TerrainRenderer.HDR
 
             ((ReinhardToneMap)this.ToneMapper).WhiteLevel = this.WhiteLevel;
 
-            UpdateHistogram(leveldata.Select(c => c.Xyz).Select(c => this.ToneMapper.Tonemap(c)).Select(c => c.Pow(1.0f / 2.2f)));
+            UpdateHistogram(leveldata.Select(c=>c.Xyz - new Vector3(this.BlackLevel)).Select(c => Vector3.One - (c * this.Exposure).Exp()).Select(c => this.ToneMapper.Tonemap(c)).Select(c => c.Pow(1.0f / 2.2f)));
             /*
             var luminance = leveldata
                 //.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp())
@@ -232,6 +240,7 @@ namespace Snowscape.TerrainRenderer.HDR
                 sp.SetUniform("histogramTex", 1);
                 sp.SetUniform("exposure", this.Exposure);
                 sp.SetUniform("whitelevel", this.WhiteLevel);
+                sp.SetUniform("blacklevel", this.BlackLevel);
             });
         }
     }

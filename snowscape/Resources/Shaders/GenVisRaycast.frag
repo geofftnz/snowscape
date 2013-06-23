@@ -229,7 +229,7 @@ vec3 getNormal(vec2 pos)
 float texel = 1.0 / boxparam.x;
 float sampleHeight(vec2 posTile)
 {
-	return texture(heightTex,(posTile + vec2(0.5)) * texel).r;
+	return texture(heightTex,(posTile) * texel).r;
 }
 //
 // pos in tile coords (0-boxparam.xy)
