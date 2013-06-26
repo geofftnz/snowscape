@@ -514,14 +514,10 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 		float scatter_factor = dt;// * getAirDensity(p.y); // scatter less as we go higher.
 
         mie += absorb(dist, pointInflux, scatterAbsorb) * scatter_factor;
-		//raleigh += absorb(dist, Kral * pointInflux, scatterAbsorb) * scatter_factor;
+		raleigh += absorb(dist, Kral * pointInflux, scatterAbsorb) * scatter_factor;
 
 		skyLightScatter += inscatter(dist, skyLight, scatterAbsorb) * scatter_factor * getAOInfluence(p);
-		//skyLightScatter += absorb(dist, skyLight, scatterAbsorb) * scatter_factor;
-		//skyLightScatter += skyLight * scatter_factor;
-		
-        //mie += absorb(dist * distFactor, pointInflux, scatterAbsorb) * cloudAbsorb * dt;
-        //raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * cloudAbsorb * dt;
+
 
         t+=dt;
         dt *= stepgrowth;
@@ -532,7 +528,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 	mie *= mie_factor * l * distFactor;
     //cmie *= (0.6 + 0.4 * cloud_mie_factor) * l * distFactor;
     //raleigh *= dt;
-	//raleigh *= raleigh_factor * l * distFactor;
+	raleigh *= raleigh_factor * l * distFactor;
 	skyLightScatter *= skylight_factor * l * distFactor;
 
 	float outScatter = dot(skyLightScatter,vec3(0.333));

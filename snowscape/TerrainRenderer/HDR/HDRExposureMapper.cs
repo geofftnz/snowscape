@@ -192,7 +192,15 @@ namespace Snowscape.TerrainRenderer.HDR
 
             ((ReinhardToneMap)this.ToneMapper).WhiteLevel = this.WhiteLevel;
 
-            UpdateHistogram(leveldata.Select(c=>c.Xyz - new Vector3(this.BlackLevel)).Select(c => Vector3.One - (c * this.Exposure).Exp()).Select(c => this.ToneMapper.Tonemap(c)).Select(c => c.Pow(1.0f / 2.2f)));
+            UpdateHistogram(
+                leveldata
+                    .Select(c=>c.Xyz - new Vector3(this.BlackLevel))
+                    //.Select(c => Vector3.One - (c * this.Exposure).Exp())
+                    .Select(c => (c * -this.Exposure))
+                    .Select(c => this.ToneMapper.Tonemap(c))
+                    .Select(c => c.Pow(1.0f / 2.2f))
+                    );
+
             /*
             var luminance = leveldata
                 //.Select(c => Vector3.One - (c.Xyz * this.Exposure).Exp())
