@@ -42,7 +42,8 @@ void main(void)
 	col.rgb -= vec3(blacklevel);
 
 	// apply exposure
-	col.rgb = vec3(1.0) - exp(col.rgb * exposure);
+	//col.rgb = vec3(1.0) - exp(col.rgb * exposure);
+	col.rgb *= -exposure;
 
 	// reinhard tone map
 	//float whitelevel = 2.0;

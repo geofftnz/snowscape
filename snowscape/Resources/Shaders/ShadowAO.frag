@@ -15,12 +15,20 @@ float texel = 1.0 / 1024.0;
 // gets the height (in world coordinates) of the shadow-plane above this sample.
 float getShadowHeight(vec2 p)
 {
-	vec2 d = normalize(sunDirection.xz) * texel;  // amount to move each step
-	float dh = sunDirection.y;  // change in height on each step
 	float h0 = texture2D(heightTexture,p).r; // current height
+	vec2 d = normalize(sunDirection.xz) * texel;  // amount to move each step
+	float l = length(sunDirection.xz);
+
+	// sun straight overhead, shadow on/under ground
+	if (l<=0.000001)
+	{
+		return h0;
+	}
+
+	float dh = sunDirection.y / l;  // change in height on each step
 	//float h = h0;
 
-	vec3 pp = vec3(p,h0);
+	vec3 pp = vec3(p,h0); 
 	vec3 dpp = vec3(d,dh);
 
 	// sun below horizon - shadow is very high
@@ -29,19 +37,13 @@ float getShadowHeight(vec2 p)
 		return 65000.0;
 	}
 
-	// sun straight overhead, shadow on/under ground
-	if (dh > 0.999999)
-	{
-		return h0;
-	}
-
 	float maxH = -1.0; // current max height of shadow-plane
 	float i = 0.0f;
 
-	pp += dpp;
+	//pp += dpp;
 	while (pp.z < maxHeight && i < 2048.0f)
 	{
-		maxH = max(maxH, texture2D(heightTexture,pp.xy).r - pp.z);
+		maxH = max(maxH, texture(heightTexture,pp.xy).r - pp.z);
 		pp += dpp;
 		i += 1.0f;
 	}
@@ -52,13 +54,13 @@ float getShadowHeight(vec2 p)
 
 float getSliceVisibility(vec2 p, vec2 dp)
 {
-	float h0 = texture2D(heightTexture,p).r; // height at origin
+	float h0 = texture(heightTexture,p).r; // height at origin
 	float t = 0.0;
 	float dydx = 0.0;
 	
 	for(t = 1.0; t < 50.0; t += 1.0 + t*0.25)
 	{
-		dydx = max(dydx, (texture2D(heightTexture, p + dp * t ).r - h0) / t);
+		dydx = max(dydx, (texture(heightTexture, p + dp * t ).r - h0) / t);
 	}
 
 	return 1.0 - atan(dydx) / 1.57079635;

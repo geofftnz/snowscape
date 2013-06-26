@@ -52,7 +52,7 @@ vec3 getNormal(vec2 pos)
 void main() {
 
 	vec2 texcoord = in_boxcoord.xz;
-	
+
 	float h = texture2D(heightTex,texcoord).r;
 
 	normal = getNormal(texcoord);

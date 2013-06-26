@@ -209,11 +209,11 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 		//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonBlock(psun, -sunVector, groundLevel);// * horizonLight(p,sunVector,groundLevel,scatteramount);
 		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
         raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
-        mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
+        //mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
     }
 
 	raleigh *= raleigh_factor * ray_length;
-    mie *= mie_factor * ray_length;
+    //mie *= mie_factor * ray_length;
     return vec3(raleigh + mie);
 }
 

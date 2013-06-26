@@ -18,6 +18,7 @@ uniform float scatterAbsorb;
 uniform vec3 Kr;
 uniform float raleighBrightness;
 uniform float mieBrightness;
+uniform float miePhase;
 uniform float nearMieBrightness;
 uniform float skylightBrightness;
 uniform float groundLevel;
@@ -467,7 +468,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 	float distFactor = sampleDistanceFactor;
 
     float alpha = dot(normalize(d), sunVector);
-    float mie_factor = phase(alpha,0.99) * mieBrightness * nearMieBrightness;
+    float mie_factor = phase(alpha,miePhase) * mieBrightness * nearMieBrightness;
     // mie brightness
 	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
     // raleigh brightness
@@ -489,7 +490,11 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 
 	vec3 rp = vec3(texcoord0.xy * 497.0, hash(time*7.117));
 	// dither start position
-	t += dt * 2.0 * rand(rp);
+	t += dt * rand(rp);
+
+	// dither step growth
+	float stepgrowth = scatteringStepGrowthFactor * (1.0 + 0.04 * rand(rp));
+
 	// offset eye by a small amount
 	//eye += (vec3( hash(dot(rp, vec3(14.7, 13.5, 99.2))), hash(dot(rp, vec3(14.7, 13.5, 99.2)) * 391.7), hash(dot(rp, vec3(14.7, 13.5, 99.2)) * 173.1) ) - vec3(0.5)) * 0.2;
 
@@ -506,10 +511,10 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 		float s = getShadow(p);// * cloudSunAbsorb(p);
         vec3 pointInflux = influx * s;
 
-		float scatter_factor = dt * getAirDensity(p.y); // scatter less as we go higher.
+		float scatter_factor = dt;// * getAirDensity(p.y); // scatter less as we go higher.
 
         mie += absorb(dist, pointInflux, scatterAbsorb) * scatter_factor;
-		raleigh += absorb(dist, Kral * pointInflux, scatterAbsorb) * scatter_factor;
+		//raleigh += absorb(dist, Kral * pointInflux, scatterAbsorb) * scatter_factor;
 
 		skyLightScatter += inscatter(dist, skyLight, scatterAbsorb) * scatter_factor * getAOInfluence(p);
 		//skyLightScatter += absorb(dist, skyLight, scatterAbsorb) * scatter_factor;
@@ -519,7 +524,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
         //raleigh += absorb(dist * distFactor, Kral * pointInflux, scatterAbsorb) * cloudAbsorb * dt;
 
         t+=dt;
-        dt *= scatteringStepGrowthFactor;
+        dt *= stepgrowth;
     }
 
 
@@ -527,7 +532,7 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 	mie *= mie_factor * l * distFactor;
     //cmie *= (0.6 + 0.4 * cloud_mie_factor) * l * distFactor;
     //raleigh *= dt;
-	raleigh *= raleigh_factor * l * distFactor;
+	//raleigh *= raleigh_factor * l * distFactor;
 	skyLightScatter *= skylight_factor * l * distFactor;
 
 	float outScatter = dot(skyLightScatter,vec3(0.333));
@@ -634,9 +639,12 @@ void main(void)
 			{
 				if (p.y < 1.0)
 				{
-					vec3 pos = texture(posTex,p).xyz + eyePos;
+					vec4 pos = texture(posTex,p);// + eyePos;
 					//c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
-					c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
+					//c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
+					c.r = mod(length(pos.xyz) * 0.01,1.0);
+					c.g = mod((pos.y + eyePos.y) * 0.5,1.0);
+					c.b = pos.a;
 				}
 				else
 				{

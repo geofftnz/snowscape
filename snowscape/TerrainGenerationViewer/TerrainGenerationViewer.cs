@@ -235,15 +235,16 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.15f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028  0.1
 
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
-            parameters.Add(new Parameter<float>("skylightBrightness", 1.5f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("skylightBrightness", 1.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.01f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
 
-            parameters.Add(new Parameter<float>("groundLevel", 0.996f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
+            parameters.Add(new Parameter<float>("groundLevel", 0.998f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
-            parameters.Add(new Parameter<float>("AmbientBias", 0.1f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
+            parameters.Add(new Parameter<float>("AmbientBias", 0.04f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
 
             //parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
             //parameters.Add(new Parameter<float>("cloudThickness", 50.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
@@ -662,6 +663,7 @@ namespace Snowscape.TerrainGenerationViewer
                     ),
                 ScatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
                 MieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
+                MiePhase = (float)this.parameters["miePhase"].GetValue(),
                 RaleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
                 SkylightBrightness = (float)this.parameters["skylightBrightness"].GetValue(),
                 GroundLevel = (float)this.parameters["groundLevel"].GetValue(),
