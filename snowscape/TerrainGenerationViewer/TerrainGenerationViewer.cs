@@ -20,6 +20,7 @@ using OpenTKExtensions.Camera;
 using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
 using Lighting = Snowscape.TerrainRenderer.Lighting;
 using HDR = Snowscape.TerrainRenderer.HDR;
+using Snowscape.TerrainRenderer.Mesh;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -51,10 +52,13 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Lighting.LightingCombiner lightingStep = new Lighting.LightingCombiner();
 
+        private IPatchCache patchCache = new PatchCache();
+
         private TerrainTile terrainTile;
         private TerrainGlobal terrainGlobal;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
+        private ITileRenderer tileRendererPatch;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
@@ -200,6 +204,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
+            this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
             this.camera = new WalkCamera(this.Keyboard, this.Mouse);
@@ -377,6 +382,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.Init();
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
+            this.tileRendererPatch.Load();
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
@@ -935,7 +941,13 @@ namespace Snowscape.TerrainGenerationViewer
             RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
 
             RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, 0f, 0f, this.tileRenderer);
+
+            ((GenerationVisPatchRenderer)this.tileRendererPatch).Scale = 1.0f / 4.0f;
+            ((GenerationVisPatchRenderer)this.tileRendererPatch).Offset = (new Vector2(1.0f, 1.0f) / 4.0f);
+            //((GenerationVisPatchRenderer)this.tileRendererPatch).Scale = 0.5f;
+            RenderTile(this.terrainTile, 0f, 0f, this.tileRendererPatch);
+            
+            
             RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
 
             RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
