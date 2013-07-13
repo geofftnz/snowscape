@@ -58,6 +58,7 @@
     <Compile Include="Mesh\TerrainPatchMesh.cs" />
     <Compile Include="NoiseTexture.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
+    <Compile Include="Renderers\CompositeLODRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchRenderer.cs" />
     <Compile Include="Renderers\GenerationVisRaycastRenderer.cs" />
     <Compile Include="Renderers\GenerationVisMeshRenderer.cs" />

@@ -59,6 +59,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private ITileRenderer tileRendererPatch;
+        private ITileRenderer tileRendererLOD;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
@@ -205,6 +206,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
             this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
+            this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatch);
+
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
             this.camera = new WalkCamera(this.Keyboard, this.Mouse);
@@ -383,6 +386,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
             this.tileRendererPatch.Load();
+            this.tileRendererLOD.Load();
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
@@ -958,6 +962,8 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset, ITileRenderer renderer)
         {
             tile.ModelMatrix = Matrix4.CreateTranslation(TileXOffset * (float)tile.Width, 0f, TileZOffset * (float)tile.Height);
+
+            //this.tileRendererLOD.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
             renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 

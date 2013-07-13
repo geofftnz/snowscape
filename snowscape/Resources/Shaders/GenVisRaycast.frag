@@ -276,7 +276,7 @@ void main(void)
 		vec4 worldPos = (model_matrix * vec4(p.xyz,1.0));
 
 		// position in world, relative to eye
-		out_Pos = vec4(worldPos.xyz - eyePos,p.w);
+		out_Pos = vec4(worldPos.xyz - eyePos,0.8);  // a was p.w
 
 		// normal at intersection
 		vec3 normal = getNormal(mod(worldPos.xz,vec2(boxparam.x)));

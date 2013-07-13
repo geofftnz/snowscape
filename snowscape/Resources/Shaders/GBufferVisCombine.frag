@@ -373,8 +373,8 @@ vec3 getSkyLight(vec3 dir)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
-    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	//vec3 col = vec3(pow(1.0,2.2));
+    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	vec3 col = vec3(pow(0.9,2.2));
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
@@ -639,7 +639,7 @@ void main(void)
 					//c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
 					//c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
 					c.r = mod(length(pos.xyz) * 0.01,1.0);
-					c.g = mod((pos.y + eyePos.y) * 0.5,1.0);
+					c.g = 0;//mod((pos.y + eyePos.y) * 0.5,1.0);
 					c.b = pos.a;
 				}
 				else
