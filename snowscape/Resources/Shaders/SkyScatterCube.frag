@@ -24,6 +24,23 @@ out vec3 out_Sky;
 vec3 Kr2 = Kr;
 vec3 Kral = Kr;
 
+// random
+float rand(vec3 co){
+    return fract(sin(dot(co.xyz ,vec3(12.9898,78.233,47.985))) * 43758.5453);
+}
+
+// random vec
+vec3 randvec(vec3 p){
+	return normalize(
+		vec3(
+			rand(p),
+			rand(p+vec3(7.,17.,19.)),
+			rand(p+vec3(3.,7.,13.))
+			)
+			-vec3(0.5)
+		);
+}
+
 
 // exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 vec3 absorb(float dist, vec3 col, float f)
@@ -209,6 +226,62 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 }
 
 
+vec3 getInscatterSkyMulti(vec3 eye, vec3 dir)
+{
+    highp float tscale = 0.004/6000.0;
+    vec3 p0 =  eye * tscale + vec3(0.0,groundLevel + 0.001,0.0);
+
+	float ray_length = adepthSkyGround(p0,dir,groundLevel);
+
+	float alpha = dot(dir, sunVector);
+    float mie_factor = phase(alpha,0.99) * mieBrightness;
+    // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
+    // raleigh brightness
+
+	vec3 mie = vec3(0.0);
+    vec3 raleigh = vec3(0.0);
+    float nsteps = 50.0;
+    float stepsize = 1.0 / nsteps;
+    float step_length = ray_length / nsteps;
+    vec3 sunIntensity = sunLight;
+    float scatteramount = scatterAbsorb;
+
+	float ralabsorbfactor = 140.0;
+    float mieabsorbfactor = 260.0;
+
+    // calculate fake refraction factor. This will be used to shift the sampling points along the ray to simulate light curving through the atmosphere.
+	float refk = pow(1.0 - clamp(  abs(0.05 + dot(dir,normalize(p0))) ,0.0,1.0),9.0) * 0.5;
+
+	for(float t = 0.0; t < 1.0; t += stepsize)
+	{
+        float sample_dist = ray_length * t;
+        vec3 p = p0 + dir * sample_dist;
+
+        // advance sun sample position along ray proportional to how shallow our eye ray is.
+		vec3 psun = p0 + dir * (t * (1.0-refk) + refk * 1.0) * ray_length;
+        float sample_depth = adepthSky(psun,sunVector) + sample_dist;
+        // todo: + sample_dist ?
+
+		// do another scattering step
+		vec3 secondaryScattering = vec3(0.0);
+		for (float sstep=0.;sstep<5.;sstep+=1.0){
+			vec3 dir2 = randvec(p*19. + vec3(dir*sstep));
+			secondaryScattering += getInscatterSky(p,dir2);
+		}
+
+		vec3 sunIntensity2 = sunIntensity + secondaryScattering * 16.;
+
+		vec3 influx = absorb(sample_depth, sunIntensity2, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
+        raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
+        //mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
+    }
+
+	raleigh *= raleigh_factor * ray_length;
+    //mie *= mie_factor * ray_length;
+    return vec3(raleigh + mie);
+}
+
 
 
 
@@ -225,4 +298,12 @@ void main(void)
 
 	out_Sky = getInscatterSky(eye, dir);
 
+
+	//if (dir.x > 0.0){
+		//out_Sky = getInscatterSky(eye, dir);
+	//}
+	//else{
+		//out_Sky = getInscatterSkyMulti(eye, dir);
+	//}
+//
 }
