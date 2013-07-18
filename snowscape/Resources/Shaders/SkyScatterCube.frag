@@ -97,19 +97,11 @@ float adepthSkyGround(vec3 eye, vec3 dir, float groundheight)
 // fake refracted light
 vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor)
 {
-    //vec3 sd=sph[i].xyz-p;    
-    //b = dot ( rd,sd );
-    //disc = b*b + sph[i].w - dot ( sd,sd );
-    //if (disc>0.0) tnow = b - sqrt(disc);
-//
-
 	// intersect the eye-->dir ray with the radius=groundheight sphere centred on 0,0,0
 	float a = dot(dir, dir);
     float b = 2.0 * dot(dir, eye);
     float c = dot(eye, eye) - groundheight*groundheight;
     float det = b*b - 4.0*a*c;
-    //float b = dot(dir, eye);
-	//float det = b*b - dot(eye,eye) + groundheight*groundheight;
 
 	// no intersection
 	if (det < 0.0)
@@ -135,7 +127,6 @@ vec3 horizonLight(vec3 eye, vec3 dir, float groundheight, float factor)
 	if (t1 > 0.0 && t2 > 0.0)
 	{
         return vec3(1.0 / (1.0+t * t * 50.0));
-        //return vec3(1.0) - pow(Kr,vec3(1.0 / t));
 	}
 
 	return vec3(0.0);
@@ -190,9 +181,10 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
     float step_length = ray_length / nsteps;
     vec3 sunIntensity = sunLight;
     float scatteramount = scatterAbsorb;
-    //1.5;
+
 	float ralabsorbfactor = 140.0;
     float mieabsorbfactor = 260.0;
+
     // calculate fake refraction factor. This will be used to shift the sampling points along the ray to simulate light curving through the atmosphere.
 	float refk = pow(1.0 - clamp(  abs(0.05 + dot(dir,normalize(p0))) ,0.0,1.0),9.0) * 0.5;
 
@@ -200,13 +192,12 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	{
         float sample_dist = ray_length * t;
         vec3 p = p0 + dir * sample_dist;
+
         // advance sun sample position along ray proportional to how shallow our eye ray is.
-		
 		vec3 psun = p0 + dir * (t * (1.0-refk) + refk * 1.0) * ray_length;
         float sample_depth = adepthSky(psun,sunVector) + sample_dist;
         // todo: + sample_dist ?
 
-		//vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonBlock(psun, -sunVector, groundLevel);// * horizonLight(p,sunVector,groundLevel,scatteramount);
 		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
         raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
         //mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
@@ -230,8 +221,8 @@ void main(void)
 	// we're in a cube of radius 1.0
 	// assume eye is at 0,0,0
 
-	vec3 dir = (facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
+	vec3 dir = normalize(facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
 
-	out_Sky = getInscatterSky(eye, normalize(dir));
+	out_Sky = getInscatterSky(eye, dir);
 
 }
