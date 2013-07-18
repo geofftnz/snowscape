@@ -75,7 +75,7 @@ float fbm( vec3 p )
 
 float getHeight(vec2 pos)
 {
-	return texture(heightTex,pos).r + noise(vec3(pos * 8192.0,1.0)) * 0.1;
+	return texture(heightTex,pos).r + noise(vec3(pos * 8192.0,1.0)) * 0.2;
 }
 
 // finite difference
