@@ -59,6 +59,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private ITileRenderer tileRendererPatch;
+        private ITileRenderer tileRendererPatchLow;
         private ITileRenderer tileRendererLOD;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
@@ -206,6 +207,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
             this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
+            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth/4, TileHeight/4, patchCache);
             this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatch);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
@@ -386,6 +388,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
             this.tileRendererPatch.Load();
+            this.tileRendererPatchLow.Load();
             this.tileRendererLOD.Load();
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
 
@@ -940,23 +943,32 @@ namespace Snowscape.TerrainGenerationViewer
         {
             //RenderTile(this.terrainTile, 0f, 0f, this.tileRendererRaycast);
 
-            RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
 
-            RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
 
-            ((GenerationVisPatchRenderer)this.tileRendererPatch).Scale = 1.0f / 4.0f;
-            ((GenerationVisPatchRenderer)this.tileRendererPatch).Offset = (new Vector2(1.0f, 1.0f) / 4.0f);
-            //((GenerationVisPatchRenderer)this.tileRendererPatch).Scale = 0.5f;
-            RenderTile(this.terrainTile, 0f, 0f, this.tileRendererPatch);
+            for (int y = 0; y < 4; y++)
+            {
+                for (int x = 0; x < 4; x++)
+                {
+                    var tileRenderer = (x == 0 && y == 0) ? this.tileRendererPatch : this.tileRendererPatchLow;
+
+
+                    ((GenerationVisPatchRenderer)tileRenderer).Scale = 1.0f / 4.0f;
+                    ((GenerationVisPatchRenderer)tileRenderer).Offset = (new Vector2((float)x, (float)y) / 4.0f);
+                    RenderTile(this.terrainTile, 0f, 0f, tileRenderer);
+                }
+            }
+
+
             
             
-            RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
-
-            RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
-            RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
+            //RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
         }
 
         private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset, ITileRenderer renderer)
