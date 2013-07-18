@@ -15,6 +15,8 @@ uniform vec3 facenormal;
 uniform vec3 facexbasis;
 uniform vec3 faceybasis;
 
+uniform samplerCube prevSky;
+
 in vec2 sky2d;
 
 out vec3 out_Sky;
@@ -294,9 +296,12 @@ void main(void)
 	// we're in a cube of radius 1.0
 	// assume eye is at 0,0,0
 
+
 	vec3 dir = normalize(facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
 
-	out_Sky = getInscatterSky(eye, dir);
+	vec3 prev = textureCube(prevSky,dir).rgb;
+
+	out_Sky = prev * 0.9 + getInscatterSky(eye, dir) * 0.1;
 
 
 	//if (dir.x > 0.0){

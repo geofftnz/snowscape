@@ -71,6 +71,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
 
         private Texture skyCubeTexture;
+        private Texture skyCubeTexture2;
+        private int lightingIteration = 0;
 
         //private Texture cloudTexture;
         //private Texture cloudDepthTexture;
@@ -207,7 +209,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
             this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth/4, TileHeight/4, patchCache);
+            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth / 4, TileHeight / 4, patchCache);
             this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatch);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
@@ -425,16 +427,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.skyRenderer.Init();
 
-            GL.Enable(EnableCap.TextureCubeMap);
-            GL.Enable(EnableCap.TextureCubeMapSeamless);
-            this.skyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest));
+            this.skyCubeTexture = InitSkyCubeTexture();
+            this.skyCubeTexture2 = InitSkyCubeTexture();
 
-            this.SetupCubeMap();
+
 
             /*
             // create noise texture for clouds
@@ -479,16 +475,30 @@ namespace Snowscape.TerrainGenerationViewer
             this.CalculateSunDirection();
         }
 
-        private void SetupCubeMap()
+        private Texture InitSkyCubeTexture()
         {
-            this.skyCubeTexture.Bind();
-            this.skyCubeTexture.ApplyParameters();
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeX);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeY);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeZ);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveX);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveY);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveZ);
+            GL.Enable(EnableCap.TextureCubeMap);
+            GL.Enable(EnableCap.TextureCubeMapSeamless);
+            Texture skyCube = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
+            skyCube.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
+            skyCube.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
+            skyCube.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
+            skyCube.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            skyCube.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest));
+            this.SetupCubeMap(skyCube);
+            return skyCube;
+        }
+
+        private void SetupCubeMap(Texture skyCube)
+        {
+            skyCube.Bind();
+            skyCube.ApplyParameters();
+            skyCube.UploadEmpty(TextureTarget.TextureCubeMapNegativeX);
+            skyCube.UploadEmpty(TextureTarget.TextureCubeMapNegativeY);
+            skyCube.UploadEmpty(TextureTarget.TextureCubeMapNegativeZ);
+            skyCube.UploadEmpty(TextureTarget.TextureCubeMapPositiveX);
+            skyCube.UploadEmpty(TextureTarget.TextureCubeMapPositiveY);
+            skyCube.UploadEmpty(TextureTarget.TextureCubeMapPositiveZ);
         }
 
         private void UpdateThreadProc()
@@ -658,7 +668,7 @@ namespace Snowscape.TerrainGenerationViewer
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
                 //NoiseTexture = this.cloudTexture,
-                SkyCubeTexture = this.skyCubeTexture,
+                SkyCubeTexture = GetSkyCubeTarget(),
                 EyePos = this.eyePos,
                 SunDirection = this.sunDirection,
                 MinHeight = this.terrainGlobal.MinHeight,
@@ -818,10 +828,10 @@ namespace Snowscape.TerrainGenerationViewer
                 //this.RenderCloudDepth(this.sunDirection);
                 //perfmon.Stop("CloudDepth");
 
+                this.lightingIteration++;
                 perfmon.Start("SkyPreCalc");
                 this.RenderSky(this.eyePos, this.sunDirection, (float)this.parameters["groundLevel"].GetValue());
                 perfmon.Stop("SkyPreCalc");
-
 
                 this.prevSunDirection = this.sunDirection;
                 this.prevParamsVersion = this.currentParamsVersion;
@@ -905,16 +915,27 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
         }
-/*
-        private void RenderCloudDepth(Vector3 sunVector)
+        /*
+                private void RenderCloudDepth(Vector3 sunVector)
+                {
+                    this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale);
+                }
+                */
+
+        private Texture GetSkyCubeTarget()
         {
-            this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale);
+            return (this.lightingIteration % 2 == 0) ? this.skyCubeTexture : this.skyCubeTexture2;
         }
-        */
+        private Texture GetSkyCubeSource()
+        {
+            return (this.lightingIteration % 2 == 1) ? this.skyCubeTexture : this.skyCubeTexture2;
+        }
+
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(
-                this.skyCubeTexture,
+                GetSkyCubeTarget(),
+                GetSkyCubeSource(),
                 eyePos,
                 sunVector,
                 groundLevel,
@@ -963,8 +984,8 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
 
-            
-            
+
+
             //RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
