@@ -32,7 +32,7 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileWidth = 1024;
         const int TileHeight = 1024;
 
-        const int SkyRes = 512;
+        const int SkyRes = 256;//512;
         const int CloudRes = 512;
 
         public TerrainGen Terrain { get; set; }
@@ -249,10 +249,10 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f));
             parameters.Add(new Parameter<float>("raleighBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
-            parameters.Add(new Parameter<float>("skylightBrightness", 1.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("skylightBrightness", 1.0f, 0.0001f, 400.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
-            parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.01f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
+            parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.0002f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
 
             parameters.Add(new Parameter<float>("groundLevel", 0.998f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
@@ -752,6 +752,7 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
             bool needToRenderLighting = false;
+            bool needToRenderSky = false;
 
             //if (this.frameCounter.Frames % 32 == 0)
             //{
@@ -828,13 +829,23 @@ namespace Snowscape.TerrainGenerationViewer
                 //this.RenderCloudDepth(this.sunDirection);
                 //perfmon.Stop("CloudDepth");
 
+                needToRenderSky = true;
+
+                this.prevSunDirection = this.sunDirection;
+                this.prevParamsVersion = this.currentParamsVersion;
+            }
+
+            if (this.frameCounter.Frames % 4 == 0)
+            {
+                needToRenderSky = true;
+            }
+
+            if (needToRenderSky)
+            {
                 this.lightingIteration++;
                 perfmon.Start("SkyPreCalc");
                 this.RenderSky(this.eyePos, this.sunDirection, (float)this.parameters["groundLevel"].GetValue());
                 perfmon.Stop("SkyPreCalc");
-
-                this.prevSunDirection = this.sunDirection;
-                this.prevParamsVersion = this.currentParamsVersion;
             }
 
             SetTerrainProjection();
@@ -951,7 +962,8 @@ namespace Snowscape.TerrainGenerationViewer
                         (float)this.parameters["Sun_r"].GetValue(),
                         (float)this.parameters["Sun_g"].GetValue(),
                         (float)this.parameters["Sun_b"].GetValue()
-                    )
+                    ),
+                (float)this.lightingIteration
                 );
         }
 

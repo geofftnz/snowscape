@@ -15,6 +15,7 @@ uniform vec3 facenormal;
 uniform vec3 facexbasis;
 uniform vec3 faceybasis;
 
+uniform float time;
 uniform samplerCube prevSky;
 
 in vec2 sky2d;
@@ -25,6 +26,11 @@ out vec3 out_Sky;
 // other vars
 vec3 Kr2 = Kr;
 vec3 Kral = Kr;
+
+float rand(float seed)
+{
+	return fract(sin(seed) * 43758.5453);
+}
 
 // random
 float rand(vec3 co){
@@ -267,12 +273,14 @@ vec3 getInscatterSkyMulti(vec3 eye, vec3 dir)
 
 		// do another scattering step
 		vec3 secondaryScattering = vec3(0.0);
-		for (float sstep=0.;sstep<5.;sstep+=1.0){
-			vec3 dir2 = randvec(p*19. + vec3(dir*sstep));
-			secondaryScattering += getInscatterSky(p,dir2);
-		}
+		//for (float sstep=0.;sstep<5.;sstep+=1.0){
+		//	vec3 dir2 = randvec(p*19. + vec3(dir*sstep));
+		//	secondaryScattering += getInscatterSky(p,dir2);
+		//}
+		vec3 dir2 = randvec(p*19.0 + vec3(rand(time*0.1)));
+		secondaryScattering += getInscatterSky(p,dir2);
 
-		vec3 sunIntensity2 = sunIntensity + secondaryScattering * 16.;
+		vec3 sunIntensity2 = /*sunIntensity +*/ secondaryScattering * 16.;
 
 		vec3 influx = absorb(sample_depth, sunIntensity2, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
         raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
@@ -301,14 +309,21 @@ void main(void)
 
 	vec3 prev = textureCube(prevSky,dir).rgb;
 
-	out_Sky = prev * 0.9 + getInscatterSky(eye, dir) * 0.1;
+	if (rand(rand(dir) + rand(time)) > 0.1)
+	{
+		out_Sky = prev;
+	}
+	else
+	{
+		if (dir.x > 0.0){
+			out_Sky = prev * 0.5 + getInscatterSky(eye, dir) * 0.5;
+		}
+		else{
+			out_Sky = prev * 0.5 + getInscatterSkyMulti(eye, dir) * 0.5;
+		}
+	}
 
+	//out_Sky = prev * 0.9 + getInscatterSky(eye, dir) * 0.1;
 
-	//if (dir.x > 0.0){
-		//out_Sky = getInscatterSky(eye, dir);
-	//}
-	//else{
-		//out_Sky = getInscatterSkyMulti(eye, dir);
-	//}
 //
 }

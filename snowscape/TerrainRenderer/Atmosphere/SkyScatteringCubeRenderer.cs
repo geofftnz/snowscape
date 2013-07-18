@@ -32,11 +32,12 @@ namespace Snowscape.TerrainRenderer.Atmosphere
             gb.Init(@"../../../Resources/Shaders/SkyScatterCube.vert".Load(), @"../../../Resources/Shaders/SkyScatterCube.frag".Load());
         }
 
-        public void Render(Texture cubeMapTexDest, Texture cubeMapTexSrc, Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight)
+        public void Render(Texture cubeMapTexDest, Texture cubeMapTexSrc, Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight, float time)
         {
             Action<ShaderProgram> uniforms = (sp) =>
             {
                 sp.SetUniform("prevSky", 0);
+                sp.SetUniform("time",time);
                 sp.SetUniform("eye", eye);
                 sp.SetUniform("sunVector", sunVector);
                 sp.SetUniform("groundLevel", groundLevel);
