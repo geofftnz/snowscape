@@ -388,7 +388,8 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 
 	// indirect illumination from sky-dome
 	//light += getSkyLight(n) * AO;
-	light += mix(getSkyLight(n),sunLight,ambientBias) * AO;
+	//light += mix(getSkyLight(n),sunLight,ambientBias) * AO;
+	light += getSkyLight(n) * 10.0 * ambientBias * AO;
 
 	vec3 col2 = col * light;
 
