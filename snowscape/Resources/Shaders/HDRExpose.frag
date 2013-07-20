@@ -38,6 +38,14 @@ void main(void)
 	//vec3 col = texture(colTex,texcoord0).rgb;
 	vec3 col = textureLod(colTex,texcoord0,0).rgb;
 
+	// chromatic aberration
+	//vec2 posFromCentre = texcoord0.xy - vec2(0.5);
+	//vec3 col;
+	//col.r = textureLod(colTex,texcoord0 + posFromCentre * 0.0,0).r;
+	//col.g = textureLod(colTex,texcoord0 + posFromCentre * 0.005,0).g;
+	//col.b = textureLod(colTex,texcoord0 + posFromCentre * 0.01,0).b;
+//
+
 	// set black level
 	col.rgb -= vec3(blacklevel);
 
