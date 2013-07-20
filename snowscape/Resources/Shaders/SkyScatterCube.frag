@@ -177,6 +177,13 @@ float horizonBlock(vec3 eye, vec3 dir, float groundheight)
 }
 
 
+// get the air density for a given height. Exponential falloff.
+float getAirDensity(vec3 p)
+{
+	float h = (length(p) - groundLevel) / (1.0 - groundLevel);
+	return exp(h * -3.0);
+}
+
 
 vec3 getInscatterSky(vec3 eye, vec3 dir)
 {
@@ -211,12 +218,12 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
         vec3 p = p0 + dir * sample_dist;
 
         // advance sun sample position along ray proportional to how shallow our eye ray is.
-		vec3 psun = p0 + dir * (t * (1.0-refk) + refk * 1.0) * ray_length;
+		vec3 psun = p0 + dir * (t * (1.0-refk) + refk) * ray_length;
         float sample_depth = adepthSky(psun,sunVector) + sample_dist;
         // todo: + sample_dist ?
 
 		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
-        raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
+        raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor) * getAirDensity(p);
         //mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
     }
 
