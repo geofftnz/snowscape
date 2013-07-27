@@ -87,23 +87,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                 boxcoord[i].Z = (float)z * zscale;
             });
 
-            //for (int z = 0; z < this.Height; z++)
-            //{
-            //    for (int x = 0; x < this.Width; x++)
-            //    {
-            //        int i = x + z * this.Width;
-
-            //        vertex[i].X = (float)x * xscale;
-            //        vertex[i].Y = 0f;
-            //        vertex[i].Z = (float)z * zscale;
-
-            //        boxcoord[i].X = (float)x * xscale;
-            //        boxcoord[i].Y = 0f;
-            //        boxcoord[i].Z = (float)z * zscale;
-
-            //    }
-            //}
-
 
             // vertex VBO
             this.vertexVBO.SetData(vertex);
