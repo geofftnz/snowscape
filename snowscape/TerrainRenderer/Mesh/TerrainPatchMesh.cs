@@ -44,14 +44,67 @@ namespace Snowscape.TerrainRenderer.Mesh
             SetupMesh();
         }
 
+        private int VertexCount
+        {
+            get
+            {
+                return
+                    this.VertexWidth * this.VertexHeight + // core mesh
+                    this.VertexWidth * 2 + // top & bottom edges
+                    this.VertexHeight * 2; // left and right edges
+            }
+        }
+
+        private int TriangleCount
+        {
+            get
+            {
+                return
+                    this.Width * this.Height * 2 + // core mesh
+                    this.Width * 4 + // top and bottom edges
+                    this.Height * 4; // left and right edges
+            }
+        }
+
+        private int IndexCount
+        {
+            get
+            {
+                return TriangleCount * 3;
+            }
+        }
+
+        private enum Edge
+        {
+            Top = 0,
+            Bottom,
+            Left,
+            Right
+        }
+
+        private int GetSkirtVertexStart(Edge e)
+        {
+            int coreMeshEnd = this.VertexWidth * this.VertexHeight;
+
+            switch (e)
+            {
+                case Edge.Top: return coreMeshEnd;
+                case Edge.Bottom: return coreMeshEnd + this.VertexWidth;
+                case Edge.Left: return coreMeshEnd + this.VertexWidth * 2;
+                case Edge.Right:
+                default: return coreMeshEnd + this.VertexWidth * 2 + this.VertexHeight;
+            }
+        }
+
         private void SetupMesh()
         {
-            Vector3[] vertex = new Vector3[this.VertexWidth * this.VertexHeight];
-            Vector3[] boxcoord = new Vector3[this.VertexWidth * this.VertexHeight];
+            Vector3[] vertex = new Vector3[this.VertexCount];
+            Vector3[] boxcoord = new Vector3[this.VertexCount];
 
             float xscale = 1.0f / (float)(this.Width);
             float zscale = 1.0f / (float)(this.Height);
 
+            // setup core mesh
             ParallelHelper.For2D(this.VertexWidth, this.VertexHeight, (x, z, i) =>
             {
                 vertex[i].X = (float)x * xscale;
@@ -63,13 +116,47 @@ namespace Snowscape.TerrainRenderer.Mesh
                 boxcoord[i].Z = (float)z * zscale;
             });
 
+            // setup edges as copies of core edges
+            int j = this.VertexWidth * this.VertexHeight; // start vertex
+
+            for (int i = 0; i < this.VertexWidth; i++)
+            {
+                vertex[j] = vertex[i]; // top edge
+                boxcoord[j] = vertex[j];
+                vertex[j].Y = -1.0f;
+                j++;
+            }
+            for (int i = 0; i < this.VertexWidth; i++)
+            {
+                vertex[j] = vertex[this.Height * this.VertexWidth + i]; // bottom edge
+                boxcoord[j] = vertex[j];
+                vertex[j].Y = -1.0f;
+                j++;
+            }
+            for (int i = 0; i < this.VertexHeight; i++)
+            {
+                vertex[j] = vertex[i * this.VertexWidth]; // left edge
+                boxcoord[j] = vertex[j];
+                vertex[j].Y = -1.0f;
+                j++;
+            }
+            for (int i = 0; i < this.VertexHeight; i++)
+            {
+                vertex[j] = vertex[i * this.VertexWidth + this.Width]; // right edge
+                boxcoord[j] = vertex[j];
+                vertex[j].Y = -1.0f;
+                j++;
+            }
+
+
+
             // vertex VBO
             this.vertexVBO.SetData(vertex);
             // boxcoord VBO
             this.boxcoordVBO.SetData(boxcoord);
 
             // cubeindex VBO
-            uint[] meshindex = new uint[this.Width * this.Height * 6];
+            uint[] meshindex = new uint[this.IndexCount];
 
             for (int y = 0; y < this.Height; y++)
             {
@@ -97,6 +184,96 @@ namespace Snowscape.TerrainRenderer.Mesh
                     }
                 }
             }
+
+            // setup edge indices
+            int ii = this.Width * this.Height * 6; // index start point
+
+            // top edge
+            for (int x = 0; x < this.Width; x++)
+            {
+                // work out indices of each corner 
+                // 0 1  core mesh
+                // 2 3  skirt
+
+                uint index0 = (uint)(x);
+                uint index1 = (uint)(x + 1);
+                uint index2 = (uint)(GetSkirtVertexStart(Edge.Top) + x);
+                uint index3 = (uint)(index2 + 1);
+
+                meshindex[ii + 0] = index0;  // 0
+                meshindex[ii + 1] = index2; // 2
+                meshindex[ii + 2] = index1;  // 1
+                meshindex[ii + 3] = index1; // 1
+                meshindex[ii + 4] = index2; // 2
+                meshindex[ii + 5] = index3; // 3
+
+                ii += 6;
+            }
+            // bottom edge
+            for (int x = 0; x < this.Width; x++)
+            {
+                // work out indices of each corner 
+                // 0 1  core mesh
+                // 2 3  skirt
+
+                uint index0 = (uint)(x + this.Height * this.VertexWidth);
+                uint index1 = (uint)(x + this.Height * this.VertexWidth + 1);
+                uint index2 = (uint)(GetSkirtVertexStart(Edge.Bottom) + x);
+                uint index3 = (uint)(index2 + 1);
+
+                meshindex[ii + 0] = index0;  // 0
+                meshindex[ii + 1] = index1;  // 1
+                meshindex[ii + 2] = index2; // 2
+                meshindex[ii + 3] = index1; // 1
+                meshindex[ii + 4] = index3; // 3
+                meshindex[ii + 5] = index2; // 2
+
+                ii += 6;
+            }
+            // left edge
+            for (int y = 0; y < this.Height; y++)
+            {
+                // work out indices of each corner 
+                // 0 1  core mesh
+                // 2 3  skirt
+
+                uint index0 = (uint)(y * this.VertexWidth);
+                uint index1 = (uint)((y + 1) * this.VertexWidth);
+                uint index2 = (uint)(GetSkirtVertexStart(Edge.Left) + y);
+                uint index3 = (uint)(index2 + 1);
+
+                meshindex[ii + 0] = index0;  // 0
+                meshindex[ii + 1] = index1;  // 1
+                meshindex[ii + 2] = index2; // 2
+                meshindex[ii + 3] = index1; // 1
+                meshindex[ii + 4] = index3; // 3
+                meshindex[ii + 5] = index2; // 2
+
+                ii += 6;
+            }
+            // right edge
+            for (int y = 0; y < this.Height; y++)
+            {
+                // work out indices of each corner 
+                // 0 1  core mesh
+                // 2 3  skirt
+
+                uint index0 = (uint)(y * this.VertexWidth + this.Width);
+                uint index1 = (uint)((y + 1) * this.VertexWidth + this.Width);
+                uint index2 = (uint)(GetSkirtVertexStart(Edge.Right) + y);
+                uint index3 = (uint)(index2 + 1);
+
+                meshindex[ii + 0] = index0;  // 0
+                meshindex[ii + 1] = index2; // 2
+                meshindex[ii + 2] = index1;  // 1
+                meshindex[ii + 3] = index1; // 1
+                meshindex[ii + 4] = index2; // 2
+                meshindex[ii + 5] = index3; // 3
+
+                ii += 6;
+            }
+
+
 
             indexVBO.SetData(meshindex);
 

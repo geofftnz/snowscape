@@ -948,7 +948,11 @@ namespace Snowscape.TerrainGenerationViewer
             //RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
 
+            //((GenerationVisPatchRenderer)tileRendererPatch).Scale = 1.0f / 16.0f;
+            //((GenerationVisPatchRenderer)tileRendererPatch).Offset = (new Vector2((float)0.0, (float)0.0) / 16.0f);
+            //RenderTile(this.terrainTile, 0f, 0f, tileRendererPatch);
 
+            
             for (int y = 0; y < 16; y++)
             {
                 for (int x = 0; x < 16; x++)
@@ -961,7 +965,7 @@ namespace Snowscape.TerrainGenerationViewer
                     RenderTile(this.terrainTile, 0f, 0f, tileRenderer);
                 }
             }
-
+            
 
             
             
