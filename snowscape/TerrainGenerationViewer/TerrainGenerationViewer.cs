@@ -35,6 +35,8 @@ namespace Snowscape.TerrainGenerationViewer
         const int SkyRes = 512;
         const int CloudRes = 512;
 
+        const int TileLodScale = 4;
+
         public TerrainGen Terrain { get; set; }
 
         private Matrix4 overlayProjection = Matrix4.Identity;
@@ -207,7 +209,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
             this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth/16, TileHeight/16, patchCache);
+            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth / TileLodScale, TileHeight / TileLodScale, patchCache);
             this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatch);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
@@ -952,16 +954,16 @@ namespace Snowscape.TerrainGenerationViewer
             //((GenerationVisPatchRenderer)tileRendererPatch).Offset = (new Vector2((float)0.0, (float)0.0) / 16.0f);
             //RenderTile(this.terrainTile, 0f, 0f, tileRendererPatch);
 
-            
-            for (int y = 0; y < 16; y++)
+
+            for (int y = 0; y < TileLodScale; y++)
             {
-                for (int x = 0; x < 16; x++)
+                for (int x = 0; x < TileLodScale; x++)
                 {
                     var tileRenderer = (x == 0 && y == 0) ? this.tileRendererPatch : this.tileRendererPatchLow;
 
 
-                    ((GenerationVisPatchRenderer)tileRenderer).Scale = 1.0f / 16.0f;
-                    ((GenerationVisPatchRenderer)tileRenderer).Offset = (new Vector2((float)x, (float)y) / 16.0f);
+                    ((GenerationVisPatchRenderer)tileRenderer).Scale = 1.0f / (float)TileLodScale;
+                    ((GenerationVisPatchRenderer)tileRenderer).Offset = (new Vector2((float)x, (float)y) / (float)TileLodScale);
                     RenderTile(this.terrainTile, 0f, 0f, tileRenderer);
                 }
             }
