@@ -62,6 +62,7 @@
     <Compile Include="Renderers\GenerationVisPatchRenderer.cs" />
     <Compile Include="Renderers\GenerationVisRaycastRenderer.cs" />
     <Compile Include="Renderers\GenerationVisMeshRenderer.cs" />
+    <Compile Include="Renderers\IPatchRenderer.cs" />
     <Compile Include="Renderers\ITileRenderer.cs" />
     <Compile Include="Renderers\MeshRenderer.cs" />
     <Compile Include="Renderers\QuadtreeLODRenderer.cs" />

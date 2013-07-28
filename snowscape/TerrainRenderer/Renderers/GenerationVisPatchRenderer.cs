@@ -16,12 +16,29 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// This will use a mesh and a portion of a heightmap and associated textures.
     /// The mesh is designed to seamlessly tile to adjacent patches, assuming the source textures wrap around.
     /// </summary>
-    public class GenerationVisPatchRenderer : ITileRenderer
+    public class GenerationVisPatchRenderer : ITileRenderer, Snowscape.TerrainRenderer.Renderers.IPatchRenderer
     {
         private TerrainPatchMesh mesh;
         private ShaderProgram shader = new ShaderProgram("vistilepatch");
 
-        public int Width { get; set; }
+        public IPatchCache PatchCache { get; set; }
+
+        private int _width;
+        public int Width
+        {
+            get
+            {
+                return _width;
+            }
+            set
+            {
+                if (value != _width)
+                {
+                    _width = value;
+                    this.mesh = PatchCache.GetPatchMesh(_width);
+                }
+            }
+        }
         public int Height { get; set; }
 
         public float Scale { get; set; }
@@ -33,9 +50,9 @@ namespace Snowscape.TerrainRenderer.Renderers
             {
                 throw new InvalidOperationException("Patch must be square.");
             }
+            this.PatchCache = patchCache;
             this.Width = width;
             this.Height = height;
-            this.mesh = patchCache.GetPatchMesh(this.Width);
             this.Scale = 1.0f;
             this.Offset = Vector2.Zero;
         }
@@ -85,8 +102,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("boxparam", boxparam)
                 .SetUniform("patchSize", this.Width)
-                .SetUniform("scale",this.Scale)
-                .SetUniform("offset",this.Offset);
+                .SetUniform("scale", this.Scale)
+                .SetUniform("offset", this.Offset);
             this.mesh.Bind(this.shader.VariableLocation("vertex"), this.shader.VariableLocation("in_boxcoord"));
             this.mesh.Render();
 

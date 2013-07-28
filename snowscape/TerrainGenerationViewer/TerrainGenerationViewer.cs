@@ -63,6 +63,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererPatch;
         private ITileRenderer tileRendererPatchLow;
         private ITileRenderer tileRendererLOD;
+        private ITileRenderer tileRendererQuadtree;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
 
@@ -211,6 +212,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
             this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth / TileLodScale, TileHeight / TileLodScale, patchCache);
             this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatch);
+            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatch, (IPatchRenderer)this.tileRendererPatch, (IPatchRenderer)this.tileRendererPatch);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
@@ -392,6 +394,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererPatch.Load();
             this.tileRendererPatchLow.Load();
             this.tileRendererLOD.Load();
+            this.tileRendererQuadtree.Load();
+
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
@@ -954,7 +958,7 @@ namespace Snowscape.TerrainGenerationViewer
             //((GenerationVisPatchRenderer)tileRendererPatch).Offset = (new Vector2((float)0.0, (float)0.0) / 16.0f);
             //RenderTile(this.terrainTile, 0f, 0f, tileRendererPatch);
 
-
+            /*
             for (int y = 0; y < TileLodScale; y++)
             {
                 for (int x = 0; x < TileLodScale; x++)
@@ -966,7 +970,7 @@ namespace Snowscape.TerrainGenerationViewer
                     ((GenerationVisPatchRenderer)tileRenderer).Offset = (new Vector2((float)x, (float)y) / (float)TileLodScale);
                     RenderTile(this.terrainTile, 0f, 0f, tileRenderer);
                 }
-            }
+            }*/
             
 
             
@@ -975,6 +979,17 @@ namespace Snowscape.TerrainGenerationViewer
             //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
+
+            //RenderTile(this.terrainTile, 0f, 0f, tileRendererQuadtree);
+
+            for (int y = -1; y <= 1; y++)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    RenderTile(this.terrainTile, (float)x, (float)y, tileRendererQuadtree);
+                }
+            }
+
         }
 
         private void RenderTile(TerrainTile tile, float TileXOffset, float TileZOffset, ITileRenderer renderer)
