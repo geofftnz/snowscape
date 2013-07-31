@@ -9,7 +9,10 @@ uniform vec4 boxparam;
 uniform vec3 eyePos;
 uniform float patchSize;
 uniform float scale;
+uniform float detailScale;
 uniform vec2 offset;
+
+uniform vec4 detailWeights; // x:TL y:TR z:BL w:BR
 
 in vec3 vertex;
 in vec3 in_boxcoord;
@@ -19,6 +22,8 @@ out vec3 worldpos;
 out vec3 normal;
 
 float t = 1.0 / boxparam.x;
+float pt = t * detailScale;
+float nx = 2.0 * detailScale;
 
 
 
@@ -72,30 +77,35 @@ float fbm( vec3 p )
 
 
 
-
-float getHeight(vec2 pos)
+float getHeightDetail(vec2 pos)
 {
-	return texture(heightTex,pos).r + noise(vec3(pos * 8192.0,1.0)) * 0.2;
+	//return 0.0;
+	return noise(vec3(pos * 4096.0,1.0)) * 0.05;
+}
+
+float getHeight(vec2 pos,float weight)
+{
+	return texture(heightTex,pos).r;
 }
 
 // finite difference
-float sampleHeight(vec2 pos)
+float sampleHeight(vec2 pos, float weight)
 {
-	float c = getHeight(pos);
-	float n = getHeight(vec2(pos.x, pos.y - t));
-	float s = getHeight(vec2(pos.x, pos.y + t));
-	float w = getHeight(vec2(pos.x - t, pos.y));
-	float e = getHeight(vec2(pos.x + t, pos.y));
-	return (c * 4.0 + n+s+w+e) / 8.0;
+	float c = getHeight(pos,weight);
+	float n = getHeight(vec2(pos.x, pos.y - t),weight);
+	float s = getHeight(vec2(pos.x, pos.y + t),weight);
+	float w = getHeight(vec2(pos.x - t, pos.y),weight);
+	float e = getHeight(vec2(pos.x + t, pos.y),weight);
+	return ((c * 2.0 + n+s+w+e) / 6.0) + getHeightDetail(pos) * weight;
 }
 
-vec3 getNormal(vec2 pos)
+vec3 getNormal(vec2 pos, float weight)
 {
 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - t));
-	float h2 = sampleHeight(vec2(pos.x, pos.y + t));
-    float h3 = sampleHeight(vec2(pos.x - t, pos.y));
-	float h4 = sampleHeight(vec2(pos.x + t, pos.y));
+    float h1 = sampleHeight(vec2(pos.x, pos.y - t),  weight);
+	float h2 = sampleHeight(vec2(pos.x, pos.y + t),  weight);
+    float h3 = sampleHeight(vec2(pos.x - t, pos.y),  weight);
+	float h4 = sampleHeight(vec2(pos.x + t, pos.y),  weight);
 
     //return normalize(vec3(h4-h3,h2-h1,1.0));
 	return normalize(vec3(h3-h4,2.0,h1-h2));
@@ -130,10 +140,14 @@ void main() {
 
 	vec2 texcoord = b.xz;
 
+	float weight = 
+		clamp(mix(
+			mix(detailWeights.x,detailWeights.y,in_boxcoord.x),
+			mix(detailWeights.z,detailWeights.w,in_boxcoord.x),
+			in_boxcoord.z),0.0,1.0);
 
-
-	float h = sampleHeight(texcoord);
-	normal = getNormal(texcoord);
+	float h = sampleHeight(texcoord,weight);
+	normal = getNormal(texcoord,weight);
 
 	vec3 v = vertex;
 	v.xz *= scale;

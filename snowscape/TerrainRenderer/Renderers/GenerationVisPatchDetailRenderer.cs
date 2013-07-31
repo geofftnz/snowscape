@@ -21,9 +21,14 @@ namespace Snowscape.TerrainRenderer.Renderers
         private TerrainPatchMesh mesh;
         private ShaderProgram shader = new ShaderProgram("vistilepatchdetail");
 
+        /// <summary>
+        /// XYZW = TL TR BL BR weights of detail - this is blended across tile
+        /// </summary>
+        private Vector4 detailWeight;
+
         public IPatchCache PatchCache { get; set; }
 
-        
+
         /// <summary>
         /// Sets the width of the patch. This will fetch (and potentially generate) the correct-sized patch mesh from the current patch cache.
         /// </summary>
@@ -49,6 +54,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
         public float Scale { get; set; }
         public Vector2 Offset { get; set; }
+        public float DetailScale { get; set; }
 
         public GenerationVisPatchDetailRenderer(int width, int height, IPatchCache patchCache)
         {
@@ -61,6 +67,9 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.Height = height;
             this.Scale = 1.0f;
             this.Offset = Vector2.Zero;
+            this.DetailScale = 1.0f;
+
+            this.detailWeight = Vector4.One;
         }
 
         public void Load()
@@ -109,7 +118,10 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("boxparam", boxparam)
                 .SetUniform("patchSize", this.Width)
                 .SetUniform("scale", this.Scale)
-                .SetUniform("offset", this.Offset);
+                .SetUniform("offset", this.Offset)
+                .SetUniform("detailScale", this.DetailScale)
+                .SetUniform("detailWeights", this.detailWeight);
+
             this.mesh.Bind(this.shader.VariableLocation("vertex"), this.shader.VariableLocation("in_boxcoord"));
             this.mesh.Render();
 
@@ -123,5 +135,9 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             throw new NotImplementedException();
         }
+
+
+
+
     }
 }

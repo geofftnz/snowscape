@@ -47,6 +47,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
         public float Scale { get; set; }
         public Vector2 Offset { get; set; }
+        public float DetailScale { get; set; }
 
         public GenerationVisPatchRenderer(int width, int height, IPatchCache patchCache)
         {
@@ -59,6 +60,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.Height = height;
             this.Scale = 1.0f;
             this.Offset = Vector2.Zero;
+            this.DetailScale = 1.0f;
         }
 
         public void Load()

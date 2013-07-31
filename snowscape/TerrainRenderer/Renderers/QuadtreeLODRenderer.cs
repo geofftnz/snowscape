@@ -139,6 +139,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 {
                     tileDetailRenderer.Width = 64;
                     tileDetailRenderer.Height = 64;
+                    tileDetailRenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                     tileDetailRenderer.Scale = (float)this.TileSize / (float)tile.Width;
                     tileDetailRenderer.Offset = (this.TopLeft.Position.Xz / (float)tile.Width);
                     tileDetailRenderer.Render(tile, projection, view, eye);
@@ -216,7 +217,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.fullTileNearRenderer = fullTileNear;
             this.subTileRenderer = subTile;
             this.subTileDetailRenderer = subTileDetail;
-            this.DetailRadius = 4.0f;
+            this.DetailRadius = 12.0f;
             this.DistantTileRadius = 1024.0f;
         }
 

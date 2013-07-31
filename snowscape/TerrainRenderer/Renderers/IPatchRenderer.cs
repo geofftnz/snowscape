@@ -8,6 +8,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         OpenTK.Vector2 Offset { get; set; }
         void Render(Snowscape.TerrainRenderer.TerrainTile tile, OpenTK.Matrix4 projection, OpenTK.Matrix4 view, OpenTK.Vector3 eyePos);
         float Scale { get; set; }
+        float DetailScale { get; set; }
         void Unload();
         int Width { get; set; }
     }
