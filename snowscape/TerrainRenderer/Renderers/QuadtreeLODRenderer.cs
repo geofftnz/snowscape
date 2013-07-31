@@ -137,6 +137,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 // we can render now once we've got to a small enough tile
                 if (this.TileSize <= 4)
                 {
+                    tileDetailRenderer.Width = 64;
+                    tileDetailRenderer.Height = 64;
                     tileDetailRenderer.Scale = (float)this.TileSize / (float)tile.Width;
                     tileDetailRenderer.Offset = (this.TopLeft.Position.Xz / (float)tile.Width);
                     tileDetailRenderer.Render(tile, projection, view, eye);
