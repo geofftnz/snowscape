@@ -212,7 +212,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache);
             this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
             this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatchDetail);
-            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatchDetail, (IPatchRenderer)this.tileRendererPatchDetail, (IPatchRenderer)this.tileRendererPatchDetail);
+            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchDetail);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
