@@ -16,13 +16,14 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// This will use a mesh and a portion of a heightmap and associated textures.
     /// The mesh is designed to seamlessly tile to adjacent patches, assuming the source textures wrap around.
     /// </summary>
-    public class GenerationVisPatchRenderer : ITileRenderer, Snowscape.TerrainRenderer.Renderers.IPatchRenderer
+    public class GenerationVisPatchDetailRenderer : ITileRenderer, Snowscape.TerrainRenderer.Renderers.IPatchRenderer
     {
         private TerrainPatchMesh mesh;
-        private ShaderProgram shader = new ShaderProgram("vistilepatch");
+        private ShaderProgram shader = new ShaderProgram("vistilepatchdetail");
 
         public IPatchCache PatchCache { get; set; }
 
+        
         /// <summary>
         /// Sets the width of the patch. This will fetch (and potentially generate) the correct-sized patch mesh from the current patch cache.
         /// </summary>
@@ -43,12 +44,13 @@ namespace Snowscape.TerrainRenderer.Renderers
         }
         private int _width;
 
+
         public int Height { get; set; }
 
         public float Scale { get; set; }
         public Vector2 Offset { get; set; }
 
-        public GenerationVisPatchRenderer(int width, int height, IPatchCache patchCache)
+        public GenerationVisPatchDetailRenderer(int width, int height, IPatchCache patchCache)
         {
             if (width != height)
             {
@@ -70,8 +72,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.shader.Init(
-                @"../../../Resources/Shaders/GenVisPatch.vert".Load(),
-                @"../../../Resources/Shaders/GenVisPatch.frag".Load(),
+                @"../../../Resources/Shaders/GenVisPatchDetail.vert".Load(),
+                @"../../../Resources/Shaders/GenVisPatchDetail.frag".Load(),
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

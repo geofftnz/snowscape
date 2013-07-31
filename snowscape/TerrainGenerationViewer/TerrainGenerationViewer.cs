@@ -60,7 +60,7 @@ namespace Snowscape.TerrainGenerationViewer
         private TerrainGlobal terrainGlobal;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
-        private ITileRenderer tileRendererPatch;
+        private ITileRenderer tileRendererPatchDetail;
         private ITileRenderer tileRendererPatchLow;
         private ITileRenderer tileRendererLOD;
         private ITileRenderer tileRendererQuadtree;
@@ -209,10 +209,10 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
-            this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth / TileLodScale, TileHeight / TileLodScale, patchCache);
-            this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatch);
-            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatch, (IPatchRenderer)this.tileRendererPatch, (IPatchRenderer)this.tileRendererPatch);
+            this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache);
+            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
+            this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatchDetail);
+            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatchDetail, (IPatchRenderer)this.tileRendererPatchDetail, (IPatchRenderer)this.tileRendererPatchDetail);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
@@ -391,7 +391,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobal.Init();
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
-            this.tileRendererPatch.Load();
+            this.tileRendererPatchDetail.Load();
             this.tileRendererPatchLow.Load();
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
