@@ -217,8 +217,8 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.fullTileNearRenderer = fullTileNear;
             this.subTileRenderer = subTile;
             this.subTileDetailRenderer = subTileDetail;
-            this.DetailRadius = 12.0f;
-            this.DistantTileRadius = 1024.0f;
+            this.DetailRadius = 24.0f;
+            this.DistantTileRadius = 512.0f;
         }
 
         public void Load()
