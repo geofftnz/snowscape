@@ -24,7 +24,7 @@ float t = 1.0 / boxparam.x;
 
 float getHeight(vec2 pos)
 {
-	return texture(heightTex,pos).r;
+	return textureLod(heightTex,pos,0).r;
 }
 
 // finite difference

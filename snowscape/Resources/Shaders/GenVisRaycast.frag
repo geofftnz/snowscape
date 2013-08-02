@@ -5,7 +5,7 @@ uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 
 uniform sampler2D heightTex;
-//uniform sampler2D normalTex;
+uniform sampler2D normalTex;
 //uniform sampler2D shadeTex;
 uniform sampler2D paramTex;
 uniform vec4 boxparam;  // dim of box
@@ -235,12 +235,15 @@ float sampleHeight(vec2 posTile)
 // pos in tile coords (0-boxparam.xy)
 vec3 getNormal(vec2 pos)
 {
+/*
 	float t = 1.0;
     float h1 = sampleHeight(vec2(pos.x, pos.y - t));
     float h2 = sampleHeight(vec2(pos.x, pos.y + t));
     float h3 = sampleHeight(vec2(pos.x - t, pos.y));
     float h4 = sampleHeight(vec2(pos.x + t, pos.y));
     return normalize(vec3(h3-h4,t* 2.0,h1-h2));
+*/
+	return normalize(texture(normalTex,pos).rgb - vec3(0.5));
 }
 
 
@@ -268,7 +271,7 @@ void main(void)
 		vec2 texcoord = p.xz / boxparam.xy;
 
 		// todo: compute normal from heightmap
-		//vec3 normal = getNormal(floor(p.xz) + vec2(0.5)); //normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
+		//vec3 normal = normalize(texture2D(normalTex,texcoord).rgb - vec3(0.5,0.5,0.5));
 		//out_Shade = texture2D(shadeTex,texcoord);
 		out_Param = texture2D(paramTex,texcoord);
 
@@ -279,9 +282,11 @@ void main(void)
 		out_Pos = vec4(worldPos.xyz - eyePos,0.8);  // a was p.w
 
 		// normal at intersection
-		vec3 normal = getNormal(mod(worldPos.xz,vec2(boxparam.x)));
-		out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
+		//vec3 normal = getNormal(mod(worldPos.xz,vec2(boxparam.x)));
+		//out_Normal = vec4(normal.xyz * 0.5 + 0.5,1.0);
 		//out_Normal = vec4(1.0);  // special value to indicate that normal should be computed from heightmap in lighting pass.
+		out_Normal = vec4(texture(normalTex,texcoord).rgb,1.0);
+		//out_Normal = vec4(normalize(vec3(0.0,1.0,0.0)),1.0);
 
 		// write depth
 		// transform intersection to screen coords

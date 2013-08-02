@@ -7,6 +7,7 @@ uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
 uniform sampler2D noiseTex;
 uniform sampler2D skyTex;
+
 uniform samplerCube skyCubeTex;
 uniform vec4 boxparam;
 uniform vec3 eyePos;
@@ -602,7 +603,7 @@ void main(void)
 
 	}
 
-	/*
+/*	
 	//vec2 p = texcoord0.xy * 2.0;
 	p *= 2.0;
     // split screen into 4
@@ -672,8 +673,8 @@ void main(void)
 			}
 			
 		}
-	}
-	*/
+	}*/
+	
 
 	// fog
 

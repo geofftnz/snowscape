@@ -39,5 +39,17 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("texsize", (float)heightmap.Width);
             });
         }
+        public void Render(Texture heightmap, Sampler heightmapSampler)
+        {
+            gb.Render(() =>
+            {
+                heightmapSampler.Bind(TextureUnit.Texture0);
+            },
+            (sp) =>
+            {
+                sp.SetUniform("heightmap", 0);
+                sp.SetUniform("texsize", (float)heightmap.Width);
+            });
+        }
     }
 }

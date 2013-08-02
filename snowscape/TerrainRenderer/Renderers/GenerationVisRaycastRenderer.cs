@@ -38,6 +38,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
             tile.ParamTexture.Bind(TextureUnit.Texture1);
+            tile.NormalTexture.Bind(TextureUnit.Texture2);
 
             this.boundingBoxProgram
                 .UseProgram()
@@ -46,6 +47,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("view_matrix", view)
                 .SetUniform("heightTex", 0)
                 .SetUniform("paramTex", 1)
+                .SetUniform("normalTex", 2)
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("nEyePos", eyePosTileCoords)
                 .SetUniform("boxparam", boxparam);

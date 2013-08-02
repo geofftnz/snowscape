@@ -85,7 +85,7 @@ float getHeightDetail(vec2 pos)
 
 float getHeight(vec2 pos,float weight)
 {
-	return texture(heightTex,pos).r;
+	return textureLod(heightTex,pos,0).r;
 }
 
 // finite difference

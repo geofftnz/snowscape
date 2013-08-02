@@ -809,7 +809,7 @@ namespace Snowscape.TerrainGenerationViewer
                 this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
                 this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
 
-                this.tileNormalGenerator.Render(this.terrainTile.HeightTexture);
+                this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
 
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
@@ -839,6 +839,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             SetTerrainProjection();
+
 
             // TODO: replace with call to lighting combiner
             // render terrain to gbuffer

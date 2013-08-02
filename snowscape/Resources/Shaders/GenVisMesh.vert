@@ -21,10 +21,10 @@ vec3 getNormal(vec2 pos)
 {
 	float t = 1.0 / boxparam.x;
 
-    float h1 = texture2D(heightTex,vec2(pos.x, pos.y - t)).r;
-	float h2 = texture2D(heightTex,vec2(pos.x, pos.y + t)).r;
-    float h3 = texture2D(heightTex,vec2(pos.x - t, pos.y)).r;
-	float h4 = texture2D(heightTex,vec2(pos.x + t, pos.y)).r;
+    float h1 = textureLod(heightTex,vec2(pos.x, pos.y - t),0).r;
+	float h2 = textureLod(heightTex,vec2(pos.x, pos.y + t),0).r;
+    float h3 = textureLod(heightTex,vec2(pos.x - t, pos.y),0).r;
+	float h4 = textureLod(heightTex,vec2(pos.x + t, pos.y),0).r;
 
     //return normalize(vec3(h4-h3,h2-h1,1.0));
 	return normalize(vec3(h3-h4,2.0,h1-h2));
@@ -53,7 +53,7 @@ void main() {
 
 	vec2 texcoord = in_boxcoord.xz;
 
-	float h = texture2D(heightTex,texcoord).r;
+	float h = textureLod(heightTex,texcoord,0).r;
 
 	normal = getNormal(texcoord);
 
