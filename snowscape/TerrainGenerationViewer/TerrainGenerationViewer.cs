@@ -66,6 +66,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererQuadtree;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
+        private Lighting.HeightmapNormalGenerator tileNormalGenerator = new Lighting.HeightmapNormalGenerator();
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
@@ -397,6 +398,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererQuadtree.Load();
 
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
+            this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -806,6 +808,9 @@ namespace Snowscape.TerrainGenerationViewer
                 CopyMapDataFromUpdateThread();
                 this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
                 this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
+
+                this.tileNormalGenerator.Render(this.terrainTile.HeightTexture);
+
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
 

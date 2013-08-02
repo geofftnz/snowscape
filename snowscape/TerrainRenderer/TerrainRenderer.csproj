@@ -52,6 +52,7 @@
     <Compile Include="HDR\IToneMapper.cs" />
     <Compile Include="HDR\ReinhardToneMap.cs" />
     <Compile Include="HDR\Uncharted2ToneMap.cs" />
+    <Compile Include="Lighting\HeightmapNormalGenerator.cs" />
     <Compile Include="Lighting\LightingCombiner.cs" />
     <Compile Include="Mesh\IPatchCache.cs" />
     <Compile Include="Mesh\PatchCache.cs" />
