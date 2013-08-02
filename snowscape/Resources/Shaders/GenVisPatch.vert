@@ -1,6 +1,7 @@
 ﻿#version 140
  
 uniform sampler2D heightTex;
+uniform sampler2D normalTex;
 
 uniform mat4 projection_matrix;
 uniform mat4 model_matrix;
@@ -42,7 +43,7 @@ float sampleHeight(vec2 pos)
 
 vec3 getNormal(vec2 pos)
 {
-
+/*
     float h1 = sampleHeight(vec2(pos.x, pos.y - t));
 	float h2 = sampleHeight(vec2(pos.x, pos.y + t));
     float h3 = sampleHeight(vec2(pos.x - t, pos.y));
@@ -50,6 +51,8 @@ vec3 getNormal(vec2 pos)
 
     //return normalize(vec3(h4-h3,h2-h1,1.0));
 	return normalize(vec3(h3-h4,2.0,h1-h2));
+	*/
+	return texture(normalTex,pos).rgb * 2.0 - vec3(1.0);
 }
 /*
 float texel = 1.0 / boxparam.x;
