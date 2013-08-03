@@ -79,8 +79,8 @@ float fbm( vec3 p )
 
 float getHeightDetail(vec2 pos)
 {
-	//return 0.0;
-	return noise(vec3(pos * 4096.0,1.0)) * 0.1;
+	return 0.0;
+	//return noise(vec3(pos * 4096.0,1.0)) * 0.1;
 }
 
 float getHeight(vec2 pos,float weight)
@@ -89,6 +89,7 @@ float getHeight(vec2 pos,float weight)
 }
 
 // finite difference
+/*
 float sampleHeight(vec2 pos, float weight)
 {
 	float c = getHeight(pos,weight);
@@ -96,8 +97,60 @@ float sampleHeight(vec2 pos, float weight)
 	float s = getHeight(vec2(pos.x, pos.y + t),weight);
 	float w = getHeight(vec2(pos.x - t, pos.y),weight);
 	float e = getHeight(vec2(pos.x + t, pos.y),weight);
-	return ((c * 2.0 + n+s+w+e) / 6.0) + getHeightDetail(pos) * weight;
+	return ((c * 4.0 + n+s+w+e) / 8.0) + getHeightDetail(pos) * weight;
+}*/
+
+float sampleHeight(vec2 pos, float weight)
+{
+	// get texel centre
+	vec2 tc = pos * vec2(boxparam.x);
+	vec2 itc = floor(tc - vec2(0.5)) + vec2(0.5);
+	
+	// fractional offset
+	vec2 f = tc - itc;
+
+	vec2 f2 = f*f;
+	vec2 f3 = f2*f;
+
+	// bspline weights
+	vec2 w0 = f2 - (f3 + f) * 0.5;
+    vec2 w1 = f3 * 1.5 - f2 * 2.5 + vec2(1.0);
+    vec2 w3 = (f3 - f2) * 0.5;
+    vec2 w2 = vec2(1.0) - w0 - w1 - w3;
+
+	// taps
+    vec2 tc0 = itc - vec2(1.0);
+    vec2 tc1 = itc;
+    vec2 tc2 = itc + vec2(1.0);
+    vec2 tc3 = itc + vec2(2.0);
+
+	tc0 *= t;
+	tc1 *= t;
+	tc2 *= t;
+	tc3 *= t;
+
+	return 
+		textureLod(heightTex,vec2(tc0.x,tc0.y),0).r * w0.x * w0.y +
+		textureLod(heightTex,vec2(tc1.x,tc0.y),0).r * w1.x * w0.y +
+		textureLod(heightTex,vec2(tc2.x,tc0.y),0).r * w2.x * w0.y +
+		textureLod(heightTex,vec2(tc3.x,tc0.y),0).r * w3.x * w0.y +
+												 
+		textureLod(heightTex,vec2(tc0.x,tc1.y),0).r * w0.x * w1.y +
+		textureLod(heightTex,vec2(tc1.x,tc1.y),0).r * w1.x * w1.y +
+		textureLod(heightTex,vec2(tc2.x,tc1.y),0).r * w2.x * w1.y +
+		textureLod(heightTex,vec2(tc3.x,tc1.y),0).r * w3.x * w1.y +
+												 
+		textureLod(heightTex,vec2(tc0.x,tc2.y),0).r * w0.x * w2.y +
+		textureLod(heightTex,vec2(tc1.x,tc2.y),0).r * w1.x * w2.y +
+		textureLod(heightTex,vec2(tc2.x,tc2.y),0).r * w2.x * w2.y +
+		textureLod(heightTex,vec2(tc3.x,tc2.y),0).r * w3.x * w2.y +
+												 
+		textureLod(heightTex,vec2(tc0.x,tc3.y),0).r * w0.x * w3.y +
+		textureLod(heightTex,vec2(tc1.x,tc3.y),0).r * w1.x * w3.y +
+		textureLod(heightTex,vec2(tc2.x,tc3.y),0).r * w2.x * w3.y +
+		textureLod(heightTex,vec2(tc3.x,tc3.y),0).r * w3.x * w3.y ;
 }
+
 
 vec3 getNormal(vec2 pos, float weight)
 {
