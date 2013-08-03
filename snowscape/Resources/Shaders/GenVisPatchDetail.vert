@@ -100,7 +100,42 @@ float sampleHeight(vec2 pos, float weight)
 	return ((c * 4.0 + n+s+w+e) / 8.0) + getHeightDetail(pos) * weight;
 }*/
 
+// credit to http://vec3.ca/bicubic-filtering-in-fewer-taps/
 float sampleHeight(vec2 pos, float weight)
+{
+	// get texel centre
+	vec2 tc = pos * vec2(boxparam.x);
+	vec2 itc = floor(tc);
+	
+	// fractional offset
+	vec2 f = tc - itc;
+
+	vec2 f2 = f*f;
+	vec2 f3 = f2*f;
+
+	// bspline weights
+	vec2 w0 = f2 - (f3 + f) * 0.5;
+    vec2 w1 = f3 * 1.5 - f2 * 2.5 + vec2(1.0);
+    vec2 w3 = (f3 - f2) * 0.5;
+    vec2 w2 = vec2(1.0) - w0 - w1 - w3;
+
+	vec2 s0 = w0 + w1;
+	vec2 s1 = w2 + w3;
+
+	vec2 f0 = w1 / (w0 + w1);
+	vec2 f1 = w3 / (w2 + w3);
+
+	vec2 t0 = (itc - vec2(1.0) + f0) * t;
+	vec2 t1 = (itc + vec2(1.0) + f1) * t;
+
+	return 
+		textureLod(heightTex,vec2(t0.x,t0.y),0).r * s0.x * s0.y +
+		textureLod(heightTex,vec2(t1.x,t0.y),0).r * s1.x * s0.y +
+		textureLod(heightTex,vec2(t0.x,t1.y),0).r * s0.x * s1.y +
+		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y ;
+}
+
+float sampleHeight2(vec2 pos, float weight)
 {
 	// get texel centre
 	vec2 tc = pos * vec2(boxparam.x);
