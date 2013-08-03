@@ -130,6 +130,21 @@ namespace Snowscape.TerrainRenderer.Renderers
 
             }
 
+
+            private int GetDetailTileSize(Vector3 viewer, float detailRadius)
+            {
+                int baseRes = 128;
+                for (int i = 16; i > 1; i /= 2)
+                {
+                    if (IsViewerInDetailRange(viewer, detailRadius / (float)i))
+                    {
+                        return baseRes;
+                    }
+                    baseRes /= 2;
+                }
+                return baseRes;
+            }
+
             public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye, Vector3 reye, float detailRadius, IPatchRenderer tileRenderer, IPatchRenderer tileDetailRenderer)
             {
                 // can we render this tile without subdividing?
@@ -137,8 +152,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 // we can render now once we've got to a small enough tile
                 if (this.TileSize <= 4)
                 {
-                    tileDetailRenderer.Width = 32;
-                    tileDetailRenderer.Height = 32;
+                    tileDetailRenderer.Width = GetDetailTileSize(reye,detailRadius);
+                    tileDetailRenderer.Height = tileDetailRenderer.Width;
                     tileDetailRenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                     tileDetailRenderer.Scale = (float)this.TileSize / (float)tile.Width;
                     tileDetailRenderer.Offset = (this.TopLeft.Position.Xz / (float)tile.Width);
@@ -217,7 +232,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.fullTileNearRenderer = fullTileNear;
             this.subTileRenderer = subTile;
             this.subTileDetailRenderer = subTileDetail;
-            this.DetailRadius = 24.0f;
+            this.DetailRadius = 48.0f;
             this.DistantTileRadius = 512.0f;
         }
 
