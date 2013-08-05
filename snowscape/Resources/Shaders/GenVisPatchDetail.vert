@@ -180,7 +180,7 @@ void main() {
 	v.xz += offset;
 	v.x *= boxparam.x;
 	v.z *= boxparam.y;
-	v.y = h + v.y * (boxparam.w - boxparam.z) * 0.005;
+	v.y = h + v.y * 0.2;
 
     gl_Position = projection_matrix * view_matrix * model_matrix * vec4(v, 1.0);
 
