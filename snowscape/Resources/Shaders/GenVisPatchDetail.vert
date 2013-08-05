@@ -80,7 +80,7 @@ float fbm( vec3 p )
 float getHeightDetail(vec2 pos)
 {
 	//return 0.0;
-	return noise(vec3(pos * 4096.0,1.0)) * 0.1;
+	return noise(vec3(pos * 4096.0,1.0)) * 0.07 + noise(vec3(pos * 17000.0,17.0)) * 0.03;
 }
 
 float getHeight(vec2 pos,float weight)
