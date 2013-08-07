@@ -31,6 +31,12 @@ namespace Snowscape.TerrainRenderer
         /// </summary>
         public Texture ShadeTexture { get; private set; }
 
+        /// <summary>
+        /// Indirect Illumination Texture - single component float16
+        /// Represents the amount of indirect illumination from lit parts of the terrain.
+        /// </summary>
+        public Texture IndirectIlluminationTexture { get; private set; }
+
         
         public float MinHeight { get; private set; }
         public float MaxHeight { get; private set; }
@@ -62,6 +68,16 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
             this.ShadeTexture.UploadEmpty();
+
+            this.IndirectIlluminationTexture = 
+                new Texture(this.Width, this.Height,TextureTarget.Texture2D, PixelInternalFormat.R16f, PixelFormat.Red, PixelType.HalfFloat)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+            this.IndirectIlluminationTexture.UploadEmpty();
+
         }
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain)

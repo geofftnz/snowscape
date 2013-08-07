@@ -5,8 +5,7 @@ uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
-uniform sampler2D noiseTex;
-uniform sampler2D skyTex;
+uniform sampler2D indirectTex;
 
 uniform samplerCube skyCubeTex;
 uniform vec4 boxparam;
@@ -602,6 +601,16 @@ void main(void)
         }
 
 	}
+
+	p *= 2.0;
+    // lower right quadrant
+	if (p.x >= 1.0 && p.y >= 1.0)
+	{
+		p -= vec2(1.0);
+		c.rgb = vec3(texture(indirectTex,p).r);
+	}
+
+
 
 /*	
 	//vec2 p = texcoord0.xy * 2.0;

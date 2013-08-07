@@ -67,6 +67,7 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private TerrainLightingGenerator terrainLighting;
         private Lighting.HeightmapNormalGenerator tileNormalGenerator = new Lighting.HeightmapNormalGenerator();
+        private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator();
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
@@ -399,6 +400,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
             this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
+            this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -665,8 +667,8 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
-                //NoiseTexture = this.cloudTexture,
                 SkyCubeTexture = this.skyCubeTexture,
+                IndirectIlluminationTexture = this.terrainGlobal.IndirectIlluminationTexture,
                 EyePos = this.eyePos,
                 SunDirection = this.sunDirection,
                 MinHeight = this.terrainGlobal.MinHeight,
@@ -824,6 +826,11 @@ namespace Snowscape.TerrainGenerationViewer
                 perfmon.Start("Lighting");
                 this.RenderLighting(this.sunDirection);
                 perfmon.Stop("Lighting");
+
+                // render indirect lighting
+                perfmon.Start("Indirect");
+                this.indirectIlluminationGenerator.Render(this.terrainGlobal.HeightTexture, this.terrainGlobal.ShadeTexture, this.terrainTile.NormalTexture, this.sunDirection);
+                perfmon.Stop("Indirect");
 
                 //perfmon.Start("CloudDepth");
                 //this.RenderCloudDepth(this.sunDirection);

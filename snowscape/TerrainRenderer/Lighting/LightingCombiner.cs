@@ -50,6 +50,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             public Texture ShadeTexture { get; set; }
             public Texture NoiseTexture { get; set; }
             public Texture SkyCubeTexture { get; set; }
+            public Texture IndirectIlluminationTexture { get; set; }
             public Vector3 EyePos { get; set; }
             public Vector3 SunDirection { get; set; }
             public float MinHeight { get; set; }
@@ -145,6 +146,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             rp.ShadeTexture.Bind(TextureUnit.Texture4);
             //rp.CloudTexture.Bind(TextureUnit.Texture4);
             //rp.CloudDepthTexture.Bind(TextureUnit.Texture5);
+            rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture5);
             rp.SkyCubeTexture.Bind(TextureUnit.Texture6);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
@@ -156,7 +158,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("normalTex", 2);
                 sp.SetUniform("heightTex", 3);
                 sp.SetUniform("shadeTex", 4);
-                //sp.SetUniform("noiseTex", 4);
+                sp.SetUniform("indirectTex", 5);
                 sp.SetUniform("skyCubeTex", 6);
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);
