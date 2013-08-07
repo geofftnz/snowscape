@@ -9,7 +9,7 @@ uniform vec3 sunVector;
 
 in vec2 texcoord;
 
-out float out_Indirect;
+out vec4 out_Indirect;
 
 float texel = 1.0 / texsize;
 
@@ -38,7 +38,7 @@ float getDirectIllumination(vec2 p, vec3 n, float h)
 	return clamp(dot(n,sunVector),0.0,1.0) * getShadowForGroundPos(h,texture(shadowTexture,p).r);
 }
 
-float getSliceIndirect(vec2 p0, vec2 dp)
+vec4 getSliceIndirect(vec2 p0, vec2 dp)
 {
 	// walk out across terrain
 	// determine if sample is visible
@@ -47,31 +47,61 @@ float getSliceIndirect(vec2 p0, vec2 dp)
 	// calculate specular-diffuse bounce   LSDE
 	
 	float h0 = texture(heightTexture,p0).r; // height at origin
+	vec3 n0 = normalize(texture(normalTexture,p0).rgb - vec3(0.5));  // normal at origin
 	float t = 0.0;
 	float maxdydx = 0.0;
 	float indirect = 0.0;
+
+	vec3 avgdir = vec3(dp.x,0.0,dp.y);
 	
-	for(t = 1.0; t < 50.0; t += 1.0 + t*0.25)
+	for(t = 0.25; t < 200.0; t += t * 1.05)
 	{
 		vec2 p = p0 + dp * t;
 		float h = texture(heightTexture, p).r ;
 		float dydx = (h - h0) / t;
 
-		if (dydx > maxdydx){ // this sample is visible
-			maxdydx = dydx;
+		if (dydx <= maxdydx){ // this sample is visible
+			
 
 			// get normal
 			vec3 n = normalize(texture(normalTexture,p).rgb - vec3(0.5));
 
-			float direct = getDirectIllumination(p,n,h);
+			//float direct = getDirectIllumination(p,n,h);
 
-			indirect += direct * 0.02;
+			// get view ray direction from p0 to p
+			vec3 lray = vec3(p.x * texsize,h,p.y  * texsize) - vec3(p0.x  * texsize,h0,p0.y  * texsize);
+
+			// TODO: we should be using BRDF of p with i=sunVector, o=lray
+
+						// work out diffuse falloff as 1/r^2
+			float falloff = 1.0 / (1.0 + dot(lray,lray)*0.1);//(texel / (dot(lray,lray) * 0.1));
+
+			vec3 lrayd = normalize(lray);
+
+			float s = getShadowForGroundPos(h,texture(shadowTexture,p).r);
+
+			float n0dotl = 1.0;//clamp(dot(n0,lrayd),0.0,1.0);
+
+			// get direct illumination at point p
+			float direct = clamp(dot(n,sunVector),0.0,1.0) * s;
+
+			float diffuse = direct * n0dotl * falloff;
+
+			// light specularly reflected from L off P towards P0
+			//vec3 rsun = reflect(sunVector, n);
+			//float specular = pow(clamp(dot(lrayd, -rsun),0.0,1.0),20.0) * s * n0dotl * falloff;
+			float specular = 0.0;
+
+			indirect += diffuse + specular;
+
+			//avgdir += lrayd * (diffuse + specular);
 
 		}
+		maxdydx = max(dydx,maxdydx);
 
 	}
 		
-	return indirect;
+	return vec4(normalize(avgdir),indirect * 0.5);
 }
 
 
@@ -79,11 +109,14 @@ void main(void)
 {
 
 	float indirect = 0.0;
+	vec3 avgdir = vec3(0.0);
 
-	for(float a = 0.0; a < 1.0; a += 1.0/19.0)
+	for(float a = 0.0; a < 1.0; a += 1.0/39.0)
 	{
-		indirect += getSliceIndirect(texcoord,vec2(sin(a*6.2831854),cos(a*6.2831854))*texel);	
+		vec4 ind = getSliceIndirect(texcoord,vec2(sin(a*6.2831854),cos(a*6.2831854))*texel);	
+		indirect += ind.a;
+		avgdir += ind.xyz * ind.a;
 	}
 
-	out_Indirect = indirect / 19.0;
+	out_Indirect = vec4(normalize(avgdir) * 0.5 + vec3(0.5), indirect / 39.0);
 }

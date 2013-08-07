@@ -386,6 +386,12 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	// direct illumination from sun
 	light += sunLight * clamp(dot(n,sunVector),0.0,1.0) * getShadowForGroundPos(p,shadowHeight);
 
+	// indirect illumination from terrain-bounce
+	vec4 ind = texture(indirectTex,p.xz * texel);
+	vec3 indd = normalize(ind.xyz - vec3(0.5));
+
+	light += sunLight * clamp(dot(n,indd),0.0,1.0) * ind.a;
+
 	// indirect illumination from sky-dome
 	//light += getSkyLight(n) * AO;
 	//light += mix(getSkyLight(n),sunLight,ambientBias) * AO;
@@ -607,7 +613,11 @@ void main(void)
 	if (p.x >= 1.0 && p.y >= 1.0)
 	{
 		p -= vec2(1.0);
-		c.rgb = vec3(texture(indirectTex,p).r);
+		//c.rgb = vec3(texture(indirectTex,p).r);
+
+		vec4 ind = texture(indirectTex,p);
+
+		c.rgb = ind.rgb * ind.a;
 	}
 
 
