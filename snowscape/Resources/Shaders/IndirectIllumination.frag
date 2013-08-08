@@ -119,8 +119,6 @@ float patchVisibility(vec2 pp0, vec2 pp1)
 	vec3 p0 = vec3(pp0.x * texsize,h0,pp0.y * texsize);
 	vec3 p1 = vec3(pp1.x * texsize,h1,pp1.y * texsize);
 
-	vec3 n0 = normalize(texture(normalTexture,pp0).rgb - vec3(0.5));  // normal at origin
-	vec3 n1 = normalize(texture(normalTexture,pp1).rgb - vec3(0.5));  // normal at target
 
 	float l = length(p1.xz-p0.xz);
 	
@@ -129,9 +127,6 @@ float patchVisibility(vec2 pp0, vec2 pp1)
 	}
 
 	vec3 dp = (p1-p0)/l;
-	vec3 dpn = normalize(dp);
-
-	float vf = dot(n0,dpn) * dot(n1,-dpn);
 
 	for (float t = 0.0; t <= l; t+= 1.0)
 	{
@@ -141,6 +136,14 @@ float patchVisibility(vec2 pp0, vec2 pp1)
 			return 0.0;
 		}
 	}
+
+	// patch visible, calculate lighting
+
+	vec3 n0 = normalize(texture(normalTexture,pp0).rgb - vec3(0.5));  // normal at origin
+	vec3 n1 = normalize(texture(normalTexture,pp1).rgb - vec3(0.5));  // normal at target
+
+	vec3 dpn = normalize(dp);
+	float vf = clamp(dot(n0,dpn),0.0,1.0) * clamp(dot(n1,-dpn),0.0,1.0);
 
 	// direct illumination
 	float direct = clamp(dot(n1,sunVector),0.0,1.0) * vf;
