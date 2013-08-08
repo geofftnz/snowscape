@@ -27,7 +27,8 @@ uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scat
 uniform float aoInfluenceHeight; // height above the terrain to blend influence of AO when raymarching scattering
 uniform float time;
 uniform float nearScatterDistance;
-uniform float ambientBias;  // how to mix sunlight and skylight for the ambient term. 0 = all skylight, 1 = all sunlight.
+uniform float ambientBias;  // amount of skylight
+uniform float indirectBias; // amount of indirect light
 
 // scattering performance
 uniform float scatteringInitialStepSize;
@@ -354,7 +355,7 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 vec3 getSkyLightFromDirection(vec3 dir, vec3 base)
 {
 	vec3 col = textureLod(skyCubeTex,base,9).rgb;
-	return col * (dot(dir, base) * 0.8 + 0.2);
+	return col * (dot(dir, base) * 0.5 + 0.5);
 }
 
 vec3 getSkyLight(vec3 dir)
@@ -392,7 +393,7 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	float ind = texture(indirectTex,p.xz * texel).r;
 
 	//light += sunLight * clamp(dot(n,indd),0.0,1.0) * ind.a;
-	light += sunLight * vec3(ind) * (1.0-n.y);  // vertical slopes would be fully lit.
+	light += sunLight * vec3(ind) * indirectBias * (clamp(1.0-n.y,0.0,1.0) * 0.8 + 0.2);  // vertical slopes would be fully lit.
 
 	// indirect illumination from sky-dome
 	//light += getSkyLight(n) * AO;
@@ -611,8 +612,9 @@ void main(void)
 
 	}
 
-	p *= 2.0;
+	/*
     // lower right quadrant
+	p *= 2.0;
 	if (p.x >= 1.0 && p.y >= 1.0)
 	{
 		p -= vec2(1.0);
@@ -620,8 +622,8 @@ void main(void)
 
 		//vec4 ind = texture(indirectTex,p);
 		//c.rgb = ind.rgb * ind.a;
-	}
-
+	}*/
+	
 
 
 /*	
