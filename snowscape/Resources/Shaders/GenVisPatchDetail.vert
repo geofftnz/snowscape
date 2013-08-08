@@ -80,7 +80,7 @@ float fbm( vec3 p )
 float getHeightDetail(vec2 pos)
 {
 	//return 0.0;
-	return noise(vec3(pos * 4096.0,1.0)) * 0.15 + noise(vec3(pos * 17000.0,17.0)) * 0.05;
+	return noise(vec3(pos * 4096.0,1.0)) * 0.05 + noise(vec3(pos * 17000.0,17.0)) * 0.02;
 }
 
 float getHeight(vec2 pos,float weight)
@@ -128,13 +128,13 @@ float sampleHeight(vec2 pos, float weight)
 vec3 getNormal(vec2 pos, float weight)
 {
 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - t),  weight);
-	float h2 = sampleHeight(vec2(pos.x, pos.y + t),  weight);
-    float h3 = sampleHeight(vec2(pos.x - t, pos.y),  weight);
-	float h4 = sampleHeight(vec2(pos.x + t, pos.y),  weight);
+    float h1 = sampleHeight(vec2(pos.x, pos.y - pt),  weight);
+	float h2 = sampleHeight(vec2(pos.x, pos.y + pt),  weight);
+    float h3 = sampleHeight(vec2(pos.x - pt, pos.y),  weight);
+	float h4 = sampleHeight(vec2(pos.x + pt, pos.y),  weight);
 
     //return normalize(vec3(h4-h3,h2-h1,1.0));
-	return normalize(vec3(h3-h4,2.0,h1-h2));
+	return normalize(vec3(h3-h4,nx,h1-h2));
 }
 /*
 float texel = 1.0 / boxparam.x;
