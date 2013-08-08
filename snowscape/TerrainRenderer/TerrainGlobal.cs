@@ -32,10 +32,8 @@ namespace Snowscape.TerrainRenderer
         public Texture ShadeTexture { get; private set; }
 
         /// <summary>
-        /// Indirect Illumination Texture - rgba
+        /// Indirect Illumination Texture - float16
         /// Represents the amount of indirect illumination from lit parts of the terrain.
-        /// RGB = normal of average indirect light direction
-        /// A = amount of indirect light
         /// </summary>
         public Texture IndirectIlluminationTexture { get; private set; }
 
@@ -72,8 +70,8 @@ namespace Snowscape.TerrainRenderer
             this.ShadeTexture.UploadEmpty();
 
             this.IndirectIlluminationTexture = 
-                //new Texture(this.Width, this.Height,TextureTarget.Texture2D, PixelInternalFormat.R16f, PixelFormat.Red, PixelType.HalfFloat)
-                new Texture(this.Width, this.Height,TextureTarget.Texture2D, PixelInternalFormat.Rgba8, PixelFormat.Rgba, PixelType.UnsignedByte)
+                new Texture(this.Width, this.Height,TextureTarget.Texture2D, PixelInternalFormat.R16f, PixelFormat.Red, PixelType.HalfFloat)
+                //new Texture(this.Width, this.Height,TextureTarget.Texture2D, PixelInternalFormat.Rgba8, PixelFormat.Rgba, PixelType.UnsignedByte)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
