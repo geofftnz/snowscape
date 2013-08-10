@@ -197,8 +197,9 @@ float patchVisibility(vec2 pp0, vec2 pp1, float h0, vec3 n0)
 	// direct illumination
 	float direct = clamp(dot(n1,sunVector),0.0,1.0) * vf;
 
-	return direct / (1.0 + l * 0.1);
-	//return direct / (3.1415927 * l * l);
+	//return direct / (1.0 + l * l * 0.1);
+	l *= 0.1;
+	return direct / (3.1415927 * l * l);
 }
 
 float indirectForPatch(vec2 pp0, vec2 pp1, float h0, vec3 n0)
@@ -250,7 +251,7 @@ float getIndirectRadial(vec2 pp0)
 
 	for (float a = 0.0; a< 1.0; a+= 0.1)
 	{
-		for(float r = 1.0; r< 150.0; r *= 1.3)
+		for(float r = 1.0; r< 20.0; r *= 1.2)
 		{
 			vec2 pp1 = pp0 + vec2(cos(a*6.282),sin(a*6.282)) * r * texel;
 

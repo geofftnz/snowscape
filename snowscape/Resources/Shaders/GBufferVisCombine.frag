@@ -355,7 +355,8 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
 vec3 getSkyLightFromDirection(vec3 dir, vec3 base)
 {
 	vec3 col = textureLod(skyCubeTex,base,9).rgb;
-	return col * (dot(dir, base) * 0.5 + 0.5);
+	//return col * (dot(dir, base) * 0.5 + 0.5);
+	return col * clamp(dot(dir, base),0.0,1.0);
 }
 
 vec3 getSkyLight(vec3 dir)
@@ -393,13 +394,16 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	float ind = texture(indirectTex,p.xz * texel).r;
 
 	//light += sunLight * clamp(dot(n,indd),0.0,1.0) * ind.a;
-	light += sunLight * vec3(ind) * indirectBias * (clamp(1.0-n.y,0.0,1.0) * 0.8 + 0.2);  // vertical slopes would be fully lit.
+	vec3 indn = normalize(vec3(n.x,-0.2,n.z));
+
+	light += sunLight * vec3(ind) * indirectBias * (clamp(dot(n,indn),0.0,1.0));  // vertical slopes would be fully lit.
 
 	// indirect illumination from sky-dome
 	//light += getSkyLight(n) * AO;
 	//light += mix(getSkyLight(n),sunLight,ambientBias) * AO;
-	light += getSkyLight(n) * 10.0 * ambientBias * AO;
 	//light += textureLod(skyCubeTex,n,0).rgb * 10.0 * ambientBias * AO;
+
+	light += getSkyLight(n) * 10.0 * ambientBias * AO;// * (clamp(n.y,0.0,1.0) * 0.5 + 0.5);
 
 	vec3 col2 = col * light;
 
