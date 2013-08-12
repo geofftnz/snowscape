@@ -34,6 +34,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         const int SkyRes = 512;
         const int CloudRes = 512;
+        const int DetailRes = 1024;
 
         const int TileLodScale = 4;
 
@@ -76,6 +77,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
 
         private Texture skyCubeTexture;
+
+        private Texture terrainDetailTexture;
 
         //private Texture cloudTexture;
         //private Texture cloudDepthTexture;
@@ -446,6 +449,29 @@ namespace Snowscape.TerrainGenerationViewer
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest));
 
             this.SetupCubeMap();
+
+
+            this.terrainDetailTexture = new Texture(DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
+            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
+            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear));
+
+            TextureSynth ts = new TextureSynth(DetailRes, DetailRes);
+
+            //this.terrainDetailTexture.Upload(ts.ApplyWrapNoise(6, 8.0f, 1.0f, h => Math.Abs(h), h => h).Normalise().GetData());
+
+            this.terrainDetailTexture.Upload(
+                ts.ForEach((x, y, h) =>
+                    {
+                        return (float)(((x>>4) & 0x01) ^ ((y>>4) & 0x01));
+                    })
+                    .Normalise()
+                    .GetData());
+
+            this.terrainDetailTexture.Bind();
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
 
             /*
             // create noise texture for clouds
@@ -926,12 +952,12 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
         }
-/*
-        private void RenderCloudDepth(Vector3 sunVector)
-        {
-            this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale);
-        }
-        */
+        /*
+                private void RenderCloudDepth(Vector3 sunVector)
+                {
+                    this.cloudDepthRenderer.Render(this.cloudTexture, sunVector, this.cloudScale);
+                }
+                */
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(
@@ -986,10 +1012,10 @@ namespace Snowscape.TerrainGenerationViewer
                     RenderTile(this.terrainTile, 0f, 0f, tileRenderer);
                 }
             }*/
-            
 
-            
-            
+
+
+
             //RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
             //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);

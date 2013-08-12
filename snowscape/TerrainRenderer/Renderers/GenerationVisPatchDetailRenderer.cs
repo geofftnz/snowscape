@@ -55,6 +55,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         public float Scale { get; set; }
         public Vector2 Offset { get; set; }
         public float DetailScale { get; set; }
+        public Texture DetailTexture { get; set; }
 
         public GenerationVisPatchDetailRenderer(int width, int height, IPatchCache patchCache)
         {
@@ -106,6 +107,13 @@ namespace Snowscape.TerrainRenderer.Renderers
             tile.HeightTexture.Bind(TextureUnit.Texture0);
             tile.LinearSampler.Bind(TextureUnit.Texture0);
             tile.ParamTexture.Bind(TextureUnit.Texture1);
+            tile.NormalTexture.Bind(TextureUnit.Texture2);
+
+
+            if (this.DetailTexture != null)
+            {
+                this.DetailTexture.Bind(TextureUnit.Texture3);
+            }
 
             this.shader
                 .UseProgram()
@@ -114,6 +122,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("view_matrix", view)
                 .SetUniform("heightTex", 0)
                 .SetUniform("paramTex", 1)
+                .SetUniform("normalTex", 2)
+                .SetUniform("detailTex", 3)
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("boxparam", boxparam)
                 .SetUniform("patchSize", this.Width)

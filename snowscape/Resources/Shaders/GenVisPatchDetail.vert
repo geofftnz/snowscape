@@ -1,6 +1,10 @@
 ﻿#version 140
+
+precision highp float;
  
 uniform sampler2D heightTex;
+uniform sampler2D normalTex;
+uniform sampler2D detailTex;
 
 uniform mat4 projection_matrix;
 uniform mat4 model_matrix;
@@ -79,8 +83,10 @@ float fbm( vec3 p )
 
 float getHeightDetail(vec2 pos)
 {
-	//return 0.0;
-	return noise(vec3(pos * 4096.0,1.0)) * 0.03 + noise(vec3(pos * 8354.0,17.0)) * 0.015 + noise(vec3(pos * 17354.0,189.0)) * 0.007;
+	return 0.0;
+	//return noise(vec3(pos * 4096.0,1.0)) * 0.03 + noise(vec3(pos * 8354.0,17.0)) * 0.015 + noise(vec3(pos * 17354.0,189.0)) * 0.007;
+
+	//return textureLod(detailTex,pos * 32.0 ,0).r * 0.1;
 }
 
 float getHeight(vec2 pos,float weight)
@@ -125,17 +131,58 @@ float sampleHeight(vec2 pos, float weight)
 		getHeightDetail(pos);
 }
 
+//vec3 getNormal(vec2 pos, float weight)
+//{
+	//float tt = t;
+	//float w = 2.0;
+//
+    //float h1 = sampleHeight(vec2(pos.x, pos.y - tt),  weight);
+	//float h2 = sampleHeight(vec2(pos.x, pos.y + tt),  weight);
+    //float h3 = sampleHeight(vec2(pos.x - tt, pos.y),  weight);
+	//float h4 = sampleHeight(vec2(pos.x + tt, pos.y),  weight);
+//
+    ////return normalize(vec3(h4-h3,h2-h1,1.0));
+	//return normalize(vec3(h3-h4,w,h1-h2));
+//}
+
 vec3 getNormal(vec2 pos, float weight)
 {
+	// get texel centre
+	vec2 tc = pos * vec2(boxparam.x);
+	vec2 itc = floor(tc);
+	
+	// fractional offset
+	vec2 f = tc - itc;
 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - pt),  weight);
-	float h2 = sampleHeight(vec2(pos.x, pos.y + pt),  weight);
-    float h3 = sampleHeight(vec2(pos.x - pt, pos.y),  weight);
-	float h4 = sampleHeight(vec2(pos.x + pt, pos.y),  weight);
+	vec2 f2 = f*f;
+	vec2 f3 = f2*f;
 
-    //return normalize(vec3(h4-h3,h2-h1,1.0));
-	return normalize(vec3(h3-h4,nx,h1-h2));
+	// bspline weights
+	vec2 w0 = f2 - (f3 + f) * 0.5;
+    vec2 w1 = f3 * 1.5 - f2 * 2.5 + vec2(1.0);
+    vec2 w3 = (f3 - f2) * 0.5;
+    vec2 w2 = vec2(1.0) - w0 - w1 - w3;
+
+	vec2 s0 = w0 + w1;
+	vec2 s1 = w2 + w3;
+
+	vec2 f0 = w1 / (w0 + w1);
+	vec2 f1 = w3 / (w2 + w3);
+
+	vec2 t0 = (itc - vec2(1.0) + f0) * t;
+	vec2 t1 = (itc + vec2(1.0) + f1) * t;
+
+	return normalize(
+		(
+			textureLod(normalTex,vec2(t0.x,t0.y),0).rgb * s0.x * s0.y +
+			textureLod(normalTex,vec2(t1.x,t0.y),0).rgb * s1.x * s0.y +
+			textureLod(normalTex,vec2(t0.x,t1.y),0).rgb * s0.x * s1.y +
+			textureLod(normalTex,vec2(t1.x,t1.y),0).rgb * s1.x * s1.y
+		) * 2.0 - vec3(1.0)
+		);
 }
+
+
 /*
 float texel = 1.0 / boxparam.x;
 float sampleHeight(vec2 posTile)
@@ -172,8 +219,10 @@ void main() {
 			mix(detailWeights.z,detailWeights.w,in_boxcoord.x),
 			in_boxcoord.z),0.0,1.0);
 
-	float h = sampleHeight(texcoord,weight);
-	normal = getNormal(texcoord,weight);
+	highp vec2 pos = mod(texcoord,boxparam.x);
+
+	float h = sampleHeight(pos,weight);
+	normal = getNormal(pos,weight);
 
 	vec3 v = vertex;
 	v.xz *= scale;

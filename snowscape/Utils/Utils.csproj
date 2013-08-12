@@ -58,6 +58,7 @@
     <Compile Include="PerfMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimplexNoise.cs" />
+    <Compile Include="TextureSynth.cs" />
     <Compile Include="TileMath.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>

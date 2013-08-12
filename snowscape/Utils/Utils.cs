@@ -114,5 +114,13 @@ namespace Utils
             return x;
         }
 
+        public static void Maybe<T>(this T t, Action<T> action)
+        {
+            if (t != null && action != null)
+            {
+                action(t);
+            }
+        }
+
     }
 }
