@@ -373,6 +373,36 @@ vec3 getSkyLight(vec3 dir)
 }
 
 
+// this is screwed.
+vec3 brdfSunSnow(vec3 p, vec3 n, vec3 l, vec3 e, vec3 influx)
+{
+	// diffuse
+	float dif = clamp(dot(n,l),0.0,1.0);
+
+	// specular facets
+    vec3 refl = reflect(e,n);
+    vec3 spec = influx * pow(clamp(dot(l,refl),0.0,1.0),2.0) * 0.1;
+
+    vec3 totalspec = vec3(0.0);
+    vec3 totaldif = vec3(0.0);
+
+    for(float i=0.0;i<10.0;i+=1.0){
+        vec3 p2 = (p)*3.0 + vec3(i*19.3);
+        vec3 n2 = normalize((vec3(noise(p2),noise(p2*1.5),noise(p2*7.1))-vec3(0.5)));
+        float facetintensity = 0.1 + rand(p2);
+
+        //float fre = pow( clamp(1.0+dot(nor2,rd),0.0,1.0), 2.0 );
+
+        vec3 refl2 = reflect(e,n2);
+        totaldif += getSkyLight(refl2);
+        totalspec += pow(clamp(dot(l,refl2),0.0,1.0),200.0) * (clamp(dot(n,l)+0.1,0.0,1.0)) * facetintensity;// * fre;
+    }
+
+	return influx * vec3(0.9) * dif + totaldif * 0.01 + totalspec;
+}
+
+
+
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
     //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
@@ -387,6 +417,7 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	
 	// direct illumination from sun
 	light += sunLight * clamp(dot(n,sunVector),0.0,1.0) * getShadowForGroundPos(p,shadowHeight);
+	//light += brdfSunSnow(p,n,sunVector,normalize(p-eye),sunLight * getShadowForGroundPos(p,shadowHeight));
 
 	// indirect illumination from terrain-bounce
 	//vec4 ind = texture(indirectTex,p.xz * texel);
