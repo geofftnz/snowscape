@@ -381,7 +381,7 @@ vec3 brdfSunSnow(vec3 p, vec3 n, vec3 l, vec3 e, vec3 influx)
 
 	// specular facets
     vec3 refl = reflect(e,n);
-    vec3 spec = influx * pow(clamp(dot(l,refl),0.0,1.0),2.0) * 0.1;
+    vec3 spec = influx * pow(clamp(dot(l,refl),0.0,1.0),2.0) * 0.25;
 
     vec3 totalspec = vec3(0.0);
     vec3 totaldif = vec3(0.0);
@@ -405,6 +405,9 @@ vec3 brdfSunSnow(vec3 p, vec3 n, vec3 l, vec3 e, vec3 influx)
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
+
+	//return n.xyz * 0.5 + vec3(0.5);
+
     //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
 	vec3 col = vec3(pow(0.9,2.2));
 

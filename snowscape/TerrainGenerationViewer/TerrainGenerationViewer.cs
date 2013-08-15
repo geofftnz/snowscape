@@ -459,15 +459,15 @@ namespace Snowscape.TerrainGenerationViewer
 
             TextureSynth ts = new TextureSynth(DetailRes, DetailRes);
 
-            //this.terrainDetailTexture.Upload(ts.ApplyWrapNoise(6, 8.0f, 1.0f, h => Math.Abs(h), h => h).Normalise().GetData());
-
+            this.terrainDetailTexture.Upload(ts.ApplyWrapNoise(6, 8.0f, 1.0f, h => Math.Abs(h), h => h).Normalise().GetData());
+            /*
             this.terrainDetailTexture.Upload(
                 ts.ForEach((x, y, h) =>
                     {
                         return (float)(((x>>4) & 0x01) ^ ((y>>4) & 0x01));
                     })
                     .Normalise()
-                    .GetData());
+                    .GetData());*/
 
             this.terrainDetailTexture.Bind();
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);

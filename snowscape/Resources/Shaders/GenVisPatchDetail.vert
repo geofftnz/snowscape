@@ -24,6 +24,9 @@ in vec3 in_boxcoord;
 out vec3 boxcoord;
 out vec3 worldpos;
 out vec3 normal;
+out vec3 binormal;
+out vec3 tangent;
+out vec2 detailpos;
 
 float t = 1.0 / boxparam.x;
 float pt = t * detailScale;
@@ -83,10 +86,10 @@ float fbm( vec3 p )
 
 float getHeightDetail(vec2 pos)
 {
-	return 0.0;
+	//return 0.0;
 	//return noise(vec3(pos * 4096.0,1.0)) * 0.03 + noise(vec3(pos * 8354.0,17.0)) * 0.015 + noise(vec3(pos * 17354.0,189.0)) * 0.007;
 
-	//return textureLod(detailTex,pos * 32.0 ,0).r * 0.1;
+	return textureLod(detailTex,pos,0).r * 0.1;
 }
 
 float getHeight(vec2 pos,float weight)
@@ -127,8 +130,8 @@ float sampleHeight(vec2 pos, float weight)
 		textureLod(heightTex,vec2(t0.x,t0.y),0).r * s0.x * s0.y +
 		textureLod(heightTex,vec2(t1.x,t0.y),0).r * s1.x * s0.y +
 		textureLod(heightTex,vec2(t0.x,t1.y),0).r * s0.x * s1.y +
-		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y + 
-		getHeightDetail(pos);
+		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y;// + 
+		//getHeightDetail(pos);
 }
 
 //vec3 getNormal(vec2 pos, float weight)
@@ -224,12 +227,30 @@ void main() {
 	float h = sampleHeight(pos,weight);
 	normal = getNormal(pos,weight);
 
+	// calculate tangent and binormal
+	// tangent is in X direction, so is the cross product of normal (Y) and Z
+	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	binormal = normalize(cross(t1,normal));
+	tangent = normalize(cross(normal,binormal));
+//
+//	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+//	tangent = normalize(cross(t1,normal));
+//	binormal = normalize(cross(normal, tangent));
+//
+	//tangent = normalize(cross(normal,vec3(0.0,0.0,1.0)));
+	//binormal = normalize(cross(normal,tangent));
+	//tangent = normalize(cross(normal, binormal));
+
+	detailpos = pos * 32.0;
+
 	vec3 v = vertex;
 	v.xz *= scale;
 	v.xz += offset;
 	v.x *= boxparam.x;
 	v.z *= boxparam.y;
 	v.y = h + v.y * 0.2;
+
+	v += normal * getHeightDetail(detailpos);
 
     gl_Position = projection_matrix * view_matrix * model_matrix * vec4(v, 1.0);
 
