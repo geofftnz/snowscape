@@ -472,6 +472,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainDetailTexture.Bind();
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
+            (this.tileRendererPatchLow as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
 
             /*
             // create noise texture for clouds

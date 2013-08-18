@@ -18,6 +18,10 @@ in vec3 in_boxcoord;
 out vec3 boxcoord;
 out vec3 worldpos;
 out vec3 normal;
+out vec3 binormal;
+out vec3 tangent;
+out vec2 detailpos;
+
 
 float t = 1.0 / boxparam.x;
 
@@ -84,10 +88,16 @@ void main() {
 
 	vec2 texcoord = b.xz;
 
-
+	highp vec2 pos = mod(texcoord,boxparam.x);
+	detailpos = pos * 32.0;
 
 	float h = sampleHeight(texcoord);
 	normal = getNormal(texcoord);
+
+	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	binormal = normalize(cross(t1,normal));
+	tangent = normalize(cross(normal,binormal));
+
 
 	vec3 v = vertex;
 	v.xz *= scale;
