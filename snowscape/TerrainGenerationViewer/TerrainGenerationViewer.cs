@@ -263,7 +263,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("groundLevel", 0.985f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f)); // 0.995 0.98
 
-            parameters.Add(new Parameter<float>("AmbientBias", 0.16f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
+            parameters.Add(new Parameter<float>("AmbientBias", 0.40f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
             parameters.Add(new Parameter<float>("IndirectBias", 0.05f, 0.0f, 10.0f, v => v + 0.005f, v => v - 0.005f)); // 0.995 0.98
 
             //parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
