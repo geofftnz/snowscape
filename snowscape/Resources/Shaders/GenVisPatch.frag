@@ -48,15 +48,13 @@ void main(void)
 {
 	vec2 texcoord = boxcoord.xz/boxparam.xy;
     //float h = texture2D(heightTex,texcoord).r;
-    //vec3 n = normal; //normalize(normal);
+    
+	
+	vec3 n = normal; //normalize(normal);
 
-	mat3 nm = mat3(tangent,normal,binormal);
-
-	//vec3 dn = vec3(0.0,1.0,0.0);
-	vec3 dn = getDetailNormal(detailpos);
-
-	//vec3 n = getDetailNormal(detailpos);
-	vec3 n = normalize(dn * nm);
+	//mat3 nm = mat3(tangent,normal,binormal);
+	//vec3 dn = getDetailNormal(detailpos);
+	//vec3 n = normalize(dn * nm);
 
 
     out_Pos = vec4(worldpos.xyz,1.0);
