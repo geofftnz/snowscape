@@ -82,7 +82,7 @@ vec3 getDetailNormal(vec2 pos)
 	//pos *= 32.0;
 	//vec3 ofs = vec3(-t,0.0,t);
 
-	float w = 2.0 / 32.0;
+	float w = 2.0 / 16.0;
 
     //float h1 = sampleHeight(pos + ofs.yx); // 0,-1
     //float h2 = sampleHeight(pos + ofs.yz);  // 0 1

@@ -31,7 +31,7 @@ vec3 getDetailNormal(vec2 pos)
 	//pos *= 32.0;
 	//vec3 ofs = vec3(-t,0.0,t);
 
-	float w = 2.0 / 32.0;
+	float w = 2.0 / 16.0;
 
     //float h1 = sampleHeight(pos + ofs.yx); // 0,-1
     //float h2 = sampleHeight(pos + ofs.yz);  // 0 1
@@ -50,11 +50,11 @@ void main(void)
     //float h = texture2D(heightTex,texcoord).r;
     
 	
-	vec3 n = normal; //normalize(normal);
+	//vec3 n = normal; //normalize(normal);
 
-	//mat3 nm = mat3(tangent,normal,binormal);
-	//vec3 dn = getDetailNormal(detailpos);
-	//vec3 n = normalize(dn * nm);
+	mat3 nm = mat3(tangent,normal,binormal);
+	vec3 dn = getDetailNormal(detailpos);
+	vec3 n = normalize(dn * nm);
 
 
     out_Pos = vec4(worldpos.xyz,1.0);

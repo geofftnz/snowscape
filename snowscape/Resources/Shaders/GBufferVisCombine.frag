@@ -408,8 +408,8 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 
 	//return n.xyz * 0.5 + vec3(0.5);
 
-    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	vec3 col = vec3(pow(0.9,2.2));
+    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	//vec3 col = vec3(pow(0.9,2.2));
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
@@ -421,6 +421,13 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	// direct illumination from sun
 	light += sunLight * clamp(dot(n,sunVector),0.0,1.0) * getShadowForGroundPos(p,shadowHeight);
 	//light += brdfSunSnow(p,n,sunVector,normalize(p-eye),sunLight * getShadowForGroundPos(p,shadowHeight));
+
+	// glow through snow at grazing angles
+	//light += sunLight * vec3(0.2,0.25,0.4) * clamp(dot(n,sunVector)+0.1,0.0,1.0) * getShadowForGroundPos(p,shadowHeight);
+	//float nds = dot(n,sunVector);
+	//float sg = pow(smoothstep(-0.3,0.0,nds) * (1.0 - smoothstep(0.1,0.3,nds)),2.0) * 0.1;
+	//light += sunLight * Kr * sg * getShadowForGroundPos(p,shadowHeight);
+	//pow(Kr,vec3(1.0 + 10.0 * clamp(-nds,0.0,1.0)))
 
 	// indirect illumination from terrain-bounce
 	//vec4 ind = texture(indirectTex,p.xz * texel);

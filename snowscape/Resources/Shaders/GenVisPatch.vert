@@ -94,9 +94,9 @@ void main() {
 	float h = sampleHeight(texcoord);
 	normal = getNormal(texcoord);
 
-	//vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
-	//binormal = normalize(cross(t1,normal));
-	//tangent = normalize(cross(normal,binormal));
+	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	binormal = normalize(cross(t1,normal));
+	tangent = normalize(cross(normal,binormal));
 //
 
 	vec3 v = vertex;
