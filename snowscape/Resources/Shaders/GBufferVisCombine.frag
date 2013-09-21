@@ -402,6 +402,23 @@ vec3 brdfSunSnow(vec3 p, vec3 n, vec3 l, vec3 e, vec3 influx)
 }
 
 
+vec3 brdfRock(vec3 pos, vec3 norm, vec3 light, vec3 view, vec3 influx)
+{
+//vec3(0.3216,0.2078,0.1686)
+//vec3(0.2549,0.1490,0.0863)
+//vec3(0.3020,0.2000,0.1137)
+//vec3(0.2941,0.2000,0.1137)
+//vec3(0.2941,0.1529,0.0980)
+//vec3(0.3569,0.2078,0.1255)
+//vec3(0.4196,0.2824,0.2275)
+//vec3(0.6549,0.5804,0.4667)
+//vec3(0.4902,0.3961,0.2784)
+
+	// rock is primarily diffuse, with largish specular highlight
+	return vec3(0.0);
+}
+
+
 
 vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
