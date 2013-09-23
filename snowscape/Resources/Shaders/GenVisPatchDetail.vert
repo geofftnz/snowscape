@@ -26,7 +26,12 @@ out vec3 worldpos;
 out vec3 normal;
 out vec3 binormal;
 out vec3 tangent;
-out vec2 detailpos;
+
+//out vec2 detailpos;
+out vec2 detailpos_n;
+out vec2 detailpos_s;
+out vec2 detailpos_w;
+out vec2 detailpos_e;
 
 float t = 1.0 / boxparam.x;
 float pt = t * detailScale;
@@ -241,7 +246,12 @@ void main() {
 	//binormal = normalize(cross(normal,tangent));
 	//tangent = normalize(cross(normal, binormal));
 
-	detailpos = pos * 32.0;
+	vec2 detailpos = pos * 32.0;
+	float dt = 1.0/1024.0;
+	detailpos_n = detailpos - vec2(0.0,dt);
+	detailpos_s = detailpos + vec2(0.0,dt);
+	detailpos_w = detailpos - vec2(dt,0.0);
+	detailpos_e = detailpos + vec2(dt,0.0);
 
 	vec3 v = vertex;
 	v.xz *= scale;

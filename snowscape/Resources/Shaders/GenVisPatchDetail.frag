@@ -14,8 +14,11 @@ in vec3 worldpos;
 in vec3 normal;
 in vec3 binormal;
 in vec3 tangent;
-in vec2 detailpos;
-
+//in vec2 detailpos;
+in vec2 detailpos_n;
+in vec2 detailpos_s;
+in vec2 detailpos_w;
+in vec2 detailpos_e;
 
 out vec4 out_Pos;
 out vec4 out_Normal;
@@ -74,27 +77,39 @@ float fbm( vec3 p )
 float t = 1.0 / 1024.0;
 float sampleHeight(vec2 pos)
 {
-	return textureLod(detailTex,pos,0).r * 0.1 + textureLod(detailTex,pos*16.0,0).r * 0.00625;
+	return textureLod(detailTex,pos,0).r * 0.1;// + textureLod(detailTex,pos*16.0,0).r * 0.00625;
 }
 
-vec3 getDetailNormal(vec2 pos)
+//vec3 getDetailNormal(vec2 pos)
+//{
+	////pos *= 32.0;
+	////vec3 ofs = vec3(-t,0.0,t);
+//
+	//float w = 2.0 / 16.0;
+//
+    ////float h1 = sampleHeight(pos + ofs.yx); // 0,-1
+    ////float h2 = sampleHeight(pos + ofs.yz);  // 0 1
+    ////float h3 = sampleHeight(pos + ofs.xy); // -1 0
+    ////float h4 = sampleHeight(pos + ofs.zy); // 1 0
+    //float h1 = sampleHeight(vec2(pos.x, pos.y - t));
+    //float h2 = sampleHeight(vec2(pos.x, pos.y + t));
+    //float h3 = sampleHeight(vec2(pos.x - t, pos.y));
+    //float h4 = sampleHeight(vec2(pos.x + t, pos.y));
+    //return normalize(vec3(h4-h3,w,h2-h1));  // WAT
+//}
+//
+vec3 getDetailNormal()
 {
-	//pos *= 32.0;
-	//vec3 ofs = vec3(-t,0.0,t);
-
 	float w = 2.0 / 16.0;
+	float a = 0.1;
 
-    //float h1 = sampleHeight(pos + ofs.yx); // 0,-1
-    //float h2 = sampleHeight(pos + ofs.yz);  // 0 1
-    //float h3 = sampleHeight(pos + ofs.xy); // -1 0
-    //float h4 = sampleHeight(pos + ofs.zy); // 1 0
-    float h1 = sampleHeight(vec2(pos.x, pos.y - t));
-    float h2 = sampleHeight(vec2(pos.x, pos.y + t));
-    float h3 = sampleHeight(vec2(pos.x - t, pos.y));
-    float h4 = sampleHeight(vec2(pos.x + t, pos.y));
+	float h1 = textureLod(detailTex,detailpos_n,0).r * a;
+	float h2 = textureLod(detailTex,detailpos_s,0).r * a;
+	float h3 = textureLod(detailTex,detailpos_w,0).r * a;
+	float h4 = textureLod(detailTex,detailpos_e,0).r * a;
+
     return normalize(vec3(h4-h3,w,h2-h1));  // WAT
 }
-
 
 
 void main(void)
@@ -107,7 +122,7 @@ void main(void)
 	mat3 nm = mat3(tangent,normal,binormal);
 
 	//vec3 dn = vec3(0.0,1.0,0.0);
-	vec3 dn = getDetailNormal(detailpos);
+	vec3 dn = getDetailNormal();
 
 	//vec3 n = getDetailNormal(detailpos);
 	vec3 n = normalize(dn * nm);
