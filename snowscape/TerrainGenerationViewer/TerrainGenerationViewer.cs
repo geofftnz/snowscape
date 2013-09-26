@@ -693,6 +693,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             var rp = new Lighting.LightingCombiner.RenderParams()
             {
+                DepthTexture = this.lightingStep.DepthTexture,
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
                 SkyCubeTexture = this.skyCubeTexture,

@@ -32,7 +32,7 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// </summary>
     public class LightingCombiner
     {
-        private GBuffer gbuffer = new GBuffer("lighting");
+        private GBuffer gbuffer = new GBuffer("lighting",true);
         private ShaderProgram program = new ShaderProgram("combiner");
         private GBufferCombiner gbufferCombiner;
         private Matrix4 projection = Matrix4.Identity;
@@ -41,11 +41,20 @@ namespace Snowscape.TerrainRenderer.Lighting
         public int Width { get; private set; }
         public int Height { get; private set; }
 
+        public Texture DepthTexture
+        {
+            get
+            {
+                return gbuffer.DepthTexture;
+            }
+        }
+
         /// <summary>
         /// Parameters for lighting step
         /// </summary>
         public class RenderParams
         {
+            public Texture DepthTexture { get; set; }
             public Texture HeightTexture { get; set; }
             public Texture ShadeTexture { get; set; }
             public Texture NoiseTexture { get; set; }
@@ -149,6 +158,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             //rp.CloudDepthTexture.Bind(TextureUnit.Texture5);
             rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture5);
             rp.SkyCubeTexture.Bind(TextureUnit.Texture6);
+            rp.DepthTexture.Bind(TextureUnit.Texture7);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -161,6 +171,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("shadeTex", 4);
                 sp.SetUniform("indirectTex", 5);
                 sp.SetUniform("skyCubeTex", 6);
+                sp.SetUniform("depthTex", 7);
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);
                 sp.SetUniform("exposure", rp.Exposure);

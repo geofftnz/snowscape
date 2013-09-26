@@ -297,9 +297,17 @@ namespace OpenTKExtensions
                 this.DepthTexture = null;
             }
             // create & bind depth texture
-            this.DepthTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.DepthComponent32f, PixelFormat.DepthComponent, PixelType.Float);
+            this.DepthTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.DepthComponent32, PixelFormat.DepthComponent, PixelType.Float);
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.DepthTextureMode, (int)All.Intensity));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureCompareMode, (int)TextureCompareMode.CompareRToTexture));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureCompareFunc, (int)All.Lequal));
             this.DepthTexture.Init();
             this.DepthTexture.UploadEmpty();
+            this.DepthTexture.Bind();
             GL.FramebufferTexture2D(this.FBO.Target, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, this.DepthTexture.ID, 0);
         }
 
@@ -308,6 +316,12 @@ namespace OpenTKExtensions
             this.FBO.Bind(FramebufferTarget.DrawFramebuffer);
             GL.Viewport(0, 0, this.Width, this.Height);
             SetDrawBuffers();
+            if (this.WantDepth)
+            {
+                GL.Enable(EnableCap.DepthTest);
+                GL.DepthMask(true);
+            }
+
         }
 
         /// <summary>

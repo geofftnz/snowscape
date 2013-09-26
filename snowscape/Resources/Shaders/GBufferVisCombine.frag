@@ -6,6 +6,7 @@ uniform sampler2D paramTex;
 uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
 uniform sampler2D indirectTex;
+uniform sampler2D depthTex;
 
 uniform samplerCube skyCubeTex;
 uniform vec4 boxparam;
@@ -613,7 +614,12 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 
 
 
-
+float LinearizeDepth(float z)
+{
+  float n = 0.1; // camera z near
+  float f = 4000.0; // camera z far
+  return (2.0 * n) / (f + n - z * (f - n));	
+}
 
 
 void main(void)
@@ -622,31 +628,22 @@ void main(void)
     vec4 posT = texture(posTex,p);
 	vec4 paramT = texture(paramTex,p);
     vec4 normalT = texture(normalTex,p);
+	float depth = texture(depthTex,p).r;
 
     vec4 c = vec4(0.0,0.0,0.0,1.0);
     float hitType = posT.a;
     vec4 pos = vec4(posT.xyz + eyePos,0.0);
     vec3 normal;
-	
 
-	//if (dot(normalT.xyz,normalT.xyz) > 1.1)
-	//{
-		//normal = getNormal(pos.xz);
-	//}
-	//else
-	//{
-		//normal = normalize(normalT.xyz - vec3(0.5));
-	//}
 	normal = normalize(normalT.xyz - vec3(0.5));
-	 
-
 
 	vec3 wpos = posT.xyz; //pos.xyz - eyePos;
-    //float smoothness = smoothstep(0.02,0.1,paramT.g)*8.0 + paramT.r*paramT.r * 2.0;
-	
-	//vec3 normal = getNormalNoise(pos.xz,0.76,1.0 / (1.0+smoothness));
-	//vec3 normal = getNormal(pos.xz);
 
+	//0.1f, 4000.0f
+	//c.rgb = pos.xyz / 1024.0;
+	c.r = LinearizeDepth(depth);
+
+	/*
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
     float d = length(wpos);
     if (hitType > 0.6)
@@ -671,8 +668,8 @@ void main(void)
 		{
             c = vec4(1.0,1.0,0.0,1.0);
         }
-
 	}
+	*/
 
 	/*
     // lower right quadrant
