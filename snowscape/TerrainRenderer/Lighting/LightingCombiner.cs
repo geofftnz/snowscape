@@ -54,6 +54,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         /// </summary>
         public class RenderParams
         {
+            public Matrix4 GBufferProjectionMatrix { get; set; }
             public Texture DepthTexture { get; set; }
             public Texture HeightTexture { get; set; }
             public Texture ShadeTexture { get; set; }
@@ -162,6 +163,7 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
+                sp.SetUniform("pre_projection_matrix", rp.GBufferProjectionMatrix);
                 sp.SetUniform("eyePos", rp.EyePos);
                 sp.SetUniform("sunVector", rp.SunDirection);
                 sp.SetUniform("posTex", 0);

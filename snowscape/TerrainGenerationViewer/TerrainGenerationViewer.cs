@@ -690,9 +690,19 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderGBufferCombiner()
         {
+            Matrix4 mv = this.terrainModelview;
+            //mv.M41 = 0f;
+            //mv.M42 = 0f;
+            //mv.M43 = 0f;
+            //mv.M14 = 0f;
+            //mv.M24 = 0f;
+            //mv.M34 = 0f;
+
 
             var rp = new Lighting.LightingCombiner.RenderParams()
             {
+                //GBufferProjectionMatrix = Matrix4.Mult(mv, this.terrainProjection),
+                GBufferProjectionMatrix = Matrix4.Mult(this.terrainModelview, this.terrainProjection),
                 DepthTexture = this.lightingStep.DepthTexture,
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,

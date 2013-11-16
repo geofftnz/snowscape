@@ -2,6 +2,7 @@
  
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
+
 in vec3 vertex;
 in vec2 in_texcoord0;
 out vec2 texcoord0;

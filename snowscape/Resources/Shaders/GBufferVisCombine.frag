@@ -36,6 +36,7 @@ uniform float scatteringInitialStepSize;
 uniform float scatteringStepGrowthFactor;
 
 
+uniform mat4 pre_projection_matrix;
 
 in vec2 texcoord0;
 out vec4 out_Colour;
@@ -621,6 +622,18 @@ float LinearizeDepth(float z)
   return (2.0 * n) / (f + n - z * (f - n));	
 }
 
+float LinearizeDepth2(float depth)
+{
+	float FarClipDistance = 4000.0;
+	float NearClipDistance = 0.1;
+	float ProjectionA = FarClipDistance / (FarClipDistance - NearClipDistance);
+	float ProjectionB = (-FarClipDistance * NearClipDistance) / (FarClipDistance - NearClipDistance);
+
+	// Sample the depth and convert to linear view space Z (assume it gets sampled as
+	// a floating point value of the range [0,1])
+	return ProjectionB / (depth - ProjectionA);
+}
+
 
 void main(void)
 {
@@ -641,7 +654,26 @@ void main(void)
 
 	//0.1f, 4000.0f
 	//c.rgb = pos.xyz / 1024.0;
-	c.r = LinearizeDepth(depth);
+	
+	if (hitType > 0.6){
+
+		if (texcoord0.x<0.5)
+		{
+			c.rgb = (pos.xyz / 8192.0);
+		}
+		else
+		{
+			vec4 projpos = vec4(texcoord0.x * 2.0 - 1.0, texcoord0.y * 2.0 - 1.0, depth*2.0-1.0, 1.0);
+			vec4 worldspacepos = inverse(pre_projection_matrix) * projpos;
+			worldspacepos.xyz /= worldspacepos.w;
+
+			c.rgb = worldspacepos.xyz / 8192.0;
+		}
+	}
+	else
+	{
+		c.rgb = 0.5;
+	}
 
 	/*
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
