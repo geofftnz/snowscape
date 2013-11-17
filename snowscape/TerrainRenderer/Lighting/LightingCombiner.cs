@@ -102,9 +102,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             this.Width = width;
             this.Height = height;
 
-            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
-            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
-            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
+            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
+            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
             this.gbuffer.Init(this.Width, this.Height);
 
             program.Init(
@@ -166,9 +165,8 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("pre_projection_matrix", rp.GBufferProjectionMatrix);
                 sp.SetUniform("eyePos", rp.EyePos);
                 sp.SetUniform("sunVector", rp.SunDirection);
-                sp.SetUniform("posTex", 0);
-                sp.SetUniform("paramTex", 1);
-                sp.SetUniform("normalTex", 2);
+                sp.SetUniform("paramTex", 0);
+                sp.SetUniform("normalTex", 1);
                 sp.SetUniform("heightTex", 3);
                 sp.SetUniform("shadeTex", 4);
                 sp.SetUniform("indirectTex", 5);

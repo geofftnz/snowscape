@@ -1,6 +1,5 @@
 ﻿#version 330
 precision highp float;
-uniform sampler2D posTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D heightTex;
@@ -638,7 +637,7 @@ float LinearizeDepth2(float depth)
 void main(void)
 {
     vec2 p = texcoord0.xy;
-    vec4 posT = texture(posTex,p);
+    //vec4 posT = texture(posTex,p);
 	vec4 paramT = texture(paramTex,p);
     vec4 normalT = texture(normalTex,p);
 	float depth = texture(depthTex,p).r;
@@ -648,24 +647,16 @@ void main(void)
 	//depth = clamp(depth,0,1);
 
 	vec4 projpos = vec4(texcoord0.x * 2.0 - 1.0, texcoord0.y * 2.0 - 1.0, depth*2.0-1.0, 1.0);
-	vec4 ppos = inverse(pre_projection_matrix) * projpos;
-	ppos.xyz /= ppos.w;
+	vec4 pos = inverse(pre_projection_matrix) * projpos;
+	pos.xyz /= pos.w;
 
 
     vec4 c = vec4(0.0,0.0,0.0,1.0);
-    float hitType = posT.a;
-    vec4 pos = vec4(posT.xyz + eyePos,0.0);
-    vec3 normal;
+    float hitType = normalT.a;
+    //vec4 pos = vec4(posT.xyz + eyePos,0.0);
+    vec3 normal = normalize(normalT.xyz - vec3(0.5));
 
-
-	if (texcoord0.x>0.5)
-	{
-		pos = ppos;
-	}
-
-	normal = normalize(normalT.xyz - vec3(0.5));
-
-	vec3 wpos = posT.xyz; //pos.xyz - eyePos;
+	//vec3 wpos = posT.xyz; //pos.xyz - eyePos;
 
 	//0.1f, 4000.0f
 	//c.rgb = pos.xyz / 1024.0;
@@ -690,9 +681,10 @@ void main(void)
 		c.rgb = 0.5;
 	}
 	*/
+
+	//c.rgb = normal * 0.5 + 0.5;
 	
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
-    float d = length(wpos);
     if (hitType > 0.6)
 	{
         c.rgb = generateCol(pos.xyz,normal,paramT, eyePos, shadowAO.r, shadowAO.g);
@@ -705,7 +697,7 @@ void main(void)
 	{
         if (hitType > 0.05)
 		{
-			vec3 skyDir = normalize(posT.xyz);
+			vec3 skyDir = normal;
 			c.rgb += getSkyColour(skyDir);
 			vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * nearScatterDistance);
 			c.rgb *= inst.a;

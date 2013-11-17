@@ -6,16 +6,13 @@ uniform mat4 view_matrix;
 
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
-//uniform sampler2D shadeTex;
 uniform sampler2D paramTex;
 uniform vec4 boxparam;  // dim of box
 uniform vec3 eyePos;
 uniform vec3 nEyePos;
 in vec3 boxcoord;   // current box coord of back face, not normalized to 0-1
 
-out vec4 out_Pos;
 out vec4 out_Normal;
-//out vec4 out_Shade;
 out vec4 out_Param;
 
 
@@ -277,9 +274,6 @@ void main(void)
 
 		// translate intersection from tile-space to world-space and offset by eye pos.
 		vec4 worldPos = (model_matrix * vec4(p.xyz,1.0));
-
-		// position in world, relative to eye
-		out_Pos = vec4(worldPos.xyz - eyePos,0.8);  // a was p.w
 
 		// normal at intersection
 		//vec3 normal = getNormal(mod(worldPos.xz,vec2(boxparam.x)));

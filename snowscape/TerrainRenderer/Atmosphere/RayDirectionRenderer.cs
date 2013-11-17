@@ -68,7 +68,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                 },
                 new string[]
                 {
-                    "out_Pos"
+                    "out_Normal"
                 });
 
         }

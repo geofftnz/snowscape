@@ -10,7 +10,6 @@ uniform vec2 offset;
 uniform float detailScale;
 
 in vec3 boxcoord;
-in vec3 worldpos;
 in vec3 normal;
 in vec3 binormal;
 in vec3 tangent;
@@ -77,27 +76,10 @@ float fbm( vec3 p )
 float t = 1.0 / 1024.0;
 float sampleHeight(vec2 pos)
 {
-	return textureLod(detailTex,pos,0).r * 0.1;// + textureLod(detailTex,pos*16.0,0).r * 0.00625;
+	return textureLod(detailTex,pos,0).r * 0.1;
 }
 
-//vec3 getDetailNormal(vec2 pos)
-//{
-	////pos *= 32.0;
-	////vec3 ofs = vec3(-t,0.0,t);
-//
-	//float w = 2.0 / 16.0;
-//
-    ////float h1 = sampleHeight(pos + ofs.yx); // 0,-1
-    ////float h2 = sampleHeight(pos + ofs.yz);  // 0 1
-    ////float h3 = sampleHeight(pos + ofs.xy); // -1 0
-    ////float h4 = sampleHeight(pos + ofs.zy); // 1 0
-    //float h1 = sampleHeight(vec2(pos.x, pos.y - t));
-    //float h2 = sampleHeight(vec2(pos.x, pos.y + t));
-    //float h3 = sampleHeight(vec2(pos.x - t, pos.y));
-    //float h4 = sampleHeight(vec2(pos.x + t, pos.y));
-    //return normalize(vec3(h4-h3,w,h2-h1));  // WAT
-//}
-//
+
 vec3 getDetailNormal()
 {
 	float w = 2.0 / 16.0;
@@ -115,32 +97,12 @@ vec3 getDetailNormal()
 void main(void)
 {
 	vec2 texcoord = boxcoord.xz/boxparam.xy;
-    //float h = texture2D(heightTex,texcoord).r;
 
 	// calculate normal of detail heightmap at detailpos
-
 	mat3 nm = mat3(tangent,normal,binormal);
-
-	//vec3 dn = vec3(0.0,1.0,0.0);
 	vec3 dn = getDetailNormal();
-
-	//vec3 n = getDetailNormal(detailpos);
 	vec3 n = normalize(dn * nm);
-	//vec3 n = normal;
 
-    //vec3 n = normal; //normalize(normal);
-	/*
-	vec3 npos = worldpos.xyz * 64.0;
-	vec3 n2 = 
-		vec3(
-			fbm(npos),
-			fbm(npos + vec3(3.7,7.8,9.0)),
-			fbm(npos + vec3(9.7,3.8,19.0))
-		) - vec3(0.5);
-
-	n = normalize(n + n2 * 0.1);*/
-
-    out_Pos = vec4(worldpos.xyz,1.0);
     out_Normal = vec4(n.xyz * 0.5 + 0.5,1.0);
 	out_Param = texture(paramTex,texcoord);
 
