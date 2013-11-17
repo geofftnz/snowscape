@@ -19,6 +19,9 @@ namespace OpenTKExtensions.Camera
         public int Width { get; set; }
         public int Height { get; set; }
 
+        public float ZNear { get; set; }
+        public float ZFar { get; set; }
+
 
         /// <summary>
         /// look angle (up/down), in radians 
@@ -103,6 +106,8 @@ namespace OpenTKExtensions.Camera
             this.AngleUpDown = (float)Math.PI * 0.5f;
             this.AngleLeftRight = (float)Math.PI;
             this.EyeHeight = 200f;
+            this.ZNear = 1.0f;
+            this.ZFar = 4000.0f;
 
         }
 
@@ -118,7 +123,7 @@ namespace OpenTKExtensions.Camera
             this.Width = ClientWidth;
             this.Height = ClientHeight;
 
-            this.Projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, ClientHeight > 0 ? (float)ClientWidth / (float)ClientHeight : 1.0f, 0.1f, 4000.0f);
+            this.Projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, ClientHeight > 0 ? (float)ClientWidth / (float)ClientHeight : 1.0f, this.ZNear, this.ZFar);
         }
 
 
