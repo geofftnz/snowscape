@@ -133,7 +133,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
             private int GetDetailTileSize(Vector3 viewer, float detailRadius)
             {
-                int baseRes = 128;
+                int baseRes = 64;
                 for (int i = 16; i > 1; i /= 2)
                 {
                     if (IsViewerInDetailRange(viewer, detailRadius / (float)i))

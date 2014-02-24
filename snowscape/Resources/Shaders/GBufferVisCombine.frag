@@ -426,8 +426,8 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 
 	//return n.xyz * 0.5 + vec3(0.5);
 
-    vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	//vec3 col = vec3(pow(0.9,2.2));
+    //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
+	vec3 col = vec3(pow(0.98,2.2));
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
@@ -455,7 +455,7 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	//light += sunLight * clamp(dot(n,indd),0.0,1.0) * ind.a;
 	vec3 indn = normalize(vec3(n.x,-0.2,n.z));
 
-	light += sunLight * vec3(ind) * indirectBias * (clamp(dot(n,indn),0.0,1.0));  // vertical slopes would be fully lit.
+	light += sunLight * vec3(0.7,0.85,1.0) * vec3(ind) * indirectBias * (clamp(dot(n,indn),0.0,1.0));  // vertical slopes would be fully lit.
 
 	// indirect illumination from sky-dome
 	//light += getSkyLight(n) * AO;
