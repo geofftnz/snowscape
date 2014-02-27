@@ -79,6 +79,11 @@ namespace OpenTKExtensions
             public TextureSlotParam TextureParam { get; set; }
             public Texture Texture { get; set; }
 
+            /// <summary>
+            /// Mipmap level to bind to
+            /// </summary>
+            public int Level { get; set; }
+
             public int TextureID
             {
                 get
@@ -100,6 +105,7 @@ namespace OpenTKExtensions
                 this.Slot = 0;
                 this.TextureParam = new TextureSlotParam();
                 this.Texture = null;
+                this.Level = 0;
             }
 
             public TextureSlot(int colourAttachmentSlot, Texture texture)
@@ -109,6 +115,17 @@ namespace OpenTKExtensions
                 this.Slot = colourAttachmentSlot;
                 this.TextureParam = new TextureSlotParam();
                 this.Texture = texture;
+                this.Level = 0;
+            }
+
+            public TextureSlot(int colourAttachmentSlot, Texture texture, int level)
+            {
+                this.Enabled = true;
+                this.External = true;
+                this.Slot = colourAttachmentSlot;
+                this.TextureParam = new TextureSlotParam();
+                this.Texture = texture;
+                this.Level = level;
             }
 
             public TextureSlot(int colourAttachmentSlot, Texture texture, TextureTarget target)
@@ -118,6 +135,7 @@ namespace OpenTKExtensions
                 this.Slot = colourAttachmentSlot;
                 this.TextureParam = new TextureSlotParam() { Target = target };
                 this.Texture = texture;
+                this.Level = 0;
             }
 
             public void InitTexture(int Width, int Height)
@@ -147,7 +165,7 @@ namespace OpenTKExtensions
             }
             public void AttachToFramebuffer(FramebufferTarget target)
             {
-                GL.FramebufferTexture2D(target, this.FramebufferAttachmentSlot, this.TextureParam.Target, this.TextureID, 0);
+                GL.FramebufferTexture2D(target, this.FramebufferAttachmentSlot, this.TextureParam.Target, this.TextureID, this.Level);
             }
         }
 
