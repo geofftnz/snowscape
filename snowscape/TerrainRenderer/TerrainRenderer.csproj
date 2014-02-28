@@ -76,7 +76,8 @@
     <Compile Include="TerrainTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TileMeshBorder.cs" />
-    <Compile Include="Utility\TerrainTextureCopy.cs" />
+    <Compile Include="Utility\TerrainGlobalTextureCopy.cs" />
+    <Compile Include="Utility\TerrainTileTextureCopy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -42,6 +42,7 @@ namespace Snowscape
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, ex.GetType().Name);
+                throw;
             }
             this.Show();
         }

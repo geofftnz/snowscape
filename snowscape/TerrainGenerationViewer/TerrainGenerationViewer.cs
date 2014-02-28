@@ -20,6 +20,7 @@ using OpenTKExtensions.Camera;
 using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
 using Lighting = Snowscape.TerrainRenderer.Lighting;
 using HDR = Snowscape.TerrainRenderer.HDR;
+using Utility = Snowscape.TerrainRenderer.Utility;
 using Snowscape.TerrainRenderer.Mesh;
 
 
@@ -38,7 +39,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         const int TileLodScale = 4;
 
-        public TerrainGen Terrain { get; set; }
+        public ITerrainGen Terrain { get; set; }
 
         private Matrix4 overlayProjection = Matrix4.Identity;
         private Matrix4 overlayModelview = Matrix4.Identity;
@@ -69,6 +70,8 @@ namespace Snowscape.TerrainGenerationViewer
         private TerrainLightingGenerator terrainLighting;
         private Lighting.HeightmapNormalGenerator tileNormalGenerator = new Lighting.HeightmapNormalGenerator();
         private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator();
+        private Utility.TerrainTileTextureCopy terrainTileTextureCopy = new Utility.TerrainTileTextureCopy();
+        private Utility.TerrainGlobalTextureCopy terrainGlobalTextureCopy = new Utility.TerrainGlobalTextureCopy();
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
@@ -209,7 +212,8 @@ namespace Snowscape.TerrainGenerationViewer
         public TerrainGenerationViewer()
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
-            this.Terrain = new TerrainGen(TileWidth, TileHeight);
+            //this.Terrain = new TerrainGen(TileWidth, TileHeight);
+            this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
@@ -360,25 +364,29 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // kill thread
-            log.Trace("Sending kill signal to update thread");
-            lock (this)
+
+            if (this.Terrain is TerrainGen)
             {
-                this.killThread = true;
+                // kill thread
+                log.Trace("Sending kill signal to update thread");
+                lock (this)
+                {
+                    this.killThread = true;
+                }
+
+                // wait for thread to complete
+                log.Trace("Waiting for thread to complete...");
+                this.updateThread.Join(2000);
+
+                if (this.updateThread.IsAlive)
+                {
+                    log.Warn("Thread.Join timeout - aborting");
+                    this.updateThread.Abort();
+                }
             }
 
-            // wait for thread to complete
-            log.Trace("Waiting for thread to complete...");
-            this.updateThread.Join(2000);
-
-            if (this.updateThread.IsAlive)
-            {
-                log.Warn("Thread.Join timeout - aborting");
-                this.updateThread.Abort();
-            }
-
-            log.Trace("Saving terrain into slot 0...");
-            this.Terrain.Save(this.GetTerrainFileName(0));
+            //log.Trace("Saving terrain into slot 0...");
+            //this.Terrain.Save(this.GetTerrainFileName(0));
         }
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
@@ -390,6 +398,9 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
             this.VSync = VSyncMode.Off;
+
+            // init generator
+            this.Terrain.Init();
 
             // create VBOs/Shaders etc
 
@@ -405,6 +416,9 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
             this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
             this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
+
+            this.terrainTileTextureCopy.Init(this.terrainTile.HeightTexture, this.terrainTile.ParamTexture);
+            this.terrainGlobalTextureCopy.Init(this.terrainGlobal.HeightTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -502,17 +516,26 @@ namespace Snowscape.TerrainGenerationViewer
             }
             catch (FileNotFoundException)
             {
-                this.Terrain.InitTerrain1();
+                // TODO: terrain init for GPU terrain
+                if (this.Terrain is TerrainGen)
+                {
+                    ((TerrainGen)this.Terrain).InitTerrain1();
+                }
             }
-
-            this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
-            this.threadRenderMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
 
             this.frameCounter.Start();
 
-            log.Trace("Starting update thread...");
-            this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
-            this.updateThread.Start();
+            // we only need a thread for TerrainGen
+            if (this.Terrain is TerrainGen)
+            {
+                this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
+                this.threadRenderMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
+
+                log.Trace("Starting update thread...");
+                this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
+                this.updateThread.Start();
+            }
+
 
             this.CalculateSunDirection();
         }
@@ -538,6 +561,13 @@ namespace Snowscape.TerrainGenerationViewer
             sw.Start();
             double startTime = 0.0;
             double updateTime = 0.0;
+
+            if (!(this.Terrain is TerrainGen))
+            {
+                return;
+            }
+
+            var t = this.Terrain as TerrainGen;
 
 
             while (true)
@@ -568,10 +598,10 @@ namespace Snowscape.TerrainGenerationViewer
                     {
                         lock (this)
                         {
-                            this.threadCopyMap.CopyFrom(this.Terrain.Terrain);
+                            this.threadCopyMap.CopyFrom(t.Terrain);
                             this.updateThreadIterations = iteration;
                             this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.8 + 0.2 * updateTime;
-                            this.waterIterations = this.Terrain.WaterIterations;
+                            this.waterIterations = t.WaterIterations;
                         }
                     }
                 }
@@ -582,11 +612,14 @@ namespace Snowscape.TerrainGenerationViewer
 
         protected void CopyMapDataFromUpdateThread()
         {
-            lock (this)
+            if (this.Terrain is TerrainGen)
             {
-                perfmon.Start("Copy2");
-                this.threadRenderMap.CopyFrom(this.threadCopyMap);
-                perfmon.Stop("Copy2");
+                lock (this)
+                {
+                    perfmon.Start("Copy2");
+                    this.threadRenderMap.CopyFrom(this.threadCopyMap);
+                    perfmon.Stop("Copy2");
+                }
             }
         }
 
@@ -636,7 +669,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
 
             var pos = (this.camera as WalkCamera).Position;
-            pos.Y = this.Terrain.Terrain.HeightAt(pos.X, pos.Z);
+            pos.Y = this.Terrain.GetHeightAt(pos.X, pos.Z);
             (this.camera as WalkCamera).Position = pos;
 
             this.camera.Update(e.Time);
@@ -672,19 +705,19 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void ResetTerrain()
         {
-            log.Info("Resetting Terrain - pausing thread");
-            this.PauseThread = true;
+            //log.Info("Resetting Terrain - pausing thread");
+            //this.PauseThread = true;
 
-            while (!this.ThreadPaused)
-            {
-                Thread.Sleep(1);
-            }
-            log.Info("Resetting Terrain - thread paused");
+            //while (!this.ThreadPaused)
+            //{
+            //    Thread.Sleep(1);
+            //}
+            //log.Info("Resetting Terrain - thread paused");
 
-            this.Terrain.ResetTerrain();
+            //this.Terrain.ResetTerrain();
 
-            log.Info("Resetting Terrain - restarting thread");
-            this.PauseThread = false;
+            //log.Info("Resetting Terrain - restarting thread");
+            //this.PauseThread = false;
         }
 
 
@@ -790,20 +823,44 @@ namespace Snowscape.TerrainGenerationViewer
                     )
                 );
 
-            uint currentThreadIterations = updateThreadIterations;
-            if (prevThreadIterations != currentThreadIterations)
-            {
-                CopyMapDataFromUpdateThread();
-                this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
-                this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
 
+            // upload data from CPU-based terrain generation
+            if (this.Terrain is TerrainGen)
+            {
+                uint currentThreadIterations = updateThreadIterations;
+                if (prevThreadIterations != currentThreadIterations)
+                {
+
+                    CopyMapDataFromUpdateThread();
+                    this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
+                    this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
+
+                    this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
+
+                    textureUpdateCount++;
+                    prevThreadIterations = currentThreadIterations;
+
+                    needToRenderLighting = true;
+                }
+            }
+
+            // copy data from GPU generation to terrain tile
+            //if (this.Terrain is GPUWaterErosion)
+            //{
+                var t = this.Terrain as GPUWaterErosion;
+                this.terrainTileTextureCopy.Render(t.CurrentTerrainTexture);
+
+                this.terrainGlobalTextureCopy.Render(t.CurrentTerrainTexture);
+
+            //TODO: need to set terrain min/max values in tile. Maybe do this as part of maximum mipmap generation. (also generate a min mipmap)
+
+                // TODO: mipmap upload in tile
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
 
-                textureUpdateCount++;
-                prevThreadIterations = currentThreadIterations;
+                //needToRenderLighting = true;
+            //}
 
-                needToRenderLighting = true;
-            }
+
 
             this.CalculateSunDirection();
             if (prevSunDirection != sunDirection || prevParamsVersion != currentParamsVersion || needToRenderLighting)
@@ -897,7 +954,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
         }
-  
+
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(

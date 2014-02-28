@@ -7,6 +7,10 @@ namespace TerrainGeneration
 {
     public interface ITerrainGen
     {
+        int Width { get; }
+        int Height { get; }
+        float GetHeightAt(float x, float y);
+        void Init();
         void ModifyTerrain();
         void Load(string filename);
         void Save(string filename);

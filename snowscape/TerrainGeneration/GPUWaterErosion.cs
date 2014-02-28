@@ -69,6 +69,14 @@ namespace TerrainGeneration
         /// </summary>
         private Texture[] TerrainTexture = new Texture[2];
 
+        public Texture CurrentTerrainTexture
+        {
+            get
+            {
+                return this.TerrainTexture[0];
+            }
+        }
+
         /// <summary>
         /// Velocity of water over terrain. Used for erosion potential.
         /// RG
@@ -115,6 +123,8 @@ namespace TerrainGeneration
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
+            this.VelocityTexture.UploadEmpty();
+
             this.FlowRateTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
@@ -122,8 +132,14 @@ namespace TerrainGeneration
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
+            this.FlowRateTexture.UploadEmpty();
+
         }
 
+        public float GetHeightAt(float x, float y)
+        {
+            return 0f;
+        }
 
         public void ModifyTerrain()
         {
@@ -142,6 +158,8 @@ namespace TerrainGeneration
 
         public void Load(string filename)
         {
+            var data = new float[this.Width * this.Height * 4];
+
             using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None, 256 * 1024))
             {
                 using (var sr = new BinaryReader(fs))
@@ -163,8 +181,6 @@ namespace TerrainGeneration
                         throw new Exception(string.Format("Terrain size {0}x{1} did not match generator size {2}x{3}", w, h, this.Width, this.Height));
                     }
 
-                    var data = new float[w * h * 4];
-
                     for (int i = 0; i < w * h; i++)
                     {
                         data[i * 4 + 0] = sr.ReadSingle();
@@ -177,6 +193,8 @@ namespace TerrainGeneration
                 }
                 fs.Close();
             }
+
+            UploadTerrain(data);
 
         }
 

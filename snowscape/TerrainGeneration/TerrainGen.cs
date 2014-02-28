@@ -1235,5 +1235,17 @@ namespace TerrainGeneration
         #endregion
 
 
+
+
+        public float GetHeightAt(float x, float y)
+        {
+            return this.Terrain.HeightAt(x, y);
+        }
+
+
+        public void Init()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

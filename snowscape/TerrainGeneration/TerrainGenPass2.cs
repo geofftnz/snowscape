@@ -520,6 +520,18 @@ namespace TerrainGeneration
 
         #endregion
 
+
+
+        public float GetHeightAt(float x, float y)
+        {
+            return 0f;
+        }
+
+
+        public void Init()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
