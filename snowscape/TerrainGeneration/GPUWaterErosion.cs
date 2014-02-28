@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTKExtensions;
+using OpenTK.Graphics.OpenGL;
+using System.IO;
 
 namespace TerrainGeneration
 {
@@ -46,10 +48,13 @@ namespace TerrainGeneration
     /// -----
     /// 
     /// </summary>
-    public class GPUWaterErosion:ITerrainGen
+    public class GPUWaterErosion : ITerrainGen
     {
-        // managed here, copied to terrain tile and terrain global
-        // need 2 copies as we ping-pong between them each iteration
+        const int FILEMAGIC = 0x54455230;
+
+
+        public int Width { get; private set; }
+        public int Height { get; private set; }
 
         /// <summary>
         /// Terrain layer texture.
@@ -58,6 +63,9 @@ namespace TerrainGeneration
         /// G: Soil (soft).
         /// B: Water depth.
         /// A: Material suspended in water.
+        /// 
+        /// managed here, copied to terrain tile and terrain global
+        /// need 2 copies as we ping-pong between them each iteration
         /// </summary>
         private Texture[] TerrainTexture = new Texture[2];
 
@@ -78,19 +86,124 @@ namespace TerrainGeneration
         private Texture FlowRateTexture;
 
 
+        public GPUWaterErosion(int width, int height)
+        {
+            this.Width = width;
+            this.Height = height;
+
+        }
+
+        public void Init()
+        {
+            // setup textures
+            for (int i = 0; i < 2; i++)
+            {
+                this.TerrainTexture[i] =
+                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+                this.TerrainTexture[i].UploadEmpty();
+            }
+
+            this.VelocityTexture =
+                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+            this.FlowRateTexture =
+                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+        }
+
+
         public void ModifyTerrain()
         {
-            throw new NotImplementedException();
+
+        }
+
+        private void UploadTerrain(float[] data)
+        {
+            this.TerrainTexture[0].Upload(data);
+        }
+
+        private float[] DownloadTerrain()
+        {
+            return this.TerrainTexture[0].GetLevelDataFloat(0);
         }
 
         public void Load(string filename)
         {
-            //throw new NotImplementedException();
+            using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None, 256 * 1024))
+            {
+                using (var sr = new BinaryReader(fs))
+                {
+                    int magic = sr.ReadInt32();
+                    if (magic != FILEMAGIC)
+                    {
+                        throw new Exception("Not a terrain file");
+                    }
+
+                    int w, h;
+
+                    w = sr.ReadInt32();
+                    h = sr.ReadInt32();
+
+                    if (w != this.Width || h != this.Height)
+                    {
+                        // TODO: handle size changes
+                        throw new Exception(string.Format("Terrain size {0}x{1} did not match generator size {2}x{3}", w, h, this.Width, this.Height));
+                    }
+
+                    var data = new float[w * h * 4];
+
+                    for (int i = 0; i < w * h; i++)
+                    {
+                        data[i * 4 + 0] = sr.ReadSingle();
+                        data[i * 4 + 1] = sr.ReadSingle();
+                        data[i * 4 + 2] = 0f; sr.ReadSingle();
+                        data[i * 4 + 3] = 0f; sr.ReadSingle();
+                    }
+
+                    sr.Close();
+                }
+                fs.Close();
+            }
+
         }
 
         public void Save(string filename)
         {
-            //throw new NotImplementedException();
+            var data = this.DownloadTerrain();
+
+            using (var fs = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None, 256 * 1024))
+            {
+                using (var sw = new BinaryWriter(fs))
+                {
+                    sw.Write(FILEMAGIC);
+                    sw.Write(this.Width);
+                    sw.Write(this.Height);
+
+                    for (int i = 0; i < this.Width * this.Height; i++)
+                    {
+                        sw.Write(data[i * 4 + 0]);
+                        sw.Write(data[i * 4 + 1]);
+                        sw.Write(0f);
+                        sw.Write(0f);
+                    }
+
+                    sw.Close();
+                }
+                fs.Close();
+            }
         }
     }
 }
