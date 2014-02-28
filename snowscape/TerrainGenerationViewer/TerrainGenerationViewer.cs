@@ -338,24 +338,27 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (e.Key == Key.Space)
             {
-                if (pauseUpdate) // currently paused
+                if (this.Terrain is TerrainGen)
                 {
-                    // resume thread
-                    this.PauseThread = false;
-                    this.pauseUpdate = false;
-                }
-                else // currently running
-                {
-                    log.Info("Pausing Update - pausing thread");
-                    this.PauseThread = true;
-
-                    while (!this.ThreadPaused)
+                    if (pauseUpdate) // currently paused
                     {
-                        Thread.Sleep(1);
+                        // resume thread
+                        this.PauseThread = false;
+                        this.pauseUpdate = false;
                     }
-                    log.Info("Pausing Update - thread paused");
-                    this.pauseUpdate = true;
+                    else // currently running
+                    {
+                        log.Info("Pausing Update - pausing thread");
+                        this.PauseThread = true;
 
+                        while (!this.ThreadPaused)
+                        {
+                            Thread.Sleep(1);
+                        }
+                        log.Info("Pausing Update - thread paused");
+                        this.pauseUpdate = true;
+
+                    }
                 }
             }
         }
@@ -386,7 +389,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             //log.Trace("Saving terrain into slot 0...");
-            //this.Terrain.Save(this.GetTerrainFileName(0));
+            this.Terrain.Save(this.GetTerrainFileName(0));
         }
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
@@ -853,6 +856,8 @@ namespace Snowscape.TerrainGenerationViewer
                 this.terrainGlobalTextureCopy.Render(t.CurrentTerrainTexture);
 
             //TODO: need to set terrain min/max values in tile. Maybe do this as part of maximum mipmap generation. (also generate a min mipmap)
+                this.terrainTile.MinHeight = 0f;
+                this.terrainTile.MaxHeight = 200f;
 
                 // TODO: mipmap upload in tile
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);

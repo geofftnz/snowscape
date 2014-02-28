@@ -35,8 +35,8 @@ namespace Snowscape.TerrainRenderer
         public Texture ParamTexture { get; private set; }
         public Sampler LinearSampler { get; private set; }
 
-        public float MinHeight { get; private set; }
-        public float MaxHeight { get; private set; }
+        public float MinHeight { get; set; }
+        public float MaxHeight { get; set; }
 
         private Matrix4 modelMatrix;
         public Matrix4 ModelMatrix
@@ -68,6 +68,8 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat));
 
+            this.HeightTexture.UploadEmpty();
+
             this.LinearSampler =
                 new Sampler()
                 .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Linear))
@@ -95,6 +97,8 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+            this.ParamTexture.UploadEmpty();
         }
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
