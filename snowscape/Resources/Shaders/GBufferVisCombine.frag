@@ -7,6 +7,8 @@ uniform sampler2D shadeTex;
 uniform sampler2D indirectTex;
 uniform sampler2D depthTex;
 
+uniform sampler2D miscTex;
+
 uniform samplerCube skyCubeTex;
 uniform vec4 boxparam;
 uniform vec3 eyePos;
@@ -738,7 +740,7 @@ void main(void)
 	
 
 
-/*	
+	
 	//vec2 p = texcoord0.xy * 2.0;
 	p *= 2.0;
     // split screen into 4
@@ -772,43 +774,55 @@ void main(void)
 			{
 				if (p.y < 1.0)
 				{
-					vec4 pos = texture(posTex,p);// + eyePos;
-					//c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
-					//c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
-					c.r = mod(length(pos.xyz) * 0.01,1.0);
-					c.g = 0;//mod((pos.y + eyePos.y) * 0.5,1.0);
-					c.b = pos.a;
+					//vec4 pos = texture(posTex,p);// + eyePos;
+					////c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
+					////c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
+					//c.r = mod(length(pos.xyz) * 0.01,1.0);
+					//c.g = 0;//mod((pos.y + eyePos.y) * 0.5,1.0);
+					//c.b = pos.a;
 				}
 				else
 				{
-					c.rgb = texture(paramTex,p-vec2(0.0,1.0)).rgb * 0.2;
+					//c.rgb = texture(paramTex,p-vec2(0.0,1.0)).rgb * 0.2;
 				}
 			}
 			else
 			{
 				if (p.y < 1.0)
 				{
-					c.rgb = pow(texture(normalTex,p-vec2(1.0,0.0)).xzy,vec3(2.2));
+					//c.rgb = pow(texture(normalTex,p-vec2(1.0,0.0)).xzy,vec3(2.2));
 					//c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
 					//c.rgb = vec3(texture(shadeTex,p-vec2(1.0,0.0)).rg,0.0);
+
+					vec4 flow = texture(miscTex,p-vec2(1.0,0.0)).rgba;
+					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
+					c.rgb = vec3(flow.b,flow.a,0.0);
+
 				}
 				else
 				{
 					//c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 
 					// sky dome
-					vec3 skyp = vec3(0.0);
-					skyp.xy = (p.xy - vec2(1.0,1.0)) * 2.0 - vec2(1.0);
-					if (dot(skyp.xy,skyp.xy) <= 1.0)
-					{
-						skyp.z = 1.0 - length(skyp.xy);
-					}
-					c.rgb = getSkyColour(skyp.xzy);
+					//vec3 skyp = vec3(0.0);
+					//skyp.xy = (p.xy - vec2(1.0,1.0)) * 2.0 - vec2(1.0);
+					//if (dot(skyp.xy,skyp.xy) <= 1.0)
+					//{
+						//skyp.z = 1.0 - length(skyp.xy);
+					//}
+					//c.rgb = getSkyColour(skyp.xzy);
+
+					vec4 flow = texture(miscTex,p-vec2(1.0,1.0)).rgba;
+					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
+					c.rgb = vec3(flow.r,flow.g,0.0);
+
+					//vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg * 0.5 + 0.5;
+					//c.rgb = vec3(vel,0.4);
 				}
 			}
 			
 		}
-	}*/
+	}
 	
 
 	// fog

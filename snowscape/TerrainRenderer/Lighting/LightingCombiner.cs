@@ -86,6 +86,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float AmbientBias { get; set; }
             public float IndirectBias { get; set; }
 
+            public Texture MiscTexture { get; set; }
+
             public RenderParams()
             {
             }
@@ -159,6 +161,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture5);
             rp.SkyCubeTexture.Bind(TextureUnit.Texture6);
             rp.DepthTexture.Bind(TextureUnit.Texture7);
+            rp.MiscTexture.Bind(TextureUnit.Texture8);
 
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -172,6 +175,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("indirectTex", 5);
                 sp.SetUniform("skyCubeTex", 6);
                 sp.SetUniform("depthTex", 7);
+                sp.SetUniform("miscTex", 8);
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);
                 sp.SetUniform("exposure", rp.Exposure);

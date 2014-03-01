@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
+using Utils;
 
 namespace TerrainGeneration
 {
@@ -93,6 +94,16 @@ namespace TerrainGeneration
         /// </summary>
         private Texture FlowRateTexture;
 
+        public Texture FlowRateTex { get { return FlowRateTexture; } }  // for visualisation
+        public Texture VelocityTex { get { return VelocityTexture; } }  // for visualisation
+
+        // Shader steps
+        private GBufferShaderStep ComputeOutflowStep = new GBufferShaderStep("erosion-outflow");
+        private GBufferShaderStep ComputeVelocityStep = new GBufferShaderStep("erosion-velocity");
+        private GBufferShaderStep UpdateLayersStep = new GBufferShaderStep("erosion-updatelayers");
+        private GBufferShaderStep SedimentTransportStep = new GBufferShaderStep("erosion-transport");
+
+
 
         public GPUWaterErosion(int width, int height)
         {
@@ -134,6 +145,12 @@ namespace TerrainGeneration
 
             this.FlowRateTexture.UploadEmpty();
 
+            // setup steps
+            ComputeOutflowStep.SetOutputTexture(0, "out_Flow", this.FlowRateTexture);
+            ComputeOutflowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_1Outflow.frag".Load());
+
+            ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture);
+            ComputeVelocityStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_2Velocity.frag".Load());
         }
 
         public float GetHeightAt(float x, float y)
@@ -143,6 +160,35 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
+
+            // step 1 - compute flows
+
+            ComputeOutflowStep.Render(
+                    () =>
+                    {
+                        this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    },
+                    (sp) =>
+                    {
+                        sp.SetUniform("terraintex", 0);
+                        sp.SetUniform("texsize", this.Width);
+                        sp.SetUniform("flowRate", 0.1f);  // todo: hoist parameter
+                    }
+                );
+
+            GL.Finish();
+
+            // step 2 - compute velocity
+            ComputeVelocityStep.Render(
+                () =>
+                {
+                    this.FlowRateTex.Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("flowtex", 0);
+                    sp.SetUniform("texsize", this.Width);
+                });
 
         }
 

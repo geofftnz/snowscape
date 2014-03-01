@@ -765,7 +765,9 @@ namespace Snowscape.TerrainGenerationViewer
 
                 ScatteringInitialStepSize = (float)this.parameters["ScatteringInitialStepSize"].GetValue(),
                 ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue(),
-                Time = (float)(this.frameCounter.Frames % 65536)
+                Time = (float)(this.frameCounter.Frames % 65536),
+
+                MiscTexture = ((GPUWaterErosion)this.Terrain).FlowRateTex
             };
 
             this.lightingStep.Render(rp);
