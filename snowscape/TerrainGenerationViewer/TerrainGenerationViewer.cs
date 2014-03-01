@@ -176,6 +176,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private bool pauseUpdate = false;
 
+        private uint updateGPUIterations = 0;
         private uint updateThreadIterations = 0;
         private uint prevThreadIterations;
         private double updateThreadUpdateTime = 0.0;
@@ -816,15 +817,22 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             // do GPU-based terrain generation
-            if (!this.Terrain.NeedThread)
+            if (!this.Terrain.NeedThread && !this.ThreadPaused)
             {
+                perfmon.Start("GPU Erosion");
                 this.Terrain.ModifyTerrain();
-                this.updateThreadIterations++;
+                perfmon.Stop("GPU Erosion");
+                this.updateGPUIterations++;
+                if (this.updateGPUIterations % 20 == 0)
+                {
+                    this.updateThreadIterations = this.updateGPUIterations;
+                }
             }
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
             {
+                perfmon.Start("Generation Update");
                 if (this.Terrain.NeedThread)
                 {
                     CopyMapDataFromUpdateThread();
@@ -839,6 +847,8 @@ namespace Snowscape.TerrainGenerationViewer
                 }
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
+                
+                perfmon.Stop("Generation Update");
 
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
