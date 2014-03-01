@@ -867,7 +867,7 @@ namespace TerrainGeneration
                     // move a fraction of remainder from hard
                     diff -= this.Terrain.Map[celli].Loose;
                     diff *= 0.2f; // hard rock doesn't move as easily
-                    
+
                     this.Terrain.Map[celli].Hard -= diff;
                     this.Terrain.Map[lowestNeighbour.Item1].Loose += diff;
                 }
@@ -1235,5 +1235,16 @@ namespace TerrainGeneration
         #endregion
 
 
+
+
+        public float GetHeightAt(float x, float y)
+        {
+            return this.Terrain.HeightAt(x, y);
+        }
+
+
+        public void Init()
+        {
+        }
     }
 }
