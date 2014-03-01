@@ -353,6 +353,19 @@ vec3 terrainDiffuse(vec3 p, vec3 n, vec4 s, float shadowHeight)
     return col;
 }
 
+vec3 terrainDiffuseDebug(vec3 p, vec3 n, vec4 s, float shadowHeight)
+{
+	vec3 baseCol = vec3(0.2);
+
+	baseCol += vec3(0.1,0.3,0.05) * s.r * s.r;
+	baseCol += vec3(0.1,0.15,0.3) * s.g;
+	baseCol.r += s.b * 0.4;
+
+    return pow(baseCol,vec3(2.2));
+}
+
+
+
 vec3 getSkyLightFromDirection(vec3 dir, vec3 base)
 {
 	vec3 col = textureLod(skyCubeTex,base,9).rgb;
@@ -427,7 +440,8 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	//return n.xyz * 0.5 + vec3(0.5);
 
     //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	vec3 col = vec3(pow(0.98,2.2));
+	//vec3 col = vec3(pow(0.98,2.2));
+	vec3 col = terrainDiffuseDebug(p,n,s,shadowHeight);
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
