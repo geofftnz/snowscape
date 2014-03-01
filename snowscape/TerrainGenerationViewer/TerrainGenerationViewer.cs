@@ -38,7 +38,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         const int TileLodScale = 4;
 
-        public TerrainGen Terrain { get; set; }
+        public ITerrainGen Terrain { get; set; }
 
         private Matrix4 overlayProjection = Matrix4.Identity;
         private Matrix4 overlayModelview = Matrix4.Identity;
@@ -502,7 +502,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
             catch (FileNotFoundException)
             {
-                this.Terrain.InitTerrain1();
+                this.Terrain.ResetTerrain();
             }
 
             this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
@@ -568,10 +568,10 @@ namespace Snowscape.TerrainGenerationViewer
                     {
                         lock (this)
                         {
-                            this.threadCopyMap.CopyFrom(this.Terrain.Terrain);
+                            this.threadCopyMap.CopyFrom(((TerrainGen)this.Terrain).Terrain);
                             this.updateThreadIterations = iteration;
                             this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.8 + 0.2 * updateTime;
-                            this.waterIterations = this.Terrain.WaterIterations;
+                            this.waterIterations = ((TerrainGen)this.Terrain).WaterIterations;
                         }
                     }
                 }
@@ -636,7 +636,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
 
             var pos = (this.camera as WalkCamera).Position;
-            pos.Y = this.Terrain.Terrain.HeightAt(pos.X, pos.Z);
+            pos.Y = this.Terrain.GetHeightAt(pos.X, pos.Z);
             (this.camera as WalkCamera).Position = pos;
 
             this.camera.Update(e.Time);

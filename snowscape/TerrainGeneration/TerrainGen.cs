@@ -206,11 +206,11 @@ namespace TerrainGeneration
 
         public void ResetTerrain()
         {
-            this.InitTerrain1();
+            this.InitTerrain();
             this.ResetAllWaterParticles();
         }
 
-        public void InitTerrain1()
+        public void InitTerrain()
         {
             this.Terrain.Clear(0.0f);
 

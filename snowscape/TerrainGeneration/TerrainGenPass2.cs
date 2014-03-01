@@ -532,6 +532,12 @@ namespace TerrainGeneration
         {
             throw new NotImplementedException();
         }
+
+
+        public void ResetTerrain()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
