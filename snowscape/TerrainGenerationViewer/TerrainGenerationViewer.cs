@@ -176,7 +176,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private bool pauseUpdate = false;
 
-        private uint updateThreadIterations;
+        private uint updateThreadIterations = 0;
         private uint prevThreadIterations;
         private double updateThreadUpdateTime = 0.0;
         private long waterIterations = 0;
@@ -214,7 +214,8 @@ namespace Snowscape.TerrainGenerationViewer
         public TerrainGenerationViewer()
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
-            this.Terrain = new TerrainGen(TileWidth, TileHeight);
+            //this.Terrain = new TerrainGen(TileWidth, TileHeight);
+            this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
@@ -365,21 +366,24 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // kill thread
-            log.Trace("Sending kill signal to update thread");
-            lock (this)
+            if (this.Terrain.NeedThread)
             {
-                this.killThread = true;
-            }
+                // kill thread
+                log.Trace("Sending kill signal to update thread");
+                lock (this)
+                {
+                    this.killThread = true;
+                }
 
-            // wait for thread to complete
-            log.Trace("Waiting for thread to complete...");
-            this.updateThread.Join(2000);
+                // wait for thread to complete
+                log.Trace("Waiting for thread to complete...");
+                this.updateThread.Join(2000);
 
-            if (this.updateThread.IsAlive)
-            {
-                log.Warn("Thread.Join timeout - aborting");
-                this.updateThread.Abort();
+                if (this.updateThread.IsAlive)
+                {
+                    log.Warn("Thread.Join timeout - aborting");
+                    this.updateThread.Abort();
+                }
             }
 
             log.Trace("Saving terrain into slot 0...");
@@ -500,6 +504,10 @@ namespace Snowscape.TerrainGenerationViewer
             textManager.Font = font;
 
             SetProjection();
+
+
+            // setup terrain
+            this.Terrain.Init();
 
             try
             {
@@ -806,12 +814,29 @@ namespace Snowscape.TerrainGenerationViewer
                     )
                 );
 
+
+            // do GPU-based terrain generation
+            if (!this.Terrain.NeedThread)
+            {
+                this.Terrain.ModifyTerrain();
+                this.updateThreadIterations++;
+            }
+
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
             {
-                CopyMapDataFromUpdateThread();
-                this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
-                this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
+                if (this.Terrain.NeedThread)
+                {
+                    CopyMapDataFromUpdateThread();
+                    this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
+                    this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
+                }
+                else
+                {
+                    float[] tempData = this.Terrain.GetRawData();
+                    this.terrainTile.SetDataFromTerrainGenerationRaw(tempData);
+                    this.terrainGlobal.SetDataFromTerrainGenerationRaw(tempData);
+                }
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
 

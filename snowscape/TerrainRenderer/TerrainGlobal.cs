@@ -92,6 +92,15 @@ namespace Snowscape.TerrainRenderer
 
         }
 
+        public void SetDataFromTerrainGenerationRaw(float[] data)
+        {
+            if (data.Length < this.Width * this.Height * 4)
+            {
+                throw new InvalidOperationException("TerrainGlobal.SetDataFromTerrainGenerationRaw: supplied data is too small");
+            }
+            UploadHeightTextureFromTerrain(data);
+        }
+
         private void UploadHeightTextureFromTerrain(TerrainStorage.Terrain terrain)
         {
             float[] height = new float[this.Width * this.Height];
@@ -102,6 +111,18 @@ namespace Snowscape.TerrainRenderer
 
             UploadHeightTexture(height);
         }
+
+        private void UploadHeightTextureFromTerrain(float[] data)
+        {
+            float[] height = new float[this.Width * this.Height];
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
+            {
+                height[i] = data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2];
+            });
+
+            UploadHeightTexture(height);
+        }
+
 
         private void UploadHeightTexture(float[] height)
         {
