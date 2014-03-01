@@ -543,6 +543,12 @@ namespace TerrainGeneration
         {
             get { return true; }
         }
+
+
+        public float[] GetRawData()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

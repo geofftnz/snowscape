@@ -150,6 +150,11 @@ namespace Snowscape.TerrainGenerationViewer
         {
             get
             {
+                if (!this.Terrain.NeedThread)
+                {
+                    // we don't need a thread for update, so return the requested value.
+                    return this.PauseThread;
+                }
                 bool temp;
                 lock (this)
                 {
@@ -510,9 +515,12 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.frameCounter.Start();
 
-            log.Trace("Starting update thread...");
-            this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
-            this.updateThread.Start();
+            if (this.Terrain.NeedThread)
+            {
+                log.Trace("Starting update thread...");
+                this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
+                this.updateThread.Start();
+            }
 
             this.CalculateSunDirection();
         }
@@ -538,6 +546,11 @@ namespace Snowscape.TerrainGenerationViewer
             sw.Start();
             double startTime = 0.0;
             double updateTime = 0.0;
+
+            if (!this.Terrain.NeedThread)
+            {
+                return;
+            }
 
 
             while (true)
@@ -582,11 +595,14 @@ namespace Snowscape.TerrainGenerationViewer
 
         protected void CopyMapDataFromUpdateThread()
         {
-            lock (this)
+            if (this.Terrain.NeedThread)
             {
-                perfmon.Start("Copy2");
-                this.threadRenderMap.CopyFrom(this.threadCopyMap);
-                perfmon.Stop("Copy2");
+                lock (this)
+                {
+                    perfmon.Start("Copy2");
+                    this.threadRenderMap.CopyFrom(this.threadCopyMap);
+                    perfmon.Stop("Copy2");
+                }
             }
         }
 
@@ -897,7 +913,7 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
         }
-  
+
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(

@@ -122,6 +122,19 @@ namespace Snowscape.TerrainRenderer
             UploadVisParamTexture(terrain, offsetX, offsetY);
         }
 
+        /// <summary>
+        /// Only valid where generated data is the same size as the terrain tile
+        /// </summary>
+        /// <param name="data"></param>
+        public void SetDataFromTerrainGenerationRaw(float[] data)
+        {
+            // height from cells
+            UploadHeightTextureFromTerrain(data);
+
+            // param texture - cell components
+            UploadVisParamTexture(data);
+        }
+
         private void UploadVisParamTexture(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
             byte[] param = new byte[this.Width * this.Height * 4];
@@ -138,6 +151,28 @@ namespace Snowscape.TerrainRenderer
 
             this.ParamTexture.Upload(param);
         }
+
+        private void UploadVisParamTexture(float[] data)
+        {
+            if (data.Length < this.Width * this.Height * 4)
+            {
+                throw new InvalidOperationException("TerrainTile.UploadHeightTextureFromTerrain: supplied data is too small");
+            }
+
+            byte[] param = new byte[this.Width * this.Height * 4];
+
+            ParallelHelper.For2D(this.Width, this.Height, (x, y, i) =>
+            {
+                var ii = i * 4;
+                param[ii + 0] = (byte)(data[ii + 1] * 8.0f).Clamp(0f, 255f);   // soft
+                param[ii + 1] = (byte)(data[ii + 2] * 8192.0f).Clamp(0f, 255f);  // water
+                param[ii + 2] = (byte)(data[ii + 3] * 32.0f).Clamp(0f, 255f); // suspended
+                param[ii + 3] = (byte)(0);
+            });
+
+            this.ParamTexture.Upload(param);
+        }
+
 
         private void CalculateAndUploadNormalsFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
@@ -167,6 +202,27 @@ namespace Snowscape.TerrainRenderer
             UploadHeightTexture(height);
         }
 
+        /// <summary>
+        /// only valid where the terrain size is equal to the tile size
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="offsetX"></param>
+        /// <param name="offsetY"></param>
+        private void UploadHeightTextureFromTerrain(float[] data)
+        {
+            if (data.Length < this.Width * this.Height * 4)
+            {
+                throw new InvalidOperationException("TerrainTile.UploadHeightTextureFromTerrain: supplied data is too small");
+            }
+
+            float[] height = new float[this.Width * this.Height];
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
+            {
+                height[i] = data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2];
+            });
+
+            UploadHeightTexture(height);
+        }
 
 
         public void SetupTestData()

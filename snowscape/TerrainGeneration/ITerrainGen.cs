@@ -16,5 +16,6 @@ namespace TerrainGeneration
         void ModifyTerrain();
         void Load(string filename);
         void Save(string filename);
+        float[] GetRawData();
     }
 }

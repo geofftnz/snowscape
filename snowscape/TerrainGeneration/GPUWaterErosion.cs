@@ -156,6 +156,12 @@ namespace TerrainGeneration
             return this.TerrainTexture[0].GetLevelDataFloat(0);
         }
 
+        public float[] GetRawData()
+        {
+            return DownloadTerrain();
+        }
+
+
         public void Load(string filename)
         {
             var data = new float[this.Width * this.Height * 4];
@@ -233,5 +239,7 @@ namespace TerrainGeneration
         {
             get { return false; }
         }
+
+
     }
 }
