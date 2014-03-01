@@ -538,6 +538,11 @@ namespace TerrainGeneration
         {
             throw new NotImplementedException();
         }
+
+        public bool NeedThread
+        {
+            get { return true; }
+        }
     }
 }
 

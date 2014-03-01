@@ -7,6 +7,7 @@ namespace TerrainGeneration
 {
     public interface ITerrainGen
     {
+        bool NeedThread { get; }
         int Width { get; }
         int Height { get; }
         float GetHeightAt(float x, float y);

@@ -1246,5 +1246,10 @@ namespace TerrainGeneration
         public void Init()
         {
         }
+
+        public bool NeedThread
+        {
+            get { return true; }
+        }
     }
 }
