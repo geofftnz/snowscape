@@ -171,12 +171,12 @@ namespace TerrainGeneration
                     (sp) =>
                     {
                         sp.SetUniform("terraintex", 0);
-                        sp.SetUniform("texsize", this.Width);
+                        sp.SetUniform("texsize", (float)this.Width);
                         sp.SetUniform("flowRate", 0.1f);  // todo: hoist parameter
                     }
                 );
 
-            GL.Finish();
+            //GL.Finish();
 
             // step 2 - compute velocity
             ComputeVelocityStep.Render(
@@ -187,7 +187,7 @@ namespace TerrainGeneration
                 (sp) =>
                 {
                     sp.SetUniform("flowtex", 0);
-                    sp.SetUniform("texsize", this.Width);
+                    sp.SetUniform("texsize", (float)this.Width);
                 });
 
         }

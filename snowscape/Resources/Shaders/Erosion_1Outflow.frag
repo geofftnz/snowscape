@@ -14,9 +14,9 @@ out vec4 out_Flow;
 float t = 1.0 / texsize;
 
 
-float sampleHeight(vec2 pos,float ofsx, float ofsy)
+float sampleHeight(vec2 pos)
 {
-	vec4 l = texture(terraintex,pos + vec2(ofsx,ofsy));
+	vec4 l = texture(terraintex,pos);
 	return l.r + l.g + l.b;
 }
 
@@ -26,10 +26,10 @@ void main(void)
 	vec4 l = texture(terraintex,texcoord);
 	float h = l.r + l.g + l.b;
 
-	float htop = sampleHeight(texcoord,0.0,-t);
-	float hright = sampleHeight(texcoord,t,0.0);
-	float hbottom = sampleHeight(texcoord,0.0,t);
-	float hleft = sampleHeight(texcoord,-t,0.0);
+	float htop = sampleHeight(texcoord + vec2(0,-t));
+	float hright = sampleHeight(texcoord + vec2(t,0));
+	float hbottom = sampleHeight(texcoord + vec2(0,t));
+	float hleft = sampleHeight(texcoord + vec2(-t,0));
 
 	float ptop = max(0,h - htop);
 	float pright = max(0,h - hright);
@@ -46,5 +46,4 @@ void main(void)
 	pscale *= flowRate;
 
 	out_Flow = vec4(ptop, pright, pbottom, pleft) * pscale;
-
 }
