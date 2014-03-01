@@ -98,6 +98,29 @@ namespace OpenTKExtensions
             public DrawBuffersEnum DrawBufferSlot { get { return DrawBuffersEnum.ColorAttachment0 + this.Slot; } }
             public FramebufferAttachment FramebufferAttachmentSlot { get { return FramebufferAttachment.ColorAttachment0 + this.Slot; } }
 
+            public int ViewportWidth
+            {
+                get
+                {
+                    if (Texture != null)
+                    {
+                        return Texture.Width >> this.Level;
+                    }
+                    return 0;
+                }
+            }
+            public int ViewportHeight
+            {
+                get
+                {
+                    if (Texture != null)
+                    {
+                        return Texture.Height >> this.Level;
+                    }
+                    return 0;
+                }
+            }
+
             public TextureSlot()
             {
                 this.Enabled = false;
@@ -349,6 +372,10 @@ namespace OpenTKExtensions
         public void BindForWritingTo(params TextureSlot[] outputTextures)
         {
             // shouldn't call this if we've got any texture slots defined.
+
+            // set our current width and height off texture size and level
+            this.Width = outputTextures[0].ViewportWidth;
+            this.Height = outputTextures[0].ViewportHeight;
 
             this.FBO.Bind(FramebufferTarget.DrawFramebuffer);
             GL.Viewport(0, 0, this.Width, this.Height);

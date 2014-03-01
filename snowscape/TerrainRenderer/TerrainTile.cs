@@ -7,6 +7,7 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
 using Utils;
+using Snowscape.TerrainRenderer.Utility;
 
 namespace Snowscape.TerrainRenderer
 {
@@ -49,6 +50,8 @@ namespace Snowscape.TerrainRenderer
             }
         }
         public Matrix4 InverseModelMatrix { get; private set; }
+
+        private MinMaxMipMapGenerator MinMaxGenerator = new MinMaxMipMapGenerator();
 
 
         public TerrainTile(int width, int height)
@@ -99,6 +102,8 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
             this.ParamTexture.UploadEmpty();
+
+            this.MinMaxGenerator.Init();
         }
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
@@ -169,6 +174,19 @@ namespace Snowscape.TerrainRenderer
             });
 
             UploadHeightTexture(height);
+        }
+
+        public void GenerateMaxMipMaps()
+        {
+            int w = this.Width;
+            int level = 0;
+
+            while (w > 1)
+            {
+                this.MinMaxGenerator.Render(this.HeightTexture, level, (float)w);
+                level++;
+                w >>= 1;
+            }
         }
 
 

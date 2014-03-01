@@ -76,6 +76,7 @@
     <Compile Include="TerrainTile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TileMeshBorder.cs" />
+    <Compile Include="Utility\MinMaxMipMapGenerator.cs" />
     <Compile Include="Utility\TerrainGlobalTextureCopy.cs" />
     <Compile Include="Utility\TerrainTileTextureCopy.cs" />
   </ItemGroup>

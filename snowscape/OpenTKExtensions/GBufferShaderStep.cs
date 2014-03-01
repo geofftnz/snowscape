@@ -133,14 +133,18 @@ namespace OpenTKExtensions
 
         protected virtual void InitGBuffer()
         {
+            int width = 0, height = 0;
             if (!this.textureSlot.Any(ts => ts != null && ts.Texture != null))
             {
-                throw new InvalidOperationException("No texture slots filled");
+                //throw new InvalidOperationException("No texture slots filled"); //can actually build without slots
             }
 
             // find first texture slot, set width and height
-            int width = this.textureSlot.Where(ts => ts != null && ts.Texture != null).FirstOrDefault().Texture.Width;
-            int height = this.textureSlot.Where(ts => ts != null && ts.Texture != null).FirstOrDefault().Texture.Height;
+            if (this.textureSlot.Any(ts => ts != null && ts.Texture != null))
+            {
+                width = this.textureSlot.Where(ts => ts != null && ts.Texture != null).FirstOrDefault().Texture.Width;
+                height = this.textureSlot.Where(ts => ts != null && ts.Texture != null).FirstOrDefault().Texture.Height;
+            }
 
             //gbuffer.SetSlot(0, outputTexture);
             for (int slot = 0; slot < MAXSLOTS; slot++)

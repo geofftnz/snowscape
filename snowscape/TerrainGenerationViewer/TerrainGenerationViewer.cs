@@ -852,6 +852,7 @@ namespace Snowscape.TerrainGenerationViewer
             //{
                 var t = this.Terrain as GPUWaterErosion;
                 this.terrainTileTextureCopy.Render(t.CurrentTerrainTexture);
+                this.terrainTile.GenerateMaxMipMaps();
 
                 this.terrainGlobalTextureCopy.Render(t.CurrentTerrainTexture);
 

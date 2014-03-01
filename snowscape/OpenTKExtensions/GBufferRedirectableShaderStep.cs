@@ -11,6 +11,14 @@ namespace OpenTKExtensions
         public int Width { get; set; }
         public int Height { get; set; }
 
+        public GBufferRedirectableShaderStep(string name)
+            : base(name)
+        {
+            // this only works because the output textures set the output size
+            this.Width = 0;
+            this.Height = 0;
+        }
+
         public GBufferRedirectableShaderStep(string name, int width, int height)
             : base(name)
         {
