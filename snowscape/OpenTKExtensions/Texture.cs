@@ -219,6 +219,7 @@ namespace OpenTKExtensions
 
         public float[] GetLevelDataFloat(int level)
         {
+            this.Bind();
             int width = this.GetLevelWidth(level);
             int height = this.GetLevelHeight(level);
 
