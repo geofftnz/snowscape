@@ -70,13 +70,8 @@ namespace TerrainGeneration
         /// </summary>
         private Texture[] TerrainTexture = new Texture[2];
 
-        public Texture CurrentTerrainTexture
-        {
-            get
-            {
-                return this.TerrainTexture[0];
-            }
-        }
+        public Texture CurrentTerrainTexture { get { return this.TerrainTexture[0]; } }
+        public Texture TempTerrainTexture { get { return this.TerrainTexture[1]; } }
 
         /// <summary>
         /// Velocity of water over terrain. Used for erosion potential.
@@ -151,6 +146,12 @@ namespace TerrainGeneration
 
             ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture);
             ComputeVelocityStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_2Velocity.frag".Load());
+
+            UpdateLayersStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
+            UpdateLayersStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_3UpdateLayers.frag".Load());
+
+            SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            SedimentTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_4Transport.frag".Load());
         }
 
         public float GetHeightAt(float x, float y)
@@ -176,8 +177,6 @@ namespace TerrainGeneration
                     }
                 );
 
-            //GL.Finish();
-
             // step 2 - compute velocity
             ComputeVelocityStep.Render(
                 () =>
@@ -189,6 +188,45 @@ namespace TerrainGeneration
                     sp.SetUniform("flowtex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
                 });
+
+            // step 3 - update layers
+            UpdateLayersStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    this.FlowRateTexture.Bind(TextureUnit.Texture1);
+                    this.VelocityTexture.Bind(TextureUnit.Texture2);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("flowtex", 1);
+                    sp.SetUniform("velocitytex", 2);
+                    sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("capacitybias", 1.0f);
+                    sp.SetUniform("capacityscale", 1.0f);
+                    sp.SetUniform("rockerodability", 0.1f);
+                    sp.SetUniform("erosionfactor", 0.05f);
+                    sp.SetUniform("depositfactor", 0.5f);
+                    sp.SetUniform("evaporationfactor", 1.0f);
+                });
+
+            // step 4 - sediment transport
+            SedimentTransportStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                    this.FlowRateTexture.Bind(TextureUnit.Texture1);
+                    this.VelocityTexture.Bind(TextureUnit.Texture2);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("flowtex", 1);
+                    sp.SetUniform("velocitytex", 2);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
+
 
         }
 
@@ -237,7 +275,7 @@ namespace TerrainGeneration
                     {
                         data[i * 4 + 0] = sr.ReadSingle();
                         data[i * 4 + 1] = sr.ReadSingle();
-                        data[i * 4 + 2] = 0f; sr.ReadSingle();
+                        data[i * 4 + 2] = 1f; sr.ReadSingle();
                         data[i * 4 + 3] = 0f; sr.ReadSingle();
                     }
 
@@ -279,6 +317,26 @@ namespace TerrainGeneration
 
         public void ResetTerrain()
         {
+            Snowscape.TerrainStorage.Terrain terrain = new Snowscape.TerrainStorage.Terrain(this.Width, this.Height);
+
+            terrain.Clear(0.0f);
+            terrain.AddSimplexNoise(6, 0.3333f / (float)this.Width, 50.0f, h => h, h => Math.Abs(h));
+            terrain.AddSimplexNoise(14, 0.37f / (float)this.Width, 300.0f, h => Math.Abs(h), h => h);
+            terrain.AddLooseMaterial(15.0f);
+            terrain.SetBaseLevel();
+
+            var data = new float[this.Width * this.Height * 4];
+
+            ParallelHelper.For2D(this.Width, this.Height, (i) =>
+            {
+                data[i * 4 + 0] = terrain[i].Hard;
+                data[i * 4 + 1] = terrain[i].Loose;
+                data[i * 4 + 2] = 0.05f;  // water
+                data[i * 4 + 3] = 0.0f;
+            });
+
+            UploadTerrain(data);
+
         }
 
         public bool NeedThread
