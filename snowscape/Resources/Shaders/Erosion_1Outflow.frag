@@ -39,7 +39,6 @@ void main(void)
 	float ptotal = ptop + pleft + pright + pbottom;
 
 	// l.b has available water - make sure we don't exceed this.
-	l.b = 500.0; // temp for debugging
 	float pavailable = min(ptotal,l.b);
 	float pscale = pavailable / ptotal;
 
