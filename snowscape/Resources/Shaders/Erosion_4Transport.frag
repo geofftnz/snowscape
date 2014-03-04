@@ -9,6 +9,7 @@ uniform float texsize;
 in vec2 texcoord;
 
 out vec4 out_Terrain;
+out vec4 out_Flow;
 
 
 
@@ -111,6 +112,7 @@ void main(void)
 
 
 	out_Terrain = layers;
+	out_Flow = outflow; // copy flow1 back to flow0 for next iteration.
 	
 
 }

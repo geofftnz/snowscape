@@ -87,9 +87,9 @@ namespace TerrainGeneration
         /// B: flow down
         /// A: flow left
         /// </summary>
-        private Texture FlowRateTexture;
+        private Texture[] FlowRateTexture = new Texture[2];
 
-        public Texture FlowRateTex { get { return FlowRateTexture; } }  // for visualisation
+        public Texture FlowRateTex { get { return FlowRateTexture[0]; } }  // for visualisation
         public Texture VelocityTex { get { return VelocityTexture; } }  // for visualisation
 
         // Shader steps
@@ -120,6 +120,16 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
                 this.TerrainTexture[i].UploadEmpty();
+
+                this.FlowRateTexture[i] =
+                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+                this.FlowRateTexture[i].UploadEmpty();
+            
             }
 
             this.VelocityTexture =
@@ -131,17 +141,9 @@ namespace TerrainGeneration
 
             this.VelocityTexture.UploadEmpty();
 
-            this.FlowRateTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-
-            this.FlowRateTexture.UploadEmpty();
 
             // setup steps
-            ComputeOutflowStep.SetOutputTexture(0, "out_Flow", this.FlowRateTexture);
+            ComputeOutflowStep.SetOutputTexture(0, "out_Flow", this.FlowRateTexture[1]);
             ComputeOutflowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_1Outflow.frag".Load());
 
             ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture);
@@ -151,6 +153,7 @@ namespace TerrainGeneration
             UpdateLayersStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_3UpdateLayers.frag".Load());
 
             SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            SedimentTransportStep.SetOutputTexture(1, "out_Flow", this.FlowRateTexture[0]);
             SedimentTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_4Transport.frag".Load());
         }
 
@@ -168,12 +171,15 @@ namespace TerrainGeneration
                     () =>
                     {
                         this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                        this.FlowRateTexture[0].Bind(TextureUnit.Texture1);
                     },
                     (sp) =>
                     {
                         sp.SetUniform("terraintex", 0);
+                        sp.SetUniform("flowtex", 1);
                         sp.SetUniform("texsize", (float)this.Width);
-                        sp.SetUniform("flowRate", 0.7f);  // todo: hoist parameter
+                        sp.SetUniform("flowRate", 0.9f);  // todo: hoist parameter
+                        sp.SetUniform("flowLowpass", 0.5f);  // todo: hoist parameter
                     }
                 );
 
@@ -194,7 +200,7 @@ namespace TerrainGeneration
                 () =>
                 {
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
-                    this.FlowRateTexture.Bind(TextureUnit.Texture1);
+                    this.FlowRateTexture[1].Bind(TextureUnit.Texture1);
                     this.VelocityTexture.Bind(TextureUnit.Texture2);
                 },
                 (sp) =>
@@ -216,7 +222,7 @@ namespace TerrainGeneration
                 () =>
                 {
                     this.TerrainTexture[1].Bind(TextureUnit.Texture0);
-                    this.FlowRateTexture.Bind(TextureUnit.Texture1);
+                    this.FlowRateTexture[1].Bind(TextureUnit.Texture1);
                     this.VelocityTexture.Bind(TextureUnit.Texture2);
                 },
                 (sp) =>
