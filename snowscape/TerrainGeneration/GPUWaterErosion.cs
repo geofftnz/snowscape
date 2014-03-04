@@ -331,7 +331,7 @@ namespace TerrainGeneration
             {
                 data[i * 4 + 0] = terrain[i].Hard;
                 data[i * 4 + 1] = terrain[i].Loose;
-                data[i * 4 + 2] = 0.05f;  // water
+                data[i * 4 + 2] = 1.0f;  // water
                 data[i * 4 + 3] = 0.0f;
             });
 

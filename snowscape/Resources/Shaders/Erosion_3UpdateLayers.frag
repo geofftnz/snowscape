@@ -55,27 +55,27 @@ void main(void)
 	vec3 grad = terrainGradient(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).rg;
 
-	float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,-1,0))) * length(velocity);
-
-	float erosionamount = erosionfactor * layers.b * max(0, capacity - layers.a);
-	float depositamount = depositfactor * layers.b * max(0, layers.a - capacity);
-
-	// erode
-	// erode from soft material first - take the lesser of erosionamount and soft material
-	float softerode = min(layers.g, erosionamount);
-	layers.g -= softerode;
-	erosionamount -= softerode;
-	layers.a += softerode;
-
-	// erode from hard material
-	float harderode = erosionamount * rockerodability;
-	layers.r -= harderode;
-	layers.a += harderode;
-
-	// deposit
-	layers.g += depositamount;
-	layers.a -= depositamount;
-
+	//float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,-1,0))) * length(velocity);
+//
+	//float erosionamount = erosionfactor * layers.b * max(0, capacity - layers.a);
+	//float depositamount = depositfactor * layers.b * max(0, layers.a - capacity);
+//
+	//// erode
+	//// erode from soft material first - take the lesser of erosionamount and soft material
+	//float softerode = min(layers.g, erosionamount);
+	//layers.g -= softerode;
+	//erosionamount -= softerode;
+	//layers.a += softerode;
+//
+	//// erode from hard material
+	//float harderode = erosionamount * rockerodability;
+	//layers.r -= harderode;
+	//layers.a += harderode;
+//
+	//// deposit
+	//layers.g += depositamount;
+	//layers.a -= depositamount;
+//
 	// evaporation
 	//float evaporationamount = min(layers.b, 
 
