@@ -38,8 +38,12 @@ void main(void)
 
 	float ptotal = ptop + pleft + pright + pbottom;
 
-	// l.b has available water - make sure we don't exceed this.
-	float pavailable = min(ptotal,l.b);
+	// find lowest neighbour and make sure the max water we remove wont drop our current location below that level.
+	float minneighbour = min(min(htop,hbottom),min(hleft,hright));
+	float maxdrop = max(0.0,h - minneighbour);
+
+	// l.b has available water - make sure we don't exceed this or the min-neighbour difference calculated above
+	float pavailable = min(min(ptotal,l.b),maxdrop*1.2);
 	float pscale = pavailable / ptotal;
 
 	pscale *= flowRate;

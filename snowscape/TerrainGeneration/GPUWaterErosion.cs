@@ -173,7 +173,7 @@ namespace TerrainGeneration
                     {
                         sp.SetUniform("terraintex", 0);
                         sp.SetUniform("texsize", (float)this.Width);
-                        sp.SetUniform("flowRate", 0.1f);  // todo: hoist parameter
+                        sp.SetUniform("flowRate", 0.7f);  // todo: hoist parameter
                     }
                 );
 
