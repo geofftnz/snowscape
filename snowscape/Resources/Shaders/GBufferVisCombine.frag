@@ -818,13 +818,13 @@ void main(void)
 					//}
 					//c.rgb = getSkyColour(skyp.xzy);
 
-					vec4 flow = texture(miscTex,p-vec2(1.0,1.0)).rgba;
+					//vec4 flow = texture(miscTex,p-vec2(1.0,1.0)).rgba;
 					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
 					//c.rgb = vec3(flow.r,flow.g,0.0);
-					c.rgb = flow.agb * vec3(1,0.01,1);
+					//c.rgb = flow.agb * vec3(1,0.01,1);
 
-					//vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg * 0.5 + 0.5;
-					//c.rgb = vec3(vel,0.4);
+					vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg * 8.0 + 0.5;
+					c.rgb = vec3(vel,0.4);
 				}
 			}
 			
