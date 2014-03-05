@@ -826,7 +826,7 @@ void main(void)
 					vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg;
 					c.rgb = vec3(
 								clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
-								0.0);
+								length(vel) * 4.0 );
 				}
 			}
 			
