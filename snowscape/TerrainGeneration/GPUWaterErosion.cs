@@ -92,6 +92,8 @@ namespace TerrainGeneration
         public Texture FlowRateTex { get { return FlowRateTexture[0]; } }  // for visualisation
         public Texture VelocityTex { get { return VelocityTexture; } }  // for visualisation
 
+        public Texture VisTex { get; set; }
+
         // Shader steps
         private GBufferShaderStep ComputeOutflowStep = new GBufferShaderStep("erosion-outflow");
         private GBufferShaderStep ComputeVelocityStep = new GBufferShaderStep("erosion-velocity");
@@ -120,6 +122,7 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
                 this.TerrainTexture[i].UploadEmpty();
+                
 
                 this.FlowRateTexture[i] =
                     new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
@@ -141,6 +144,15 @@ namespace TerrainGeneration
 
             this.VelocityTexture.UploadEmpty();
 
+            this.VisTex =
+                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+            this.VisTex.UploadEmpty();
+
 
             // setup steps
             ComputeOutflowStep.SetOutputTexture(0, "out_Flow", this.FlowRateTexture[1]);
@@ -150,6 +162,7 @@ namespace TerrainGeneration
             ComputeVelocityStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_2Velocity.frag".Load());
 
             UpdateLayersStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
+            UpdateLayersStep.SetOutputTexture(1, "out_Vis", this.VisTex);
             UpdateLayersStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_3UpdateLayers.frag".Load());
 
             SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
@@ -187,7 +200,7 @@ namespace TerrainGeneration
             ComputeVelocityStep.Render(
                 () =>
                 {
-                    this.FlowRateTex.Bind(TextureUnit.Texture0);
+                    this.FlowRateTexture[1].Bind(TextureUnit.Texture0);
                 },
                 (sp) =>
                 {
@@ -209,13 +222,14 @@ namespace TerrainGeneration
                     sp.SetUniform("flowtex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("capacitybias", 1.0f);
-                    sp.SetUniform("capacityscale", 1.0f);
-                    sp.SetUniform("rockerodability", 0.1f);
-                    sp.SetUniform("erosionfactor", 0.05f);
-                    sp.SetUniform("depositfactor", 0.5f);
+                    sp.SetUniform("capacitybias", 0.1f);
+                    sp.SetUniform("capacityscale", 50.0f);
+                    sp.SetUniform("rockerodability", 0.5f);
+                    sp.SetUniform("erosionfactor", 0.1f);
+                    sp.SetUniform("depositfactor", 0.1f);
                     sp.SetUniform("evaporationfactor", 1.0f);
                 });
+
 
             // step 4 - sediment transport
             SedimentTransportStep.Render(

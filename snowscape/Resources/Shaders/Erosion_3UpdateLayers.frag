@@ -16,6 +16,7 @@ uniform float evaporationfactor;
 in vec2 texcoord;
 
 out vec4 out_Terrain;
+out vec4 out_Vis;
 
 
 
@@ -49,33 +50,45 @@ vec3 terrainGradient(vec2 p)
 void main(void)
 {
 	// flow RGBA = R:top G:right B:bottom A:left
+	vec4 vis = vec4(0.0);
 
 	// R:hard G:soft B:water A:suspended
 	vec4 layers = texture(terraintex,texcoord);
 	vec3 grad = terrainGradient(texcoord);
-	vec2 velocity = texture(velocitytex,texcoord).rg;
+	vec2 velocity = texture(velocitytex,texcoord).xy;
 
 	//float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,-1,0))) * length(velocity);
-//
-	//float erosionamount = erosionfactor * layers.b * max(0, capacity - layers.a);
-	//float depositamount = depositfactor * layers.b * max(0, layers.a - capacity);
-//
-	//// erode
-	//// erode from soft material first - take the lesser of erosionamount and soft material
+	float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,-1.0,0.0))) * length(velocity);
+	//float capacity = capacityscale * layers.b * length(velocity);
+
+	layers.a = max(0,layers.a); // TODO: why is this negative infinity?
+
+	float erosionamount = erosionfactor * max(0.0, capacity - layers.a);
+	float depositamount = depositfactor * min(layers.a,depositfactor * max(0.0, layers.a - capacity));
+
+
+	vis.r = erosionamount;
+	vis.g = layers.a;
+	vis.b = capacity;
+
+	// erode
+	// erode from soft material first - take the lesser of erosionamount and soft material
 	//float softerode = min(layers.g, erosionamount);
 	//layers.g -= softerode;
 	//erosionamount -= softerode;
 	//layers.a += softerode;
-//
-	//// erode from hard material
-	//float harderode = erosionamount * rockerodability;
-	//layers.r -= harderode;
-	//layers.a += harderode;
-//
-	//// deposit
+
+	// erode from hard material
+	float harderode = erosionamount;
+	layers.r -= harderode;
+	layers.a += harderode;
+
+	// deposit
 	//layers.g += depositamount;
 	//layers.a -= depositamount;
-//
+
+	//vis.g = layers.a * 64.0;
+
 	// evaporation
 	//float evaporationamount = min(layers.b, 
 
@@ -100,18 +113,6 @@ void main(void)
 	//layers.b -= min(layers.b,outflow.r + outflow.g + outflow.b + outflow.a);
 //
 	out_Terrain = layers;
+	out_Vis = vis;
 	
-
-	/*
-	vec4 f = sampleFlow(texcoord,0.0,0.0);
-	vec4 ftop = sampleFlow(texcoord,0.0,-t);
-	vec4 fright = sampleFlow(texcoord,t,0.0);
-	vec4 fbottom = sampleFlow(texcoord,0.0,t);
-	vec4 fleft = sampleFlow(texcoord,-t,0.0);
-
-
-	out_Velocity = vec4(
-	(fleft.g - f.a + f.g - fright.a) * 0.5,
-	(ftop.b - f.r + f.b - fbottom.r) * 0.5,
-	0.0,0.0); */
 }

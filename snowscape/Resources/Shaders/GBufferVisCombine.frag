@@ -8,6 +8,7 @@ uniform sampler2D indirectTex;
 uniform sampler2D depthTex;
 
 uniform sampler2D miscTex;
+uniform sampler2D miscTex2;
 
 uniform samplerCube skyCubeTex;
 uniform vec4 boxparam;
@@ -368,7 +369,9 @@ vec3 terrainDiffuseDebug(vec3 p, vec3 n, vec4 s, float shadowHeight)
 	vec3 watercol = mix(vec3(0.05,0.4,0.6),vec3(0.005,0.02,0.25),clamp(pow(waterdepth,0.5),0.0,1.0));
 	col = mix(col, watercol, smoothstep(0.0005,0.001,waterdepth));
 
-
+	float suspended = s.b;
+	vec3 suspendedcol = vec3(0.6,0.0,0.2);
+	col = mix(col, suspendedcol,clamp(suspended,0.0,1.0));
     return col;
 }
 
@@ -789,7 +792,7 @@ void main(void)
 				}
 				else
 				{
-					//c.rgb = texture(paramTex,p-vec2(0.0,1.0)).rgb * 0.2;
+					c.rgb = texture(paramTex,p-vec2(0.0,1.0)).rgb * 0.5;
 				}
 			}
 			else
@@ -800,7 +803,8 @@ void main(void)
 					//c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
 					//c.rgb = vec3(texture(shadeTex,p-vec2(1.0,0.0)).rg,0.0);
 
-					//vec4 flow = texture(miscTex,p-vec2(1.0,0.0)).rgba;
+					vec4 misc = texture(miscTex2,p-vec2(1.0,0.0));
+					c.rgb = misc.rgb * 4.0;
 					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
 					//c.rgb = vec3(flow.b,flow.a,0.0);
 
@@ -826,7 +830,7 @@ void main(void)
 					vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg;
 					c.rgb = vec3(
 								clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
-								length(vel) * 4.0 );
+								0.0 );
 				}
 			}
 			

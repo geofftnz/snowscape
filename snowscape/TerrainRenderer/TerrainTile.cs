@@ -166,7 +166,7 @@ namespace Snowscape.TerrainRenderer
                 var ii = i * 4;
                 param[ii + 0] = (byte)(data[ii + 1] * 8.0f).Clamp(0f, 255f);   // soft
                 param[ii + 1] = (byte)(data[ii + 2] * 64.0f).Clamp(0f, 255f);  // water
-                param[ii + 2] = (byte)(data[ii + 3] * 32.0f).Clamp(0f, 255f); // suspended
+                param[ii + 2] = (byte)(data[ii + 3] * 8192.0f).Clamp(0f, 255f); // suspended
                 param[ii + 3] = (byte)(0);
             });
 

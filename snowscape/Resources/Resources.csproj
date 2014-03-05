@@ -259,7 +259,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\BasicQuad.vert" />
+    <Content Include="Shaders\BasicQuad.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Shaders\Erosion_1Outflow.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

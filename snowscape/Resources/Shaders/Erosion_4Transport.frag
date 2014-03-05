@@ -48,7 +48,7 @@ void main(void)
 	// flow RGBA = R:top G:right B:bottom A:left
 
 	// R:hard G:soft B:water A:suspended
-	vec4 layers = texture(terraintex,texcoord);
+	vec4 layers = sampleLayer(texcoord);
 	vec4 outflow = sampleFlow(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).rg;
 
@@ -59,58 +59,43 @@ void main(void)
 	// a proportional amount of sediment flows with the water.
 
 	// subtract outflows
-	float totaloutflow = outflow.r + outflow.g + outflow.b + outflow.a;
-	if (totaloutflow>0) // we lose all sediment unless we have no outflows.
-	{
-		layers.a = 0.0;
-	}
-	layers.b -= min(layers.b,totaloutflow);
+	float totaloutflow = min(layers.b,outflow.r + outflow.g + outflow.b + outflow.a);
+	float sedimentoutflow = layers.a * (totaloutflow / layers.b);
+	layers.a -= sedimentoutflow;
+	layers.b -= totaloutflow;
 
 	// add inflow from left block
 	vec2 leftpos = texcoord + vec2(-t,0);
 	vec4 leftflow = sampleFlow(leftpos);
 	vec4 leftcell = sampleLayer(leftpos);
 	layers.b += leftflow.g;
-	layers.a += leftcell.a * (leftflow.g / (leftflow.r + leftflow.g + leftflow.b + leftflow.a));
+	layers.a += leftcell.a * (leftflow.g / leftcell.b);
 
 	// add inflow from right block
 	vec2 rightpos = texcoord + vec2(t,0);
 	vec4 rightflow = sampleFlow(rightpos);
 	vec4 rightcell = sampleLayer(rightpos);
 	layers.b += rightflow.a;
-	layers.a += rightcell.a * (rightflow.a / (rightflow.r + rightflow.g + rightflow.b + rightflow.a));
+	layers.a += rightcell.a * (rightflow.a / rightcell.b);
 
 	// add inflow from upper block
 	vec2 toppos = texcoord + vec2(0,-t);
 	vec4 topflow = sampleFlow(toppos);
 	vec4 topcell = sampleLayer(toppos);
 	layers.b += topflow.b;
-	layers.a += topcell.a * (topflow.b / (topflow.r + topflow.g + topflow.b + topflow.a));
+	layers.a += topcell.a * (topflow.b / topcell.b);
 
 	// add inflow from lower block
 	vec2 bottompos = texcoord + vec2(0,t);
 	vec4 bottomflow = sampleFlow(bottompos);
 	vec4 bottomcell = sampleLayer(bottompos);
 	layers.b += bottomflow.r;
-	layers.a += bottomcell.a * (bottomflow.r / (bottomflow.r + bottomflow.g + bottomflow.b + bottomflow.a));
+	layers.a += bottomcell.a * (bottomflow.r / bottomcell.b);
 
 
-/*
-	// add outflows from surrounding blocks.
-	// left cell, take right outflow
-	layers.b += sampleFlow(texcoord + vec2(-t,0)).g;
-	// right cell, take left outflow
-	layers.b += sampleFlow(texcoord + vec2(t,0)).a;
-
-	// top cell, take bottom outflow
-	layers.b += sampleFlow(texcoord + vec2(0,-t)).b;
-
-	// bottom cell, take top outflow
-	layers.b += sampleFlow(texcoord + vec2(0,t)).r;
-*/
-
+	
 	// add some water
-	if (length(texcoord-vec2(0.2,0.7)) < 0.002)
+	if (length(texcoord-vec2(0.2,0.75)) < 0.002)
 	{
 		layers.b += 0.1;
 	}
