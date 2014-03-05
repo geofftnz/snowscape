@@ -73,7 +73,7 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 		{
 			n = n + 0.01;
 
-			height = texture2DLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
+			height = textureLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
 			
 			qx = (floor(texEntry.x / p2l) + 1.0f) * p2l;		
 			qz = (floor(texEntry.z / p2l) + 1.0f) * p2l;  // quantize texcoords for level
@@ -128,7 +128,7 @@ vec4 intersectHeightmap(vec3 boxEnter, vec3 posRayDir)
 		{
 			n = n + 0.01;
 
-			height = texture2DLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
+			height = textureLod(heightTex, vec2(texEntry.x+uofs, texEntry.z+vofs) * texScale, level).r; // grab height at point for mip level
 			
 			qx = (floor(texEntry.x / p2l) + 1.0f) * p2l;		
 			qz = (floor(texEntry.z / p2l) + 1.0f) * p2l;  // quantize texcoords for level
