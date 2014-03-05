@@ -178,7 +178,7 @@ namespace TerrainGeneration
                         sp.SetUniform("terraintex", 0);
                         sp.SetUniform("flowtex", 1);
                         sp.SetUniform("texsize", (float)this.Width);
-                        sp.SetUniform("flowRate", 0.9f);  // todo: hoist parameter
+                        sp.SetUniform("flowRate", 0.5f);  // todo: hoist parameter
                         sp.SetUniform("flowLowpass", 0.5f);  // todo: hoist parameter
                     }
                 );
@@ -281,7 +281,7 @@ namespace TerrainGeneration
                     {
                         data[i * 4 + 0] = sr.ReadSingle();
                         data[i * 4 + 1] = sr.ReadSingle();
-                        data[i * 4 + 2] = 1f; sr.ReadSingle();
+                        data[i * 4 + 2] = 0f; sr.ReadSingle();
                         data[i * 4 + 3] = 0f; sr.ReadSingle();
                     }
 

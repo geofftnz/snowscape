@@ -823,8 +823,10 @@ void main(void)
 					//c.rgb = vec3(flow.r,flow.g,0.0);
 					//c.rgb = flow.agb * vec3(1,0.01,1);
 
-					vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg * 8.0 + 0.5;
-					c.rgb = vec3(vel,0.4);
+					vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg;
+					c.rgb = vec3(
+								clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
+								0.0);
 				}
 			}
 			

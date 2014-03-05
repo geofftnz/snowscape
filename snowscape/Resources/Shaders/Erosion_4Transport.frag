@@ -109,6 +109,12 @@ void main(void)
 	layers.b += sampleFlow(texcoord + vec2(0,t)).r;
 */
 
+	// add some water
+	if (length(texcoord-vec2(0.2,0.7)) < 0.002)
+	{
+		layers.b += 0.1;
+	}
+
 
 
 	out_Terrain = layers;
