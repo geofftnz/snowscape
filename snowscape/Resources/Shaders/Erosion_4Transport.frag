@@ -69,28 +69,28 @@ void main(void)
 	vec4 leftflow = sampleFlow(leftpos);
 	vec4 leftcell = sampleLayer(leftpos);
 	layers.b += leftflow.g;
-	layers.a += leftcell.a * (leftflow.g / leftcell.b);
+	layers.a += leftcell.a * clamp((leftflow.g / leftcell.b),0.0,1.0);
 
 	// add inflow from right block
 	vec2 rightpos = texcoord + vec2(t,0);
 	vec4 rightflow = sampleFlow(rightpos);
 	vec4 rightcell = sampleLayer(rightpos);
 	layers.b += rightflow.a;
-	layers.a += rightcell.a * (rightflow.a / rightcell.b);
+	layers.a += rightcell.a * clamp((rightflow.a / rightcell.b),0.0,1.0);
 
 	// add inflow from upper block
 	vec2 toppos = texcoord + vec2(0,-t);
 	vec4 topflow = sampleFlow(toppos);
 	vec4 topcell = sampleLayer(toppos);
 	layers.b += topflow.b;
-	layers.a += topcell.a * (topflow.b / topcell.b);
+	layers.a += topcell.a * clamp((topflow.b / topcell.b),0.0,1.0);
 
 	// add inflow from lower block
 	vec2 bottompos = texcoord + vec2(0,t);
 	vec4 bottomflow = sampleFlow(bottompos);
 	vec4 bottomcell = sampleLayer(bottompos);
 	layers.b += bottomflow.r;
-	layers.a += bottomcell.a * (bottomflow.r / bottomcell.b);
+	layers.a += bottomcell.a * clamp((bottomflow.r / bottomcell.b),0.0,1.0);
 
 
 	
