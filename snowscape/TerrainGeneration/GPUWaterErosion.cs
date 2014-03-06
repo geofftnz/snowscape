@@ -222,12 +222,12 @@ namespace TerrainGeneration
                     sp.SetUniform("flowtex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("capacitybias", 0.0f);
-                    sp.SetUniform("capacityscale", 5.0f);
-                    sp.SetUniform("rockerodability", 0.5f);
-                    sp.SetUniform("erosionfactor", 0.1f);
-                    sp.SetUniform("depositfactor", 0.1f);
-                    sp.SetUniform("evaporationfactor", 1.0f);
+                    sp.SetUniform("capacitybias", 0.02f);
+                    sp.SetUniform("capacityscale", 10.0f);
+                    sp.SetUniform("rockerodability", 0.2f);
+                    sp.SetUniform("erosionfactor", 0.3f);
+                    sp.SetUniform("depositfactor", 0.2f);
+                    //sp.SetUniform("evaporationfactor", 0.98f);
                 });
 
 
@@ -245,6 +245,7 @@ namespace TerrainGeneration
                     sp.SetUniform("flowtex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("evaporationfactor", 0.995f);
                 });
 
 
@@ -342,7 +343,8 @@ namespace TerrainGeneration
             terrain.Clear(0.0f);
             terrain.AddSimplexNoise(6, 0.3333f / (float)this.Width, 50.0f, h => h, h => Math.Abs(h));
             terrain.AddSimplexNoise(14, 0.37f / (float)this.Width, 300.0f, h => Math.Abs(h), h => h);
-            terrain.AddLooseMaterial(15.0f);
+            terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
+            terrain.AddLooseMaterial(10.0f);
             terrain.SetBaseLevel();
 
             var data = new float[this.Width * this.Height * 4];
@@ -351,7 +353,7 @@ namespace TerrainGeneration
             {
                 data[i * 4 + 0] = terrain[i].Hard;
                 data[i * 4 + 1] = terrain[i].Loose;
-                data[i * 4 + 2] = 1.0f;  // water
+                data[i * 4 + 2] = 2.0f;  // water
                 data[i * 4 + 3] = 0.0f;
             });
 

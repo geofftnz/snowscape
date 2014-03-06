@@ -11,7 +11,6 @@ uniform float capacityscale;
 uniform float rockerodability;
 uniform float erosionfactor;
 uniform float depositfactor;
-uniform float evaporationfactor;
 
 in vec2 texcoord;
 
@@ -57,8 +56,8 @@ void main(void)
 	vec3 grad = terrainGradient(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).xy;
 
-	//float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
-	float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
+	float capacity = capacityscale * min(10.0,0.1+max(0.0,layers.b * 0.5)) * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
+	//float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
 	//float capacity = capacityscale * layers.b * length(velocity);
 
 	layers.a = max(0,layers.a); // TODO: why is this negative infinity?
@@ -67,8 +66,8 @@ void main(void)
 	float depositamount = depositfactor * min(layers.a,depositfactor * max(0.0, layers.a - capacity));
 
 
-	vis.r = erosionamount * 10.0;
-	vis.g = depositamount * 10.0;
+	vis.r = erosionamount;
+	vis.g = depositamount;
 	vis.b = capacity;
 
 	// erode
@@ -84,7 +83,7 @@ void main(void)
 	layers.a += harderode;
 
 	// deposit
-	depositamount = min(layers.a, depositamount);
+	depositamount = max(0.0,min(layers.a, depositamount));
 	layers.g += depositamount;
 	layers.a -= depositamount;
 

@@ -5,6 +5,7 @@ uniform sampler2D terraintex;
 uniform sampler2D flowtex;
 uniform sampler2D velocitytex;
 uniform float texsize;
+uniform float evaporationfactor;
 
 in vec2 texcoord;
 
@@ -61,7 +62,7 @@ void main(void)
 	// subtract outflows
 	float totaloutflow = outflow.r + outflow.g + outflow.b + outflow.a;
 	float sedimentoutflow = layers.a * clamp((totaloutflow / layers.b),0.0,1.0);
-	layers.a -= sedimentoutflow;
+	layers.a = max(0.0,layers.a - sedimentoutflow);
 	layers.b = max(0.0,layers.b - totaloutflow);
 
 	// add inflow from left block
@@ -93,12 +94,20 @@ void main(void)
 	layers.a += bottomcell.a * clamp((bottomflow.r / bottomcell.b),0.0,1.0);
 
 
+	// evaporation
+	float sedimentprecipitation = max(0.0,layers.a * evaporationfactor);
+	layers.a -= sedimentprecipitation;
+	layers.g += sedimentprecipitation;
+	layers.b *= evaporationfactor;
+
 	
 	// add some water
-	if (length(texcoord-vec2(0.2,0.75)) < 0.002)
-	{
-		layers.b += 0.1;
-	}
+	//if (length(texcoord-vec2(0.2,0.75)) < 0.002)
+	//{
+		//layers.b += 0.1;
+	//}
+
+	layers.b += 0.001;
 
 
 
