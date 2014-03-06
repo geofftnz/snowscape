@@ -60,7 +60,7 @@ void main(void)
 
 	// subtract outflows
 	float totaloutflow = min(layers.b,outflow.r + outflow.g + outflow.b + outflow.a);
-	float sedimentoutflow = layers.a * (totaloutflow / layers.b);
+	float sedimentoutflow = layers.a * clamp((totaloutflow / layers.b),0.0,1.0);
 	layers.a -= sedimentoutflow;
 	layers.b -= totaloutflow;
 

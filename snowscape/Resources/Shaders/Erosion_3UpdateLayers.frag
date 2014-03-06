@@ -57,11 +57,11 @@ void main(void)
 	vec3 grad = terrainGradient(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).xy;
 
-	//float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,-1,0))) * length(velocity);
-	float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,-1.0,0.0))) * length(velocity);
+	float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
+	//float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,-1.0,0.0))) * length(velocity);
 	//float capacity = capacityscale * layers.b * length(velocity);
 
-	layers.a = max(0,layers.a); // TODO: why is this negative infinity?
+	//layers.a = max(0,layers.a); // TODO: why is this negative infinity?
 
 	float erosionamount = erosionfactor * max(0.0, capacity - layers.a);
 	float depositamount = depositfactor * min(layers.a,depositfactor * max(0.0, layers.a - capacity));
@@ -84,8 +84,8 @@ void main(void)
 	layers.a += harderode;
 
 	// deposit
-	//layers.g += depositamount;
-	//layers.a -= depositamount;
+	layers.g += depositamount;
+	layers.a -= depositamount;
 
 	//vis.g = layers.a * 64.0;
 
