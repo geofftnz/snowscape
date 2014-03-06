@@ -58,7 +58,7 @@ void main(void)
 
 	// l.b has available water - make sure we don't exceed this or the min-neighbour difference calculated above
 	float pavailable = min(min(ptotal,l.b),maxdrop);
-	float pscale = pavailable / ptotal;
+	float pscale = pavailable * clamp(1.0 / ptotal,0.0,1.0);
 
 	pscale *= flowRate;
 

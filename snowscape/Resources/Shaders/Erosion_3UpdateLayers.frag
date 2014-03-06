@@ -57,33 +57,34 @@ void main(void)
 	vec3 grad = terrainGradient(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).xy;
 
-	float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
-	//float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,-1.0,0.0))) * length(velocity);
+	//float capacity = capacityscale * layers.b * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
+	float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
 	//float capacity = capacityscale * layers.b * length(velocity);
 
-	//layers.a = max(0,layers.a); // TODO: why is this negative infinity?
+	layers.a = max(0,layers.a); // TODO: why is this negative infinity?
 
 	float erosionamount = erosionfactor * max(0.0, capacity - layers.a);
 	float depositamount = depositfactor * min(layers.a,depositfactor * max(0.0, layers.a - capacity));
 
 
-	vis.r = erosionamount;
-	vis.g = layers.a;
+	vis.r = erosionamount * 10.0;
+	vis.g = depositamount * 10.0;
 	vis.b = capacity;
 
 	// erode
 	// erode from soft material first - take the lesser of erosionamount and soft material
-	//float softerode = min(layers.g, erosionamount);
-	//layers.g -= softerode;
-	//erosionamount -= softerode;
-	//layers.a += softerode;
+	float softerode = min(layers.g, erosionamount);
+	layers.g -= softerode;
+	erosionamount -= softerode;
+	layers.a += softerode;
 
 	// erode from hard material
-	float harderode = erosionamount;
+	float harderode = max(0,erosionamount) * rockerodability;
 	layers.r -= harderode;
 	layers.a += harderode;
 
 	// deposit
+	depositamount = min(layers.a, depositamount);
 	layers.g += depositamount;
 	layers.a -= depositamount;
 

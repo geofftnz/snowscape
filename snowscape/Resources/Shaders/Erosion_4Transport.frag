@@ -59,10 +59,10 @@ void main(void)
 	// a proportional amount of sediment flows with the water.
 
 	// subtract outflows
-	float totaloutflow = min(layers.b,outflow.r + outflow.g + outflow.b + outflow.a);
+	float totaloutflow = outflow.r + outflow.g + outflow.b + outflow.a;
 	float sedimentoutflow = layers.a * clamp((totaloutflow / layers.b),0.0,1.0);
 	layers.a -= sedimentoutflow;
-	layers.b -= totaloutflow;
+	layers.b = max(0.0,layers.b - totaloutflow);
 
 	// add inflow from left block
 	vec2 leftpos = texcoord + vec2(-t,0);
