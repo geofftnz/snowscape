@@ -107,7 +107,7 @@ void main(void)
 		//layers.b += 0.1;
 	//}
 
-	layers.b += 0.001;
+	layers.b += 0.002;
 
 
 

@@ -53,6 +53,7 @@ void main(void)
 	float ptotal = ptop + pleft + pright + pbottom;
 
 	// find lowest neighbour and make sure the max water we remove wont drop our current location below the estimated level of our neighbours.
+	// uses previous flow rate to estimate neighbour height.
 	float minneighbour = min(min(htop-oftop,hbottom-ofbottom),min(hleft-ofleft,hright-ofright));
 	float maxdrop = max(0.0,h - minneighbour);
 

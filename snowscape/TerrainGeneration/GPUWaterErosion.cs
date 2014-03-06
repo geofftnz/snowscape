@@ -89,6 +89,17 @@ namespace TerrainGeneration
         /// </summary>
         private Texture[] FlowRateTexture = new Texture[2];
 
+        /// <summary>
+        /// Outflow due to soft material creep
+        /// 
+        /// R: flow up
+        /// G: flow right
+        /// B: flow down
+        /// A: flow left
+        /// </summary>
+        private Texture SlipFlowTexture;
+
+
         public Texture FlowRateTex { get { return FlowRateTexture[0]; } }  // for visualisation
         public Texture VelocityTex { get { return VelocityTexture; } }  // for visualisation
 
@@ -99,6 +110,9 @@ namespace TerrainGeneration
         private GBufferShaderStep ComputeVelocityStep = new GBufferShaderStep("erosion-velocity");
         private GBufferShaderStep UpdateLayersStep = new GBufferShaderStep("erosion-updatelayers");
         private GBufferShaderStep SedimentTransportStep = new GBufferShaderStep("erosion-transport");
+        private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("erosion-slipflow");
+        private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("erosion-sliptransport");
+        private GBufferShaderStep TerrainCopyStep = new GBufferShaderStep("erosion-terraincopy");
 
 
 
@@ -144,6 +158,16 @@ namespace TerrainGeneration
 
             this.VelocityTexture.UploadEmpty();
 
+            this.SlipFlowTexture =
+                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+            this.SlipFlowTexture.UploadEmpty();
+
+
             this.VisTex =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
@@ -168,6 +192,15 @@ namespace TerrainGeneration
             SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SedimentTransportStep.SetOutputTexture(1, "out_Flow", this.FlowRateTexture[0]);
             SedimentTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_4Transport.frag".Load());
+
+            SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
+            SlippageFlowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_5SlipOutflow.frag".Load());
+
+            SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
+            SlippageTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_6SlipTransport.frag".Load());
+
+            TerrainCopyStep.SetOutputTexture(0,"out_Terrain",this.TerrainTexture[0]);
+            TerrainCopyStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_7TerrainCopy.frag".Load());
         }
 
         public float GetHeightAt(float x, float y)
@@ -224,9 +257,9 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("capacitybias", 0.02f);
                     sp.SetUniform("capacityscale", 10.0f);
-                    sp.SetUniform("rockerodability", 0.2f);
+                    sp.SetUniform("rockerodability", 0.1f);
                     sp.SetUniform("erosionfactor", 0.3f);
-                    sp.SetUniform("depositfactor", 0.2f);
+                    sp.SetUniform("depositfactor", 0.5f);
                     //sp.SetUniform("evaporationfactor", 0.98f);
                 });
 
@@ -248,6 +281,46 @@ namespace TerrainGeneration
                     sp.SetUniform("evaporationfactor", 0.995f);
                 });
 
+            // step 5 - slippage flow calc
+            // in: terrain
+            // out: slip-flow
+            SlippageFlowStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("maxdiff", 0.5f);
+                    sp.SetUniform("sliprate", 0.25f);
+                });
+
+            // step 6 - slippage transport
+            SlippageTransportStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    this.SlipFlowTexture.Bind(TextureUnit.Texture1);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("sliptex", 1);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
+
+            // step 7 - terrain copy
+            TerrainCopyStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                });
 
         }
 
@@ -343,8 +416,8 @@ namespace TerrainGeneration
             terrain.Clear(0.0f);
             terrain.AddSimplexNoise(6, 0.3333f / (float)this.Width, 50.0f, h => h, h => Math.Abs(h));
             terrain.AddSimplexNoise(14, 0.37f / (float)this.Width, 300.0f, h => Math.Abs(h), h => h);
-            terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
-            terrain.AddLooseMaterial(10.0f);
+            terrain.AddSimplexNoise(6, 39.0f / (float)this.Width, 20.0f, h => h*h, h => h);
+            terrain.AddLooseMaterial(2.0f);
             terrain.SetBaseLevel();
 
             var data = new float[this.Width * this.Height * 4];
@@ -353,7 +426,7 @@ namespace TerrainGeneration
             {
                 data[i * 4 + 0] = terrain[i].Hard;
                 data[i * 4 + 1] = terrain[i].Loose;
-                data[i * 4 + 2] = 2.0f;  // water
+                data[i * 4 + 2] = 1.0f;  // water
                 data[i * 4 + 3] = 0.0f;
             });
 
