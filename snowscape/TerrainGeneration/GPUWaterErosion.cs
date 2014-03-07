@@ -293,8 +293,8 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("maxdiff", 0.5f);
-                    sp.SetUniform("sliprate", 0.25f);
+                    sp.SetUniform("maxdiff", 0.8f);
+                    sp.SetUniform("sliprate", 0.05f);
                 });
 
             // step 6 - slippage transport
