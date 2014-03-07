@@ -3,6 +3,7 @@ precision highp float;
 
 uniform sampler2D terraintex;
 uniform sampler2D flowtex;
+uniform sampler2D flowdtex;
 uniform sampler2D velocitytex;
 
 uniform float texsize;

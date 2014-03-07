@@ -86,8 +86,15 @@ namespace TerrainGeneration
         /// G: flow right
         /// B: flow down
         /// A: flow left
+        /// 
+        /// diagonal texture
+        /// R: up-right
+        /// G: down-right
+        /// B: down-left
+        /// A: up-left
         /// </summary>
         private Texture[] FlowRateTexture = new Texture[2];
+        private Texture[] FlowRateTextureDiagonal = new Texture[2];
 
         /// <summary>
         /// Outflow due to soft material creep
@@ -146,7 +153,15 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
                 this.FlowRateTexture[i].UploadEmpty();
-            
+
+                this.FlowRateTextureDiagonal[i] =
+                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+                this.FlowRateTextureDiagonal[i].UploadEmpty();
             }
 
             this.VelocityTexture =
@@ -180,6 +195,7 @@ namespace TerrainGeneration
 
             // setup steps
             ComputeOutflowStep.SetOutputTexture(0, "out_Flow", this.FlowRateTexture[1]);
+            ComputeOutflowStep.SetOutputTexture(1, "out_FlowD", this.FlowRateTextureDiagonal[1]);
             ComputeOutflowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_1Outflow.frag".Load());
 
             ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture);
@@ -191,6 +207,7 @@ namespace TerrainGeneration
 
             SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SedimentTransportStep.SetOutputTexture(1, "out_Flow", this.FlowRateTexture[0]);
+            SedimentTransportStep.SetOutputTexture(2, "out_FlowD", this.FlowRateTexture[1]);
             SedimentTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_4Transport.frag".Load());
 
             SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
@@ -218,11 +235,13 @@ namespace TerrainGeneration
                     {
                         this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                         this.FlowRateTexture[0].Bind(TextureUnit.Texture1);
+                        this.FlowRateTextureDiagonal[0].Bind(TextureUnit.Texture2);
                     },
                     (sp) =>
                     {
                         sp.SetUniform("terraintex", 0);
                         sp.SetUniform("flowtex", 1);
+                        sp.SetUniform("flowdtex", 2);
                         sp.SetUniform("texsize", (float)this.Width);
                         sp.SetUniform("flowRate", 0.5f);  // todo: hoist parameter
                         sp.SetUniform("flowLowpass", 0.5f);  // todo: hoist parameter
@@ -234,10 +253,12 @@ namespace TerrainGeneration
                 () =>
                 {
                     this.FlowRateTexture[1].Bind(TextureUnit.Texture0);
+                    this.FlowRateTextureDiagonal[1].Bind(TextureUnit.Texture1);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("flowtex", 0);
+                    sp.SetUniform("flowdtex", 1);
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
@@ -247,13 +268,15 @@ namespace TerrainGeneration
                 {
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.FlowRateTexture[1].Bind(TextureUnit.Texture1);
-                    this.VelocityTexture.Bind(TextureUnit.Texture2);
+                    this.FlowRateTextureDiagonal[1].Bind(TextureUnit.Texture2);
+                    this.VelocityTexture.Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("flowtex", 1);
-                    sp.SetUniform("velocitytex", 2);
+                    sp.SetUniform("flowdtex", 2);
+                    sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("capacitybias", 0.02f);
                     sp.SetUniform("capacityscale", 10.0f);
@@ -270,13 +293,15 @@ namespace TerrainGeneration
                 {
                     this.TerrainTexture[1].Bind(TextureUnit.Texture0);
                     this.FlowRateTexture[1].Bind(TextureUnit.Texture1);
-                    this.VelocityTexture.Bind(TextureUnit.Texture2);
+                    this.FlowRateTextureDiagonal[1].Bind(TextureUnit.Texture2);
+                    this.VelocityTexture.Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("flowtex", 1);
-                    sp.SetUniform("velocitytex", 2);
+                    sp.SetUniform("flowdtex", 2);
+                    sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("evaporationfactor", 0.995f);
                 });

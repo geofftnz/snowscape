@@ -3,6 +3,7 @@ precision highp float;
 
 uniform sampler2D terraintex;
 uniform sampler2D flowtex;
+uniform sampler2D flowdtex;
 uniform sampler2D velocitytex;
 uniform float texsize;
 uniform float evaporationfactor;
@@ -11,32 +12,20 @@ in vec2 texcoord;
 
 out vec4 out_Terrain;
 out vec4 out_Flow;
-
+out vec4 out_FlowD;
 
 
 float t = 1.0 / texsize;
-
-float sampleSediment(vec2 pos)
-{
-
-	pos *= texsize;
-
-	vec2 ipos = floor(pos);
-	vec2 fpos = pos - floor(pos);
-
-	ipos *= t;
-
-	float s00 = texture(terraintex,ipos).a;
-	float s10 = texture(terraintex,ipos + vec2(t,0)).a;
-	float s11 = texture(terraintex,ipos + vec2(t,t)).a;
-	float s01 = texture(terraintex,ipos + vec2(0,t)).a;
-
-	return mix(mix(s00,s10,fpos.x),mix(s01,s11,fpos.x),fpos.y);
-}
+float diag = 0.707;
 
 vec4 sampleFlow(vec2 pos)
 {
 	return texture(flowtex,pos);
+}
+
+vec4 sampleFlowD(vec2 pos)
+{
+	return texture(flowdtex,pos);
 }
 
 vec4 sampleLayer(vec2 pos)
@@ -51,6 +40,7 @@ void main(void)
 	// R:hard G:soft B:water A:suspended
 	vec4 layers = sampleLayer(texcoord);
 	vec4 outflow = sampleFlow(texcoord);
+	vec4 outflowd = sampleFlowD(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).rg;
 
 	//layers.a = sampleSediment(texcoord - normalize(velocity) * t)*0.1;
@@ -60,10 +50,16 @@ void main(void)
 	// a proportional amount of sediment flows with the water.
 
 	// subtract outflows
-	float totaloutflow = outflow.r + outflow.g + outflow.b + outflow.a;
+	float totaloutflow = outflow.r + outflow.g + outflow.b + outflow.a +
+	                     (outflowd.r + outflowd.g + outflowd.b + outflowd.a) * diag;
+
 	float sedimentoutflow = layers.a * clamp((totaloutflow / layers.b),0.0,1.0);
+
 	layers.a = max(0.0,layers.a - sedimentoutflow);
 	layers.b = max(0.0,layers.b - totaloutflow);
+
+	// RGBA = R:top G:right B:bottom A:left
+	// RGBA = R:topright G:bottomright B:bottomleft A:topleft
 
 	// add inflow from left block
 	vec2 leftpos = texcoord + vec2(-t,0);
@@ -93,6 +89,35 @@ void main(void)
 	layers.b += bottomflow.r;
 	layers.a += bottomcell.a * clamp((bottomflow.r / bottomcell.b),0.0,1.0);
 
+	// add inflow from top right block
+	vec2 toprightpos = texcoord + vec2(t,-t);
+	float toprightflow = sampleFlowD(toprightpos).b * diag;
+	vec4 toprightcell = sampleLayer(toprightpos);
+	layers.b += toprightflow;
+	layers.a += toprightcell.a * clamp((toprightflow / toprightcell.b),0.0,1.0);
+
+	// add inflow from bottom right block
+	vec2 bottomrightpos = texcoord + vec2(t,t);
+	float bottomrightflow = sampleFlowD(bottomrightpos).a * diag;
+	vec4 bottomrightcell = sampleLayer(bottomrightpos);
+	layers.b += bottomrightflow;
+	layers.a += bottomrightcell.a * clamp((bottomrightflow / bottomrightcell.b),0.0,1.0);
+
+	// add inflow from bottom left block
+	vec2 bottomleftpos = texcoord + vec2(-t,t);
+	float bottomleftflow = sampleFlowD(bottomleftpos).r * diag;
+	vec4 bottomleftcell = sampleLayer(bottomleftpos);
+	layers.b += bottomleftflow;
+	layers.a += bottomleftcell.a * clamp((bottomleftflow / bottomleftcell.b),0.0,1.0);
+
+	// add inflow from top left block
+	vec2 topleftpos = texcoord + vec2(-t,-t);
+	float topleftflow = sampleFlowD(topleftpos).g * diag;
+	vec4 topleftcell = sampleLayer(topleftpos);
+	layers.b += topleftflow;
+	layers.a += topleftcell.a * clamp((topleftflow / topleftcell.b),0.0,1.0);
+
+
 
 	// evaporation
 	float sedimentprecipitation = max(0.0,layers.a * evaporationfactor);
@@ -113,6 +138,7 @@ void main(void)
 
 	out_Terrain = layers;
 	out_Flow = outflow; // copy flow1 back to flow0 for next iteration.
+	out_FlowD = outflowd;
 	
 
 }
