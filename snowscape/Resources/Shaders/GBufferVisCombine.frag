@@ -365,9 +365,9 @@ vec3 terrainDiffuseDebug(vec3 p, vec3 n, vec4 s, float shadowHeight)
 	col = mix(col, softcol, clamp(soft * 256.0,0.0,1.0));
 
 	// water depth
-	float waterdepth = s.g*s.g;
+	float waterdepth = s.g;
 	vec3 watercol = mix(vec3(0.05,0.4,0.6),vec3(0.005,0.02,0.25),clamp(pow(waterdepth,0.5),0.0,1.0));
-	col = mix(col, watercol, 0.4*smoothstep(0.0005,0.001,waterdepth));
+	col = mix(col, watercol, 0.8*smoothstep(0.001,0.005,waterdepth*waterdepth));
 
 	float suspended = s.b * 0.1;
 	vec3 suspendedcol = vec3(0.6,0.0,0.2);

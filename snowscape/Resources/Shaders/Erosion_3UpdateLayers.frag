@@ -57,7 +57,7 @@ void main(void)
 	vec3 grad = terrainGradient(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).xy;
 
-	float capacity = capacityscale * min(10.0,0.1+max(0.0,layers.b * 0.5)) * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
+	float capacity = capacityscale * min(10.0,0.01+max(0.0,layers.b * 50.0)) * max(capacitybias,dot(grad, vec3(0,1,0))) * length(velocity);
 	//float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
 	//float capacity = capacityscale * layers.b * length(velocity);
 
