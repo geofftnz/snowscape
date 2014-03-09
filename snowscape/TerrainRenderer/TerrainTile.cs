@@ -35,8 +35,8 @@ namespace Snowscape.TerrainRenderer
         public Texture ParamTexture { get; private set; }
         public Sampler LinearSampler { get; private set; }
 
-        public float MinHeight { get; private set; }
-        public float MaxHeight { get; private set; }
+        //public float MinHeight { get; private set; }
+        //public float MaxHeight { get; private set; }
 
         private Matrix4 modelMatrix;
         public Matrix4 ModelMatrix
@@ -63,10 +63,14 @@ namespace Snowscape.TerrainRenderer
             // setup textures
             this.HeightTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat));
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
+                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat));
 
             this.HeightTexture.UploadEmpty();
 
@@ -293,8 +297,8 @@ namespace Snowscape.TerrainRenderer
 
         private void UploadHeightTexture(float[] height)
         {
-            this.MinHeight = height.Min();
-            this.MaxHeight = height.Max();
+            //this.MinHeight = 0.0f;// height.Min();
+            //this.MaxHeight = 1.0f;// height.Max();
 
             int maxlevel = 0;
             int x = this.Width;

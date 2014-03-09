@@ -104,7 +104,7 @@ void main() {
 	v.xz += offset;
 	v.x *= boxparam.x;
 	v.z *= boxparam.y;
-	v.y = h + v.y * 20.0f;//(boxparam.w - boxparam.z) * 0.005; // patch skirt.
+	v.y = h + v.y * 1.0f;//(boxparam.w - boxparam.z) * 0.005; // patch skirt.
 
     gl_Position = projection_matrix * view_matrix * model_matrix * vec4(v, 1.0);
 

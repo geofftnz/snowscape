@@ -75,6 +75,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Loaders.TerrainGlobalLoader terrainGlobalLoader = new Loaders.TerrainGlobalLoader();
         private Loaders.TerrainTileLoader terrainTileLoader = new Loaders.TerrainTileLoader();
+        private Loaders.TerrainTileParamLoader terrainTileParamLoader = new Loaders.TerrainTileParamLoader();
 
 
         //private Texture skyTexture;
@@ -422,7 +423,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
 
             this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
-            this.terrainTileLoader.Init(this.terrainTile.HeightTexture, this.terrainTile.ParamTexture);
+            this.terrainTileLoader.Init(this.terrainTile.HeightTexture);
+            this.terrainTileParamLoader.Init(this.terrainTile.ParamTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -858,9 +860,11 @@ namespace Snowscape.TerrainGenerationViewer
                     //float[] tempData = this.Terrain.GetRawData();
                     //this.terrainTile.SetDataFromTerrainGenerationRaw(tempData);
                     //this.terrainGlobal.SetDataFromTerrainGenerationRaw(tempData);
+                    
                     var terr = this.Terrain as GPUWaterErosion;
-                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
                     this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
                 }
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);

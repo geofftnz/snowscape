@@ -95,7 +95,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-            tile.LinearSampler.Bind(TextureUnit.Texture0);
+            //tile.LinearSampler.Bind(TextureUnit.Texture0);
             tile.ParamTexture.Bind(TextureUnit.Texture1);
             tile.NormalTexture.Bind(TextureUnit.Texture2);
 
@@ -121,7 +121,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.mesh.Bind(this.shader.VariableLocation("vertex"), this.shader.VariableLocation("in_boxcoord"));
             this.mesh.Render();
 
-            Sampler.Unbind(TextureUnit.Texture0);
+            //Sampler.Unbind(TextureUnit.Texture0);
 
         }
 

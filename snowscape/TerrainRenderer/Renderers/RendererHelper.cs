@@ -11,7 +11,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
         public static Vector4 GetBoxParam(this TerrainTile tile)
         {
-            return new Vector4((float)tile.Width, (float)tile.Height, tile.MinHeight, tile.MaxHeight);
+            return new Vector4((float)tile.Width, (float)tile.Height, 0.0f, 1.0f);
         }
 
     }

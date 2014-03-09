@@ -8,19 +8,19 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Snowscape.TerrainRenderer.Loaders
 {
-    public class TerrainTileLoader
+    public class TerrainTileParamLoader
     {
-        private GBufferShaderStep gb = new GBufferShaderStep("terraintileloader");
+        private GBufferShaderStep gb = new GBufferShaderStep("terraintileparamloader");
 
-        public TerrainTileLoader()
+        public TerrainTileParamLoader()
         {
                 
         }
 
-        public void Init(Texture heightTexture)
+        public void Init(Texture paramTexture)
         {
-            gb.SetOutputTexture(0, "out_Height", heightTexture);
-            gb.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/TerrainTileLoader.frag".Load());
+            gb.SetOutputTexture(0, "out_Param", paramTexture);
+            gb.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/TerrainTileParamLoader.frag".Load());
         }
 
         public void Render(Texture terrainTexture)
