@@ -124,15 +124,15 @@ void main(void)
 	layers.a -= sedimentprecipitation;
 	layers.g += sedimentprecipitation;
 	layers.b *= evaporationfactor;
-
+		
 	
 	// add some water
 	//if (length(texcoord-vec2(0.2,0.75)) < 0.002)
 	//{
-		//layers.b += 0.1;
+		//layers.b += 0.05;
 	//}
-
-	layers.b += 0.002;
+//
+	layers.b += 0.0015;
 
 
 

@@ -37,7 +37,7 @@ namespace Snowscape.TerrainRenderer
         /// </summary>
         public Texture IndirectIlluminationTexture { get; private set; }
 
-        
+        // TODO: Lose these
         public float MinHeight { get; private set; }
         public float MaxHeight { get; private set; }
 

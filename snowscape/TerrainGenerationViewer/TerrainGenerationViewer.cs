@@ -833,16 +833,16 @@ namespace Snowscape.TerrainGenerationViewer
             if (!this.Terrain.NeedThread && !this.ThreadPaused)
             {
                 perfmon.Start("GPU Erosion");
-                for (int i = 0; i < 20; i++)
+                for (int i = 0; i < 4; i++)
                 {
                     this.Terrain.ModifyTerrain();
                     this.updateGPUIterations++;
                 }
                 perfmon.Stop("GPU Erosion");
-                if (this.updateGPUIterations % 200 == 0)
-                {
+                //if (this.updateGPUIterations % 4 == 0)
+                //{
                     this.updateThreadIterations = this.updateGPUIterations;
-                }
+                //}
             }
 
             uint currentThreadIterations = updateThreadIterations;
@@ -874,7 +874,7 @@ namespace Snowscape.TerrainGenerationViewer
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
 
-                if (textureUpdateCount % 8 == 0)
+                if (textureUpdateCount % 256 == 0)
                 {
                     needToRenderLighting = true;
                 }

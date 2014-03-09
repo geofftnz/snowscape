@@ -243,8 +243,8 @@ namespace TerrainGeneration
                         sp.SetUniform("flowtex", 1);
                         sp.SetUniform("flowdtex", 2);
                         sp.SetUniform("texsize", (float)this.Width);
-                        sp.SetUniform("flowRate", 0.85f);  // todo: hoist parameter
-                        sp.SetUniform("flowLowpass", 0.9f);  // todo: hoist parameter
+                        sp.SetUniform("flowRate", 0.7f);  // todo: hoist parameter
+                        sp.SetUniform("flowLowpass", 0.75f);  // todo: hoist parameter
                     }
                 );
 
@@ -278,11 +278,11 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 2);
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("capacitybias", 0.25f);
-                    sp.SetUniform("capacityscale", 1.0f);
-                    sp.SetUniform("rockerodability", 0.05f);
-                    sp.SetUniform("erosionfactor", 0.01f);
-                    sp.SetUniform("depositfactor", 0.01f);
+                    sp.SetUniform("capacitybias", 0.1f);
+                    sp.SetUniform("capacityscale", 20.0f);
+                    sp.SetUniform("rockerodability", 0.02f);
+                    sp.SetUniform("erosionfactor", 0.2f);
+                    sp.SetUniform("depositfactor", 0.05f);
                     //sp.SetUniform("evaporationfactor", 0.98f);
                 });
 
@@ -303,7 +303,7 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 2);
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("evaporationfactor", 0.999f);
+                    sp.SetUniform("evaporationfactor", 0.995f);
                 });
 
             // step 5 - slippage flow calc
@@ -318,7 +318,7 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("maxdiff", 0.8f);
+                    sp.SetUniform("maxdiff", 1.0f);
                     sp.SetUniform("sliprate", 0.01f);
                 });
 
@@ -440,9 +440,9 @@ namespace TerrainGeneration
 
             terrain.Clear(0.0f);
             terrain.AddSimplexNoise(6, 0.3333f / (float)this.Width, 50.0f, h => h, h => Math.Abs(h));
-            terrain.AddSimplexNoise(14, 0.67f / (float)this.Width, 300.0f, h => Math.Abs(h), h => h);
+            terrain.AddSimplexNoise(14, 0.37f / (float)this.Width, 400.0f, h => Math.Abs(h), h => h);
             terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
-            //terrain.AddLooseMaterial(2.0f);
+            terrain.AddLooseMaterial(1.0f);
             terrain.SetBaseLevel();
 
             var data = new float[this.Width * this.Height * 4];
