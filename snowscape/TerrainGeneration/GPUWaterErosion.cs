@@ -243,8 +243,8 @@ namespace TerrainGeneration
                         sp.SetUniform("flowtex", 1);
                         sp.SetUniform("flowdtex", 2);
                         sp.SetUniform("texsize", (float)this.Width);
-                        sp.SetUniform("flowRate", 0.5f);  // todo: hoist parameter
-                        sp.SetUniform("flowLowpass", 0.5f);  // todo: hoist parameter
+                        sp.SetUniform("flowRate", 0.85f);  // todo: hoist parameter
+                        sp.SetUniform("flowLowpass", 0.9f);  // todo: hoist parameter
                     }
                 );
 
@@ -281,8 +281,8 @@ namespace TerrainGeneration
                     sp.SetUniform("capacitybias", 0.25f);
                     sp.SetUniform("capacityscale", 1.0f);
                     sp.SetUniform("rockerodability", 0.05f);
-                    sp.SetUniform("erosionfactor", 0.05f);
-                    sp.SetUniform("depositfactor", 0.05f);
+                    sp.SetUniform("erosionfactor", 0.01f);
+                    sp.SetUniform("depositfactor", 0.01f);
                     //sp.SetUniform("evaporationfactor", 0.98f);
                 });
 
