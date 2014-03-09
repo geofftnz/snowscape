@@ -48,6 +48,10 @@ namespace OpenTKExtensions
             return new Vector4((float)Math.Pow(v.X, e.X), (float)Math.Pow(v.Y, e.Y), (float)Math.Pow(v.Z, e.Z), (float)Math.Pow(v.W, e.W));
         }
 
+        public static Vector2 Abs(this Vector2 v)
+        {
+            return new Vector2(Math.Abs(v.X), Math.Abs(v.Y));
+        }
         public static Vector3 Abs(this Vector3 v)
         {
             return new Vector3(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));

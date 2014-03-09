@@ -49,8 +49,8 @@ namespace Snowscape.TerrainRenderer.Renderers
             public QuadTreeVertex TopRight { get; set; }
             public QuadTreeVertex BottomLeft { get; set; }
             public QuadTreeVertex BottomRight { get; set; }
-            public float MinHeight { get; set; }
-            public float MaxHeight { get; set; }
+            //public float MinHeight { get; set; }
+            //public float MaxHeight { get; set; }
 
             public float NodeWidth
             {
@@ -73,7 +73,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 {
                     return new Vector3(
                             (TopRight.Position.X + TopLeft.Position.X) * 0.5f,
-                            (MaxHeight + MinHeight) * 0.5f,
+                            0.0f,
                             (TopLeft.Position.Z + BottomLeft.Position.Z) * 0.5f
                         );
                 }
@@ -94,18 +94,14 @@ namespace Snowscape.TerrainRenderer.Renderers
             /// <returns></returns>
             public bool IsViewerInDetailRange(Vector3 viewer, float detailRadius)
             {
-                Vector3 detailDistance = (viewer - this.TileCentre).Abs();
+                Vector2 detailDistance = (viewer.Xz - this.TileCentre.Xz).Abs();
 
                 // outside
                 if (detailDistance.X > NodeWidth * 0.5f + detailRadius)
                 {
                     return false;
                 }
-                if (detailDistance.Y > (MaxHeight - MinHeight) * 0.5f + detailRadius)
-                {
-                    return false;
-                }
-                if (detailDistance.Z > NodeHeight * 0.5f + detailRadius)
+                if (detailDistance.Y > NodeHeight * 0.5f + detailRadius)
                 {
                     return false;
                 }
@@ -115,16 +111,12 @@ namespace Snowscape.TerrainRenderer.Renderers
                 {
                     return true;
                 }
-                if (detailDistance.Y <= (MaxHeight - MinHeight) * 0.5f)
-                {
-                    return true;
-                }
-                if (detailDistance.Z <= NodeHeight * 0.5f)
+                if (detailDistance.Y <= NodeHeight * 0.5f)
                 {
                     return true;
                 }
 
-                float cornerDistanceSquared = (detailDistance - new Vector3(NodeWidth * 0.5f, (MaxHeight - MinHeight) * 0.5f, NodeHeight * 0.5f)).LengthSquared;
+                float cornerDistanceSquared = (detailDistance - new Vector2(NodeWidth * 0.5f, NodeHeight * 0.5f)).LengthSquared;
 
                 return cornerDistanceSquared <= detailRadius * detailRadius;
 
@@ -182,8 +174,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                     TopRight = new QuadTreeVertex() { Position = new Vector3(centre.X, 0f, this.TopLeft.Position.Z) },
                     BottomLeft = new QuadTreeVertex() { Position = new Vector3(this.TopLeft.Position.X, 0f, centre.Z) },
                     BottomRight = new QuadTreeVertex() { Position = centre },
-                    MinHeight = this.MinHeight,
-                    MaxHeight = this.MaxHeight,
                     TileSize = this.TileSize / 2
                 }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
@@ -194,8 +184,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                     TopRight = this.TopRight,
                     BottomLeft = new QuadTreeVertex() { Position = centre },
                     BottomRight = new QuadTreeVertex() { Position = new Vector3(this.TopRight.Position.X, 0f, centre.Z) },
-                    MinHeight = this.MinHeight,
-                    MaxHeight = this.MaxHeight,
                     TileSize = this.TileSize / 2
                 }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
@@ -206,8 +194,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                     TopRight = new QuadTreeVertex() { Position = centre },
                     BottomLeft = this.BottomLeft,
                     BottomRight = new QuadTreeVertex() { Position = new Vector3(centre.X, 0f, this.BottomLeft.Position.Z) },
-                    MinHeight = this.MinHeight,
-                    MaxHeight = this.MaxHeight,
                     TileSize = this.TileSize / 2
                 }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
@@ -218,8 +204,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                     TopRight = new QuadTreeVertex() { Position = new Vector3(this.BottomRight.Position.X, 0f, centre.Z) },
                     BottomLeft = new QuadTreeVertex() { Position = new Vector3(centre.X, 0f, this.BottomRight.Position.Z) },
                     BottomRight = this.BottomRight,
-                    MinHeight = this.MinHeight,
-                    MaxHeight = this.MaxHeight,
                     TileSize = this.TileSize / 2
                 }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
@@ -268,8 +252,6 @@ namespace Snowscape.TerrainRenderer.Renderers
                     Position = new Vector3((float)tile.Width, 0f, (float)tile.Height)
                     //Position = Vector3.Transform(new Vector3((float)tile.Width, 0f, (float)tile.Height), tile.ModelMatrix)
                 },
-                MinHeight = tile.MinHeight,
-                MaxHeight = tile.MaxHeight,
                 TileSize = tile.Width // assume width == height
             };
 
@@ -278,7 +260,9 @@ namespace Snowscape.TerrainRenderer.Renderers
             {
                 var distrenderer = (IPatchRenderer)fullTileDistantRenderer;
 
-                distrenderer.Width = tile.Width / 16;
+                //float distancepastdetail = (xformeye.Xz - new Vector2((float)tile.Width * 0.5f,(float)tile.Height * 0.5f)).Length - ;
+
+                distrenderer.Width = tile.Width / 4;
                 distrenderer.Height = distrenderer.Width;
                 //distrenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                 distrenderer.Scale = 1.0f;
