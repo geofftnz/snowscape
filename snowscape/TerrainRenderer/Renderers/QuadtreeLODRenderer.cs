@@ -276,6 +276,14 @@ namespace Snowscape.TerrainRenderer.Renderers
             // check to see if we're completely outside the far detail radius
             if (!root.IsViewerInDetailRange(xformeye, this.DistantTileRadius))
             {
+                var distrenderer = (IPatchRenderer)fullTileDistantRenderer;
+
+                distrenderer.Width = tile.Width / 16;
+                distrenderer.Height = distrenderer.Width;
+                //distrenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
+                distrenderer.Scale = 1.0f;
+                distrenderer.Offset = new Vector2(0.0f,0.0f);
+
                 fullTileDistantRenderer.Render(tile, projection, view, eye);
             }
             else // check inner detail radius
