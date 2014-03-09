@@ -60,6 +60,8 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
+            this.HeightTexture.UploadEmpty();
+
             this.ShadeTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rg16f, PixelFormat.Rg, PixelType.HalfFloat)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
