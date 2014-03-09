@@ -55,6 +55,8 @@
     <Compile Include="Lighting\HeightmapNormalGenerator.cs" />
     <Compile Include="Lighting\IndirectIlluminationGenerator.cs" />
     <Compile Include="Lighting\LightingCombiner.cs" />
+    <Compile Include="Loaders\TerrainTileLoader.cs" />
+    <Compile Include="Loaders\TerrainGlobalLoader.cs" />
     <Compile Include="Mesh\IPatchCache.cs" />
     <Compile Include="Mesh\PatchCache.cs" />
     <Compile Include="Mesh\TerrainPatchMesh.cs" />

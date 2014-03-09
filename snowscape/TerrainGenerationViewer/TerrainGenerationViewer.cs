@@ -21,6 +21,7 @@ using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
 using Lighting = Snowscape.TerrainRenderer.Lighting;
 using HDR = Snowscape.TerrainRenderer.HDR;
 using Snowscape.TerrainRenderer.Mesh;
+using Loaders = Snowscape.TerrainRenderer.Loaders;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -71,6 +72,9 @@ namespace Snowscape.TerrainGenerationViewer
         private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator();
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
+
+        private Loaders.TerrainGlobalLoader terrainGlobalLoader = new Loaders.TerrainGlobalLoader();
+        private Loaders.TerrainTileLoader terrainTileLoader = new Loaders.TerrainTileLoader();
 
 
         //private Texture skyTexture;
@@ -416,6 +420,9 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
             this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
             this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
+
+            this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
+            this.terrainTileLoader.Init(this.terrainTile.HeightTexture, this.terrainTile.ParamTexture);
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -848,9 +855,12 @@ namespace Snowscape.TerrainGenerationViewer
                 }
                 else
                 {
-                    float[] tempData = this.Terrain.GetRawData();
-                    this.terrainTile.SetDataFromTerrainGenerationRaw(tempData);
-                    this.terrainGlobal.SetDataFromTerrainGenerationRaw(tempData);
+                    //float[] tempData = this.Terrain.GetRawData();
+                    //this.terrainTile.SetDataFromTerrainGenerationRaw(tempData);
+                    //this.terrainGlobal.SetDataFromTerrainGenerationRaw(tempData);
+                    var terr = this.Terrain as GPUWaterErosion;
+                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
                 }
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
