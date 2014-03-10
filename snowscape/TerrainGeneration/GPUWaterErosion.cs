@@ -281,8 +281,8 @@ namespace TerrainGeneration
                     sp.SetUniform("capacitybias", 0.1f);
                     sp.SetUniform("capacityscale", 20.0f);
                     sp.SetUniform("rockerodability", 0.02f);
-                    sp.SetUniform("erosionfactor", 0.2f);
-                    sp.SetUniform("depositfactor", 0.05f);
+                    sp.SetUniform("erosionfactor", 10.0f);
+                    sp.SetUniform("depositfactor", 0.01f);
                     //sp.SetUniform("evaporationfactor", 0.98f);
                 });
 
@@ -318,8 +318,8 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("maxdiff", 1.0f);
-                    sp.SetUniform("sliprate", 0.01f);
+                    sp.SetUniform("maxdiff", 0.85f);
+                    sp.SetUniform("sliprate", 0.1f);
                 });
 
             // step 6 - slippage transport
