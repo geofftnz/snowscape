@@ -3,8 +3,9 @@ precision highp float;
 
 uniform sampler2D flowtex;
 uniform sampler2D flowdtex;
+uniform sampler2D velocitytex;
 uniform float texsize;
-
+uniform float vlowpass;
 
 in vec2 texcoord;
 
@@ -33,6 +34,7 @@ void main(void)
 
 	vec4 f = sampleFlow(texcoord,0.0,0.0);
 	vec4 fd = sampleFlowd(texcoord,0.0,0.0);
+	vec4 prevvel = texture(velocitytex,texcoord);
 	
 	float infromtop = sampleFlow(texcoord,0.0,-t).b;
 	float infromright = sampleFlow(texcoord,t,0.0).a;
@@ -57,7 +59,5 @@ void main(void)
 	// topright/bottomleft
 	v += vec2(-1.0,1.0) * (infromtopright + fd.b - fd.r - infrombottomleft) * diag * 0.5;
 
-	out_Velocity = vec4(
-	v,
-	0.0,0.0);
+	out_Velocity = prevvel * vlowpass + vec4(v,0.0,0.0) * (1.0-vlowpass);
 }

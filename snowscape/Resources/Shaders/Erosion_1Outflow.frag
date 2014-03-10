@@ -7,6 +7,7 @@ uniform sampler2D flowdtex;
 uniform float texsize;
 uniform float flowRate;
 uniform float flowLowpass;
+uniform float dt;
 
 in vec2 texcoord;
 
@@ -50,6 +51,7 @@ void main(void)
 	float hbottomleft = sampleHeight(texcoord + vec2(-t,t));
 	float htopleft = sampleHeight(texcoord + vec2(-t,-t));
 
+	/*
 	float oftop = samplePrevCellOutflow(texcoord + vec2(0,-t));
 	float ofright = samplePrevCellOutflow(texcoord + vec2(t,0));
 	float ofbottom = samplePrevCellOutflow(texcoord + vec2(0,t));
@@ -59,7 +61,7 @@ void main(void)
 	float ofbottomright = samplePrevCellOutflow(texcoord + vec2(t,t));
 	float ofbottomleft = samplePrevCellOutflow(texcoord + vec2(-t,t));
 	float oftopleft = samplePrevCellOutflow(texcoord + vec2(-t,-t));
-
+	*/
 
 	float ptop = max(0,h - htop);
 	float pright = max(0,h - hright);
@@ -77,12 +79,12 @@ void main(void)
 
 	float minneighbour = min(
 							min(
-								min(htop-oftop,hbottom-ofbottom),
-								min(hleft-ofleft,hright-ofright)
+								min(htop,hbottom),
+								min(hleft,hright)
 							),
 							min(
-								min(htopright-oftopright,hbottomright-ofbottomright),
-								min(hbottomleft-ofbottomleft,htopleft-oftopleft)
+								min(htopright,hbottomright),
+								min(hbottomleft,htopleft)
 							)
 						);
 
@@ -94,9 +96,9 @@ void main(void)
 
 	pscale *= flowRate;
 
-	vec4 newoutflow = vec4(ptop, pright, pbottom, pleft) * pscale;
-	vec4 newoutflowd = vec4(ptopright, pbottomright, pbottomleft, ptopleft) * pscale;
+	vec4 newoutflow = vec4(ptop, pright, pbottom, pleft);
+	vec4 newoutflowd = vec4(ptopright, pbottomright, pbottomleft, ptopleft);
 
-	out_Flow = prevflow * flowLowpass + newoutflow * (1.0 - flowLowpass);
-	out_FlowD = prevflowd * flowLowpass + newoutflowd * (1.0 - flowLowpass);
+	out_Flow = max(vec4(0.0),prevflow + newoutflow * dt) * pscale;
+	out_FlowD = max(vec4(0.0), prevflowd + newoutflowd * dt) * pscale;
 }

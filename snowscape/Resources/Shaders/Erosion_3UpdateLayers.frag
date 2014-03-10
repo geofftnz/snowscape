@@ -59,13 +59,13 @@ void main(void)
 
 	float vsquared = dot(velocity,velocity);
 
-	//float capacity = capacityscale * min(1.0,0.001+max(0.0,layers.b * 2.0)) * ( capacitybias + dot(grad, vec3(0,1,0))) * vsquared;
+	float capacity = capacityscale * min(1.0,0.001+max(0.0,layers.b * 2.0)) * ( capacitybias + dot(grad, vec3(0,1,0))) * pow(vsquared,0.1);
 	//float capacity = capacityscale * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
 	//float capacity = capacityscale * layers.b * length(velocity);
 	//float capacity = capacitybias + capacityscale * length(velocity);
 
 	// capacity is based on amount of water and its speed
-	float capacity = capacityscale * layers.b * vsquared;
+	//float capacity = capacityscale * layers.b * vsquared;
 
 	// potential for erosion is related to speed
 	float erosionpotential = erosionfactor * layers.b * vsquared;
@@ -77,7 +77,7 @@ void main(void)
 
 
 	vis.r = erosionamount;
-	vis.g = vsquared;
+	vis.g = pow(vsquared,0.1);
 	vis.b = capacity;
 
 	// erode

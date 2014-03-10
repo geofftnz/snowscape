@@ -13,6 +13,7 @@ in vec2 texcoord;
 out vec4 out_Terrain;
 out vec4 out_Flow;
 out vec4 out_FlowD;
+out vec4 out_Velocity;
 
 
 float t = 1.0 / texsize;
@@ -33,6 +34,11 @@ vec4 sampleLayer(vec2 pos)
 	return texture(terraintex,pos);
 }
 
+vec2 sampleVelocity(vec2 pos)
+{
+	return texture(velocitytex,pos).xy;
+}
+
 void main(void)
 {
 	// flow RGBA = R:top G:right B:bottom A:left
@@ -41,7 +47,7 @@ void main(void)
 	vec4 layers = sampleLayer(texcoord);
 	vec4 outflow = sampleFlow(texcoord);
 	vec4 outflowd = sampleFlowD(texcoord);
-	vec2 velocity = texture(velocitytex,texcoord).rg;
+	vec2 velocity = texture(velocitytex,texcoord).xy;
 
 	//layers.a = sampleSediment(texcoord - normalize(velocity) * t)*0.1;
 
@@ -58,6 +64,8 @@ void main(void)
 	layers.a = max(0.0,layers.a - sedimentoutflow);
 	layers.b = max(0.0,layers.b - totaloutflow);
 
+	vec2 newvelocity = vec2(0.0);
+
 	// RGBA = R:top G:right B:bottom A:left
 	// RGBA = R:topright G:bottomright B:bottomleft A:topleft
 
@@ -65,57 +73,73 @@ void main(void)
 	vec2 leftpos = texcoord + vec2(-t,0);
 	vec4 leftflow = sampleFlow(leftpos);
 	vec4 leftcell = sampleLayer(leftpos);
+	float leftamount = clamp((leftflow.g / leftcell.b),0.0,1.0);
 	layers.b += leftflow.g;
-	layers.a += leftcell.a * clamp((leftflow.g / leftcell.b),0.0,1.0);
+	layers.a += leftcell.a * leftamount;
+	newvelocity += sampleVelocity(leftpos) * leftamount;
 
 	// add inflow from right block
 	vec2 rightpos = texcoord + vec2(t,0);
 	vec4 rightflow = sampleFlow(rightpos);
 	vec4 rightcell = sampleLayer(rightpos);
+	float rightamount = clamp((rightflow.a / rightcell.b),0.0,1.0);
 	layers.b += rightflow.a;
-	layers.a += rightcell.a * clamp((rightflow.a / rightcell.b),0.0,1.0);
+	layers.a += rightcell.a * rightamount;
+	newvelocity += sampleVelocity(rightpos) * rightamount;
 
 	// add inflow from upper block
 	vec2 toppos = texcoord + vec2(0,-t);
 	vec4 topflow = sampleFlow(toppos);
 	vec4 topcell = sampleLayer(toppos);
+	float topamount = clamp((topflow.b / topcell.b),0.0,1.0);
 	layers.b += topflow.b;
-	layers.a += topcell.a * clamp((topflow.b / topcell.b),0.0,1.0);
+	layers.a += topcell.a * topamount;
+	newvelocity += sampleVelocity(toppos) * topamount;
 
 	// add inflow from lower block
 	vec2 bottompos = texcoord + vec2(0,t);
 	vec4 bottomflow = sampleFlow(bottompos);
 	vec4 bottomcell = sampleLayer(bottompos);
+	float bottomamount = clamp((bottomflow.r / bottomcell.b),0.0,1.0);
 	layers.b += bottomflow.r;
-	layers.a += bottomcell.a * clamp((bottomflow.r / bottomcell.b),0.0,1.0);
+	layers.a += bottomcell.a * bottomamount;
+	newvelocity += sampleVelocity(bottompos) * bottomamount;
 
 	// add inflow from top right block
 	vec2 toprightpos = texcoord + vec2(t,-t);
 	float toprightflow = sampleFlowD(toprightpos).b * diag;
 	vec4 toprightcell = sampleLayer(toprightpos);
+	float toprightamount = clamp((toprightflow / toprightcell.b),0.0,1.0);
 	layers.b += toprightflow;
-	layers.a += toprightcell.a * clamp((toprightflow / toprightcell.b),0.0,1.0);
+	layers.a += toprightcell.a * toprightamount;
+	newvelocity += sampleVelocity(toprightpos) * toprightamount;
 
 	// add inflow from bottom right block
 	vec2 bottomrightpos = texcoord + vec2(t,t);
 	float bottomrightflow = sampleFlowD(bottomrightpos).a * diag;
 	vec4 bottomrightcell = sampleLayer(bottomrightpos);
+	float bottomrightamount = clamp((bottomrightflow / bottomrightcell.b),0.0,1.0);
 	layers.b += bottomrightflow;
-	layers.a += bottomrightcell.a * clamp((bottomrightflow / bottomrightcell.b),0.0,1.0);
+	layers.a += bottomrightcell.a * bottomrightamount;
+	newvelocity += sampleVelocity(bottomrightpos) * bottomrightamount;
 
 	// add inflow from bottom left block
 	vec2 bottomleftpos = texcoord + vec2(-t,t);
 	float bottomleftflow = sampleFlowD(bottomleftpos).r * diag;
 	vec4 bottomleftcell = sampleLayer(bottomleftpos);
+	float bottomleftamount = clamp((bottomleftflow / bottomleftcell.b),0.0,1.0);
 	layers.b += bottomleftflow;
-	layers.a += bottomleftcell.a * clamp((bottomleftflow / bottomleftcell.b),0.0,1.0);
+	layers.a += bottomleftcell.a * bottomleftamount;
+	newvelocity += sampleVelocity(bottomleftpos) * bottomleftamount;
 
 	// add inflow from top left block
 	vec2 topleftpos = texcoord + vec2(-t,-t);
 	float topleftflow = sampleFlowD(topleftpos).g * diag;
 	vec4 topleftcell = sampleLayer(topleftpos);
+	float topleftamount = clamp((topleftflow / topleftcell.b),0.0,1.0);
 	layers.b += topleftflow;
-	layers.a += topleftcell.a * clamp((topleftflow / topleftcell.b),0.0,1.0);
+	layers.a += topleftcell.a * topleftamount;
+	newvelocity += sampleVelocity(topleftpos) * topleftamount;
 
 
 
@@ -139,6 +163,7 @@ void main(void)
 	out_Terrain = layers;
 	out_Flow = outflow; // copy flow1 back to flow0 for next iteration.
 	out_FlowD = outflowd;
+	out_Velocity = vec4(velocity,0.0,0.0);
 	
 
 }

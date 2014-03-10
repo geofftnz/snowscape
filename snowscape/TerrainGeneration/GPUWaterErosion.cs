@@ -77,7 +77,7 @@ namespace TerrainGeneration
         /// Velocity of water over terrain. Used for erosion potential.
         /// RG
         /// </summary>
-        private Texture VelocityTexture;
+        private Texture[] VelocityTexture = new Texture[2];
 
         /// <summary>
         /// Rate of flow out of each location
@@ -108,7 +108,7 @@ namespace TerrainGeneration
 
 
         public Texture FlowRateTex { get { return FlowRateTexture[0]; } }  // for visualisation
-        public Texture VelocityTex { get { return VelocityTexture; } }  // for visualisation
+        public Texture VelocityTex { get { return VelocityTexture[0]; } }  // for visualisation
 
         public Texture VisTex { get; set; }
 
@@ -162,16 +162,17 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
                 this.FlowRateTextureDiagonal[i].UploadEmpty();
+
+                this.VelocityTexture[i] =
+                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+                this.VelocityTexture[i].UploadEmpty();
             }
 
-            this.VelocityTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-
-            this.VelocityTexture.UploadEmpty();
 
             this.SlipFlowTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
@@ -198,7 +199,7 @@ namespace TerrainGeneration
             ComputeOutflowStep.SetOutputTexture(1, "out_FlowD", this.FlowRateTextureDiagonal[1]);
             ComputeOutflowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_1Outflow.frag".Load());
 
-            ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture);
+            ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
             ComputeVelocityStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_2Velocity.frag".Load());
 
             UpdateLayersStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
@@ -208,6 +209,7 @@ namespace TerrainGeneration
             SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SedimentTransportStep.SetOutputTexture(1, "out_Flow", this.FlowRateTexture[0]);
             SedimentTransportStep.SetOutputTexture(2, "out_FlowD", this.FlowRateTexture[1]);
+            SedimentTransportStep.SetOutputTexture(3, "out_Velocity", this.VelocityTexture[0]);
             SedimentTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_4Transport.frag".Load());
 
             SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
@@ -227,6 +229,7 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
+            float dt = 0.5f;
 
             // step 1 - compute flows
 
@@ -245,6 +248,7 @@ namespace TerrainGeneration
                         sp.SetUniform("texsize", (float)this.Width);
                         sp.SetUniform("flowRate", 0.7f);  // todo: hoist parameter
                         sp.SetUniform("flowLowpass", 0.75f);  // todo: hoist parameter
+                        sp.SetUniform("dt", dt);  
                     }
                 );
 
@@ -254,12 +258,15 @@ namespace TerrainGeneration
                 {
                     this.FlowRateTexture[1].Bind(TextureUnit.Texture0);
                     this.FlowRateTextureDiagonal[1].Bind(TextureUnit.Texture1);
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture2);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("flowtex", 0);
                     sp.SetUniform("flowdtex", 1);
+                    sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("vlowpass", 0.9f);
                 });
 
             // step 3 - update layers
@@ -269,7 +276,7 @@ namespace TerrainGeneration
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.FlowRateTexture[1].Bind(TextureUnit.Texture1);
                     this.FlowRateTextureDiagonal[1].Bind(TextureUnit.Texture2);
-                    this.VelocityTexture.Bind(TextureUnit.Texture3);
+                    this.VelocityTexture[1].Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
@@ -294,7 +301,7 @@ namespace TerrainGeneration
                     this.TerrainTexture[1].Bind(TextureUnit.Texture0);
                     this.FlowRateTexture[1].Bind(TextureUnit.Texture1);
                     this.FlowRateTextureDiagonal[1].Bind(TextureUnit.Texture2);
-                    this.VelocityTexture.Bind(TextureUnit.Texture3);
+                    this.VelocityTexture[1].Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
