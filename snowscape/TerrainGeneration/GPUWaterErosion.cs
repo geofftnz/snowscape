@@ -246,8 +246,8 @@ namespace TerrainGeneration
                         sp.SetUniform("flowtex", 1);
                         sp.SetUniform("flowdtex", 2);
                         sp.SetUniform("texsize", (float)this.Width);
-                        sp.SetUniform("flowRate", 0.7f);  // todo: hoist parameter
-                        sp.SetUniform("flowLowpass", 0.75f);  // todo: hoist parameter
+                        sp.SetUniform("flowRate", 0.9f);  // todo: hoist parameter
+                        sp.SetUniform("flowLowpass", 0.25f);  // todo: hoist parameter
                         sp.SetUniform("dt", dt);  
                     }
                 );
@@ -266,7 +266,8 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("vlowpass", 0.9f);
+                    sp.SetUniform("vdecay", 0.95f);
+                    sp.SetUniform("vadd", 0.05f);
                 });
 
             // step 3 - update layers
@@ -286,10 +287,10 @@ namespace TerrainGeneration
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("capacitybias", 0.1f);
-                    sp.SetUniform("capacityscale", 20.0f);
+                    sp.SetUniform("capacityscale", 10.0f);
                     sp.SetUniform("rockerodability", 0.02f);
-                    sp.SetUniform("erosionfactor", 10.0f);
-                    sp.SetUniform("depositfactor", 0.01f);
+                    sp.SetUniform("erosionfactor", 0.05f);
+                    sp.SetUniform("depositfactor", 0.02f);
                     //sp.SetUniform("evaporationfactor", 0.98f);
                 });
 
@@ -310,7 +311,7 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 2);
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("evaporationfactor", 0.995f);
+                    sp.SetUniform("evaporationfactor", 0.999f);
                 });
 
             // step 5 - slippage flow calc

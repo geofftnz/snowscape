@@ -5,7 +5,8 @@ uniform sampler2D flowtex;
 uniform sampler2D flowdtex;
 uniform sampler2D velocitytex;
 uniform float texsize;
-uniform float vlowpass;
+uniform float vdecay;
+uniform float vadd;
 
 in vec2 texcoord;
 
@@ -59,5 +60,5 @@ void main(void)
 	// topright/bottomleft
 	v += vec2(-1.0,1.0) * (infromtopright + fd.b - fd.r - infrombottomleft) * diag * 0.5;
 
-	out_Velocity = prevvel * vlowpass + vec4(v,0.0,0.0) * (1.0-vlowpass);
+	out_Velocity = prevvel * vdecay + vec4(v,0.0,0.0) * vadd;
 }
