@@ -145,11 +145,11 @@ void main(void)
 
 	// evaporation
 	
-	float sedimentprecipitation = max(0.0,layers.a * (evaporationfactor / (1.0 + length(velocity.xy))));
-	layers.a -= sedimentprecipitation;
-	layers.g += sedimentprecipitation;
-	layers.b *= evaporationfactor;
-		
+	//float sedimentprecipitation = max(0.0,layers.a * (evaporationfactor / (1.0 + length(velocity.xy))));
+	//layers.a -= sedimentprecipitation;
+	//layers.g += sedimentprecipitation;
+	//layers.b *= evaporationfactor;
+		//
 	
 	// add some water
 	//if (length(texcoord-vec2(0.2,0.75)) < 0.002)

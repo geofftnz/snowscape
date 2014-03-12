@@ -366,11 +366,11 @@ vec3 terrainDiffuseDebug(vec3 p, vec3 n, vec4 s, float shadowHeight)
 
 	// water depth
 	float waterdepth = s.g;
-	vec3 watercol = mix(vec3(0.05,0.4,0.6),vec3(0.005,0.02,0.25),clamp(pow(waterdepth,0.5),0.0,1.0));
-	col = mix(col, watercol, 0.6*smoothstep(0.0,5.0,waterdepth*waterdepth) + 0.4*smoothstep(0.001,0.005,waterdepth*waterdepth));
+	vec3 watercol = mix(vec3(0.001,0.1,0.6),vec3(0.005,0.02,0.25),clamp(pow(waterdepth,0.5),0.0,1.0));
+	col = mix(col, watercol, 0.6*smoothstep(0.0,0.02,waterdepth*waterdepth) + 0.4*smoothstep(0.001,0.005,waterdepth*waterdepth));
 
-	float suspended = s.b * 0.5;
-	vec3 suspendedcol = vec3(0.6,0.0,0.2);
+	float suspended = s.b * 0.2;
+	vec3 suspendedcol = vec3(0.6,0.0,0.05);
 	col = mix(col, suspendedcol,clamp(suspended,0.0,1.0));
 
     return col;

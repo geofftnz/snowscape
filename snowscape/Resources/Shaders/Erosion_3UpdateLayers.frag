@@ -12,6 +12,7 @@ uniform float capacityscale;
 uniform float rockerodability;
 uniform float erosionfactor;
 uniform float depositfactor;
+uniform float evaporationfactor;
 
 in vec2 texcoord;
 
@@ -53,14 +54,17 @@ void main(void)
 	vec4 vis = vec4(0.0);
 
 	// R:hard G:soft B:water A:suspended
-	vec4 layers = texture(terraintex,texcoord);
+	vec4 layers0 = texture(terraintex,texcoord);
+	layers0.a = max(0,layers0.a); // TODO: why is this negative infinity?
+	vec4 layers = layers0;
 	vec3 grad = terrainGradient(texcoord);
 	vec2 velocity = texture(velocitytex,texcoord).xy;
 
 	float vsquared = dot(velocity,velocity);
 
 	//float capacity = capacityscale * min(1.0,0.001+max(0.0,layers.b * 2.0)) * ( capacitybias + dot(grad, vec3(0,1,0))) * pow(vsquared,0.1);
-	float capacity = capacityscale * (1.0+layers.b) * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
+	// float capacity = capacityscale * (1.0+layers.b) * max(capacitybias,dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);  // good
+	float capacity = capacityscale * (1.0+layers.b*0.05) * (capacitybias + dot(grad, vec3(0.0,1.0,0.0))) * length(velocity);
 	//float capacity = capacityscale * layers.b * length(velocity);
 	//float capacity = capacityscale * layers.b * vsquared;
 	//float capacity = capacitybias + capacityscale * length(velocity);
@@ -71,16 +75,15 @@ void main(void)
 	// potential for erosion is related to speed
 	//float erosionpotential = erosionfactor * layers.b * vsquared;
 
-	layers.a = max(0,layers.a); // TODO: why is this negative infinity?
 
 	//float erosionamount = max(0.0,min(capacity - layers.a, erosionpotential));
 	float erosionamount = erosionfactor * max(0.0,capacity - layers.a);
 	float depositamount = depositfactor * max(0.0, layers.a - capacity);
 
 
-	vis.r = erosionamount;
-	vis.g = depositamount * 8.0;
-	vis.b = capacity;
+	//vis.r = erosionamount;
+	//vis.g = depositamount * 8.0;
+	//vis.b = capacity;
 
 	// erode
 	// erode from soft material first - take the lesser of erosionamount and soft material
@@ -99,31 +102,22 @@ void main(void)
 	layers.g += depositamount;
 	layers.a -= depositamount;
 
-	//vis.g = layers.a * 64.0;
 
 	// evaporation
-	//float evaporationamount = min(layers.b, 
+	float evap = (1.0 / (200.0 + 100.0*length(velocity.xy)));
+	float sedimentprecipitation = max(0.0,layers.a * evap);
+	float waterevaporation = max(0.0,layers.b * evap);
+	layers.a -= sedimentprecipitation;
+	layers.g += sedimentprecipitation;
+	layers.b -= waterevaporation;
+//
 
-	// move water according to flows
 
-	//vec4 outflow = sampleFlow(texcoord);
-//
-	//// add outflows from surrounding blocks.
-	//// left cell, take right outflow
-	//layers.b += sampleFlow(texcoord + vec2(-t,0)).g;
-//
-	//// right cell, take left outflow
-	//layers.b += sampleFlow(texcoord + vec2(t,0)).a;
-//
-	//// top cell, take bottom outflow
-	//layers.b += sampleFlow(texcoord + vec2(0,-t)).b;
-//
-	//// bottom cell, take top outflow
-	//layers.b += sampleFlow(texcoord + vec2(0,t)).r;
-//
-	//// subtract outflows
-	//layers.b -= min(layers.b,outflow.r + outflow.g + outflow.b + outflow.a);
-//
+	vis.r = 32.0 * max(0.0,layers.a - layers0.a);
+	vis.g = 32.0 * max(0.0,layers0.a - layers.a);
+	vis.b = 0.2 * capacity;
+
+
 	out_Terrain = layers;
 	out_Vis = vis;
 	

@@ -266,8 +266,8 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("vdecay", 0.95f);
-                    sp.SetUniform("vadd", 0.05f);
+                    sp.SetUniform("vdecay", 0.6f);
+                    sp.SetUniform("vadd", 0.4f);
                 });
 
             // step 3 - update layers
@@ -288,10 +288,10 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("capacitybias", 0.1f);
                     sp.SetUniform("capacityscale", 10.0f);
-                    sp.SetUniform("rockerodability", 0.02f);
-                    sp.SetUniform("erosionfactor", 0.05f);
-                    sp.SetUniform("depositfactor", 0.02f);
-                    //sp.SetUniform("evaporationfactor", 0.98f);
+                    sp.SetUniform("rockerodability", 0.05f);
+                    sp.SetUniform("erosionfactor", 0.02f);
+                    sp.SetUniform("depositfactor", 0.1f);
+                    sp.SetUniform("evaporationfactor", 0.001f);
                 });
 
 
@@ -311,7 +311,7 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 2);
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("evaporationfactor", 0.995f);
+                    //sp.SetUniform("evaporationfactor", 0.995f);
                 });
 
             // step 5 - slippage flow calc
@@ -327,7 +327,7 @@ namespace TerrainGeneration
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("maxdiff", 0.85f);
-                    sp.SetUniform("sliprate", 0.1f);
+                    sp.SetUniform("sliprate", 0.01f);
                 });
 
             // step 6 - slippage transport
@@ -447,7 +447,7 @@ namespace TerrainGeneration
             Snowscape.TerrainStorage.Terrain terrain = new Snowscape.TerrainStorage.Terrain(this.Width, this.Height);
 
             terrain.Clear(0.0f);
-            terrain.AddSimplexNoise(4, 0.16f / (float)this.Width, 200.0f, h => h, h => Math.Abs(h));
+            terrain.AddSimplexNoise(4, 0.16f / (float)this.Width, 300.0f, h => h, h => Math.Abs(h));
             terrain.AddSimplexNoise(14, 1.0f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h);
             //terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
             terrain.AddLooseMaterial(1.0f);
