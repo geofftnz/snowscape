@@ -970,7 +970,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderLighting(Vector3 sunVector)
         {
-            this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
+            //this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
+            this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, 0.0f, 1000.0f);
         }
 
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
