@@ -291,7 +291,7 @@ namespace TerrainGeneration
                     sp.SetUniform("rockerodability", 0.05f);
                     sp.SetUniform("erosionfactor", 0.02f);
                     sp.SetUniform("depositfactor", 0.1f);
-                    sp.SetUniform("evaporationfactor", 0.001f);
+                    sp.SetUniform("evaporationfactor", 0.001f);  // not used
                 });
 
 
@@ -312,6 +312,7 @@ namespace TerrainGeneration
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     //sp.SetUniform("evaporationfactor", 0.995f);
+                    sp.SetUniform("time", (float)(DateTime.Now.Ticks & 65535)/65535.0f);
                 });
 
             // step 5 - slippage flow calc
