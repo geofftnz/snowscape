@@ -144,7 +144,8 @@ void main(void)
 
 
 	// evaporation
-	float sedimentprecipitation = max(0.0,layers.a * evaporationfactor);
+	
+	float sedimentprecipitation = max(0.0,layers.a * (evaporationfactor / (1.0 + length(velocity.xy))));
 	layers.a -= sedimentprecipitation;
 	layers.g += sedimentprecipitation;
 	layers.b *= evaporationfactor;

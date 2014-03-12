@@ -311,7 +311,7 @@ namespace TerrainGeneration
                     sp.SetUniform("flowdtex", 2);
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("evaporationfactor", 0.999f);
+                    sp.SetUniform("evaporationfactor", 0.995f);
                 });
 
             // step 5 - slippage flow calc
@@ -447,9 +447,9 @@ namespace TerrainGeneration
             Snowscape.TerrainStorage.Terrain terrain = new Snowscape.TerrainStorage.Terrain(this.Width, this.Height);
 
             terrain.Clear(0.0f);
-            terrain.AddSimplexNoise(6, 0.3333f / (float)this.Width, 50.0f, h => h, h => Math.Abs(h));
-            terrain.AddSimplexNoise(14, 0.37f / (float)this.Width, 400.0f, h => Math.Abs(h), h => h);
-            terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
+            terrain.AddSimplexNoise(4, 0.16f / (float)this.Width, 200.0f, h => h, h => Math.Abs(h));
+            terrain.AddSimplexNoise(14, 1.0f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h);
+            //terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
             terrain.AddLooseMaterial(1.0f);
             terrain.SetBaseLevel();
 
