@@ -287,7 +287,7 @@ namespace TerrainGeneration
                     sp.SetUniform("velocitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("capacitybias", 0.1f);
-                    sp.SetUniform("capacityscale", 10.0f);
+                    sp.SetUniform("capacityscale", 30.0f);
                     sp.SetUniform("rockerodability", 0.05f);
                     sp.SetUniform("erosionfactor", 0.02f);
                     sp.SetUniform("depositfactor", 0.1f);
