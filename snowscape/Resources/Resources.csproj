@@ -286,7 +286,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Shaders\Erosion_7TerrainCopy.frag">
+    <Content Include="Shaders\Erosion_9TerrainCopy.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -302,6 +302,16 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Shaders\TerrainTileParamLoader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Shaders\Erosion_7HardSlipOutflow.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Shaders\Erosion_8HardSlipTransport.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

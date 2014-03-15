@@ -119,6 +119,8 @@ namespace TerrainGeneration
         private GBufferShaderStep SedimentTransportStep = new GBufferShaderStep("erosion-transport");
         private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("erosion-slipflow");
         private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("erosion-sliptransport");
+        private GBufferShaderStep HardSlippageFlowStep = new GBufferShaderStep("erosion-hslipflow");
+        private GBufferShaderStep HardSlippageTransportStep = new GBufferShaderStep("erosion-hsliptransport");
         private GBufferShaderStep TerrainCopyStep = new GBufferShaderStep("erosion-terraincopy");
 
 
@@ -218,8 +220,15 @@ namespace TerrainGeneration
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
             SlippageTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_6SlipTransport.frag".Load());
 
-            TerrainCopyStep.SetOutputTexture(0,"out_Terrain",this.TerrainTexture[0]);
-            TerrainCopyStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_7TerrainCopy.frag".Load());
+            HardSlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
+            HardSlippageFlowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_7HardSlipOutflow.frag".Load());
+
+            HardSlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            HardSlippageTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_8HardSlipTransport.frag".Load());
+
+            // don't need copy because hard-slip writes back to terrain0
+            //TerrainCopyStep.SetOutputTexture(0,"out_Terrain",this.TerrainTexture[0]);
+            //TerrainCopyStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_9TerrainCopy.frag".Load());
         }
 
         public float GetHeightAt(float x, float y)
@@ -328,7 +337,7 @@ namespace TerrainGeneration
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("maxdiff", 0.85f);
-                    sp.SetUniform("sliprate", 0.01f);
+                    sp.SetUniform("sliprate", 0.002f);
                 });
 
             // step 6 - slippage transport
@@ -345,8 +354,10 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
-            // step 7 - terrain copy
-            TerrainCopyStep.Render(
+            // step 7 - hard slippage flow calc
+            // in: terrain 
+            // out: slip-flow
+            HardSlippageFlowStep.Render(
                 () =>
                 {
                     this.TerrainTexture[1].Bind(TextureUnit.Texture0);
@@ -354,7 +365,35 @@ namespace TerrainGeneration
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("maxdiff", 2.5f);
+                    sp.SetUniform("sliprate", 0.001f);
                 });
+
+            // step 8 - hard slippage transport
+            HardSlippageTransportStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                    this.SlipFlowTexture.Bind(TextureUnit.Texture1);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("sliptex", 1);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
+
+            //// step 7 - terrain copy
+            //TerrainCopyStep.Render(
+            //    () =>
+            //    {
+            //        this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+            //    },
+            //    (sp) =>
+            //    {
+            //        sp.SetUniform("terraintex", 0);
+            //    });
 
         }
 
