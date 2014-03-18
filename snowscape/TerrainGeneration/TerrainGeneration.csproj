@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GPUSnowTransport.cs" />
     <Compile Include="GPUWaterErosion.cs" />
     <Compile Include="WindErosionParticle.cs" />
     <Compile Include="WaterErosionParticle.cs" />
