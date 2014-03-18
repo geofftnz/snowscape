@@ -513,5 +513,21 @@ namespace TerrainGeneration
         }
 
 
+
+
+        public void Unload()
+        {
+            // setup textures
+            for (int i = 0; i < 2; i++)
+            {
+                this.TerrainTexture[i].Unload();
+                this.FlowRateTexture[i].Unload();
+                this.FlowRateTextureDiagonal[i].Unload();
+                this.VelocityTexture[i].Unload();
+            }
+
+            this.SlipFlowTexture.Unload();
+            this.VisTex.Unload();
+        }
     }
 }

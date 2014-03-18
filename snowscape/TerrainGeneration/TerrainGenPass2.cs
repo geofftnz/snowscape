@@ -549,6 +549,12 @@ namespace TerrainGeneration
         {
             throw new NotImplementedException();
         }
+
+
+        public void Unload()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

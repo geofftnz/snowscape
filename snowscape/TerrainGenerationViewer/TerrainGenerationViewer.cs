@@ -40,6 +40,7 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileLodScale = 4;
 
         public ITerrainGen Terrain { get; set; }
+        private int TerrainGenPass = 1;
 
         private Matrix4 overlayProjection = Matrix4.Identity;
         private Matrix4 overlayModelview = Matrix4.Identity;
@@ -301,9 +302,13 @@ namespace Snowscape.TerrainGenerationViewer
                 ResetTerrain();
                 ResetCounters();
             }
-            if (e.Key == Key.P)
+            if (e.Key == Key.T)
             {
                 this.perfmon.ResetAll();
+            }
+            if (e.Key == Key.P)
+            {
+                this.SwitchPass();
             }
 
             if (e.Key == Key.Up)
@@ -367,6 +372,39 @@ namespace Snowscape.TerrainGenerationViewer
 
                 }
             }
+        }
+
+        private void SwitchPass()
+        {
+            switch (this.TerrainGenPass)
+            {
+                case 1: // currently on pass 0, start on pass 1
+                    {
+                        this.Terrain.Save(GetTerrainFileName(0, 1));
+                        GPUSnowTransport newgen = new GPUSnowTransport(this.Terrain.Width, this.Terrain.Height);
+                        newgen.Init();
+                        newgen.InitFromPass1(this.Terrain);
+                        this.Terrain.Unload();
+                        this.Terrain = newgen;
+                        this.TerrainGenPass = 2;
+                    }
+                    break;
+
+                case 2:
+                    {
+                        this.Terrain.Save(GetTerrainFileName(0, 2));
+                        GPUWaterErosion newgen = new GPUWaterErosion(this.Terrain.Width, this.Terrain.Height);
+                        newgen.Init();
+                        newgen.Load(GetTerrainFileName(0, 1));
+                        this.Terrain.Unload();
+                        this.Terrain = newgen;
+                        this.TerrainGenPass = 1;
+                    }
+                    break;
+                default: break;
+            }
+
+
         }
 
 
@@ -777,8 +815,8 @@ namespace Snowscape.TerrainGenerationViewer
                 ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue(),
                 Time = (float)(this.frameCounter.Frames % 65536),
 
-                MiscTexture = ((GPUWaterErosion)this.Terrain).VelocityTex,
-                MiscTexture2 = ((GPUWaterErosion)this.Terrain).VisTex
+                MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
+                MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture
             };
 
             this.lightingStep.Render(rp);
@@ -841,7 +879,7 @@ namespace Snowscape.TerrainGenerationViewer
                 perfmon.Stop("GPU Erosion");
                 //if (this.updateGPUIterations % 4 == 0)
                 //{
-                    this.updateThreadIterations = this.updateGPUIterations;
+                this.updateThreadIterations = this.updateGPUIterations;
                 //}
             }
 
@@ -860,15 +898,28 @@ namespace Snowscape.TerrainGenerationViewer
                     //float[] tempData = this.Terrain.GetRawData();
                     //this.terrainTile.SetDataFromTerrainGenerationRaw(tempData);
                     //this.terrainGlobal.SetDataFromTerrainGenerationRaw(tempData);
-                    
-                    var terr = this.Terrain as GPUWaterErosion;
-                    this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
-                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
-                    this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+
+                    // TODO: fix
+                    if (this.Terrain is GPUWaterErosion)
+                    {
+                        var terr = this.Terrain as GPUWaterErosion;
+                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+                    }
+
+                    if (this.Terrain is GPUSnowTransport)
+                    {
+                        var terr = this.Terrain as GPUSnowTransport;
+                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+                    }
+
                 }
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
-                
+
                 perfmon.Stop("Generation Update");
 
                 textureUpdateCount++;
@@ -1059,8 +1110,12 @@ namespace Snowscape.TerrainGenerationViewer
 
         protected string GetTerrainFileName(int index)
         {
-            return string.Format("{0}Terrain{1}.1024.pass1.ter", this.terrainPath, index);
+            return GetTerrainFileName(index, 1);
         }
 
+        protected string GetTerrainFileName(int index, int pass)
+        {
+            return string.Format("{0}Terrain{1}.1024.pass{2}.ter", this.terrainPath, index, pass);
+        }
     }
 }

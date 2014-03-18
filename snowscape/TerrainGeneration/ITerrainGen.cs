@@ -12,6 +12,7 @@ namespace TerrainGeneration
         int Height { get; }
         float GetHeightAt(float x, float y);
         void Init();
+        void Unload();
         void ResetTerrain();
         void ModifyTerrain();
         void Load(string filename);
