@@ -10,7 +10,7 @@ void main(void)
 {
 	vec4 layers = texture(terraintex,texcoord);
 
-	layers.b += 0.0001;
+	layers.b += 0.0005;
 
 	out_Terrain = layers;
 }

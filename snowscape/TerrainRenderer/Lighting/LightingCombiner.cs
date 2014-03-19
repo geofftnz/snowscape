@@ -89,6 +89,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             public Texture MiscTexture { get; set; }
             public Texture MiscTexture2 { get; set; }
 
+            public float RenderMode { get; set; }
+
             public RenderParams()
             {
             }
@@ -196,6 +198,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("aoInfluenceHeight", rp.AOInfluenceHeight);
                 sp.SetUniform("ambientBias", rp.AmbientBias);
                 sp.SetUniform("indirectBias", rp.IndirectBias);
+                sp.SetUniform("renderMode", rp.RenderMode);
 
                 sp.SetUniform("scatteringInitialStepSize", rp.ScatteringInitialStepSize);
                 sp.SetUniform("scatteringStepGrowthFactor", rp.ScatteringStepGrowthFactor);

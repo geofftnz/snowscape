@@ -18,14 +18,14 @@ float t = 1.0 / texsize;
 float sampleHeight(vec2 pos)
 {
 	vec4 l = texture(terraintex,pos);
-	return l.r + l.g;
+	return l.r + l.g + l.b;
 }
 
 void main(void)
 {
 	// get our current and neighbour heights
 	vec4 l = texture(terraintex,texcoord);
-	float h = l.r + l.g - maxdiff;
+	float h = l.r + l.g + l.b - maxdiff;
 
 	float htop = sampleHeight(texcoord + vec2(0,-t));
 	float hright = sampleHeight(texcoord + vec2(t,0));
@@ -43,8 +43,8 @@ void main(void)
 	//float minneighbour = min(min(htop-oftop,hbottom-ofbottom),min(hleft-ofleft,hright-ofright));
 	//float maxdrop = max(0.0,h - minneighbour);
 
-	// l.g has available loose material - make sure we don't exceed this or the min-neighbour difference calculated above
-	float pavailable = min(ptotal,l.g); //min(min(ptotal,l.b),maxdrop);
+	// l.b has available loose material - make sure we don't exceed this or the min-neighbour difference calculated above
+	float pavailable = min(ptotal,l.b); //min(min(ptotal,l.b),maxdrop);
 	float pscale = pavailable * clamp(1.0 / ptotal,0.0,1.0);
 
 	pscale *= sliprate;

@@ -432,7 +432,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             log.Trace("Saving terrain into slot 0...");
-            this.Terrain.Save(this.GetTerrainFileName(0));
+            this.Terrain.Save(this.GetTerrainFileName(0,this.TerrainGenPass));
         }
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
@@ -816,7 +816,9 @@ namespace Snowscape.TerrainGenerationViewer
                 Time = (float)(this.frameCounter.Frames % 65536),
 
                 MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
-                MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture
+                MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture,
+
+                RenderMode = (float)this.TerrainGenPass
             };
 
             this.lightingStep.Render(rp);

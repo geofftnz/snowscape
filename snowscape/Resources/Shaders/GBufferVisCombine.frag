@@ -33,6 +33,8 @@ uniform float nearScatterDistance;
 uniform float ambientBias;  // amount of skylight
 uniform float indirectBias; // amount of indirect light
 
+uniform float renderMode;
+
 // scattering performance
 uniform float scatteringInitialStepSize;
 uniform float scatteringStepGrowthFactor;
@@ -376,6 +378,17 @@ vec3 terrainDiffuseDebug(vec3 p, vec3 n, vec4 s, float shadowHeight)
     return col;
 }
 
+vec3 terrainDiffuseDebugSnow(vec3 p, vec3 n, vec4 s, float shadowHeight)
+{
+	vec3 col = vec3(0.1,0.06,0.05);
+
+	float snow = s.r + s.g;
+	vec3 snowcol = vec3(0.98);
+	col = mix(col, snowcol, clamp(snow * 16.0,0.0,1.0));
+
+    return col;
+}
+
 
 
 vec3 getSkyLightFromDirection(vec3 dir, vec3 base)
@@ -452,8 +465,14 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	//return n.xyz * 0.5 + vec3(0.5);
 
     //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
-	//vec3 col = vec3(pow(0.98,2.2));
-	vec3 col = terrainDiffuseDebug(p,n,s,shadowHeight);
+	vec3 col = vec3(pow(0.98,2.2));
+
+	if (abs(renderMode-1.0) < 0.1){
+		col = terrainDiffuseDebug(p,n,s,shadowHeight);
+	}
+	if (abs(renderMode-2.0) < 0.1){
+		col = terrainDiffuseDebugSnow(p,n,s,shadowHeight);
+	}
 
     //float diffuse = directIllumination(p,n,shadowHeight);
 	//col = col * diffuse + col * vec3(0.8,0.9,1.0) * 0.7 * AO;
