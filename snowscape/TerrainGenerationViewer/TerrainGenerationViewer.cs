@@ -289,6 +289,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.001f, 0.0001f, 10.0f, v => v + 0.0001f, v => v - 0.0001f));
             parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.1f, 1.0f, 2.0f, v => v + 0.001f, v => v - 0.001f));
 
+            parameters.Add(new Parameter<float>("SnowSlopeDepthAdjust", 0.01f, 0.0f, 100.0f, v => v * 1.02f, v => v * 0.98f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -810,6 +811,8 @@ namespace Snowscape.TerrainGenerationViewer
                 AOInfluenceHeight = (float)this.parameters["AOInfluenceHeight"].GetValue(),
                 AmbientBias = (float)this.parameters["AmbientBias"].GetValue(),
                 IndirectBias = (float)this.parameters["IndirectBias"].GetValue(),
+
+                SnowSlopeDepthAdjust = (float)this.parameters["SnowSlopeDepthAdjust"].GetValue(),
 
                 ScatteringInitialStepSize = (float)this.parameters["ScatteringInitialStepSize"].GetValue(),
                 ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue(),

@@ -39,6 +39,8 @@ uniform float renderMode;
 uniform float scatteringInitialStepSize;
 uniform float scatteringStepGrowthFactor;
 
+uniform float snowSlopeDepthAdjust;
+
 
 uniform mat4 pre_projection_matrix;
 
@@ -382,9 +384,13 @@ vec3 terrainDiffuseDebugSnow(vec3 p, vec3 n, vec4 s, float shadowHeight)
 {
 	vec3 col = vec3(0.1,0.06,0.05);
 
-	float snow = s.r + s.g;
+	float slope = 1.0-clamp(dot(n,vec3(0.0,1.0,0.0)),0.0,1.0);
+	float snowadjust = (slope*slope) * snowSlopeDepthAdjust;
+
+	float snow = max(0.0,s.r + s.g - snowadjust);
 	vec3 snowcol = vec3(0.98);
-	col = mix(col, snowcol, clamp(snow * 16.0,0.0,1.0));
+	//col = mix(col, snowcol, clamp(snow * 16.0,0.0,1.0));
+	col = mix(col, snowcol, smoothstep(0.0,0.1,snow));
 
     return col;
 }

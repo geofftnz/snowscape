@@ -91,6 +91,8 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             public float RenderMode { get; set; }
 
+            public float SnowSlopeDepthAdjust { get; set; }
+
             public RenderParams()
             {
             }
@@ -199,6 +201,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("ambientBias", rp.AmbientBias);
                 sp.SetUniform("indirectBias", rp.IndirectBias);
                 sp.SetUniform("renderMode", rp.RenderMode);
+                sp.SetUniform("snowSlopeDepthAdjust", rp.SnowSlopeDepthAdjust);
 
                 sp.SetUniform("scatteringInitialStepSize", rp.ScatteringInitialStepSize);
                 sp.SetUniform("scatteringStepGrowthFactor", rp.ScatteringStepGrowthFactor);
