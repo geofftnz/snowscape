@@ -180,12 +180,12 @@ namespace OpenTKExtensions.Camera
 
             if (this.Keyboard[Key.F])
             {
-                this.EyeHeight *= 1.05f;
+                this.EyeHeight += 1.0f * this.movementSpeed * (float)time;
                 this.IsMoving = true;
             }
             if (this.Keyboard[Key.V])
             {
-                this.EyeHeight *= 0.95f;
+                this.EyeHeight -= 1.0f * this.movementSpeed * (float)time;
                 this.IsMoving = true;
             }
 

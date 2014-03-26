@@ -215,8 +215,8 @@ namespace Snowscape.Viewer
             {
                 this.angle -= e.Time * 0.5;
             }
-            if (Keyboard[Key.Up]) { this.viewHeight += 10.0; }
-            if (Keyboard[Key.Down]) { this.viewHeight -= 10.0; }
+            if (Keyboard[Key.Up]) { this.viewHeight += 1.0; }
+            if (Keyboard[Key.Down]) { this.viewHeight -= 1.0; }
 
         }
 
