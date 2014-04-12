@@ -99,7 +99,7 @@ float getSliceIndirect(vec2 p0, vec2 dp)
 	float h0 = texture(heightTexture,p0).r; // height at origin
 	vec3 n0 = normalize(texture(normalTexture,p0).rgb - vec3(0.5));  // normal at origin
 	float t = 0.0;
-	float maxdydx = 0.0;
+	float maxdydx = -1000.0;
 	float indirect = 0.0;
 
 	//vec3 avgdir = vec3(dp.x,0.0,dp.y);
@@ -135,7 +135,7 @@ float getSliceIndirect(vec2 p0, vec2 dp)
 			// get direct illumination at point p
 			float direct = clamp(dot(n,sunVector),0.0,1.0) * s;
 
-			float diffuse = direct * n0dotl * falloff;
+			float diffuse = direct * (0.8 + 0.2 * n0dotl) * falloff;
 
 			// light specularly reflected from L off P towards P0
 			//vec3 rsun = reflect(sunVector, n);
