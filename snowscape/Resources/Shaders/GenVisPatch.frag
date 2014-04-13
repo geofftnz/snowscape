@@ -7,6 +7,7 @@ uniform vec4 boxparam;
 uniform float patchSize;
 uniform float scale;
 uniform vec2 offset;
+uniform float detailTexScale; // 0.1
 
 in vec3 boxcoord;
 in vec3 normal;
@@ -21,7 +22,7 @@ out vec4 out_Param;
 float t = 1.0 / 1024.0;
 float sampleHeight(vec2 pos)
 {
-	return textureLod(detailTex,pos,0).r * 0.1;
+	return textureLod(detailTex,pos,0).r * detailTexScale;
 }
 
 vec3 getDetailNormal(vec2 pos)
@@ -40,7 +41,7 @@ void main(void)
 	vec2 texcoord = boxcoord.xz/boxparam.xy;
 
 	mat3 nm = mat3(tangent,normal,binormal);
-	vec3 dn = getDetailNormal(detailpos);
+	vec3 dn = getDetailNormal(detailpos);		// calculate detail normal using heights from detail texture.
 	vec3 n = normalize(dn * nm);
 
     out_Normal = vec4(n.xyz * 0.5 + 0.5,1.0);

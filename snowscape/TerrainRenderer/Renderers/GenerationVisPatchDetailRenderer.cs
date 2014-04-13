@@ -56,6 +56,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         public Vector2 Offset { get; set; }
         public float DetailScale { get; set; }
         public Texture DetailTexture { get; set; }
+        public float DetailTexScale { get; set; }
 
         public GenerationVisPatchDetailRenderer(int width, int height, IPatchCache patchCache)
         {
@@ -69,6 +70,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.Scale = 1.0f;
             this.Offset = Vector2.Zero;
             this.DetailScale = 1.0f;
+            this.DetailTexScale = 0.1f;
 
             this.detailWeight = Vector4.One;
         }
@@ -129,7 +131,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("scale", this.Scale)
                 .SetUniform("offset", this.Offset)
                 .SetUniform("detailScale", this.DetailScale)
-                .SetUniform("detailWeights", this.detailWeight);
+                .SetUniform("detailWeights", this.detailWeight)
+                .SetUniform("detailTexScale", this.DetailTexScale);
 
             this.mesh.Bind(this.shader.VariableLocation("vertex"), this.shader.VariableLocation("in_boxcoord"));
             this.mesh.Render();
