@@ -8,6 +8,7 @@ uniform float patchSize;
 uniform float scale;
 uniform vec2 offset;
 uniform float detailScale;
+uniform float detailTexScale;
 
 in vec3 boxcoord;
 in vec3 normal;
@@ -76,19 +77,18 @@ float fbm( vec3 p )
 float t = 1.0 / 1024.0;
 float sampleHeight(vec2 pos)
 {
-	return textureLod(detailTex,pos,0).r * 0.1;
+	return textureLod(detailTex,pos,0).r * detailTexScale;
 }
 
 
 vec3 getDetailNormal()
 {
 	float w = 2.0 / 16.0;
-	float a = 0.1;
 
-	float h1 = textureLod(detailTex,detailpos_n,0).r * a;
-	float h2 = textureLod(detailTex,detailpos_s,0).r * a;
-	float h3 = textureLod(detailTex,detailpos_w,0).r * a;
-	float h4 = textureLod(detailTex,detailpos_e,0).r * a;
+	float h1 = textureLod(detailTex,detailpos_n,0).r * detailTexScale;
+	float h2 = textureLod(detailTex,detailpos_s,0).r * detailTexScale;
+	float h3 = textureLod(detailTex,detailpos_w,0).r * detailTexScale;
+	float h4 = textureLod(detailTex,detailpos_e,0).r * detailTexScale;
 
     return normalize(vec3(h4-h3,w,h2-h1));  // WAT
 }

@@ -290,6 +290,8 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.1f, 1.0f, 2.0f, v => v + 0.001f, v => v - 0.001f));
 
             parameters.Add(new Parameter<float>("SnowSlopeDepthAdjust", 0.1f, 0.0f, 100.0f, v => v * 1.02f, v => v * 0.98f));
+
+            parameters.Add(new Parameter<float>("DetailHeightScale", 0.1f, 0.0f, 10.0f, v => v + 0.01f, v => v - 0.01f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -1112,6 +1114,9 @@ namespace Snowscape.TerrainGenerationViewer
             //RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
 
             //RenderTile(this.terrainTile, 0f, 0f, tileRendererQuadtree);
+
+            (this.tileRendererPatchLow as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
+            (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
             for (int y = -1; y <= 1; y++)
             {
