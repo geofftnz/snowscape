@@ -859,18 +859,23 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             y += 0.02f;
-            for (int i = 0; i < this.parameters.Count; i++)
+            for (int i = 0; i < this.parameters.DisplayLength; i++)  //this.parameters.Count
             {
-                textManager.AddOrUpdate(
-                    new TextBlock(
-                        "param_" + this.parameters[i].Name,
-                        this.parameters[i].ToString(),
-                        new Vector3(0.01f, y, 0.0f),
-                        0.0004f,
-                        new Vector4(1.0f, 1.0f, 1.0f, (i == this.parameters.CurrentIndex) ? 1.0f : 0.5f)
-                        )
-                    );
-                y += 0.025f;
+                int paramindex = i + this.parameters.DisplayOffset;
+
+                if (paramindex >= 0 && paramindex < this.parameters.Count)
+                {
+                    textManager.AddOrUpdate(
+                        new TextBlock(
+                            "p_" + this.parameters[i].Name,
+                            this.parameters[paramindex].ToString(),
+                            new Vector3(0.01f, y, 0.0f),
+                            0.0004f,
+                            new Vector4(1.0f, 1.0f, 1.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.5f)
+                            )
+                        );
+                    y += 0.025f;
+                }
             }
 
             y += 0.02f;

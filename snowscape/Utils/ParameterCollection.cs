@@ -12,7 +12,7 @@ namespace Utils
         private int currentIndex;
         public int CurrentIndex
         {
-            get 
+            get
             {
                 if (currentIndex >= this.Count)
                 {
@@ -20,7 +20,7 @@ namespace Utils
                 }
                 return currentIndex;
             }
-            set 
+            set
             {
                 currentIndex = value;
                 if (currentIndex < 0)
@@ -31,8 +31,26 @@ namespace Utils
                 {
                     currentIndex = this.Count - 1;
                 }
+
+
+                this.DisplayOffset = currentIndex - this.DisplayLength / 2;
+                
             }
         }
+
+        public int DisplayLength { get; set; }
+
+        private int displayOffset;
+        public int DisplayOffset
+        {
+            get { return displayOffset; }
+            set
+            {
+                this.displayOffset = value.ClampInclusive(0, (this.Count - this.DisplayLength).ClampInclusive(0, int.MaxValue));
+            }
+        }
+
+
 
         public IParameter Current
         {
@@ -45,7 +63,8 @@ namespace Utils
 
         public ParameterCollection()
         {
-
+            this.DisplayLength = 10;
+            this.DisplayOffset = 0;
         }
 
         public IParameter this[string name]
@@ -67,6 +86,6 @@ namespace Utils
             }
         }
 
-        
+
     }
 }
