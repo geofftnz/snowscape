@@ -101,7 +101,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             var boxparam = tile.GetBoxParam();
 
             GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
+            GL.CullFace(CullFaceMode.Back);  // we only want to render front-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
             tile.LinearSampler.Bind(TextureUnit.Texture0);

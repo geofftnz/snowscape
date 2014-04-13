@@ -167,20 +167,20 @@ namespace Snowscape.TerrainRenderer.Mesh
                     if (y % 2 == 0)
                     {
                         meshindex[i + 0] = (uint)(x + y * this.VertexWidth);  // 0
-                        meshindex[i + 1] = (uint)(x + 1 + y * this.VertexWidth);  // 1
-                        meshindex[i + 2] = (uint)(x + (y + 1) * this.VertexWidth); // 2
+                        meshindex[i + 1] = (uint)(x + (y + 1) * this.VertexWidth); // 2
+                        meshindex[i + 2] = (uint)(x + 1 + y * this.VertexWidth);  // 1
                         meshindex[i + 3] = (uint)(x + 1 + y * this.VertexWidth); // 1
-                        meshindex[i + 4] = (uint)(x + 1 + (y + 1) * this.VertexWidth); // 3
-                        meshindex[i + 5] = (uint)(x + (y + 1) * this.VertexWidth); // 2
+                        meshindex[i + 4] = (uint)(x + (y + 1) * this.VertexWidth); // 2
+                        meshindex[i + 5] = (uint)(x + 1 + (y + 1) * this.VertexWidth); // 3
                     }
                     else
                     {
                         meshindex[i + 0] = (uint)(x + y * this.VertexWidth);  // 0
-                        meshindex[i + 1] = (uint)(x + 1 + y * this.VertexWidth);  // 1
-                        meshindex[i + 2] = (uint)(x + 1 + (y + 1) * this.VertexWidth); // 3 
+                        meshindex[i + 1] = (uint)(x + 1 + (y + 1) * this.VertexWidth); // 3 
+                        meshindex[i + 2] = (uint)(x + 1 + y * this.VertexWidth);  // 1
                         meshindex[i + 3] = (uint)(x + y * this.VertexWidth);  // 0
-                        meshindex[i + 4] = (uint)(x + 1 + (y + 1) * this.VertexWidth); // 3 
-                        meshindex[i + 5] = (uint)(x + (y + 1) * this.VertexWidth); // 2
+                        meshindex[i + 4] = (uint)(x + (y + 1) * this.VertexWidth); // 2
+                        meshindex[i + 5] = (uint)(x + 1 + (y + 1) * this.VertexWidth); // 3 
                     }
                 }
             }
@@ -201,11 +201,11 @@ namespace Snowscape.TerrainRenderer.Mesh
                 uint index3 = (uint)(index2 + 1);
 
                 meshindex[ii + 0] = index0;  // 0
-                meshindex[ii + 1] = index2; // 2
-                meshindex[ii + 2] = index1;  // 1
+                meshindex[ii + 1] = index1; // 2
+                meshindex[ii + 2] = index2;  // 1
                 meshindex[ii + 3] = index1; // 1
-                meshindex[ii + 4] = index2; // 2
-                meshindex[ii + 5] = index3; // 3
+                meshindex[ii + 4] = index3; // 2
+                meshindex[ii + 5] = index2; // 3
 
                 ii += 6;
             }
@@ -222,11 +222,11 @@ namespace Snowscape.TerrainRenderer.Mesh
                 uint index3 = (uint)(index2 + 1);
 
                 meshindex[ii + 0] = index0;  // 0
-                meshindex[ii + 1] = index1;  // 1
-                meshindex[ii + 2] = index2; // 2
+                meshindex[ii + 1] = index2;  // 1
+                meshindex[ii + 2] = index1; // 2
                 meshindex[ii + 3] = index1; // 1
-                meshindex[ii + 4] = index3; // 3
-                meshindex[ii + 5] = index2; // 2
+                meshindex[ii + 4] = index2; // 3
+                meshindex[ii + 5] = index3; // 2
 
                 ii += 6;
             }
@@ -243,11 +243,11 @@ namespace Snowscape.TerrainRenderer.Mesh
                 uint index3 = (uint)(index2 + 1);
 
                 meshindex[ii + 0] = index0;  // 0
-                meshindex[ii + 1] = index1;  // 1
-                meshindex[ii + 2] = index2; // 2
+                meshindex[ii + 1] = index2;  // 1
+                meshindex[ii + 2] = index1; // 2
                 meshindex[ii + 3] = index1; // 1
-                meshindex[ii + 4] = index3; // 3
-                meshindex[ii + 5] = index2; // 2
+                meshindex[ii + 4] = index2; // 3
+                meshindex[ii + 5] = index3; // 2
 
                 ii += 6;
             }
@@ -264,11 +264,11 @@ namespace Snowscape.TerrainRenderer.Mesh
                 uint index3 = (uint)(index2 + 1);
 
                 meshindex[ii + 0] = index0;  // 0
-                meshindex[ii + 1] = index2; // 2
-                meshindex[ii + 2] = index1;  // 1
+                meshindex[ii + 1] = index1; // 2
+                meshindex[ii + 2] = index2;  // 1
                 meshindex[ii + 3] = index1; // 1
-                meshindex[ii + 4] = index2; // 2
-                meshindex[ii + 5] = index3; // 3
+                meshindex[ii + 4] = index3; // 2
+                meshindex[ii + 5] = index2; // 3
 
                 ii += 6;
             }
