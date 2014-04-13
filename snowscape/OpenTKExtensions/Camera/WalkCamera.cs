@@ -32,7 +32,7 @@ namespace OpenTKExtensions.Camera
 
         private int prevMouseX = -10000;
         private int prevMouseY = -10000;
-        float movementSpeed = 10f;
+        float movementSpeed = 5f;
 
 
         public float AngleUpDown
@@ -180,12 +180,12 @@ namespace OpenTKExtensions.Camera
 
             if (this.Keyboard[Key.F])
             {
-                this.EyeHeight += 1.0f * this.movementSpeed * (float)time;
+                this.EyeHeight += 10.0f * this.movementSpeed * (float)time;
                 this.IsMoving = true;
             }
             if (this.Keyboard[Key.V])
             {
-                this.EyeHeight -= 1.0f * this.movementSpeed * (float)time;
+                this.EyeHeight -= 10.0f * this.movementSpeed * (float)time;
                 this.IsMoving = true;
             }
 

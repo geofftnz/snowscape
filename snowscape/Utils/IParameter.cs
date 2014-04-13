@@ -8,5 +8,6 @@ namespace Utils
         string Name { get; }
         void Reset();
         object GetValue();
+        bool Impacts(ParameterImpact impact);
     }
 }

@@ -5,6 +5,12 @@ using System.Text;
 
 namespace Utils
 {
+    public enum ParameterImpact
+    {
+        None = 0,
+        PreCalcLighting = 1
+    }
+
     /// <summary>
     /// Represents a user-settable parameter
     /// 
@@ -17,6 +23,8 @@ namespace Utils
     /// </summary>
     public class Parameter<T> : IParameter where T : IComparable
     {
+
+
         public string Name { get; private set; }
 
         private T value;
@@ -45,13 +53,20 @@ namespace Utils
         public Func<T, T> IncreaseFunc { get; set; }
         public Func<T, T> DecreaseFunc { get; set; }
 
+        public ParameterImpact Impact { get; set; }
+
         public object GetValue()
         {
             return (object)this.Value;
         }
 
+        public bool Impacts(ParameterImpact impact)
+        {
+            return this.Impact == impact;
+        }
 
-        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc)
+
+        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc, ParameterImpact impact)
         {
             this.Name = name;
             this.MinValue = minValue;
@@ -59,6 +74,12 @@ namespace Utils
             this.Value = this.DefaultValue = defaultValue;
             this.IncreaseFunc = increaseFunc;
             this.DecreaseFunc = decreaseFunc;
+            this.Impact = impact;
+        }
+
+        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc)
+            : this(name,defaultValue,minValue,maxValue, increaseFunc,decreaseFunc,ParameterImpact.None)
+        {
         }
 
         public Parameter()
