@@ -93,6 +93,9 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             public float SnowSlopeDepthAdjust { get; set; }
 
+            public float NormalBlendNearDistance { get; set; }
+            public float NormalBlendFarDistance { get; set; }
+
             public RenderParams()
             {
             }
@@ -110,7 +113,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             this.Height = height;
 
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
-            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
+            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // detail normal
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // large-scale normal
             this.gbuffer.Init(this.Width, this.Height);
 
             program.Init(
@@ -176,6 +180,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("sunVector", rp.SunDirection);
                 sp.SetUniform("paramTex", 0);
                 sp.SetUniform("normalTex", 1);
+                sp.SetUniform("normalLargeScaleTex", 2);
                 sp.SetUniform("heightTex", 3);
                 sp.SetUniform("shadeTex", 4);
                 sp.SetUniform("indirectTex", 5);
@@ -202,6 +207,10 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("indirectBias", rp.IndirectBias);
                 sp.SetUniform("renderMode", rp.RenderMode);
                 sp.SetUniform("snowSlopeDepthAdjust", rp.SnowSlopeDepthAdjust);
+
+
+                sp.SetUniform("normalBlendNearDistance", rp.NormalBlendNearDistance);
+                sp.SetUniform("normalBlendFarDistance", rp.NormalBlendFarDistance);
 
                 sp.SetUniform("scatteringInitialStepSize", rp.ScatteringInitialStepSize);
                 sp.SetUniform("scatteringStepGrowthFactor", rp.ScatteringStepGrowthFactor);

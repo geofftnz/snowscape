@@ -94,7 +94,8 @@ namespace Snowscape.TerrainRenderer.Renderers
                 new string[]
                 {
                     "out_Param",
-                    "out_Normal"
+                    "out_Normal",
+                    "out_NormalLargeScale"
                 });
         }
 

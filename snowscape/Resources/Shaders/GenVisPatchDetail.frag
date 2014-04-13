@@ -20,7 +20,7 @@ in vec2 detailpos_s;
 in vec2 detailpos_w;
 in vec2 detailpos_e;
 
-out vec4 out_Pos;
+out vec4 out_NormalLargeScale;
 out vec4 out_Normal;
 out vec4 out_Param;
 
@@ -103,6 +103,7 @@ void main(void)
 	vec3 dn = getDetailNormal();
 	vec3 n = normalize(dn * nm);
 
+	out_NormalLargeScale = vec4(normal.xyz * 0.5 + 0.5,1.0);
     out_Normal = vec4(n.xyz * 0.5 + 0.5,1.0);
 	out_Param = texture(paramTex,texcoord);
 

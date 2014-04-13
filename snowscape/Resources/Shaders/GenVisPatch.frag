@@ -15,8 +15,9 @@ in vec3 binormal;
 in vec3 tangent;
 in vec2 detailpos;
 
-out vec4 out_Normal;
 out vec4 out_Param;
+out vec4 out_Normal;
+out vec4 out_NormalLargeScale;
 
 
 float t = 1.0 / 1024.0;
@@ -45,6 +46,7 @@ void main(void)
 	vec3 n = normalize(dn * nm);
 
     out_Normal = vec4(n.xyz * 0.5 + 0.5,1.0);
+	out_NormalLargeScale = vec4(normal.xyz * 0.5 + 0.5,1.0);
 	out_Param = texture(paramTex,texcoord);
 
 }

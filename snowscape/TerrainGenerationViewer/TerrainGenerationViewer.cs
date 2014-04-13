@@ -292,6 +292,10 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("SnowSlopeDepthAdjust", 0.1f, 0.0f, 100.0f, v => v * 1.02f, v => v * 0.98f));
 
             parameters.Add(new Parameter<float>("DetailHeightScale", 0.1f, 0.0f, 10.0f, v => v + 0.01f, v => v - 0.01f));
+
+
+            parameters.Add(new Parameter<float>("NormalBlendNearDistance", 100.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("NormalBlendFarDistance", 500.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -836,7 +840,11 @@ namespace Snowscape.TerrainGenerationViewer
                 MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
                 MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture,
 
-                RenderMode = (float)this.TerrainGenPass
+                RenderMode = (float)this.TerrainGenPass,
+
+                NormalBlendNearDistance = (float)this.parameters["NormalBlendNearDistance"].GetValue(),
+                NormalBlendFarDistance = (float)this.parameters["NormalBlendFarDistance"].GetValue()
+                
             };
 
             this.lightingStep.Render(rp);

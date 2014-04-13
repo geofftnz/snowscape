@@ -1,6 +1,7 @@
 ﻿#version 330
 precision highp float;
 uniform sampler2D normalTex;
+uniform sampler2D normalLargeScaleTex;
 uniform sampler2D paramTex;
 uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
@@ -32,7 +33,6 @@ uniform float time;
 uniform float nearScatterDistance;
 uniform float ambientBias;  // amount of skylight
 uniform float indirectBias; // amount of indirect light
-
 uniform float renderMode;
 
 // scattering performance
@@ -40,6 +40,8 @@ uniform float scatteringInitialStepSize;
 uniform float scatteringStepGrowthFactor;
 
 uniform float snowSlopeDepthAdjust;
+uniform float normalBlendNearDistance;
+uniform float normalBlendFarDistance;
 
 
 uniform mat4 pre_projection_matrix;
@@ -465,10 +467,14 @@ vec3 brdfRock(vec3 pos, vec3 norm, vec3 light, vec3 view, vec3 influx)
 
 
 
-vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
+vec3 generateCol(vec3 p, vec3 nd, vec3 nls, vec4 s, vec3 eye, float shadowHeight, float AO)
 {
 
 	//return n.xyz * 0.5 + vec3(0.5);
+	//float normalblend = smoothstep(normalBlendNearDistance,normalBlendFarDistance, length(p - eye));
+	float normalblend = clamp((length(p - eye) - normalBlendNearDistance) / (normalBlendFarDistance-normalBlendNearDistance),0.0,1.0);
+	vec3 n = normalize(mix(nd,nls,normalblend));
+
 
     //vec3 col = terrainDiffuse(p,n,s,shadowHeight);
 	vec3 col = vec3(pow(0.98,2.2));
@@ -486,6 +492,8 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 
 	vec3 light = vec3(0.0);
 	vec3 sunLight = sunIntensity();
+
+
 	
 	// direct illumination from sun
 	light += sunLight * clamp(dot(n,sunVector),0.0,1.0) * getShadowForGroundPos(p,shadowHeight);
@@ -504,7 +512,7 @@ vec3 generateCol(vec3 p, vec3 n, vec4 s, vec3 eye, float shadowHeight, float AO)
 	float ind = texture(indirectTex,p.xz * texel).r;
 
 	//light += sunLight * clamp(dot(n,indd),0.0,1.0) * ind.a;
-	vec3 indn = normalize(vec3(n.x,-0.2,n.z));
+	vec3 indn = normalize(vec3(nls.x,-0.2,nls.z));
 
 	light += sunLight * vec3(0.7,0.85,1.0) * vec3(ind) * indirectBias * (clamp(dot(n,indn),0.0,1.0));  // vertical slopes would be fully lit.
 
@@ -691,6 +699,7 @@ void main(void)
     //vec4 posT = texture(posTex,p);
 	vec4 paramT = texture(paramTex,p);
     vec4 normalT = texture(normalTex,p);
+    vec4 normalTL = texture(normalLargeScaleTex,p);
 	float depth = texture(depthTex,p).r;
 
 	//dither depth
@@ -706,6 +715,7 @@ void main(void)
     float hitType = normalT.a;
     //vec4 pos = vec4(posT.xyz + eyePos,0.0);
     vec3 normal = normalize(normalT.xyz - vec3(0.5));
+	vec3 normalLargeScale = normalize(normalTL.xyz - vec3(0.5));
 
 	//vec3 wpos = posT.xyz; //pos.xyz - eyePos;
 
@@ -738,7 +748,7 @@ void main(void)
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
     if (hitType > 0.6)
 	{
-        c.rgb = generateCol(pos.xyz,normal,paramT, eyePos, shadowAO.r, shadowAO.g);
+        c.rgb = generateCol(pos.xyz,normal,normalLargeScale,paramT, eyePos, shadowAO.r, shadowAO.g);
 		vec4 inst = getInscatterTerrain(eyePos,pos.xyz);
         c.rgb *= inst.a;
         c.rgb += inst.rgb;
@@ -838,6 +848,7 @@ void main(void)
 				}
 				else
 				{
+					c.rgb = pow(texture(normalLargeScaleTex,p-vec2(1.0,1.0)).xzy,vec3(2.2));
 					//c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
 
 					// sky dome
@@ -854,10 +865,10 @@ void main(void)
 					//c.rgb = vec3(flow.r,flow.g,0.0);
 					//c.rgb = flow.agb * vec3(1,0.01,1);
 
-					vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg;
-					c.rgb = vec3(
-								clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
-								0.0 );
+					//vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg;
+					//c.rgb = vec3(
+								//clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
+								//0.0 );
 				}
 			}
 			
