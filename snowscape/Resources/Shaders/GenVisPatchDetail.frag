@@ -83,7 +83,7 @@ float sampleHeight(vec2 pos)
 
 vec3 getDetailNormal()
 {
-	float w = 2.0 / 16.0;
+	float w = 2.0 / 32.0;
 
 	float h1 = textureLod(detailTex,detailpos_n,0).r * detailTexScale;
 	float h2 = textureLod(detailTex,detailpos_s,0).r * detailTexScale;

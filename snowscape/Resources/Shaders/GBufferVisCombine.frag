@@ -825,12 +825,13 @@ void main(void)
 			{
 				if (p.y < 1.0)
 				{
-					//c.rgb = pow(texture(normalTex,p-vec2(1.0,0.0)).xzy,vec3(2.2));
+					c.rgb = pow(texture(normalTex,p-vec2(1.0,0.0)).xzy,vec3(2.2));
 					//c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
 					//c.rgb = vec3(texture(shadeTex,p-vec2(1.0,0.0)).rg,0.0);
 
-					vec4 misc = texture(miscTex2,p-vec2(1.0,0.0));
-					c.rgb = misc.rgb * 4.0;
+					//vec4 misc = texture(miscTex2,p-vec2(1.0,0.0));
+					//c.rgb = misc.rgb * 4.0;
+
 					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
 					//c.rgb = vec3(flow.b,flow.a,0.0);
 

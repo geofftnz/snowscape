@@ -27,7 +27,7 @@ float sampleHeight(vec2 pos)
 
 vec3 getDetailNormal(vec2 pos)
 {
-	float w = 2.0 / 16.0;
+	float w = 2.0 / 32.0;
 
     float h1 = sampleHeight(vec2(pos.x, pos.y - t));
     float h2 = sampleHeight(vec2(pos.x, pos.y + t));
