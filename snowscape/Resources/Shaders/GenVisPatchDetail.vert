@@ -23,12 +23,10 @@ in vec3 vertex;
 in vec3 in_boxcoord;
 
 out vec3 boxcoord;
-out vec3 worldpos;
 out vec3 normal;
 out vec3 binormal;
 out vec3 tangent;
 
-//out vec2 detailpos;
 out vec2 detailpos_n;
 out vec2 detailpos_s;
 out vec2 detailpos_w;
@@ -124,6 +122,9 @@ vec3 getNormal(vec2 pos, float weight)
 }
 
 
+// Displaces a flat mesh by the heightmap texture.
+// Performs bicubic interpolation of heightmap heights and normals, then generates a 
+// secondary detail displacement.
  
 void main() {
 
@@ -173,6 +174,6 @@ void main() {
 	b.y = h;
     
     boxcoord = b;
-	worldpos = (model_matrix * vec4(b,1.0)).xyz - eyePos;
+	//worldpos = (model_matrix * vec4(b,1.0)).xyz - eyePos;
 
 }
