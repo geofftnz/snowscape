@@ -12,9 +12,7 @@ in vec3 vertex;
 in vec3 in_boxcoord;
 
 out vec3 boxcoord;
-out vec3 worldpos;
 out vec3 normal;
-
 
 
 vec3 getNormal(vec2 pos)
@@ -26,28 +24,11 @@ vec3 getNormal(vec2 pos)
     float h3 = textureLod(heightTex,vec2(pos.x - t, pos.y),0).r;
 	float h4 = textureLod(heightTex,vec2(pos.x + t, pos.y),0).r;
 
-    //return normalize(vec3(h4-h3,h2-h1,1.0));
 	return normalize(vec3(h3-h4,2.0,h1-h2));
 }
-/*
-float texel = 1.0 / boxparam.x;
-float sampleHeight(vec2 posTile)
-{
-    return texture(heightTex,posTile * texel).r;
-}
 
-
-// pos in tile coords (0-boxparam.xy)
-vec3 getNormal(vec2 pos)
-{
-	//pos *= boxparam.x; 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - 1.0));
-    float h2 = sampleHeight(vec2(pos.x, pos.y + 1.0));
-    float h3 = sampleHeight(vec2(pos.x - 1.0, pos.y));
-    float h4 = sampleHeight(vec2(pos.x + 1.0, pos.y));
-    return normalize(vec3(h3-h4,2.0,h1-h2));
-}*/
-
+// Takes vertices from a flat mesh and displaces them according to the heightmap texture.
+// Generates the normal, boxcoord (coords within tile).
  
 void main() {
 
@@ -70,6 +51,4 @@ void main() {
 	b.y = h;
     
     boxcoord = b;
-	worldpos = (model_matrix * vec4(b,1.0)).xyz - eyePos;
-
 }
