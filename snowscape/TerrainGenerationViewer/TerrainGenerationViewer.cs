@@ -221,6 +221,10 @@ namespace Snowscape.TerrainGenerationViewer
         public TerrainGenerationViewer()
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
+            // set default shader loader
+            ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../ResoXurces/Shaders");
+
+
             //this.Terrain = new TerrainGen(TileWidth, TileHeight);
             this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);

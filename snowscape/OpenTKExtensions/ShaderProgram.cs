@@ -14,6 +14,13 @@ namespace OpenTKExtensions
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
+        private static IShaderLoader _defaultLoader = null;
+        public static IShaderLoader DefaultLoader
+        {
+            get { return _defaultLoader;  }
+            set { _defaultLoader = value; }
+        }
+
         public int Handle { get; set; }
         public string Log { get; set; }
         public string Name { get; set; }
@@ -185,8 +192,21 @@ namespace OpenTKExtensions
 
         }
 
-        public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables, string[] fragDataOutputs)
+        public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables, string[] fragDataOutputs, IShaderLoader loader)
         {
+            string vsrc, fsrc;
+
+            if (loader != null)
+            {
+                vsrc = loader.Load(vertexSource);
+                fsrc = loader.Load(fragmentSource);
+            }
+            else  // source is raw
+            {
+                vsrc = vertexSource;
+                fsrc = fragmentSource;
+            }
+
             this.AddVertexShader(vertexSource);
             this.AddFragmentShader(fragmentSource);
 
@@ -205,6 +225,12 @@ namespace OpenTKExtensions
 
             this.Link();
             return this;
+        }
+
+
+        public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables, string[] fragDataOutputs)
+        {
+            return Init(vertexSource, fragmentSource, variables, fragDataOutputs, DefaultLoader);
         }
 
         public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables)
