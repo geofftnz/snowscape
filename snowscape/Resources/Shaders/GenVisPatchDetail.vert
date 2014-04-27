@@ -39,62 +39,8 @@ float pt = t * detailScale;
 float nx = 2.0 * detailScale;
 
 
-
-mat3 m = mat3( 0.00,  0.80,  0.60,
-              -0.80,  0.36, -0.48,
-              -0.60, -0.48,  0.64 );
-
-float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-}
-
-float rand(vec3 co){
-    return fract(sin(dot(co.xyz ,vec3(12.9898,78.233,47.985))) * 43758.5453);
-}
-
-// credit: iq/rgba
-float hash( float n )
-{
-    return fract(sin(n)*43758.5453);
-}
-
-
-// credit: iq/rgba
-float noise( in vec3 x )
-{
-    vec3 p = floor(x);
-    vec3 f = fract(x);
-    f = f*f*(3.0-2.0*f);
-    float n = p.x + p.y*57.0 + 113.0*p.z;
-    float res = mix(mix(mix( hash(n+  0.0), hash(n+  1.0),f.x),
-                        mix( hash(n+ 57.0), hash(n+ 58.0),f.x),f.y),
-                    mix(mix( hash(n+113.0), hash(n+114.0),f.x),
-                        mix( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
-    return res;
-}
-
-
-// credit: iq/rgba
-float fbm( vec3 p )
-{
-    float f;
-    f  = 0.5000*noise( p );
-    p = m*p*2.02;
-    f += 0.2500*noise( p );
-    p = m*p*2.03;
-    f += 0.1250*noise( p );
-    p = m*p*2.01;
-    f += 0.0625*noise( p );
-    return f;
-}
-
-
-
 float getHeightDetail(vec2 pos)
 {
-	//return 0.0;
-	//return noise(vec3(pos * 4096.0,1.0)) * 0.03 + noise(vec3(pos * 8354.0,17.0)) * 0.015 + noise(vec3(pos * 17354.0,189.0)) * 0.007;
-
 	return textureLod(detailTex,pos,0).r * detailTexScale;
 }
 
@@ -140,20 +86,6 @@ float sampleHeight(vec2 pos, float weight)
 		//getHeightDetail(pos);
 }
 
-//vec3 getNormal(vec2 pos, float weight)
-//{
-	//float tt = t;
-	//float w = 2.0;
-//
-    //float h1 = sampleHeight(vec2(pos.x, pos.y - tt),  weight);
-	//float h2 = sampleHeight(vec2(pos.x, pos.y + tt),  weight);
-    //float h3 = sampleHeight(vec2(pos.x - tt, pos.y),  weight);
-	//float h4 = sampleHeight(vec2(pos.x + tt, pos.y),  weight);
-//
-    ////return normalize(vec3(h4-h3,h2-h1,1.0));
-	//return normalize(vec3(h3-h4,w,h1-h2));
-//}
-
 vec3 getNormal(vec2 pos, float weight)
 {
 	// get texel centre
@@ -192,29 +124,8 @@ vec3 getNormal(vec2 pos, float weight)
 }
 
 
-/*
-float texel = 1.0 / boxparam.x;
-float sampleHeight(vec2 posTile)
-{
-    return texture(heightTex,posTile * texel).r;
-}
-
-
-// pos in tile coords (0-boxparam.xy)
-vec3 getNormal(vec2 pos)
-{
-	//pos *= boxparam.x; 
-    float h1 = sampleHeight(vec2(pos.x, pos.y - 1.0));
-    float h2 = sampleHeight(vec2(pos.x, pos.y + 1.0));
-    float h3 = sampleHeight(vec2(pos.x - 1.0, pos.y));
-    float h4 = sampleHeight(vec2(pos.x + 1.0, pos.y));
-    return normalize(vec3(h3-h4,2.0,h1-h2));
-}*/
-
  
 void main() {
-
-	//vec2 texcoord = in_boxcoord.xz;
 
 	vec3 b = in_boxcoord;
 	b.xz *= scale;
@@ -238,14 +149,6 @@ void main() {
 	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
 	binormal = normalize(cross(t1,normal));
 	tangent = normalize(cross(normal,binormal));
-//
-//	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
-//	tangent = normalize(cross(t1,normal));
-//	binormal = normalize(cross(normal, tangent));
-//
-	//tangent = normalize(cross(normal,vec3(0.0,0.0,1.0)));
-	//binormal = normalize(cross(normal,tangent));
-	//tangent = normalize(cross(normal, binormal));
 
 	vec2 detailpos = pos * 32.0;
 	float dt = 1.0/1024.0;

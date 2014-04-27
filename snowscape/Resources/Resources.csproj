@@ -46,6 +46,7 @@
     <Compile Include="Resources.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\noise.glsl" />
     <Content Include="Shaders\TerrainGeneration.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
