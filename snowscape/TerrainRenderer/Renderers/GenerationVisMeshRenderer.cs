@@ -133,8 +133,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.shader.Init(
-                @"../../../Resources/Shaders/GenVisMesh.vert".Load(),
-                @"../../../Resources/Shaders/GenVisMesh.frag".Load(),
+                @"GenVisMesh.vert",
+                @"GenVisMesh.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

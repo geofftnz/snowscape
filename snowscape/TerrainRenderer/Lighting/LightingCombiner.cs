@@ -118,8 +118,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             this.gbuffer.Init(this.Width, this.Height);
 
             program.Init(
-                @"../../../Resources/Shaders/GBufferVisCombine.vert".Load(),
-                @"../../../Resources/Shaders/GBufferVisCombine.frag".Load(),
+                @"GBufferVisCombine.vert",
+                @"GBufferVisCombine.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

@@ -222,7 +222,7 @@ namespace Snowscape.TerrainGenerationViewer
             : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
             // set default shader loader
-            ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../ResoXurces/Shaders");
+            ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../Resources/Shaders");
 
 
             //this.Terrain = new TerrainGen(TileWidth, TileHeight);
@@ -495,8 +495,8 @@ namespace Snowscape.TerrainGenerationViewer
             //var program = new ShaderProgram("combiner");
 
             //program.Init(
-            //    @"../../../Resources/Shaders/GBufferVisCombine.vert".Load(),
-            //    @"../../../Resources/Shaders/GBufferVisCombine.frag".Load(),
+            //    @"GBufferVisCombine.vert",
+            //    @"GBufferVisCombine.frag",
             //    new List<Variable> 
             //    { 
             //        new Variable(0, "vertex"), 

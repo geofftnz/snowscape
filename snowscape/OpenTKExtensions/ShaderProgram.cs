@@ -207,8 +207,8 @@ namespace OpenTKExtensions
                 fsrc = fragmentSource;
             }
 
-            this.AddVertexShader(vertexSource);
-            this.AddFragmentShader(fragmentSource);
+            this.AddVertexShader(vsrc);
+            this.AddFragmentShader(fsrc);
 
             foreach (var v in variables)
             {

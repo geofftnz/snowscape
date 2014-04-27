@@ -119,8 +119,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.boundingBoxProgram.Init(
-                @"../../../Resources/Shaders/TerrainTileMesh.vert".Load(),
-                @"../../../Resources/Shaders/TerrainTileMesh_Debug1.frag".Load(),
+                @"TerrainTileMesh.vert",
+                @"TerrainTileMesh_Debug1.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

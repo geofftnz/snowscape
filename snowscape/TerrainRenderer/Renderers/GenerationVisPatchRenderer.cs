@@ -75,8 +75,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.shader.Init(
-                @"../../../Resources/Shaders/GenVisPatch.vert".Load(),
-                @"../../../Resources/Shaders/GenVisPatch.frag".Load(),
+                @"GenVisPatch.vert",
+                @"GenVisPatch.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

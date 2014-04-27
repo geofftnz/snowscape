@@ -38,7 +38,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         public void Init(Texture outputTexture)
         {
             gb.SetOutputTexture(0, "out_CloudDepth", outputTexture);
-            gb.Init(@"../../../Resources/Shaders/CloudDepth.vert".Load(), @"../../../Resources/Shaders/CloudDepth.frag".Load());
+            gb.Init(@"CloudDepth.vert", @"CloudDepth.frag");
 
         }
 

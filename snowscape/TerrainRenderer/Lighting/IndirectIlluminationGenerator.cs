@@ -21,7 +21,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         public void Init(Texture indirectIlluminationTexture)
         {
             gb.SetOutputTexture(0, "out_Indirect", indirectIlluminationTexture);
-            gb.Init(@"../../../Resources/Shaders/IndirectIllumination.vert".Load(), @"../../../Resources/Shaders/IndirectIllumination.frag".Load());
+            gb.Init(@"IndirectIllumination.vert", @"IndirectIllumination.frag");
         }
 
         public void Render(Texture heightmap, Texture shadowheight, Texture normalmap, Vector3 sunVector)

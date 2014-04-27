@@ -118,8 +118,8 @@ namespace Snowscape.Viewer
             var program = new ShaderProgram("combiner");
 
             program.Init(
-                @"../../../Resources/Shaders/GBufferCombine.vert".Load(),
-                @"../../../Resources/Shaders/GBufferCombine.frag".Load(),
+                @"GBufferCombine.vert",
+                @"GBufferCombine.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

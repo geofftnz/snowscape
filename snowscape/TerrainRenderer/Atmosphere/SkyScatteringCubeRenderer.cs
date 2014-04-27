@@ -29,7 +29,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
 
         public void Init()
         {
-            gb.Init(@"../../../Resources/Shaders/SkyScatterCube.vert".Load(), @"../../../Resources/Shaders/SkyScatterCube.frag".Load());
+            gb.Init(@"SkyScatterCube.vert", @"SkyScatterCube.frag");
         }
 
         public void Render(Texture cubeMapTex, Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight)

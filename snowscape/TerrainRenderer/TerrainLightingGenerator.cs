@@ -58,8 +58,8 @@ namespace Snowscape.TerrainRenderer
         {
             // setup shader
             this.program.Init(
-                @"../../../Resources/Shaders/ShadowAO.vert".Load(),
-                @"../../../Resources/Shaders/ShadowAO.frag".Load(),
+                @"ShadowAO.vert",
+                @"ShadowAO.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex")

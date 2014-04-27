@@ -334,7 +334,7 @@ namespace OpenTKExtensions
                 index[i++] = c4 + 2;
             }
 
-            this.indexVBO = new VBO(this.Name + "_index",BufferTarget.ElementArrayBuffer, BufferUsageHint.StaticDraw);
+            this.indexVBO = new VBO(this.Name + "_index", BufferTarget.ElementArrayBuffer, BufferUsageHint.StaticDraw);
             this.indexVBO.SetData(index);
             this.IsIndexVBOLoaded = true;
         }
@@ -400,7 +400,9 @@ namespace OpenTKExtensions
                     new Variable(0, "vertex"),
                     new Variable(1, "in_texcoord0"),
                     new Variable(2, "in_col0")
-                });
+                },
+                new string[] { },
+                null);
 
             this.IsShaderLoaded = true;
         }

@@ -59,8 +59,8 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         {
             // setup shader
             this.program.Init(
-                @"../../../Resources/Shaders/SkyRayDirection.vert".Load(),
-                @"../../../Resources/Shaders/SkyRayDirection.frag".Load(),
+                @"SkyRayDirection.vert",
+                @"SkyRayDirection.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"),

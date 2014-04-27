@@ -117,8 +117,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.boundingBoxProgram.Init(
-                @"../../../Resources/Shaders/GenVisRaycast.vert".Load(),
-                @"../../../Resources/Shaders/GenVisRaycast.frag".Load(),
+                @"GenVisRaycast.vert",
+                @"GenVisRaycast.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

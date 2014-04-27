@@ -75,8 +75,8 @@ namespace Snowscape.TerrainRenderer.HDR
             this.gbuffer.Init(this.Width, this.Height);
 
             program.Init(
-                @"../../../Resources/Shaders/HDRExpose.vert".Load(),
-                @"../../../Resources/Shaders/HDRExpose.frag".Load(),
+                @"HDRExpose.vert",
+                @"HDRExpose.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

@@ -24,7 +24,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         public void Init(Texture normalTexture)
         {
             gb.SetOutputTexture(0, "out_Normal", normalTexture);
-            gb.Init(@"../../../Resources/Shaders/HeightmapNormals.vert".Load(), @"../../../Resources/Shaders/HeightmapNormals.frag".Load());
+            gb.Init(@"HeightmapNormals.vert", @"HeightmapNormals.frag");
         }
 
         public void Render(Texture heightmap)

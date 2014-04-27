@@ -153,13 +153,13 @@ namespace TerrainGeneration
 
 
             SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
-            SlippageFlowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/SNow_SlipOutflow.frag".Load());
+            SlippageFlowStep.Init(@"BasicQuad.vert", @"SNow_SlipOutflow.frag");
 
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
-            SlippageTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Snow_SlipTransport.frag".Load());
+            SlippageTransportStep.Init(@"BasicQuad.vert", @"Snow_SlipTransport.frag");
 
             TerrainCopyStep.SetOutputTexture(0,"out_Terrain",this.TerrainTexture[0]);
-            TerrainCopyStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Snow_TerrainCopy.frag".Load());
+            TerrainCopyStep.Init(@"BasicQuad.vert", @"Snow_TerrainCopy.frag");
 
         }
 

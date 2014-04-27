@@ -118,8 +118,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.boundingBoxProgram.Init(
-                @"../../../Resources/Shaders/TerrainTileRaycast.vert".Load(),
-                @"../../../Resources/Shaders/TerrainTileRaycast.frag".Load(),
+                @"TerrainTileRaycast.vert",
+                @"TerrainTileRaycast.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 

@@ -199,36 +199,36 @@ namespace TerrainGeneration
             // setup steps
             ComputeOutflowStep.SetOutputTexture(0, "out_Flow", this.FlowRateTexture[1]);
             ComputeOutflowStep.SetOutputTexture(1, "out_FlowD", this.FlowRateTextureDiagonal[1]);
-            ComputeOutflowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_1Outflow.frag".Load());
+            ComputeOutflowStep.Init(@"BasicQuad.vert", @"Erosion_1Outflow.frag");
 
             ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
-            ComputeVelocityStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_2Velocity.frag".Load());
+            ComputeVelocityStep.Init(@"BasicQuad.vert", @"Erosion_2Velocity.frag");
 
             UpdateLayersStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
             UpdateLayersStep.SetOutputTexture(1, "out_Vis", this.VisTex);
-            UpdateLayersStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_3UpdateLayers.frag".Load());
+            UpdateLayersStep.Init(@"BasicQuad.vert", @"Erosion_3UpdateLayers.frag");
 
             SedimentTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SedimentTransportStep.SetOutputTexture(1, "out_Flow", this.FlowRateTexture[0]);
             SedimentTransportStep.SetOutputTexture(2, "out_FlowD", this.FlowRateTexture[1]);
             SedimentTransportStep.SetOutputTexture(3, "out_Velocity", this.VelocityTexture[0]);
-            SedimentTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_4Transport.frag".Load());
+            SedimentTransportStep.Init(@"BasicQuad.vert", @"Erosion_4Transport.frag");
 
             SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
-            SlippageFlowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_5SlipOutflow.frag".Load());
+            SlippageFlowStep.Init(@"BasicQuad.vert", @"Erosion_5SlipOutflow.frag");
 
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
-            SlippageTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_6SlipTransport.frag".Load());
+            SlippageTransportStep.Init(@"BasicQuad.vert", @"Erosion_6SlipTransport.frag");
 
             HardSlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
-            HardSlippageFlowStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_7HardSlipOutflow.frag".Load());
+            HardSlippageFlowStep.Init(@"BasicQuad.vert", @"Erosion_7HardSlipOutflow.frag");
 
             HardSlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
-            HardSlippageTransportStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_8HardSlipTransport.frag".Load());
+            HardSlippageTransportStep.Init(@"BasicQuad.vert", @"Erosion_8HardSlipTransport.frag");
 
             // don't need copy because hard-slip writes back to terrain0
             //TerrainCopyStep.SetOutputTexture(0,"out_Terrain",this.TerrainTexture[0]);
-            //TerrainCopyStep.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/Erosion_9TerrainCopy.frag".Load());
+            //TerrainCopyStep.Init(@"BasicQuad.vert", @"Erosion_9TerrainCopy.frag");
         }
 
         public float GetHeightAt(float x, float y)

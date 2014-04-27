@@ -20,7 +20,7 @@ namespace Snowscape.TerrainRenderer.Loaders
         public void Init(Texture heightTexture)
         {
             gb.SetOutputTexture(0, "out_Height", heightTexture);
-            gb.Init(@"../../../Resources/Shaders/BasicQuad.vert".Load(), @"../../../Resources/Shaders/TerrainGlobalLoader.frag".Load());
+            gb.Init(@"BasicQuad.vert", @"TerrainGlobalLoader.frag");
         }
 
         public void Render(Texture terrainTexture)

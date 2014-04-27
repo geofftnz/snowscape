@@ -29,7 +29,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         public void Init(Texture outputTexture)
         {
             gb.SetOutputTexture(0, "out_Sky", outputTexture);
-            gb.Init(@"../../../Resources/Shaders/SkyScatter.vert".Load(), @"../../../Resources/Shaders/SkyScatter.frag".Load());
+            gb.Init(@"SkyScatter.vert", @"SkyScatter.frag");
 
         }
 
