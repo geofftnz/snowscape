@@ -22,5 +22,29 @@ namespace OpenTKExtensions.Test
             Assert.AreEqual("test1", tokens[1].Content);
             Assert.AreEqual("test2", tokens[3].Content);
         }
+
+        [TestMethod]
+        public void TextPartExtract()
+        {
+            string input = 
+@"Outside of parts
+
+//|part1
+this is part1
+this is also part1
+//|part2
+this is part2";
+
+            string part1 = input.ExtractPart("part1", "//|");
+            string part2 = input.ExtractPart("part2", "//|");
+
+            Assert.AreEqual(@"//|part1
+this is part1
+this is also part1
+", part1);
+            Assert.AreEqual(@"//|part2
+this is part2
+", part2);
+        }
     }
 }

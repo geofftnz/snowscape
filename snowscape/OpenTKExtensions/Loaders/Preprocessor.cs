@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace OpenTKExtensions.Loaders
 {
     public static class Preprocessor
     {
+        private static string DEFAULTPREFIX = @"//|";
+
+
         public static string Preprocess(this string source, int levelsRemaining, IShaderLoader loader)
         {
             if (levelsRemaining < 0)
@@ -89,6 +93,55 @@ namespace OpenTKExtensions.Loaders
                 yield return new Token { Type = TokenType.Text, Content = s.Substring(i, l - i) };
             }
 
+        }
+
+        public static string ExtractPart(this string s, string partName)
+        {
+            return s.ExtractPart(partName, DEFAULTPREFIX);
+        }
+
+        public static string ExtractPart(this string s, string partName, string partPrefix)
+        {
+            // return entire string if no partname is supplied.
+            if (string.IsNullOrWhiteSpace(partName))
+            {
+                return s;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            string label = partPrefix + partName;
+
+            using (var sr = new StringReader(s))
+            {
+                string line = sr.ReadLine();
+                bool inPart = false;
+
+                while (line != null)
+                {
+                    // bail out if we've hit the next part
+                    if (inPart && line.TrimStart().StartsWith(partPrefix))
+                    {
+                        break;
+                    }
+
+                    // 
+                    if (!inPart && line.TrimStart().StartsWith(label, StringComparison.OrdinalIgnoreCase))
+                    {
+                        inPart = true;
+                    }
+
+                    if (inPart)
+                    {
+                        sb.AppendLine(line);
+                    }
+
+                    line = sr.ReadLine();
+                }
+
+                sr.Close();
+            }
+
+            return sb.ToString();
         }
 
 
