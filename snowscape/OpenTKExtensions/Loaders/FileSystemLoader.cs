@@ -25,11 +25,6 @@ namespace OpenTKExtensions.Loaders
 
         public string LoadRaw(string sourceName)
         {
-            return File.ReadAllText(GetFilePath(sourceName));
-        }
-
-        public string Load(string sourceName)
-        {
             // split source name into parts before and after SPLITCHAR (|)
             // first part is actual filename
             // second part refers to a labelled subset of file.
@@ -41,7 +36,13 @@ namespace OpenTKExtensions.Loaders
                 partName = parts[1];
             }
 
-            return this.LoadRaw(fileName).Preprocess(MAXLEVELS, this).ExtractPart(partName);
+            return File.ReadAllText(GetFilePath(fileName)).ExtractPart(partName); 
+        }
+
+        public string Load(string sourceName)
+        {
+
+            return this.LoadRaw(sourceName).Preprocess(MAXLEVELS, this);
         }
 
         private string GetFilePath(string fileName)
