@@ -174,6 +174,10 @@ namespace OpenTKExtensions
             this.indexVBO.SetData(index);
         }
 
+        public void ClearColourBuffer(int drawBuffer, Vector4 colour)
+        {
+            this.gbuffer.FBO.ClearColourBuffer(drawBuffer, colour);
+        }
 
     }
 }

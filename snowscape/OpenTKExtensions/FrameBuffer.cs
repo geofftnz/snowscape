@@ -81,5 +81,12 @@ namespace OpenTKExtensions
         {
             return this.Status == FramebufferErrorCode.FramebufferComplete;
         }
+
+        public void ClearColourBuffer(int drawBuffer, Vector4 colour)
+        {
+            float[] c = { colour.X, colour.Y, colour.Z, colour.W };
+            GL.ClearBuffer(ClearBuffer.Color, drawBuffer, c);
+        }
+
     }
 }
