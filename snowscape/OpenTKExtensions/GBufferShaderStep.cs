@@ -90,6 +90,16 @@ namespace OpenTKExtensions
 
         public virtual void Render(Action textureBinds, Action<ShaderProgram> setUniforms)
         {
+            this.Render(textureBinds, setUniforms, () =>
+            {
+                this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
+                this.indexVBO.Bind();
+                GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
+            });
+        }
+
+        public virtual void Render(Action textureBinds, Action<ShaderProgram> setUniforms, Action renderAction)
+        {
             // start gbuffer
             this.gbuffer.BindForWriting();
 
@@ -108,13 +118,13 @@ namespace OpenTKExtensions
                 setUniforms(this.program);
             }
 
-            this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
-            this.indexVBO.Bind();
-            GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
+            if (renderAction != null)
+            {
+                renderAction();
+            }
 
             this.gbuffer.UnbindFromWriting();
         }
-
 
 
         private void InitShader(string vertexShaderSource, string fragmentShaderSource)
