@@ -174,6 +174,9 @@ namespace TerrainGeneration
         private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("erosion-slipflow");
         private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("erosion-sliptransport");
 
+        // Copy particles from buffer 1 to buffer 0
+        private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("gpupe-copyparticles");
+
 
         public float GetHeightAt(float x, float y)
         {
@@ -251,9 +254,6 @@ namespace TerrainGeneration
             ErosionAccumulationStep.SetOutputTexture(0, "out_Erosion", this.ErosionAccumulationTexture);
             ErosionAccumulationStep.Init(@"ParticleErosion.glsl|ErosionVertex", @"ParticleErosion.glsl|Erosion");
 
-
-
-
             // Step 3: Update terrain layers
             //  - Render as quad over layer
             //  - Input: L0, E
@@ -261,7 +261,10 @@ namespace TerrainGeneration
             //  Adds deposit amount E.b to soft L0.g
             //  Subtracts material from soft, then hard.
             //  Modifies water depth from particle count (E.r).
-            //  
+            UpdateLayersStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
+            UpdateLayersStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|UpdateTerrain");
+
+
             // Step 4: Update particle state
             //  - Render as quad over particles
             //  - Input: P0, V0, E, L0
@@ -273,6 +276,9 @@ namespace TerrainGeneration
             //  Calculate new particle position by intersecting ray P0.rg->V0.rg against 
             //    cell boundaries. Add small offset to avoid boundary problems. Writes to P1.rg
             //  If death flag indicates particle recycle, init particle at random position.
+            UpdateParticlesStep.SetOutputTexture(0, "out_Particles", this.ParticleStateTexture[1]);
+            UpdateParticlesStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|UpdateParticles");
+
             //  
             // Step 5: Slip flow
             // in: L1
@@ -283,12 +289,18 @@ namespace TerrainGeneration
             // out: L0    (avoids L0/L1 switch)
 
 
+            // copy particles
+            CopyParticlesStep.SetOutputTexture(0, "out_Particles", this.ParticleStateTexture[0]);
+            CopyParticlesStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|CopyParticles");
         }
 
 
         public void ModifyTerrain()
         {
-            float deltatime = 1.0f;
+            float deltaTime = 1.0f;
+            float depositRate = 0.1f;
+            float erosionRate = 0.1f;
+            float hardErosionFactor = 0.1f;
 
             ComputeVelocityStep.Render(
                 () =>
@@ -314,15 +326,15 @@ namespace TerrainGeneration
                 () =>
                 {
                     this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
-                    this.VelocityTexture[1].Bind(TextureUnit.Texture1);
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture1);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("particletex", 0);
                     sp.SetUniform("velocitytex", 1);
-                    sp.SetUniform("deltatime", deltatime);
-                    sp.SetUniform("depositRate", 0.1f);
-                    sp.SetUniform("erosionRate", 0.1f);
+                    sp.SetUniform("deltatime", deltaTime);
+                    sp.SetUniform("depositRate", depositRate);
+                    sp.SetUniform("erosionRate", erosionRate);
                 },
                 () =>
                 {
@@ -337,6 +349,72 @@ namespace TerrainGeneration
                 }
             );
 
+            // Step 3: Update terrain layers
+            //  - Render as quad over layer
+            //  - Input: L0, E
+            //  - Output: L1
+            //  Adds deposit amount E.b to soft L0.g
+            //  Subtracts material from soft, then hard.
+            //  Modifies water depth from particle count (E.r).
+            UpdateLayersStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    this.ErosionAccumulationTexture.Bind(TextureUnit.Texture1);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("erosiontex", 1);
+                    sp.SetUniform("hardErosionFactor", hardErosionFactor);
+                    sp.SetUniform("waterLowpass", 0.9f);
+                    sp.SetUniform("waterDepthFactor", 0.1f);
+                });
+
+            // Step 4: Update particle state
+            //  - Render as quad over particles
+            //  - Input: P0, V0, E, L0
+            //  - Output: P1
+            //  Replicate particle potential calc from Step 2 to get deposit/erode potentials.
+            //  Subtract deposit amount from carrying amount P0.b, write to P1.b
+            //  Apply same calculation as step 3 to determine how much soft/hard is being eroded from L0(P0.rg).
+            //  Add material carried based on particle share of total V0.b / E(P0.rg).g -> P1.b
+            //  Calculate new particle position by intersecting ray P0.rg->V0.rg against 
+            //    cell boundaries. Add small offset to avoid boundary problems. Writes to P1.rg
+            //  If death flag indicates particle recycle, init particle at random position.
+            UpdateParticlesStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture1);
+                    this.ErosionAccumulationTexture.Bind(TextureUnit.Texture2);
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture3);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                    sp.SetUniform("velocitytex", 1);
+                    sp.SetUniform("erosiontex", 2);
+                    sp.SetUniform("terraintex", 3);
+                    sp.SetUniform("deltatime", deltaTime);
+                    sp.SetUniform("depositRate", depositRate);
+                    sp.SetUniform("erosionRate", erosionRate);
+                    sp.SetUniform("hardErosionFactor", hardErosionFactor);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
+
+
+            // todo: slip
+
+            CopyParticlesStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                });
 
 
         }
