@@ -176,7 +176,7 @@ namespace OpenTKExtensions
 
         public void ClearColourBuffer(int drawBuffer, Vector4 colour)
         {
-            this.gbuffer.FBO.ClearColourBuffer(drawBuffer, colour);
+            this.gbuffer.ClearColourBuffer(drawBuffer, colour);
         }
 
     }

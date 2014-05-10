@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK.Graphics.OpenGL;
 using NLog;
+using OpenTK;
 
 namespace OpenTKExtensions
 {
@@ -386,6 +387,11 @@ namespace OpenTKExtensions
             }
 
             return this.TextureSlots[slot].Texture;
+        }
+
+        public void ClearColourBuffer(int drawBuffer, Vector4 colour)
+        {
+            this.FBO.ClearColourBuffer(drawBuffer, colour);
         }
 
     }
