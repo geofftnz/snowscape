@@ -812,9 +812,9 @@ void main(void)
 		else
 		{
             p -= vec2(1.0,1.0);
-            
-			p *= 2.0;
+			c.rgb = texture(miscTex,p).rgb * vec3(0.1,1.0,1.0);
 
+			/*
 			if (p.x < 1.0)
 			{
 				if (p.y < 1.0)
@@ -870,7 +870,7 @@ void main(void)
 								//clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
 								//0.0 );
 				}
-			}
+			}*/
 			
 		}
 	}

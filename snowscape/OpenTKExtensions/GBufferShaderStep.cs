@@ -189,5 +189,10 @@ namespace OpenTKExtensions
             this.gbuffer.ClearColourBuffer(drawBuffer, colour);
         }
 
+        public int ShaderVariableLocation(string name)
+        {
+            return this.program.VariableLocation(name);
+        }
+
     }
 }

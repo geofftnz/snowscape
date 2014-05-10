@@ -33,6 +33,7 @@ namespace OpenTKExtensions.Loaders
 
             if (parts.Length > 1)
             {
+                fileName = parts[0];
                 partName = parts[1];
             }
 

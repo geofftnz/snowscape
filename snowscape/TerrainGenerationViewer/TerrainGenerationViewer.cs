@@ -226,7 +226,10 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             //this.Terrain = new TerrainGen(TileWidth, TileHeight);
-            this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
+            //this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
+            this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, 256, 256);
+
+
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
@@ -841,8 +844,9 @@ namespace Snowscape.TerrainGenerationViewer
                 ScatteringStepGrowthFactor = (float)this.parameters["ScatteringStepGrowthFactor"].GetValue(),
                 Time = (float)(this.frameCounter.Frames % 65536),
 
-                MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
+                //MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
                 MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture,
+                MiscTexture = (this.Terrain is GPUParticleErosion) ? ((GPUParticleErosion)this.Terrain).ErosionTex : this.terrainGlobal.ShadeTexture,
 
                 RenderMode = (float)this.TerrainGenPass,
 
@@ -940,6 +944,13 @@ namespace Snowscape.TerrainGenerationViewer
                     if (this.Terrain is GPUWaterErosion)
                     {
                         var terr = this.Terrain as GPUWaterErosion;
+                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+                    }
+                    if (this.Terrain is GPUParticleErosion)
+                    {
+                        var terr = this.Terrain as GPUParticleErosion;
                         this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
                         this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
                         this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);

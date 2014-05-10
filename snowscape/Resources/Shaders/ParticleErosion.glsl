@@ -9,8 +9,6 @@ uniform sampler2D velocitytex;
 uniform float texsize;
 uniform float vdecay;
 uniform float vadd;
-uniform float gravity;
-uniform float deltatime;
 uniform float speedCarryingCoefficient;
 
 in vec2 texcoord;
@@ -55,13 +53,63 @@ void main(void)
 	vec2 v = fall.xy;
 
 	//  Takes velocity from V1.rg, applies acceleration, writes to V0.rg
-	vec2 newVelocity = prevvel.xy * vdecay + v * vadd
+	vec2 newVelocity = prevvel.xy * vdecay + v * vadd;
 
 	//  Calculates new carrying capacity and writes to V0.b 
 	float speed = length(newVelocity);
 	float carryingCapacity = speed * speedCarryingCoefficient;
+
+	// TODO: make sure carrying capacity is sensible
 	
 	out_Velocity = vec4(newVelocity.xy,carryingCapacity,0);
+}
+
+
+//|ErosionVertex
+#version 140
+precision highp float;
+
+uniform sampler2D particletex;
+
+in vec3 vertex;
+out vec2 texcoord;
+out vec2 particlecoord;
+
+void main(void)
+{
+	particlecoord = vertex.xy;
+
+	// use vertex as lookup into particle texture to get actual position
+	texcoord = textureLod(particletex,vertex,0).xy;
+	gl_Position = vec4(texcoord.xy*2.0-1.0,0.0,1.0);
+}
+
+//|Erosion
+#version 140
+precision highp float;
+
+uniform sampler2D particletex;
+uniform sampler2D velocitytex;
+uniform float deltatime;
+uniform float depositRate;
+uniform float erosionRate;
+
+in vec2 texcoord;
+in vec2 particlecoord;
+
+out vec4 out_Erosion;
+
+void main(void)
+{
+    //   Calculate particle potential as (new carrying capacity - carrying amount).
+    //   Writes R:1 G:potential B:deposit - blend as add
+	vec4 particle = textureLod(particletex,particlecoord,0);
+	vec4 velocity = textureLod(velocitytex,particlecoord,0);
+
+	float erosionPotential = max(velocity.b - particle.b,0.0) * erosionRate * deltatime;
+	float depositAmount = max(particle.b - velocity.b,0.0) * depositRate * deltatime;
+
+	out_Erosion = vec4(1.0, erosionPotential, depositAmount, 1.0);
 }
 
 

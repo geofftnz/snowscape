@@ -46,7 +46,7 @@ namespace TerrainGeneration
     ///  - Input: P0, V0
     ///  - Output: E
     ///   Vertex shader sets particle position in E based on P0.
-    ///   Calculate particle potential as new carrying capacity - old carrying capacity.
+    ///   Calculate particle potential as (new carrying capacity - carrying amount).
     ///   Writes R:1 G:potential B:deposit
     ///   Blend mode: add
     ///  
@@ -149,6 +149,7 @@ namespace TerrainGeneration
         /// terrain erosion accumulation: R = particle count, G = total erosion potential, B = total material deposit
         /// </summary>
         private Texture ErosionAccumulationTexture;
+        public Texture ErosionTex { get { return ErosionAccumulationTexture; } }
 
 
         // particle VBOs for accumulation rendering
@@ -159,8 +160,9 @@ namespace TerrainGeneration
         // Step 2: Accumulate erosion/sediment
         private VBO ParticleVertexVBO = new VBO("particle-vertex");
         private VBO ParticleIndexVBO = new VBO("particle-index", BufferTarget.ElementArrayBuffer);
-        private ShaderProgram ErosionAccumulationProgram = new ShaderProgram("erosion-accumulation");
-        private GBuffer ErosionAccumulationGBuffer = new GBuffer("erosion-accumulation");
+        private GBufferShaderStep ErosionAccumulationStep = new GBufferShaderStep("gpupe-2-accumulation");
+        //private ShaderProgram ErosionAccumulationProgram = new ShaderProgram("erosion-accumulation");
+        //private GBuffer ErosionAccumulationGBuffer = new GBuffer("erosion-accumulation");
 
         // Step 3: Update terrain layers
         private GBufferShaderStep UpdateLayersStep = new GBufferShaderStep("gpupe-3-updatelayers");
@@ -193,7 +195,7 @@ namespace TerrainGeneration
                 this.TerrainTexture[i].UploadEmpty();
 
                 this.ParticleStateTexture[i] =
-                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -202,7 +204,7 @@ namespace TerrainGeneration
                 this.ParticleStateTexture[i].UploadEmpty();
 
                 this.VelocityTexture[i] =
-                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -222,7 +224,8 @@ namespace TerrainGeneration
             // init particle vbos
             InitParticlesVBOs();
 
-
+            // random start
+            RandomizeParticles(this.ParticleStateTexture[0]);
 
             // Step 1: Determine particle velocities
             //  - Render as quad over particles
@@ -233,19 +236,24 @@ namespace TerrainGeneration
             //  Calculates new carrying capacity and writes to V0.b 
             //  If slope information indicates particle is stuck, zero/reduce new carrying capacity, set death flag V0.a.
             ComputeVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[0]);
-            ComputeVelocityStep.Init(@"BasicQuad.vert", "@ParticleErosion.glsl|ComputeVelocity");
+            ComputeVelocityStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|ComputeVelocity");
 
 
-            
+
             // Step 2: Accumulate erosion/sediment
             //  - Render as particles over layer
-            //  - Input: P0, V0, V1
+            //  - Input: P0, V0
             //  - Output: E
             //   Vertex shader sets particle position in E based on P0.
-            //   Calculate particle potential as new carrying capacity - old carrying capacity.
+            //   Calculate particle potential as (new carrying capacity - carrying amount).
             //   Writes R:1 G:potential B:deposit
             //   Blend mode: add
-            //  
+            ErosionAccumulationStep.SetOutputTexture(0, "out_Erosion", this.ErosionAccumulationTexture);
+            ErosionAccumulationStep.Init(@"ParticleErosion.glsl|ErosionVertex", @"ParticleErosion.glsl|Erosion");
+
+
+
+
             // Step 3: Update terrain layers
             //  - Render as quad over layer
             //  - Input: L0, E
@@ -280,7 +288,57 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
-            
+            float deltatime = 1.0f;
+
+            ComputeVelocityStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture1);
+                    this.VelocityTexture[1].Bind(TextureUnit.Texture2);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("particletex", 1);
+                    sp.SetUniform("velocitytex", 2);
+                    sp.SetUniform("texsize", (float)this.ParticleTexWidth);
+                    sp.SetUniform("vdecay", 0.5f);
+                    sp.SetUniform("vadd", 0.5f);
+                    sp.SetUniform("speedCarryingCoefficient", 1.0f);
+                });
+
+            // accumulate erosion
+            //ErosionAccumulationStep.ClearColourBuffer(0, new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+            ErosionAccumulationStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
+                    this.VelocityTexture[1].Bind(TextureUnit.Texture1);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                    sp.SetUniform("velocitytex", 1);
+                    sp.SetUniform("deltatime", deltatime);
+                    sp.SetUniform("depositRate", 0.1f);
+                    sp.SetUniform("erosionRate", 0.1f);
+                },
+                () =>
+                {
+                    GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                    GL.Clear(ClearBufferMask.ColorBufferBit);
+                    GL.Enable(EnableCap.Blend);
+                    GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
+                    this.ParticleVertexVBO.Bind(this.ErosionAccumulationStep.ShaderVariableLocation("vertex"));
+                    this.ParticleIndexVBO.Bind();
+                    GL.DrawElements(BeginMode.Points, this.ParticleIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+                    GL.Disable(EnableCap.Blend);
+                }
+            );
+
+
+
         }
 
 
@@ -312,7 +370,7 @@ namespace TerrainGeneration
             throw new NotImplementedException();
         }
 
-      
+
         private void UploadTerrain(float[] data)
         {
             this.TerrainTexture[0].Upload(data);
@@ -421,6 +479,22 @@ namespace TerrainGeneration
 
             UploadTerrain(data);
 
+        }
+
+        private void RandomizeParticles(Texture destination)
+        {
+            float[] data = new float[this.ParticleTexWidth * this.ParticleTexHeight * 4];
+            var r = new Random();
+
+            for (int i = 0; i < this.ParticleTexWidth * this.ParticleTexHeight; i++)
+            {
+                data[i * 4 + 0] = (float)r.NextDouble();
+                data[i * 4 + 1] = (float)r.NextDouble();
+                data[i * 4 + 2] = 0f;
+                data[i * 4 + 3] = 0f;
+            }
+
+            destination.Upload(data);
         }
 
 

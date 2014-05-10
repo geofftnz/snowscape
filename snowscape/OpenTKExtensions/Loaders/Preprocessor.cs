@@ -125,7 +125,7 @@ namespace OpenTKExtensions.Loaders
                     }
 
                     // 
-                    if (!inPart && line.TrimStart().StartsWith(label, StringComparison.OrdinalIgnoreCase))
+                    if (!inPart && line.Trim().Equals(label, StringComparison.OrdinalIgnoreCase))
                     {
                         inPart = true;
                     }
