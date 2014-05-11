@@ -209,6 +209,8 @@ vec2 tileIntersect(vec2 pos, vec2 dir)
 		}
 
 	}
+
+	return p * t;
 }
 
 
