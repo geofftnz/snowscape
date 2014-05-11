@@ -180,6 +180,38 @@ out vec4 out_Particle;
 
 float t = 1.0 / texsize;
 
+// cast ray from pos->dir to determine where this particle exits the current terrain tile.
+vec2 tileIntersect(vec2 pos, vec2 dir)
+{
+	float tx, ty;
+	vec2 p = pos * texsize; // transform from normalized to terrain space
+
+	if (dir == vec2(0.0))
+	{
+		return pos;
+	}
+
+	if (dir.x < 0.0)
+	{
+		// heading left
+		tx = (floor(p.x) - p.x) / dir.x;
+	}
+	else
+	{
+		// heading right
+		if (dir.x > 0.0)
+		{
+			tx = (floor(p.x)+1.0-p.x) / dir.x;
+		}
+		else
+		{
+			tx = 10000000.0;
+		}
+
+	}
+}
+
+
 void main(void)
 {
 	vec4 particle = textureLod(particletex,texcoord,0);
