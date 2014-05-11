@@ -51,17 +51,26 @@ void main(void)
 	//  Uses slope information from L0 at position P0 to calculate acceleration of particle
 	vec3 fall = fallVector(particle.xy);
 	vec2 v = fall.xy;
+	float lifeFactor = 1.0;
 
+	lifeFactor *= 1.0 / (1.0 + max(0.0,fall.z));
+	//if (fall.z > 0.0)  // only way is uphill, accellerate dying
+	//{
+		//lifeFactor = 0.25;
+	//}
+//
 	//  Takes velocity from V1.rg, applies acceleration, writes to V0.rg
 	vec2 newVelocity = prevvel.xy * vdecay + v * vadd;
 
 	//  Calculates new carrying capacity and writes to V0.b 
+	float particleLifeCarryingCapacity = pow(particle.a,0.5) * lifeFactor;
+
 	float speed = length(newVelocity);
-	float carryingCapacity = speed * speedCarryingCoefficient;
+	float carryingCapacity = speed * speedCarryingCoefficient * particleLifeCarryingCapacity;
 
 	// TODO: make sure carrying capacity is sensible
 	
-	out_Velocity = vec4(newVelocity.xy,carryingCapacity,0);
+	out_Velocity = vec4(newVelocity.xy,carryingCapacity,lifeFactor);
 }
 
 
@@ -145,8 +154,8 @@ void main(void)
 	float harderode = max(erosion.g - softerode,0.0) * hardErosionFactor;
 
 	out_Terrain = vec4(
-		terrain.r - harderode, 
-		terrain.g - softerode,
+		hard - harderode, 
+		soft - softerode,
 		terrain.b * waterLowpass + erosion.r * waterDepthFactor * (1.0-waterLowpass),
 		terrain.a);
 }
@@ -167,7 +176,7 @@ uniform float hardErosionFactor;
 uniform float texsize;
 
 in vec2 texcoord;
-out vec4 out_Particles;
+out vec4 out_Particle;
 
 float t = 1.0 / texsize;
 
@@ -208,8 +217,9 @@ void main(void)
     //    cell boundaries. Add small offset to avoid boundary problems. Writes to P1.rg
     //  If death flag indicates particle recycle, init particle at random position.
 	newParticle.xy = particle.xy + normalize(velocity.xy) * t;
+	newParticle.a *= velocity.a;
 
-	out_Particles = newParticle;
+	out_Particle = newParticle;
 
 }
 
@@ -219,12 +229,31 @@ precision highp float;
 
 uniform sampler2D particletex;
 
+uniform float particleDeathRate;
+uniform float randSeed;
+
 in vec2 texcoord;
-out vec4 out_Particles;
+out vec4 out_Particle;
+
+#include "noise.glsl"
 
 void main(void)
 {
-	out_Particles = textureLod(particletex,texcoord,0);
+	vec4 particle = textureLod(particletex,texcoord,0);
+	vec4 newParticle;
+
+	newParticle.xyz = particle.xyz;
+	newParticle.a = max(0.0,particle.a - particleDeathRate);	
+
+	if (newParticle.a < 0.001)
+	{
+		newParticle.x = rand(particle.xy + vec2(randSeed));
+		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073));
+		newParticle.z = 0.0;
+		newParticle.w = 1.0;
+	}
+
+	out_Particle = newParticle;
 }
 
 

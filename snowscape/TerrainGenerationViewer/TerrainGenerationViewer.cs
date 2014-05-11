@@ -227,7 +227,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             //this.Terrain = new TerrainGen(TileWidth, TileHeight);
             //this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
-            this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, 256, 256);
+            this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, 512, 512);
 
 
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
