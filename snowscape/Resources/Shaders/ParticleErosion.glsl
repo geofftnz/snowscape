@@ -207,10 +207,55 @@ vec2 tileIntersect(vec2 pos, vec2 dir)
 		{
 			tx = 10000000.0;
 		}
-
 	}
 
-	return p * t;
+	if (dir.y < 0.0)
+	{
+		// heading left
+		ty = (floor(p.y) - p.y) / dir.y;
+	}
+	else
+	{
+		// heading right
+		if (dir.y > 0.0)
+		{
+			ty = (floor(p.y)+1.0-p.y) / dir.y;
+		}
+		else
+		{
+			ty = 10000000.0;
+		}
+	}
+
+	float tt = min(tx,ty);
+
+	vec2 exitpos = pos + dir * tt;
+
+	// clamp to avoid roundoff errors
+	if (tx < ty)
+	{
+		if (dir.x < 0.0)
+		{
+			exitpos.x = floor(p.x) - 0.0001;
+		}
+		else
+		{
+			exitpos.x = floor(p.x) + 1.0001;
+		}
+	}
+	else
+	{
+		if (dir.y < 0.0)
+		{
+			exitpos.y = floor(p.y) - 0.0001;
+		}
+		else
+		{
+			exitpos.y = floor(p.y) + 1.0001;
+		}
+	}
+
+	return exitpos * t;
 }
 
 
