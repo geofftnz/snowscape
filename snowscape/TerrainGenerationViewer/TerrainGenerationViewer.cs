@@ -845,8 +845,9 @@ namespace Snowscape.TerrainGenerationViewer
                 Time = (float)(this.frameCounter.Frames % 65536),
 
                 //MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
-                MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture,
+                //MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture,
                 MiscTexture = (this.Terrain is GPUParticleErosion) ? ((GPUParticleErosion)this.Terrain).ErosionTex : this.terrainGlobal.ShadeTexture,
+                MiscTexture2 = (this.Terrain is GPUParticleErosion) ? ((GPUParticleErosion)this.Terrain).CurrentParticleTexture : this.terrainGlobal.ShadeTexture,
 
                 RenderMode = (float)this.TerrainGenPass,
 

@@ -78,7 +78,7 @@ namespace Utils
         }
 
         public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc)
-            : this(name,defaultValue,minValue,maxValue, increaseFunc,decreaseFunc,ParameterImpact.None)
+            : this(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc, ParameterImpact.None)
         {
         }
 
@@ -120,12 +120,5 @@ namespace Utils
             return string.Format("{0}: {1:0.0000}", this.Name, this.Value);
         }
 
-
-
-
-        public T GetValue<T>()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

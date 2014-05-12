@@ -348,5 +348,11 @@ namespace TerrainGeneration
             }
             this.SlipFlowTexture.Unload();
         }
+
+
+        public IEnumerable<IParameter> GetParameters()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

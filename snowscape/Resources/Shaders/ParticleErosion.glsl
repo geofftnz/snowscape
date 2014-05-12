@@ -51,26 +51,29 @@ void main(void)
 	//  Uses slope information from L0 at position P0 to calculate acceleration of particle
 	vec3 fall = fallVector(particle.xy);
 	vec2 v = fall.xy;
-	float lifeFactor = 1.0;
+	//float lifeFactor = 1.0;
 
-	lifeFactor *= 1.0 / (1.0 + max(0.0,fall.z));
+	//lifeFactor *= 1.0 / (1.0 + max(0.0,fall.z));
 	//if (fall.z > 0.0)  // only way is uphill, accellerate dying
 	//{
-		//lifeFactor = 0.25;
+	//	lifeFactor = 0.0;
 	//}
+
+	float particleStuckFactor = 1.0;
+	if (fall.z > 0.0) {particleStuckFactor = 0.0; }
 //
 	//  Takes velocity from V1.rg, applies acceleration, writes to V0.rg
 	vec2 newVelocity = prevvel.xy * vdecay + v * vadd;
 
 	//  Calculates new carrying capacity and writes to V0.b 
-	float particleLifeCarryingCapacity = pow(particle.a,0.5) * lifeFactor;
+	//float particleLifeCarryingCapacity = pow(particle.a,0.5) * lifeFactor;
 
-	float speed = length(newVelocity);
-	float carryingCapacity = speed * speedCarryingCoefficient * particleLifeCarryingCapacity;
+	float speed = dot(newVelocity,newVelocity);
+	float carryingCapacity = speed * speedCarryingCoefficient * particleStuckFactor;// * particleLifeCarryingCapacity;
 
 	// TODO: make sure carrying capacity is sensible
 	
-	out_Velocity = vec4(newVelocity.xy,carryingCapacity,lifeFactor);
+	out_Velocity = vec4(newVelocity.x, newVelocity.y,carryingCapacity,1.0);
 }
 
 
@@ -115,8 +118,11 @@ void main(void)
 	vec4 particle = textureLod(particletex,particlecoord,0);
 	vec4 velocity = textureLod(velocitytex,particlecoord,0);
 
-	float erosionPotential = max(velocity.b - particle.b,0.0) * erosionRate * deltatime;
-	float depositAmount = max(particle.b - velocity.b,0.0) * depositRate * deltatime;
+	float carryingCapacity = velocity.b;
+	float carrying = particle.b;
+
+	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
+	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
 	out_Erosion = vec4(1.0, erosionPotential, depositAmount, 1.0);
 }
@@ -156,7 +162,7 @@ void main(void)
 	out_Terrain = vec4(
 		hard - harderode, 
 		soft - softerode,
-		terrain.b * waterLowpass + erosion.r * waterDepthFactor * (1.0-waterLowpass),
+		terrain.b * waterLowpass + erosion.r * waterDepthFactor,
 		terrain.a);
 }
 
@@ -180,84 +186,6 @@ out vec4 out_Particle;
 
 float t = 1.0 / texsize;
 
-// cast ray from pos->dir to determine where this particle exits the current terrain tile.
-vec2 tileIntersect(vec2 pos, vec2 dir)
-{
-	float tx, ty;
-	vec2 p = pos * texsize; // transform from normalized to terrain space
-
-	if (dir == vec2(0.0))
-	{
-		return pos;
-	}
-
-	if (dir.x < 0.0)
-	{
-		// heading left
-		tx = (floor(p.x) - p.x) / dir.x;
-	}
-	else
-	{
-		// heading right
-		if (dir.x > 0.0)
-		{
-			tx = (floor(p.x)+1.0-p.x) / dir.x;
-		}
-		else
-		{
-			tx = 10000000.0;
-		}
-	}
-
-	if (dir.y < 0.0)
-	{
-		// heading left
-		ty = (floor(p.y) - p.y) / dir.y;
-	}
-	else
-	{
-		// heading right
-		if (dir.y > 0.0)
-		{
-			ty = (floor(p.y)+1.0-p.y) / dir.y;
-		}
-		else
-		{
-			ty = 10000000.0;
-		}
-	}
-
-	float tt = min(tx,ty);
-
-	vec2 exitpos = pos + dir * tt;
-
-	// clamp to avoid roundoff errors
-	if (tx < ty)
-	{
-		if (dir.x < 0.0)
-		{
-			exitpos.x = floor(p.x) - 0.0001;
-		}
-		else
-		{
-			exitpos.x = floor(p.x) + 1.0001;
-		}
-	}
-	else
-	{
-		if (dir.y < 0.0)
-		{
-			exitpos.y = floor(p.y) - 0.0001;
-		}
-		else
-		{
-			exitpos.y = floor(p.y) + 1.0001;
-		}
-	}
-
-	return exitpos * t;
-}
-
 
 void main(void)
 {
@@ -269,12 +197,16 @@ void main(void)
 
 	vec4 newParticle = particle;
 
+	float carryingCapacity = velocity.b;
+	float carrying = particle.b;
+
     //  Replicate particle potential calc from Step 2 to get deposit/erode potentials.
-	float erosionPotential = max(velocity.b - particle.b,0.0) * erosionRate * deltatime;
-	float depositAmount = max(particle.b - velocity.b,0.0) * depositRate * deltatime;
+	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
+	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
     //  Subtract deposit amount from carrying amount P0.b, write to P1.b
-	newParticle.b = max(particle.b - depositAmount,0.0);
+	newParticle.b = max(carrying - depositAmount,0.0);
+
 
     //  Apply same calculation as step 3 to determine how much soft/hard is being eroded from L0(P0.rg).
 	float hard = terrain.r;
@@ -288,14 +220,12 @@ void main(void)
 	float totaleroded = softerode + harderode;
 
     //  Add material carried based on particle share of total V0.b / E(P0.rg).g -> P1.b
-	float particleerode = totaleroded * (max(velocity.b - particle.b,0.0) * erosionRate * deltatime) / erosion.g;
+	float particleerode = totaleroded * (erosionPotential / erosion.g);
 	newParticle.b += particleerode;
 
 
-    //  TODO: Calculate new particle position by intersecting ray P0.rg->V0.rg against 
-    //    cell boundaries. Add small offset to avoid boundary problems. Writes to P1.rg
-    //  If death flag indicates particle recycle, init particle at random position.
-	newParticle.xy = particle.xy + normalize(velocity.xy) * t;
+    //  move particle
+	newParticle.xy = particle.xy + normalize(velocity.xy) * t * 0.5;
 	newParticle.a *= velocity.a;
 
 	out_Particle = newParticle;

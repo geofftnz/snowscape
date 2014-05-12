@@ -812,7 +812,8 @@ void main(void)
 		else
 		{
             p -= vec2(1.0,1.0);
-			c.rgb = texture(miscTex,p).rgb * vec3(0.1,1.0,1.0);
+			c.rgb = texture(miscTex,p).rgb * vec3(0.1,10.0,10.0);
+			//c.rgb = texture(miscTex2,p).b * vec3(0.0,0.0,10.0);// + texture(miscTex2,p).a * vec3(0.0,1.0,0.0);
 
 			/*
 			if (p.x < 1.0)

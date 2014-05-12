@@ -1263,5 +1263,11 @@ namespace TerrainGeneration
         {
             throw new NotImplementedException();
         }
+
+
+        public IEnumerable<IParameter> GetParameters()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

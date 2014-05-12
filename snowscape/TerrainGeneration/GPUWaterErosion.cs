@@ -529,5 +529,11 @@ namespace TerrainGeneration
             this.SlipFlowTexture.Unload();
             this.VisTex.Unload();
         }
+
+
+        public IEnumerable<IParameter> GetParameters()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

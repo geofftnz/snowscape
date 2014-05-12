@@ -134,6 +134,7 @@ namespace TerrainGeneration
         /// B: carrying amount
         /// </summary>
         private Texture[] ParticleStateTexture = new Texture[2];
+        public Texture CurrentParticleTexture { get { return this.ParticleStateTexture[0]; } }
 
         /// <summary>
         /// Particle velocity texture.
@@ -190,6 +191,12 @@ namespace TerrainGeneration
         private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("gpupe-copyparticles");
 
 
+        private ParameterCollection parameters = new ParameterCollection();
+        public ParameterCollection Parameters { get { return parameters; } }
+
+
+
+
 
         public float GetHeightAt(float x, float y)
         {
@@ -198,6 +205,11 @@ namespace TerrainGeneration
 
         public void Init()
         {
+            // setup parameters
+            this.Parameters.Add(new Parameter<float>("erosion-depositrate", 0.5f, 0.0f, 1.0f, (v) => v + 0.01f, (v) => v - 0.01f));
+
+
+
             // setup textures
             for (int i = 0; i < 2; i++)
             {
@@ -327,7 +339,7 @@ namespace TerrainGeneration
         public void ModifyTerrain()
         {
             float deltaTime = 1.0f;
-            float depositRate = 0.7f;
+            float depositRate = (float)this.Parameters["erosion-depositrate"].GetValue();
             float erosionRate = 0.1f;
             float hardErosionFactor = 0.1f;
 
@@ -344,9 +356,9 @@ namespace TerrainGeneration
                     sp.SetUniform("particletex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("vdecay", 0.9f);
-                    sp.SetUniform("vadd", 0.1f);
-                    sp.SetUniform("speedCarryingCoefficient", 10.0f);
+                    sp.SetUniform("vdecay", 0.3f);
+                    sp.SetUniform("vadd", 0.7f);
+                    sp.SetUniform("speedCarryingCoefficient", 1.0f);
                 });
 
             // accumulate erosion
@@ -396,8 +408,8 @@ namespace TerrainGeneration
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("erosiontex", 1);
                     sp.SetUniform("hardErosionFactor", hardErosionFactor);
-                    sp.SetUniform("waterLowpass", 0.98f);
-                    sp.SetUniform("waterDepthFactor", 5.0f);
+                    sp.SetUniform("waterLowpass", 0.995f);
+                    sp.SetUniform("waterDepthFactor", 0.005f);
                 });
 
             // Step 4: Update particle state
@@ -445,8 +457,8 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("maxdiff", 0.85f);
-                    sp.SetUniform("sliprate", 0.002f);
+                    sp.SetUniform("maxdiff", 0.5f);
+                    sp.SetUniform("sliprate", 0.02f);
                 });
 
             // step 6 - slippage transport
@@ -640,5 +652,9 @@ namespace TerrainGeneration
 
 
 
+        public IEnumerable<IParameter> GetParameters()
+        {
+            return this.Parameters;
+        }
     }
 }
