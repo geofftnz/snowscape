@@ -86,6 +86,19 @@ namespace Utils
         {
         }
 
+        public static Parameter<float> NewLinearParameter(string name, float defaultValue, float minValue, float maxValue, float change = 0.01f)
+        {
+            Func<float,float> increaseFunc = (v) => v + (maxValue - minValue) * change;
+            Func<float, float> decreaseFunc = (v) => v - (maxValue - minValue) * change;
+            return new Parameter<float>(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc);
+        }
+        public static Parameter<float> NewExponentialParameter(string name, float defaultValue, float minValue, float maxValue, float changeRate = 0.01f)
+        {
+            Func<float, float> increaseFunc = (v) => v * (1.0f + changeRate);
+            Func<float, float> decreaseFunc = (v) => v * (1.0f - changeRate);
+            return new Parameter<float>(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc);
+        }
+
         public void Increase()
         {
             T newValue = this.DefaultValue;

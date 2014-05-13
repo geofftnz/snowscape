@@ -7,8 +7,7 @@ uniform sampler2D terraintex;
 uniform sampler2D particletex;
 uniform sampler2D velocitytex;
 uniform float texsize;
-uniform float vdecay;
-uniform float vadd;
+uniform float carryingCapacityLowpass;
 uniform float speedCarryingCoefficient;
 
 in vec2 texcoord;
@@ -16,8 +15,6 @@ in vec2 texcoord;
 out vec4 out_Velocity;
 
 float t = 1.0 / texsize;
-float diag = 0.707;
-
 
 float sampleHeight(vec2 pos)
 {
@@ -50,30 +47,13 @@ void main(void)
 
 	//  Uses slope information from L0 at position P0 to calculate acceleration of particle
 	vec3 fall = fallVector(particle.xy);
-	vec2 v = fall.xy;
-	//float lifeFactor = 1.0;
+	vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
 
-	//lifeFactor *= 1.0 / (1.0 + max(0.0,fall.z));
-	//if (fall.z > 0.0)  // only way is uphill, accellerate dying
-	//{
-	//	lifeFactor = 0.0;
-	//}
-
-	float particleStuckFactor = 1.0;
-	if (fall.z > 0.0) {particleStuckFactor = 0.0; }
-//
-	//  Takes velocity from V1.rg, applies acceleration, writes to V0.rg
-	vec2 newVelocity = prevvel.xy * vdecay + v * vadd;
-
-	//  Calculates new carrying capacity and writes to V0.b 
-	//float particleLifeCarryingCapacity = pow(particle.a,0.5) * lifeFactor;
-
-	float speed = dot(newVelocity,newVelocity);
-	float carryingCapacity = speed * speedCarryingCoefficient * particleStuckFactor;// * particleLifeCarryingCapacity;
-
-	// TODO: make sure carrying capacity is sensible
-	
-	out_Velocity = vec4(newVelocity.x, newVelocity.y,carryingCapacity,1.0);
+	float speed = max(-fall.z,0.0);
+	float newCarryingCapacity = speed * speedCarryingCoefficient * pow(particle.a,0.3);
+	float prevCarryingCapacity = prevvel.b;
+		
+	out_Velocity = vec4(newVelocity.xy,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),1.0);
 }
 
 
@@ -225,7 +205,7 @@ void main(void)
 
 
     //  move particle
-	newParticle.xy = particle.xy + normalize(velocity.xy) * t * 0.5;
+	newParticle.xy = particle.xy + normalize(velocity.xy) * t * deltatime;
 	newParticle.a *= velocity.a;
 
 	out_Particle = newParticle;
@@ -254,7 +234,7 @@ void main(void)
 	newParticle.xyz = particle.xyz;
 	newParticle.a = max(0.0,particle.a - particleDeathRate);	
 
-	if (newParticle.a < 0.001)
+	if (newParticle.a < 0.001 && newParticle.z < 0.00001)
 	{
 		newParticle.x = rand(particle.xy + vec2(randSeed));
 		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073));
@@ -263,6 +243,21 @@ void main(void)
 	}
 
 	out_Particle = newParticle;
+}
+
+
+//|CopyVelocity
+#version 140
+precision highp float;
+
+uniform sampler2D velocitytex;
+
+in vec2 texcoord;
+out vec4 out_Velocity;
+
+void main(void)
+{
+	out_Velocity = textureLod(velocitytex,texcoord,0);
 }
 
 

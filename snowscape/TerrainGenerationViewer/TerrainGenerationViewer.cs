@@ -594,6 +594,10 @@ namespace Snowscape.TerrainGenerationViewer
                 this.Terrain.ResetTerrain();
             }
 
+            foreach(var p in this.Terrain.GetParameters()){
+                this.parameters.Add(p);
+            }
+
             this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
             this.threadRenderMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
 

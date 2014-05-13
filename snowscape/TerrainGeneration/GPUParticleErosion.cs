@@ -95,6 +95,19 @@ namespace TerrainGeneration
     /// </summary>
     public class GPUParticleErosion : ITerrainGen
     {
+        private const string P_DEPOSITRATE = "erosion-depositrate";
+        private const string P_EROSIONRATE = "erosion-erosionrate";
+        private const string P_DELTATIME = "erosion-deltatime";
+        private const string P_HARDFACTOR = "erosion-hardfactor";
+        private const string P_CARRYCAPLOWPASS = "erosion-capacitylowpass";
+        private const string P_CARRYSPEED = "erosion-carryingspeed";
+        private const string P_WATERDECAY = "erosion-waterdecay";
+        private const string P_PARTICLEWATERDEPTH = "erosion-particlewaterdepth";
+        private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
+        private const string P_SLIPRATE = "erosion-sliprate";
+        private const string P_DEATHRATE = "erosion-deathrate";
+
+
         const int FILEMAGIC = 0x54455230;
         public bool NeedThread { get { return false; } }
         public int Width { get; private set; }
@@ -189,6 +202,7 @@ namespace TerrainGeneration
 
         // Copy particles from buffer 1 to buffer 0
         private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("gpupe-copyparticles");
+        private GBufferShaderStep CopyVelocityStep = new GBufferShaderStep("gpupe-copyvelocity");
 
 
         private ParameterCollection parameters = new ParameterCollection();
@@ -206,9 +220,21 @@ namespace TerrainGeneration
         public void Init()
         {
             // setup parameters
-            this.Parameters.Add(new Parameter<float>("erosion-depositrate", 0.5f, 0.0f, 1.0f, (v) => v + 0.01f, (v) => v - 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.5f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_EROSIONRATE, 0.01f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_DELTATIME, 0.1f, 0.0f, 1.0f));
 
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.5f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_CARRYSPEED, 1.0f, 0.0f, 100.0f));
 
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.99f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.001f, 0.0f, 0.1f, 0.001f));
+
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.0f, 0.0f, 0.1f, 0.001f));
+
+            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_DEATHRATE, 0.002f, 0.0f, 0.05f, 0.001f));
 
             // setup textures
             for (int i = 0; i < 2; i++)
@@ -333,15 +359,18 @@ namespace TerrainGeneration
             // copy particles
             CopyParticlesStep.SetOutputTexture(0, "out_Particle", this.ParticleStateTexture[0]);
             CopyParticlesStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|CopyParticles");
+
+            CopyVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
+            CopyVelocityStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|CopyVelocity");
         }
 
 
         public void ModifyTerrain()
         {
-            float deltaTime = 1.0f;
-            float depositRate = (float)this.Parameters["erosion-depositrate"].GetValue();
-            float erosionRate = 0.1f;
-            float hardErosionFactor = 0.1f;
+            float deltaTime = (float)this.Parameters[P_DELTATIME].GetValue();
+            float depositRate = (float)this.Parameters[P_DEPOSITRATE].GetValue();
+            float erosionRate = (float)this.Parameters[P_EROSIONRATE].GetValue();
+            float hardErosionFactor = (float)this.Parameters[P_HARDFACTOR].GetValue();
 
             ComputeVelocityStep.Render(
                 () =>
@@ -356,9 +385,8 @@ namespace TerrainGeneration
                     sp.SetUniform("particletex", 1);
                     sp.SetUniform("velocitytex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("vdecay", 0.3f);
-                    sp.SetUniform("vadd", 0.7f);
-                    sp.SetUniform("speedCarryingCoefficient", 1.0f);
+                    sp.SetUniform("carryingCapacityLowpass", (float)this.Parameters[P_CARRYCAPLOWPASS].GetValue());
+                    sp.SetUniform("speedCarryingCoefficient", (float)this.Parameters[P_CARRYSPEED].GetValue());
                 });
 
             // accumulate erosion
@@ -408,8 +436,8 @@ namespace TerrainGeneration
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("erosiontex", 1);
                     sp.SetUniform("hardErosionFactor", hardErosionFactor);
-                    sp.SetUniform("waterLowpass", 0.995f);
-                    sp.SetUniform("waterDepthFactor", 0.005f);
+                    sp.SetUniform("waterLowpass", (float)this.Parameters[P_WATERDECAY].GetValue());
+                    sp.SetUniform("waterDepthFactor", (float)this.Parameters[P_PARTICLEWATERDEPTH].GetValue());
                 });
 
             // Step 4: Update particle state
@@ -457,8 +485,8 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("maxdiff", 0.5f);
-                    sp.SetUniform("sliprate", 0.02f);
+                    sp.SetUniform("maxdiff", (float)this.Parameters[P_SLIPTHRESHOLD].GetValue());
+                    sp.SetUniform("sliprate", (float)this.Parameters[P_SLIPRATE].GetValue());
                 });
 
             // step 6 - slippage transport
@@ -487,10 +515,19 @@ namespace TerrainGeneration
                 (sp) =>
                 {
                     sp.SetUniform("particletex", 0);
-                    sp.SetUniform("particleDeathRate", 0.005f);
+                    sp.SetUniform("particleDeathRate", (float)this.Parameters[P_DEATHRATE].GetValue());
                     sp.SetUniform("randSeed", (float)rand.NextDouble());
                 });
 
+            CopyVelocityStep.Render(
+                () =>
+                {
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("velocitytex", 0);
+                });
 
         }
 
@@ -520,7 +557,14 @@ namespace TerrainGeneration
 
         public void Unload()
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < 2; i++)
+            {
+                this.TerrainTexture[i].Unload();
+                this.ParticleStateTexture[i].Unload();
+                this.VelocityTexture[i].Unload();
+            }
+            this.ErosionAccumulationTexture.Unload();
+            this.SlipFlowTexture.Unload();
         }
 
 
