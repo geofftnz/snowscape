@@ -221,7 +221,7 @@ namespace TerrainGeneration
         {
             // setup parameters
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.5f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_EROSIONRATE, 0.01f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.01f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_DELTATIME, 0.1f, 0.0f, 1.0f));
 
@@ -234,7 +234,7 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.01f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.0f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_DEATHRATE, 0.002f, 0.0f, 0.05f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.01f));
 
             // setup textures
             for (int i = 0; i < 2; i++)

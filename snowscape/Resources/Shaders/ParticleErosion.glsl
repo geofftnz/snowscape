@@ -50,7 +50,7 @@ void main(void)
 	vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
 
 	float speed = max(-fall.z,0.0);
-	float newCarryingCapacity = speed * speedCarryingCoefficient * pow(particle.a,0.3);
+	float newCarryingCapacity = speed * speed * speedCarryingCoefficient * particle.a;
 	float prevCarryingCapacity = prevvel.b;
 		
 	out_Velocity = vec4(newVelocity.xy,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),1.0);
@@ -234,7 +234,7 @@ void main(void)
 	newParticle.xyz = particle.xyz;
 	newParticle.a = max(0.0,particle.a - particleDeathRate);	
 
-	if (newParticle.a < 0.001 && newParticle.z < 0.00001)
+	if (newParticle.a < 0.001 && newParticle.z < 0.000001)
 	{
 		newParticle.x = rand(particle.xy + vec2(randSeed));
 		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073));

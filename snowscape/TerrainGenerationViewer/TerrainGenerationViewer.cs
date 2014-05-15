@@ -260,7 +260,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-            parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f,ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f, ParameterImpact.PreCalcLighting));
 
             //vec3(0.100,0.598,0.662) * 1.4
@@ -327,11 +327,11 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (e.Key == Key.Up)
             {
-                this.parameters.CurrentIndex--;
+                this.parameters.CurrentIndex -= (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight]) ? 10 : 1;
             }
             if (e.Key == Key.Down)
             {
-                this.parameters.CurrentIndex++;
+                this.parameters.CurrentIndex += (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight]) ? 10 : 1;
             }
 
             if (e.Key == Key.Left)
@@ -459,7 +459,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             log.Trace("Saving terrain into slot 0...");
-            this.Terrain.Save(this.GetTerrainFileName(0,this.TerrainGenPass));
+            this.Terrain.Save(this.GetTerrainFileName(0, this.TerrainGenPass));
         }
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
@@ -594,7 +594,8 @@ namespace Snowscape.TerrainGenerationViewer
                 this.Terrain.ResetTerrain();
             }
 
-            foreach(var p in this.Terrain.GetParameters()){
+            foreach (var p in this.Terrain.GetParameters())
+            {
                 this.parameters.Add(p);
             }
 
@@ -857,7 +858,7 @@ namespace Snowscape.TerrainGenerationViewer
 
                 NormalBlendNearDistance = (float)this.parameters["NormalBlendNearDistance"].GetValue(),
                 NormalBlendFarDistance = (float)this.parameters["NormalBlendFarDistance"].GetValue()
-                
+
             };
 
             this.lightingStep.Render(rp);
@@ -892,9 +893,18 @@ namespace Snowscape.TerrainGenerationViewer
                         new TextBlock(
                             "p_" + this.parameters[i].Name,
                             this.parameters[paramindex].ToString(),
+                            new Vector3(0.02f, y+0.01f, 0.0f),
+                            0.0004f,
+                            new Vector4(0.0f, 0.0f, 0.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.7f)
+                            )
+                        );
+                    textManager.AddOrUpdate(
+                        new TextBlock(
+                            "p_" + this.parameters[i].Name,
+                            this.parameters[paramindex].ToString(),
                             new Vector3(0.01f, y, 0.0f),
                             0.0004f,
-                            new Vector4(1.0f, 1.0f, 1.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.5f)
+                            new Vector4(1.0f, 1.0f, 1.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.7f)
                             )
                         );
                     y += 0.025f;
