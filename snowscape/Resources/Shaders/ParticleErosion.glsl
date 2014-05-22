@@ -9,6 +9,7 @@ uniform sampler2D velocitytex;
 uniform float texsize;
 uniform float carryingCapacityLowpass;
 uniform float speedCarryingCoefficient;
+uniform float waterHeightFactor;
 
 in vec2 texcoord;
 
@@ -18,8 +19,8 @@ float t = 1.0 / texsize;
 
 float sampleHeight(vec2 pos)
 {
-	vec4 l = texture(terraintex,pos);
-	return l.r + l.g + l.b;
+	vec3 l = texture(terraintex,pos).rgb;
+	return dot(l, vec3(1.0,1.0,waterHeightFactor));
 }
 
 vec3 fallVector(vec2 p)

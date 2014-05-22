@@ -101,12 +101,14 @@ namespace TerrainGeneration
         private const string P_HARDFACTOR = "erosion-hardfactor";
         private const string P_CARRYCAPLOWPASS = "erosion-capacitylowpass";
         private const string P_CARRYSPEED = "erosion-carryingspeed";
+        private const string P_WATERHEIGHT = "erosion-waterheight";
         private const string P_WATERDECAY = "erosion-waterdecay";
         private const string P_PARTICLEWATERDEPTH = "erosion-particlewaterdepth";
         private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
         private const string P_SLIPRATE = "erosion-sliprate";
         private const string P_DEATHRATE = "erosion-deathrate";
-
+        
+        
 
         const int FILEMAGIC = 0x54455230;
         public bool NeedThread { get { return false; } }
@@ -221,17 +223,18 @@ namespace TerrainGeneration
         {
             // setup parameters
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.5f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.01f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.05f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_DELTATIME, 0.1f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.2f, 0.0f, 1.0f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.5f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewExponentialParameter(P_CARRYSPEED, 1.0f, 0.0f, 100.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.8f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 1.0f, 0.0f, 100.0f,0.001f));
 
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.01f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.99f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.001f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.0f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.01f));
@@ -387,6 +390,7 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("carryingCapacityLowpass", (float)this.Parameters[P_CARRYCAPLOWPASS].GetValue());
                     sp.SetUniform("speedCarryingCoefficient", (float)this.Parameters[P_CARRYSPEED].GetValue());
+                    sp.SetUniform("waterHeightFactor", (float)this.Parameters[P_WATERHEIGHT].GetValue());
                 });
 
             // accumulate erosion
@@ -661,7 +665,7 @@ namespace TerrainGeneration
             terrain.AddSimplexNoise(4, 0.16f / (float)this.Width, 300.0f, h => h, h => Math.Abs(h));
             terrain.AddSimplexNoise(14, 1.0f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h);
             //terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
-            terrain.AddLooseMaterial(1.0f);
+            terrain.AddLooseMaterial(10.0f);
             terrain.SetBaseLevel();
 
             var data = new float[this.Width * this.Height * 4];
