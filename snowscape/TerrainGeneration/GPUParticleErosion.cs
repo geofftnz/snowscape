@@ -16,6 +16,26 @@ namespace TerrainGeneration
     /// 
     /// An attempt to get the original CPU-based particle erosion working on the GPU
     /// 
+    /// 
+    /// Rethink algo:
+    /// 
+    /// step 1:
+    /// - compute fall vector
+    /// - compute lowest neighbour
+    /// - output velocity (fall direction + magnitude)
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
+    /// 
     /// Needs the following textures/buffers
     /// 
     /// Terrain Layers:  R = hard, G = soft, B = water depth, A = particle life (1.0 = fully alive, 0.0 = dead)
@@ -222,17 +242,17 @@ namespace TerrainGeneration
         public void Init()
         {
             // setup parameters
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.5f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.05f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.9f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.1f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.2f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.5f, 0.0f, 1.0f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.8f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 1.0f, 0.0f, 100.0f,0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.1f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.2f, 0.0f, 100.0f,0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.01f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.99f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.001f, 0.0f, 0.1f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 1.0f, 0.0f, 10.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.995f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.003f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.0f, 0.0f, 0.1f, 0.001f));
@@ -665,7 +685,7 @@ namespace TerrainGeneration
             terrain.AddSimplexNoise(4, 0.16f / (float)this.Width, 300.0f, h => h, h => Math.Abs(h));
             terrain.AddSimplexNoise(14, 1.0f / (float)this.Width, 200.0f, h => Math.Abs(h), h => h);
             //terrain.AddSimplexNoise(6, 19.0f / (float)this.Width, 20.0f, h => h*h, h => h);
-            terrain.AddLooseMaterial(10.0f);
+            terrain.AddLooseMaterial(4.0f);
             terrain.SetBaseLevel();
 
             var data = new float[this.Width * this.Height * 4];

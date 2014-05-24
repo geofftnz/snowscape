@@ -37,7 +37,7 @@ namespace Snowscape.TerrainGenerationViewer
         const int CloudRes = 512;
         const int DetailRes = 1024;
 
-        const int TerrainParticleRes = 256;
+        const int TerrainParticleRes = 512;
 
         const int TileLodScale = 4;
 
@@ -921,11 +921,11 @@ namespace Snowscape.TerrainGenerationViewer
             if (!this.Terrain.NeedThread && !this.ThreadPaused)
             {
                 perfmon.Start("GPU Erosion");
-                //for (int i = 0; i < 4; i++)
-                //{
+                for (int i = 0; i < 4; i++)
+                {
                     this.Terrain.ModifyTerrain();
                     this.updateGPUIterations++;
-                //}
+                }
                 perfmon.Stop("GPU Erosion");
                 //if (this.updateGPUIterations % 4 == 0)
                 //{

@@ -16,6 +16,7 @@ in vec2 texcoord;
 out vec4 out_Velocity;
 
 float t = 1.0 / texsize;
+float diag = 0.707;
 
 float sampleHeight(vec2 pos)
 {
@@ -41,20 +42,53 @@ vec3 fallVector(vec2 p)
 	return normalize(f);
 }
 
+
 void main(void)
 {
 	vec4 prevvel = texture(velocitytex,texcoord);
 	vec4 particle = texture(particletex,texcoord);
 
-	//  Uses slope information from L0 at position P0 to calculate acceleration of particle
-	vec3 fall = fallVector(particle.xy);
-	vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
+	vec3 ofs = vec3(0,-t,t);
 
-	float speed = max(-fall.z,0.0);
-	float newCarryingCapacity = speed * speed * speedCarryingCoefficient * particle.a;
+	// get our current height
+	float h0 = sampleHeight(particle.xy);
+
+	// get neighbouring height differentials - positive means the neighbour is downhill from here
+	float hn = h0 - sampleHeight(particle.xy + ofs.xy); // x=0, y=-1, z=+1
+	float hs = h0 - sampleHeight(particle.xy + ofs.xz);
+	float hw = h0 - sampleHeight(particle.xy + ofs.yx);
+	float he = h0 - sampleHeight(particle.xy + ofs.zx);
+	float hnw = (h0 - sampleHeight(particle.xy + ofs.yy)) * diag; 
+	float hne = (h0 - sampleHeight(particle.xy + ofs.zy)) * diag; 
+	float hsw = (h0 - sampleHeight(particle.xy + ofs.yz)) * diag; 
+	float hse = (h0 - sampleHeight(particle.xy + ofs.zz)) * diag; 
+
+	float maxDownhill = max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
+
+	vec2 fall = vec2(0);
+
+	fall += vec2(0,-1) * max(0,hn);
+	fall += vec2(0,1) * max(0,hs);
+	fall += vec2(-1,0) * max(0,hw);
+	fall += vec2(1,0) * max(0,he);
+
+	fall += vec2(-1,-1) * max(0,hnw);
+	fall += vec2(1,-1) * max(0,hne);
+	fall += vec2(-1,1) * max(0,hsw);
+	fall += vec2(1,1) * max(0,hse);
+
+	fall = normalize(fall);
+
+
+	//  Uses slope information from L0 at position P0 to calculate acceleration of particle
+	//vec3 fall = fallVector(particle.xy);
+	//vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
+
+	float speed = atan(max(0,maxDownhill));
+	float newCarryingCapacity = speed * speedCarryingCoefficient * particle.a;
 	float prevCarryingCapacity = prevvel.b;
 		
-	out_Velocity = vec4(newVelocity.xy,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),1.0);
+	out_Velocity = vec4(fall,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),1.0);
 }
 
 
@@ -205,7 +239,7 @@ void main(void)
 	newParticle.b += particleerode;
 
 
-    //  move particle
+    //  move particle - maybe change to intersect with cell boundary
 	newParticle.xy = particle.xy + normalize(velocity.xy) * t * deltatime;
 	newParticle.a *= velocity.a;
 
@@ -235,7 +269,7 @@ void main(void)
 	newParticle.xyz = particle.xyz;
 	newParticle.a = max(0.0,particle.a - particleDeathRate);	
 
-	if (newParticle.a < 0.001 && newParticle.z < 0.000001)
+	if (newParticle.a < 0.001 && newParticle.z < 0.1)
 	{
 		newParticle.x = rand(particle.xy + vec2(randSeed));
 		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073));
