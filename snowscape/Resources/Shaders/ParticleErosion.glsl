@@ -249,6 +249,10 @@ void main(void)
 
     //  move particle - maybe change to intersect with cell boundary
 	newParticle.xy = particle.xy + normalize(velocity.xy) * t * deltatime;
+
+	// keep in range
+	newParticle.xy = mod(newParticle.xy + vec2(1.0),vec2(1.0));
+
 	newParticle.a *= velocity.a;
 
 	out_Particle = newParticle;
