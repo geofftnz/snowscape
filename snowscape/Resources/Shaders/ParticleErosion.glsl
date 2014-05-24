@@ -10,6 +10,8 @@ uniform float texsize;
 uniform float carryingCapacityLowpass;
 uniform float speedCarryingCoefficient;
 uniform float waterHeightFactor;
+uniform float fallRand;
+uniform float randSeed;
 
 in vec2 texcoord;
 
@@ -17,6 +19,8 @@ out vec4 out_Velocity;
 
 float t = 1.0 / texsize;
 float diag = 0.707;
+
+#include "noise.glsl"
 
 float sampleHeight(vec2 pos)
 {
@@ -67,6 +71,9 @@ void main(void)
 
 	vec2 fall = vec2(0);
 
+	fall.x = (rand(particle.xy + vec2(randSeed))-0.5) * fallRand;
+	fall.y = (rand(particle.xy + vec2(randSeed * 3.19 + 7.36))-0.5) * fallRand;
+
 	fall += vec2(0,-1) * max(0,hn);
 	fall += vec2(0,1) * max(0,hs);
 	fall += vec2(-1,0) * max(0,hw);
@@ -85,6 +92,7 @@ void main(void)
 	//vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
 
 	float speed = atan(max(0,maxDownhill));
+	speed += 0.1 * pow(particle.a,8.0); // boost erosion early in the particle's life.
 	float newCarryingCapacity = speed * speedCarryingCoefficient * particle.a;
 	float prevCarryingCapacity = prevvel.b;
 		

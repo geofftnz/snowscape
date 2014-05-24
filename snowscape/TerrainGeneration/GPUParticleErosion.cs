@@ -127,6 +127,8 @@ namespace TerrainGeneration
         private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
         private const string P_SLIPRATE = "erosion-sliprate";
         private const string P_DEATHRATE = "erosion-deathrate";
+
+        private const string P_FALLRAND = "erosion-fallrandom";
         
         
 
@@ -250,14 +252,16 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.1f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.2f, 0.0f, 100.0f,0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 1.0f, 0.0f, 10.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.995f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 2.5f, 0.0f, 10.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.98f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.003f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.0f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.005f, 0.0f, 0.1f, 0.01f));
+
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 1.0f, 0.0f, 5.0f, 0.01f));
 
             // setup textures
             for (int i = 0; i < 2; i++)
@@ -390,6 +394,8 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
+            var rand = new Random();
+
             float deltaTime = (float)this.Parameters[P_DELTATIME].GetValue();
             float depositRate = (float)this.Parameters[P_DEPOSITRATE].GetValue();
             float erosionRate = (float)this.Parameters[P_EROSIONRATE].GetValue();
@@ -411,6 +417,8 @@ namespace TerrainGeneration
                     sp.SetUniform("carryingCapacityLowpass", (float)this.Parameters[P_CARRYCAPLOWPASS].GetValue());
                     sp.SetUniform("speedCarryingCoefficient", (float)this.Parameters[P_CARRYSPEED].GetValue());
                     sp.SetUniform("waterHeightFactor", (float)this.Parameters[P_WATERHEIGHT].GetValue());
+                    sp.SetUniform("fallRand", (float)this.Parameters[P_FALLRAND].GetValue());
+                    sp.SetUniform("randSeed", (float)rand.NextDouble());
                 });
 
             // accumulate erosion
@@ -529,7 +537,6 @@ namespace TerrainGeneration
 
 
 
-            var rand = new Random();
 
             CopyParticlesStep.Render(
                 () =>
