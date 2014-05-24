@@ -37,6 +37,8 @@ namespace Snowscape.TerrainGenerationViewer
         const int CloudRes = 512;
         const int DetailRes = 1024;
 
+        const int TerrainParticleRes = 256;
+
         const int TileLodScale = 4;
 
         public ITerrainGen Terrain { get; set; }
@@ -227,7 +229,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             //this.Terrain = new TerrainGen(TileWidth, TileHeight);
             //this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
-            this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, 512, 512);
+            this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes);
 
 
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
@@ -893,24 +895,16 @@ namespace Snowscape.TerrainGenerationViewer
                         new TextBlock(
                             "p_" + this.parameters[i].Name,
                             this.parameters[paramindex].ToString(),
-                            new Vector3(0.02f, y+0.01f, 0.0f),
-                            0.0004f,
-                            new Vector4(0.0f, 0.0f, 0.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.7f)
-                            )
-                        );
-                    textManager.AddOrUpdate(
-                        new TextBlock(
-                            "p_" + this.parameters[i].Name,
-                            this.parameters[paramindex].ToString(),
                             new Vector3(0.01f, y, 0.0f),
                             0.0004f,
-                            new Vector4(1.0f, 1.0f, 1.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.7f)
+                            new Vector4(1.0f, 0.7f, 0.0f, (paramindex == this.parameters.CurrentIndex) ? 1.0f : 0.7f)
                             )
                         );
                     y += 0.025f;
                 }
             }
 
+            /*
             y += 0.02f;
             textManager.AddOrUpdate(
                 new TextBlock(
@@ -920,18 +914,18 @@ namespace Snowscape.TerrainGenerationViewer
                     0.0004f,
                     new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
                     )
-                );
+                );*/
 
 
             // do GPU-based terrain generation
             if (!this.Terrain.NeedThread && !this.ThreadPaused)
             {
                 perfmon.Start("GPU Erosion");
-                for (int i = 0; i < 4; i++)
-                {
+                //for (int i = 0; i < 4; i++)
+                //{
                     this.Terrain.ModifyTerrain();
                     this.updateGPUIterations++;
-                }
+                //}
                 perfmon.Stop("GPU Erosion");
                 //if (this.updateGPUIterations % 4 == 0)
                 //{
