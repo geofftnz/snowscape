@@ -371,9 +371,9 @@ vec3 terrainDiffuseDebug(vec3 p, vec3 n, vec4 s, float shadowHeight)
 	col = mix(col, softcol, clamp(soft * 16.0,0.0,1.0));
 
 	// water depth
-	float waterdepth = s.g;
-	vec3 watercol = mix(vec3(0.001,0.1,0.6),vec3(0.005,0.02,0.25),clamp(pow(waterdepth,0.5),0.0,1.0));
-	col = mix(col, watercol, 0.6*smoothstep(0.0,0.02,waterdepth*waterdepth) + 0.4*smoothstep(0.001,0.005,waterdepth*waterdepth));
+	float waterdepth = s.g*s.g;
+	vec3 watercol = mix(vec3(0.001,0.4,0.6),vec3(0.005,0.02,0.25),clamp(s.g*16.0,0.0,1.0));
+	col = mix(col, watercol, smoothstep(0.0001,0.001,waterdepth));
 
 	float suspended = s.b * 0.2;
 	vec3 suspendedcol = vec3(0.6,0.0,0.05);
@@ -481,6 +481,7 @@ vec3 generateCol(vec3 p, vec3 nd, vec3 nls, vec4 s, vec3 eye, float shadowHeight
 
 	if (abs(renderMode-1.0) < 0.1){
 		col = terrainDiffuseDebug(p,n,s,shadowHeight);
+		//col = terrainDiffuse(p,n,s,shadowHeight);
 	}
 	if (abs(renderMode-2.0) < 0.1){
 		col = terrainDiffuseDebugSnow(p,n,s,shadowHeight);
@@ -812,8 +813,19 @@ void main(void)
 		else
 		{
             p -= vec2(1.0,1.0);
-			c.rgb = texture(miscTex,p).rgb * vec3(0.1,10.0,10.0);
+			
+			//c.rgb = texture(miscTex,p).rgb * vec3(0.1,10.0,10.0);
 			//c.rgb = texture(miscTex2,p).b * vec3(0.0,0.0,10.0);// + texture(miscTex2,p).a * vec3(0.0,1.0,0.0);
+			
+			vec4 misc = texture(miscTex,p);
+
+			vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
+			misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
+
+			misccol.r += misc.g * 256.0;  // eroding
+			misccol.g += misc.b * 256.0;  // depositing
+			
+			c.rgb = misccol * min(1.0,misc.r);
 
 			/*
 			if (p.x < 1.0)

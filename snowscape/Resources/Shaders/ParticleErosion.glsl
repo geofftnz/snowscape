@@ -73,7 +73,7 @@ void main(void)
 	//vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
 
 	float speed = atan(max(0,maxDownhill));
-	speed += 0.1 * pow(particle.a,8.0); // boost erosion early in the particle's life.
+	speed += 0.01 * pow(particle.a,8.0); // boost erosion early in the particle's life.
 	float newCarryingCapacity = speed * speedCarryingCoefficient * particle.a;
 	float prevCarryingCapacity = prevvel.b;
 		
@@ -128,7 +128,7 @@ void main(void)
 	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
 	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
-	out_Erosion = vec4(1.0, erosionPotential, depositAmount, 1.0);
+	out_Erosion = vec4(1.0, erosionPotential, depositAmount, carrying);
 }
 
 //|UpdateTerrain
@@ -167,7 +167,8 @@ void main(void)
 		hard - harderode, 
 		soft - softerode,
 		terrain.b * waterLowpass + erosion.r * waterDepthFactor,
-		terrain.a);
+		erosion.a / max(1.0,erosion.r)  //average sediment carried
+		);
 }
 
 //|UpdateParticles

@@ -166,7 +166,7 @@ namespace TerrainGeneration
 
 
         /// <summary>
-        /// terrain erosion accumulation: R = particle count, G = total erosion potential, B = total material deposit
+        /// terrain erosion accumulation: R = particle count, G = total erosion potential, B = total material deposit, A = total sediment carried
         /// </summary>
         private Texture ErosionAccumulationTexture;
         public Texture ErosionTex { get { return ErosionAccumulationTexture; } }
@@ -426,7 +426,7 @@ namespace TerrainGeneration
                     GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
                     GL.Clear(ClearBufferMask.ColorBufferBit);
                     GL.Enable(EnableCap.Blend);
-                    GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.One);
+                    GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.One);
                     this.ParticleVertexVBO.Bind(this.ErosionAccumulationStep.ShaderVariableLocation("vertex"));
                     this.ParticleIndexVBO.Bind();
                     GL.DrawElements(BeginMode.Points, this.ParticleIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
