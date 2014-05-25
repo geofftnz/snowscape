@@ -960,8 +960,8 @@ namespace Snowscape.TerrainGenerationViewer
                     if (this.Terrain is GPUParticleErosion)
                     {
                         var terr = this.Terrain as GPUParticleErosion;
-                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
+                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
                         this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
                     }
 

@@ -101,7 +101,7 @@ namespace TerrainGeneration
         private const string P_HARDFACTOR = "erosion-hardfactor";
         private const string P_CARRYCAPLOWPASS = "erosion-capacitylowpass";
         private const string P_CARRYSPEED = "erosion-carryingspeed";
-        private const string P_WATERHEIGHT = "erosion-waterheight";
+        private const string P_WATERHEIGHT = "erosion-waterheight";   
         private const string P_WATERDECAY = "erosion-waterdecay";
         private const string P_PARTICLEWATERDEPTH = "erosion-particlewaterdepth";
         private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
@@ -119,6 +119,8 @@ namespace TerrainGeneration
 
         public int ParticleTexWidth { get; set; }
         public int ParticleTexHeight { get; set; }
+
+        public float WaterHeightFactor { get { return (float)this.Parameters[P_WATERHEIGHT].GetValue(); } }
 
         public GPUParticleErosion(int width, int height, int particleTexWidth, int particleTexHeight)
         {

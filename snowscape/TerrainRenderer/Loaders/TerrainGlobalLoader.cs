@@ -23,7 +23,7 @@ namespace Snowscape.TerrainRenderer.Loaders
             gb.Init(@"BasicQuad.vert", @"TerrainGlobalLoader.frag");
         }
 
-        public void Render(Texture terrainTexture)
+        public void Render(Texture terrainTexture, float waterHeightScale = 1.0f)
         {
             gb.Render(() =>
             {
@@ -32,6 +32,7 @@ namespace Snowscape.TerrainRenderer.Loaders
             (sp) =>
             {
                 sp.SetUniform("terraintex", 0);
+                sp.SetUniform("waterHeightScale", waterHeightScale);
             });
         }
 
