@@ -16,26 +16,6 @@ namespace TerrainGeneration
     /// 
     /// An attempt to get the original CPU-based particle erosion working on the GPU
     /// 
-    /// 
-    /// Rethink algo:
-    /// 
-    /// step 1:
-    /// - compute fall vector
-    /// - compute lowest neighbour
-    /// - output velocity (fall direction + magnitude)
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
-    /// 
     /// Needs the following textures/buffers
     /// 
     /// Terrain Layers:  R = hard, G = soft, B = water depth, A = particle life (1.0 = fully alive, 0.0 = dead)
@@ -191,14 +171,13 @@ namespace TerrainGeneration
 
 
         /// <summary>
-        /// Outflow due to soft material creep
+        /// Outflow due to soft material creep 
+        /// Ortho + Diagonal
         /// 
-        /// R: flow up
-        /// G: flow right
-        /// B: flow down
-        /// A: flow left
+        /// RGBA = N S W E 
+        /// RGBA = NW NE SW SE
         /// </summary>
-        private Texture SlipFlowTexture;
+        private Texture[] SlipFlowTexture = new Texture[2];
 
 
 
@@ -292,6 +271,15 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
                 this.VelocityTexture[i].UploadEmpty();
+
+                this.SlipFlowTexture[i] =
+                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+                this.SlipFlowTexture[i].UploadEmpty();
             }
 
             this.ErosionAccumulationTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
@@ -302,14 +290,7 @@ namespace TerrainGeneration
 
             this.ErosionAccumulationTexture.UploadEmpty();
 
-            this.SlipFlowTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-            this.SlipFlowTexture.UploadEmpty();
 
 
             // init particle vbos
@@ -376,11 +357,12 @@ namespace TerrainGeneration
             // in: L1,flow
             // out: L0    (avoids L0/L1 switch)
 
-            SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
-            SlippageFlowStep.Init(@"BasicQuad.vert", @"Erosion_5SlipOutflow.frag");
+            SlippageFlowStep.SetOutputTexture(0, "out_SlipO", this.SlipFlowTexture[0]);
+            SlippageFlowStep.SetOutputTexture(1, "out_SlipD", this.SlipFlowTexture[1]);
+            SlippageFlowStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|Outflow");
 
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
-            SlippageTransportStep.Init(@"BasicQuad.vert", @"Erosion_6SlipTransport.frag");
+            SlippageTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|Transport");
 
 
             // copy particles
@@ -519,6 +501,10 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("maxdiff", (float)this.Parameters[P_SLIPTHRESHOLD].GetValue());
                     sp.SetUniform("sliprate", (float)this.Parameters[P_SLIPRATE].GetValue());
+
+                    //sp.SetUniform("threshold", (float)this.Parameters[P_SLIPRATE].GetValue());
+                    //sp.SetUniform("minslip", (float)this.Parameters[P_SLIPRATE].GetValue());
+                    //sp.SetUniform("maxslip", (float)this.Parameters[P_SLIPRATE].GetValue());
                 });
 
             // step 6 - slippage transport
@@ -526,12 +512,14 @@ namespace TerrainGeneration
                 () =>
                 {
                     this.TerrainTexture[1].Bind(TextureUnit.Texture0);
-                    this.SlipFlowTexture.Bind(TextureUnit.Texture1);
+                    this.SlipFlowTexture[0].Bind(TextureUnit.Texture1);
+                    this.SlipFlowTexture[1].Bind(TextureUnit.Texture2);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
-                    sp.SetUniform("sliptex", 1);
+                    sp.SetUniform("flowOtex", 1);
+                    sp.SetUniform("flowDtex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
@@ -593,9 +581,10 @@ namespace TerrainGeneration
                 this.TerrainTexture[i].Unload();
                 this.ParticleStateTexture[i].Unload();
                 this.VelocityTexture[i].Unload();
+                this.SlipFlowTexture[i].Unload();
             }
             this.ErosionAccumulationTexture.Unload();
-            this.SlipFlowTexture.Unload();
+            
         }
 
 
