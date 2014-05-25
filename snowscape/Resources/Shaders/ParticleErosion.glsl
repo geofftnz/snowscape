@@ -28,25 +28,6 @@ float sampleHeight(vec2 pos)
 	return dot(l, vec3(1.0,1.0,waterHeightFactor));
 }
 
-vec3 fallVector(vec2 p)
-{
-	float h0 = sampleHeight(p);
-	float h1 = sampleHeight(p + vec2(0,-t));
-	float h2 = sampleHeight(p + vec2(0,t));
-	float h3 = sampleHeight(p + vec2(-t,0));
-	float h4 = sampleHeight(p + vec2(t,0));
-
-	vec3 f = vec3(0);
-
-	f += vec3(0,-1,h1-h0) * (h0-h1);
-	f += vec3(0,1,h2-h0) * (h0-h2);
-	f += vec3(-1,0,h3-h0) * (h0-h3);
-	f += vec3(1,0,h4-h0) * (h0-h4);
-
-	return normalize(f);
-}
-
-
 void main(void)
 {
 	vec4 prevvel = texture(velocitytex,texcoord);
