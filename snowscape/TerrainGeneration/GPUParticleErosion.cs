@@ -233,16 +233,16 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.1f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.2f, 0.0f, 100.0f,0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 2.5f, 0.0f, 10.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.5f, 0.0f, 10.0f, 0.01f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.98f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.003f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.0f, 0.0f, 0.1f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.005f, 0.0f, 0.1f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.01f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 1.0f, 0.0f, 5.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.5f, 0.0f, 2.0f, 0.01f));
 
             // setup textures
             for (int i = 0; i < 2; i++)
