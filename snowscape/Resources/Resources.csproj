@@ -58,6 +58,7 @@
     </Content>
     <None Include="Shaders\SnowTransport.glsl" />
     <None Include="Shaders\SoftSlip.glsl" />
+    <None Include="Shaders\TileLoader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Fonts\consolab.ttf_sdf_512.png">

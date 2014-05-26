@@ -6,6 +6,7 @@ using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using Utils;
 using System.IO;
+using OpenTK;
 
 namespace TerrainGeneration
 {
@@ -37,67 +38,96 @@ namespace TerrainGeneration
     {
         const int FILEMAGIC = 0x54455231;  // different format for pass 2
 
-        public bool NeedThread
-        {
-            get { return false; }
-        }
+        public bool NeedThread { get { return false; } }
 
         public int Width { get; private set; }
         public int Height { get; private set; }
 
+        public int ParticleTexWidth { get; set; }
+        public int ParticleTexHeight { get; set; }
 
         /// <summary>
         /// Terrain layers
         /// 
-        /// R: ground level
-        /// G: hard-packed snow
-        /// B: powder
-        /// A: air-suspended powder
+        /// R: hard rock
+        /// G: soft soil
+        /// B: hard-packed snow
+        /// A: powder
         /// </summary>
         private Texture[] TerrainTexture = new Texture[2];
         public Texture CurrentTerrainTexture { get { return this.TerrainTexture[0]; } }
 
         /// <summary>
-        /// Rate of windflow out of each location
+        /// Outflow due to powder slipping beyond its angle of repose (hdiff = 0.62) 
+        /// Ortho + Diagonal
         /// 
-        /// R: flow up
-        /// G: flow right
-        /// B: flow down
-        /// A: flow left
+        /// RGBA = N S W E 
+        /// RGBA = NW NE SW SE
         /// </summary>
-        private Texture[] FlowRateTexture = new Texture[2];
-        
-        /// <summary>
-        /// Rate of windflow out of each location
-        /// diagonal texture
-        /// R: up-right
-        /// G: down-right
-        /// B: down-left
-        /// A: up-left
-        /// </summary>
-        private Texture[] FlowRateTextureDiagonal = new Texture[2];
+        private Texture[] SlipFlowTexture = new Texture[2];
+
 
         /// <summary>
-        /// Outflow due to slippage of powder
+        /// Particle state texture.
         /// 
-        /// R: flow up
-        /// G: flow right
-        /// B: flow down
-        /// A: flow left
+        /// RG: xy of particle, 0-width/height in terrain space.
+        /// B: carrying amount
         /// </summary>
-        private Texture SlipFlowTexture;
+        private Texture[] ParticleStateTexture = new Texture[2];
+        public Texture CurrentParticleTexture { get { return this.ParticleStateTexture[0]; } }
+
+        /// <summary>
+        /// Particle velocity texture.
+        /// 
+        /// RG: velocity
+        /// B: new carrying capacity
+        /// </summary>
+        private Texture[] VelocityTexture = new Texture[2];
+
+        /// <summary>
+        /// terrain erosion accumulation: R = particle count, G = total erosion potential, B = total material deposit, A = total lofted powder
+        /// </summary>
+        private Texture ErosionAccumulationTexture;
+        public Texture ErosionTex { get { return ErosionAccumulationTexture; } }
 
 
+
+        private GBufferShaderStep SnowfallStep = new GBufferShaderStep("snow-snowfall");
         private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("snow-slipflow");
         private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("snow-sliptransport");
-        private GBufferShaderStep TerrainCopyStep = new GBufferShaderStep("snow-terraincopy");
+
+        private VBO ParticleVertexVBO = new VBO("particle-vertex");
+        private VBO ParticleIndexVBO = new VBO("particle-index", BufferTarget.ElementArrayBuffer);
+        private GBufferShaderStep ErosionAccumulationStep = new GBufferShaderStep("snow-accumulation");
+
+        // Step 3: Update terrain layers
+        private GBufferShaderStep UpdateLayersStep = new GBufferShaderStep("snow-updatelayers");
+
+        // Step 4: Update particle state
+        private GBufferShaderStep UpdateParticlesStep = new GBufferShaderStep("snow-updateparticles");
 
 
 
-        public GPUSnowTransport(int width, int height)
+        //private GBufferShaderStep TerrainCopyStep = new GBufferShaderStep("snow-terraincopy");
+
+        private ParameterCollection parameters = new ParameterCollection();
+        public ParameterCollection Parameters { get { return parameters; } }
+
+        private const string P_SNOWRATE = "snow-fallrate";
+        private const string P_SLIPTHRESHOLD = "snow-slipthreshold";
+        private const string P_SLIPRATE = "snow-sliprate";
+
+
+        public GPUSnowTransport(int width, int height, int particleTexWidth, int particleTexHeight)
         {
             this.Width = width;
             this.Height = height;
+            this.ParticleTexWidth = particleTexWidth;
+            this.ParticleTexHeight = particleTexHeight;
+
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SNOWRATE, 0.001f, 0.0f, 0.1f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 0.62f, 0.0f, 4.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
         }
 
 
@@ -121,54 +151,70 @@ namespace TerrainGeneration
 
                 this.TerrainTexture[i].UploadEmpty();
 
+                this.ParticleStateTexture[i] =
+                    new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-                this.FlowRateTexture[i] =
+                this.ParticleStateTexture[i].UploadEmpty();
+
+                this.VelocityTexture[i] =
+                    new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+                this.VelocityTexture[i].UploadEmpty();
+
+                this.SlipFlowTexture[i] =
                     new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-                this.FlowRateTexture[i].UploadEmpty();
-
-                this.FlowRateTextureDiagonal[i] =
-                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-
-                this.FlowRateTextureDiagonal[i].UploadEmpty();
+                this.SlipFlowTexture[i].UploadEmpty();
             }
 
 
-            this.SlipFlowTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+            this.ErosionAccumulationTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-            this.SlipFlowTexture.UploadEmpty();
+            this.ErosionAccumulationTexture.UploadEmpty();
+
+            // init particle vbos
+            InitParticlesVBOs();
+
+            // random start
+            RandomizeParticles(this.ParticleStateTexture[0]);
 
 
-            SlippageFlowStep.SetOutputTexture(0, "out_Slip", this.SlipFlowTexture);
-            SlippageFlowStep.Init(@"BasicQuad.vert", @"SNow_SlipOutflow.frag");
+            SnowfallStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
+            SnowfallStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|SnowFall");
 
-            SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
-            SlippageTransportStep.Init(@"BasicQuad.vert", @"Snow_SlipTransport.frag");
+            SlippageFlowStep.SetOutputTexture(0, "out_SlipO", this.SlipFlowTexture[0]);
+            SlippageFlowStep.SetOutputTexture(1, "out_SlipD", this.SlipFlowTexture[1]);
+            SlippageFlowStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|SnowOutflow");
 
-            TerrainCopyStep.SetOutputTexture(0,"out_Terrain",this.TerrainTexture[0]);
-            TerrainCopyStep.Init(@"BasicQuad.vert", @"Snow_TerrainCopy.frag");
+            SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            SlippageTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|SnowTransport");
+
+            //TerrainCopyStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            //TerrainCopyStep.Init(@"BasicQuad.vert", @"Snow_TerrainCopy.frag");
 
         }
 
         public void ModifyTerrain()
         {
-            // step 5 - slippage flow calc
-            // in: terrain0
-            // out: slip-flow
-            SlippageFlowStep.Render(
+
+
+            SnowfallStep.Render(
                 () =>
                 {
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
@@ -176,9 +222,27 @@ namespace TerrainGeneration
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("snowfallrate", (float)this.Parameters[P_SNOWRATE].GetValue());
+                });
+            
+            // step 5 - slippage flow calc
+            // in: terrain0
+            // out: slip-flow
+            SlippageFlowStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
                     sp.SetUniform("texsize", (float)this.Width);
-                    sp.SetUniform("maxdiff", 0.7f);
-                    sp.SetUniform("sliprate", 0.1f);
+                    sp.SetUniform("maxdiff", (float)this.Parameters[P_SLIPTHRESHOLD].GetValue());
+                    sp.SetUniform("sliprate", (float)this.Parameters[P_SLIPRATE].GetValue());
+
+                    //sp.SetUniform("threshold", (float)this.Parameters[P_SLIPRATE].GetValue());
+                    //sp.SetUniform("minslip", (float)this.Parameters[P_SLIPRATE].GetValue());
+                    //sp.SetUniform("maxslip", (float)this.Parameters[P_SLIPRATE].GetValue());
                 });
 
             // step 6 - slippage transport
@@ -187,28 +251,30 @@ namespace TerrainGeneration
             SlippageTransportStep.Render(
                 () =>
                 {
-                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
-                    this.SlipFlowTexture.Bind(TextureUnit.Texture1);
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                    this.SlipFlowTexture[0].Bind(TextureUnit.Texture1);
+                    this.SlipFlowTexture[1].Bind(TextureUnit.Texture2);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
-                    sp.SetUniform("sliptex", 1);
+                    sp.SetUniform("flowOtex", 1);
+                    sp.SetUniform("flowDtex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
             // terrain copy
             // in: terrain1
             // out: terrain0
-            TerrainCopyStep.Render(
-                () =>
-                {
-                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
-                },
-                (sp) =>
-                {
-                    sp.SetUniform("terraintex", 0);
-                });
+            //TerrainCopyStep.Render(
+            //    () =>
+            //    {
+            //        this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+            //    },
+            //    (sp) =>
+            //    {
+            //        sp.SetUniform("terraintex", 0);
+            //    });
 
 
         }
@@ -260,7 +326,7 @@ namespace TerrainGeneration
             });
 
             UploadTerrain(data);
-        
+
         }
 
 
@@ -343,16 +409,56 @@ namespace TerrainGeneration
             for (int i = 0; i < 2; i++)
             {
                 this.TerrainTexture[i].Unload();
-                this.FlowRateTexture[i].Unload();
-                this.FlowRateTextureDiagonal[i].Unload();
+                this.ParticleStateTexture[i].Unload();
+                this.VelocityTexture[i].Unload();
+                this.SlipFlowTexture[i].Unload();
             }
-            this.SlipFlowTexture.Unload();
+            this.ErosionAccumulationTexture.Unload();
         }
 
 
         public IEnumerable<IParameter> GetParameters()
         {
-            throw new NotImplementedException();
+            return this.Parameters;
         }
+
+        private void InitParticlesVBOs()
+        {
+            Vector3[] vertex = new Vector3[this.ParticleTexWidth * this.ParticleTexHeight];
+
+            ParallelHelper.For2D(this.ParticleTexWidth, this.ParticleTexHeight, (x, y, i) =>
+            {
+                vertex[i] = new Vector3((float)x / (float)this.ParticleTexWidth, (float)y / (float)this.ParticleTexHeight, 0f);
+            });
+
+            this.ParticleVertexVBO.SetData(vertex);
+
+            uint[] index = new uint[this.ParticleTexWidth * this.ParticleTexHeight];
+
+            for (int i = 0; i < this.ParticleTexWidth * this.ParticleTexHeight; i++)
+            {
+                index[i] = (uint)i;
+            }
+
+            this.ParticleIndexVBO.SetData(index);
+        }
+
+        private void RandomizeParticles(Texture destination)
+        {
+            float[] data = new float[this.ParticleTexWidth * this.ParticleTexHeight * 4];
+            var r = new Random();
+
+            for (int i = 0; i < this.ParticleTexWidth * this.ParticleTexHeight; i++)
+            {
+                data[i * 4 + 0] = (float)r.NextDouble();  // x
+                data[i * 4 + 1] = (float)r.NextDouble();  // y 
+                data[i * 4 + 2] = 0f;    // carrying nothing
+                data[i * 4 + 3] = (float)r.NextDouble();  // particle life
+            }
+
+            destination.Upload(data);
+        }
+
+
     }
 }

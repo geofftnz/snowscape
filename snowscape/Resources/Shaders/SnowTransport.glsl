@@ -23,3 +23,22 @@
 
 	
 */
+
+//|SnowFall
+#version 140
+precision highp float;
+
+uniform sampler2D terraintex;
+uniform float snowfallrate;
+in vec2 texcoord;
+out vec4 out_Terrain;
+
+
+void main(void)
+{
+	vec4 layers = texture(terraintex,texcoord);
+
+	layers.a += snowfallrate;
+
+	out_Terrain = layers;
+}

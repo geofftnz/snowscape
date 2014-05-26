@@ -80,6 +80,10 @@ namespace Snowscape.TerrainGenerationViewer
         private Loaders.TerrainTileLoader terrainTileLoader = new Loaders.TerrainTileLoader();
         private Loaders.TerrainTileParamLoader terrainTileParamLoader = new Loaders.TerrainTileParamLoader();
 
+        private GBufferSimpleStep terrainSnowGlobalLoader;
+        private GBufferSimpleStep terrainSnowTileLoader;
+        private GBufferSimpleStep terrainSnowTileParamLoader;
+
 
         //private Texture skyTexture;
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
@@ -410,24 +414,34 @@ namespace Snowscape.TerrainGenerationViewer
                 case 1: // currently on pass 0, start on pass 1
                     {
                         this.Terrain.Save(GetTerrainFileName(0, 1));
-                        GPUSnowTransport newgen = new GPUSnowTransport(this.Terrain.Width, this.Terrain.Height);
+                        GPUSnowTransport newgen = new GPUSnowTransport(this.Terrain.Width, this.Terrain.Height, TerrainParticleRes, TerrainParticleRes);
                         newgen.Init();
                         newgen.InitFromPass1(this.Terrain);
                         this.Terrain.Unload();
                         this.Terrain = newgen;
                         this.TerrainGenPass = 2;
+
+                        // todo: this needs to be moved out of there into a generic on-init-generation-step proc
+                        foreach (var p in this.Terrain.GetParameters())
+                        {
+                            this.parameters.Add(p);
+                        }
                     }
                     break;
 
                 case 2:
                     {
                         this.Terrain.Save(GetTerrainFileName(0, 2));
-                        GPUWaterErosion newgen = new GPUWaterErosion(this.Terrain.Width, this.Terrain.Height);
+                        //GPUWaterErosion newgen = new GPUWaterErosion(this.Terrain.Width, this.Terrain.Height);
+                        var newgen = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes);
                         newgen.Init();
                         newgen.Load(GetTerrainFileName(0, 1));
+
                         this.Terrain.Unload();
                         this.Terrain = newgen;
                         this.TerrainGenPass = 1;
+
+
                     }
                     break;
                 default: break;
@@ -492,6 +506,11 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
             this.terrainTileLoader.Init(this.terrainTile.HeightTexture);
             this.terrainTileParamLoader.Init(this.terrainTile.ParamTexture);
+
+            terrainSnowGlobalLoader = new GBufferSimpleStep("snow-global-loader", @"TileLoader.glsl|SnowGlobal", "terraintex", "out_Height", this.terrainGlobal.HeightTexture);
+            terrainSnowTileLoader = new GBufferSimpleStep("snow-tile-loader", @"TileLoader.glsl|SnowTile", "terraintex", "out_Height", this.terrainTile.HeightTexture);
+            terrainSnowTileParamLoader = new GBufferSimpleStep("snow-param-loader", @"TileLoader.glsl|SnowParam", "terraintex", "out_Param", this.terrainTile.ParamTexture);
+
 
             //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
             //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
@@ -600,6 +619,8 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.parameters.Add(p);
             }
+
+
 
             this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
             this.threadRenderMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
@@ -968,9 +989,9 @@ namespace Snowscape.TerrainGenerationViewer
                     if (this.Terrain is GPUSnowTransport)
                     {
                         var terr = this.Terrain as GPUSnowTransport;
-                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainSnowGlobalLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainSnowTileLoader.Render(terr.CurrentTerrainTexture);
+                        this.terrainSnowTileParamLoader.Render(terr.CurrentTerrainTexture);
                     }
 
                 }
