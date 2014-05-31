@@ -55,12 +55,16 @@ uniform float texsize;
 uniform vec2 windvelocity;
 uniform float lowpass;
 uniform float terrainfactor;
+uniform float noisefactor;
+uniform float randseed;
 
 in vec2 texcoord;
 out vec4 out_Velocity;
 
 float t = 1.0 / texsize;
 vec3 tt = vec3(-t,0,t);
+
+#include "noise.glsl"
 
 float sampleHeight(vec2 pos)
 {
@@ -77,6 +81,14 @@ vec3 getNormal(vec2 pos)
 	return normalize(vec3(h3-h4,h1-h2,2.0));
 }
 
+vec2 getRandomVelocity(vec2 pos)
+{
+	vec2 r;
+	r.x = (rand(pos.xy + vec2(randseed))-0.5);
+	r.y = (rand(pos.xy + vec2(randseed * 3.19 + 7.36))-0.5);
+	return r;
+}
+
 void main(void)
 {
 	vec4 particle = texture(particletex,texcoord);
@@ -84,7 +96,10 @@ void main(void)
 
 	vec3 n = getNormal(particle.xy);
 
-	vec2 newvel = windvelocity + n.xy * terrainfactor;
+	vec2 newvel = 
+		windvelocity + 
+		n.xy * terrainfactor + 
+		getRandomVelocity(particle.xy) * noisefactor;
 
 	out_Velocity = vec4(mix(newvel,prevvel.xy,lowpass),0,0);
 }

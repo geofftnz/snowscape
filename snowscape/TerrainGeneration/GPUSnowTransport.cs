@@ -123,7 +123,10 @@ namespace TerrainGeneration
         private const string P_SNOWRATE = "snow-fallrate";
         private const string P_SLIPTHRESHOLD = "snow-slipthreshold";
         private const string P_SLIPRATE = "snow-sliprate";
+        private const string P_TERRAINFACTOR = "snow-terrainfactor";
+        private const string P_NOISEFACTOR = "snow-noisefactor";
 
+        private Random rand = new Random();
 
         public GPUSnowTransport(int width, int height, int particleTexWidth, int particleTexHeight)
         {
@@ -132,9 +135,11 @@ namespace TerrainGeneration
             this.ParticleTexWidth = particleTexWidth;
             this.ParticleTexHeight = particleTexHeight;
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SNOWRATE, 0.001f, 0.0f, 0.1f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SNOWRATE, 0.0002f, 0.0f, 0.05f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 0.62f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_TERRAINFACTOR, 0.0f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_NOISEFACTOR, 0.0f, 0.0f, 1.0f));
         }
 
 
@@ -239,7 +244,7 @@ namespace TerrainGeneration
             Vector2 wind = new Vector2(0.1f, 0.4f);
             wind.Normalize();
             float deltaTime = 0.5f;
-
+            
             SnowfallStep.Render(
                 () =>
                 {
@@ -310,7 +315,9 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("windvelocity", wind);
                     sp.SetUniform("lowpass", 0.5f);
-                    sp.SetUniform("terrainfactor", 0.1f);
+                    sp.SetUniform("terrainfactor", (float)this.Parameters[P_TERRAINFACTOR].GetValue());
+                    sp.SetUniform("noisefactor", (float)this.Parameters[P_NOISEFACTOR].GetValue());
+                    sp.SetUniform("randseed", (float)rand.NextDouble());
                 });
 
 
