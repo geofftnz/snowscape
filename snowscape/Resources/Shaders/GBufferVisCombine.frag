@@ -821,8 +821,8 @@ void main(void)
 			vec4 misc2 = texture(miscTex2,p);
 
 			c.rgb = vec3(0);
-			c.b = misc.r * 0.25;
-			c.r = misc2.r;
+			c.rgb += vec3(1) * misc.r * 0.33;
+			c.r += misc2.r;
 
 			/*
 			-- particle erosion vis

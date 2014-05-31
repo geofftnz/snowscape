@@ -134,9 +134,12 @@ namespace TerrainGeneration
         private const string P_SLIPRATE = "snow-sliprate";
         private const string P_VELOCITYLOWPASS = "snow-velocitylowpass";
         private const string P_TERRAINFACTOR = "snow-terrainfactor";
+        private const string P_DENSITYFACTOR = "snow-densityfactor";
         private const string P_NOISEFACTOR = "snow-noisefactor";
         private const string P_DENSITYLOWPASS = "snow-densitylowpass";
         private const string P_DENSITYSCALE = "snow-densityscale";
+        private const string P_WINDANGLE = "snow-windangle";
+        private const string P_WINDSPEED = "snow-windspeed";
 
         private Random rand = new Random();
 
@@ -151,10 +154,14 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 0.62f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_VELOCITYLOWPASS, 0.5f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_TERRAINFACTOR, 0.0f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_NOISEFACTOR, 0.0f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_TERRAINFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_NOISEFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYLOWPASS, 0.98f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYSCALE, 0.5f, 0.0f, 1.0f));
+
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WINDANGLE, 30.0f, 0.0f, 360.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WINDSPEED, 1.0f, 0.0f, 10.0f));
         }
 
 
@@ -268,8 +275,12 @@ namespace TerrainGeneration
 
         public void ModifyTerrain()
         {
-            Vector2 wind = new Vector2(0.1f, 0.4f);
-            wind.Normalize();
+            float wind_angle = (float)this.Parameters[P_WINDANGLE].GetValue();
+            float wind_speed = (float)this.Parameters[P_WINDSPEED].GetValue();
+            double deg2rad = (Math.PI / 180.0);
+
+            Vector2 wind = new Vector2((float)Math.Cos(wind_angle * deg2rad) * wind_speed, (float)-Math.Sin(wind_angle * deg2rad) * wind_speed);
+
             float deltaTime = 0.5f;
 
             SnowfallStep.Render(
@@ -333,16 +344,19 @@ namespace TerrainGeneration
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.VelocityTexture[1].Bind(TextureUnit.Texture1);
                     this.ParticleStateTexture[0].Bind(TextureUnit.Texture2);
+                    this.DensityTexture[0].Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("velocitytex", 1);
                     sp.SetUniform("particletex", 2);
+                    sp.SetUniform("densitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("windvelocity", wind);
                     sp.SetUniform("lowpass", (float)this.Parameters[P_VELOCITYLOWPASS].GetValue());
                     sp.SetUniform("terrainfactor", (float)this.Parameters[P_TERRAINFACTOR].GetValue());
+                    sp.SetUniform("densityfactor", (float)this.Parameters[P_DENSITYFACTOR].GetValue());
                     sp.SetUniform("noisefactor", (float)this.Parameters[P_NOISEFACTOR].GetValue());
                     sp.SetUniform("randseed", (float)rand.NextDouble());
                 });
