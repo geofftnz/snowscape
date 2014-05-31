@@ -826,6 +826,17 @@ namespace Snowscape.TerrainGenerationViewer
             //mv.M24 = 0f;
             //mv.M34 = 0f;
 
+            Texture miscTexture = this.terrainGlobal.ShadeTexture;
+            if (this.Terrain is GPUParticleErosion)
+            {
+                miscTexture = ((GPUParticleErosion)this.Terrain).ErosionTex;
+            };
+            if (this.Terrain is GPUSnowTransport)
+            {
+                miscTexture = ((GPUSnowTransport)this.Terrain).ErosionTex;
+            };
+
+
 
             var rp = new Lighting.LightingCombiner.RenderParams()
             {
@@ -874,7 +885,7 @@ namespace Snowscape.TerrainGenerationViewer
 
                 //MiscTexture = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VelocityTex : this.terrainGlobal.ShadeTexture,
                 //MiscTexture2 = (this.Terrain is GPUWaterErosion) ? ((GPUWaterErosion)this.Terrain).VisTex : this.terrainGlobal.ShadeTexture,
-                MiscTexture = (this.Terrain is GPUParticleErosion) ? ((GPUParticleErosion)this.Terrain).ErosionTex : this.terrainGlobal.ShadeTexture,
+                MiscTexture = miscTexture,
                 MiscTexture2 = (this.Terrain is GPUParticleErosion) ? ((GPUParticleErosion)this.Terrain).CurrentParticleTexture : this.terrainGlobal.ShadeTexture,
 
                 RenderMode = (float)this.TerrainGenPass,

@@ -96,6 +96,8 @@ namespace TerrainGeneration
         private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("snow-slipflow");
         private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("snow-sliptransport");
 
+        private GBufferShaderStep ParticleVelocityStep = new GBufferShaderStep("snow-velocity");
+
         private VBO ParticleVertexVBO = new VBO("particle-vertex");
         private VBO ParticleIndexVBO = new VBO("particle-index", BufferTarget.ElementArrayBuffer);
         private GBufferShaderStep ErosionAccumulationStep = new GBufferShaderStep("snow-accumulation");
@@ -108,7 +110,12 @@ namespace TerrainGeneration
 
 
 
-        //private GBufferShaderStep TerrainCopyStep = new GBufferShaderStep("snow-terraincopy");
+        // Copy particles from buffer 1 to buffer 0
+        private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("snow-copyparticles");
+        private GBufferShaderStep CopyVelocityStep = new GBufferShaderStep("snow-copyvelocity");
+
+
+
 
         private ParameterCollection parameters = new ParameterCollection();
         public ParameterCollection Parameters { get { return parameters; } }
@@ -192,7 +199,7 @@ namespace TerrainGeneration
             InitParticlesVBOs();
 
             // random start
-            RandomizeParticles(this.ParticleStateTexture[0]);
+            RandomizeParticles(this.ParticleStateTexture[0], this.VelocityTexture[0]);
 
 
             SnowfallStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
@@ -208,11 +215,30 @@ namespace TerrainGeneration
             //TerrainCopyStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             //TerrainCopyStep.Init(@"BasicQuad.vert", @"Snow_TerrainCopy.frag");
 
+            ParticleVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[0]);
+            ParticleVelocityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|ParticleVelocity");
+
+            ErosionAccumulationStep.SetOutputTexture(0, "out_Erosion", this.ErosionAccumulationTexture);
+            ErosionAccumulationStep.Init(@"SnowTransport.glsl|ErosionVertex", @"SnowTransport.glsl|Erosion");
+
+            UpdateParticlesStep.SetOutputTexture(0, "out_Particle", this.ParticleStateTexture[1]);
+            UpdateParticlesStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|UpdateParticles");
+
+            // copy particles
+            CopyParticlesStep.SetOutputTexture(0, "out_Particle", this.ParticleStateTexture[0]);
+            CopyParticlesStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|CopyParticles");
+
+            CopyVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
+            CopyVelocityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|CopyVelocity");
+
+
         }
 
         public void ModifyTerrain()
         {
-
+            Vector2 wind = new Vector2(0.1f, 0.4f);
+            wind.Normalize();
+            float deltaTime = 0.5f;
 
             SnowfallStep.Render(
                 () =>
@@ -263,19 +289,105 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
-            // terrain copy
-            // in: terrain1
-            // out: terrain0
-            //TerrainCopyStep.Render(
-            //    () =>
-            //    {
-            //        this.TerrainTexture[1].Bind(TextureUnit.Texture0);
-            //    },
-            //    (sp) =>
-            //    {
-            //        sp.SetUniform("terraintex", 0);
-            //    });
 
+            // calculate new particle velocity
+            // start with prevailing wind
+            // adjust for terrain normal
+            //
+            // output to Velocity[0]
+            ParticleVelocityStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    this.VelocityTexture[1].Bind(TextureUnit.Texture1);
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture2);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("velocitytex", 1);
+                    sp.SetUniform("particletex", 2);
+                    sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("windvelocity", wind);
+                    sp.SetUniform("lowpass", 0.5f);
+                    sp.SetUniform("terrainfactor", 0.1f);
+                });
+
+
+            // render particles to accumulation texture
+            ErosionAccumulationStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture1);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                    sp.SetUniform("velocitytex", 1);
+                    sp.SetUniform("deltatime", deltaTime);
+                    //sp.SetUniform("depositRate", depositRate);
+                    //sp.SetUniform("erosionRate", erosionRate);
+                },
+                () =>
+                {
+                    GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                    GL.Clear(ClearBufferMask.ColorBufferBit);
+                    GL.Enable(EnableCap.Blend);
+                    GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.One);
+                    this.ParticleVertexVBO.Bind(this.ErosionAccumulationStep.ShaderVariableLocation("vertex"));
+                    this.ParticleIndexVBO.Bind();
+                    GL.DrawElements(BeginMode.Points, this.ParticleIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+                    GL.Disable(EnableCap.Blend);
+                }
+            );
+
+
+
+            // update particles
+            UpdateParticlesStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture1);
+                    this.ErosionAccumulationTexture.Bind(TextureUnit.Texture2);
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture3);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                    sp.SetUniform("velocitytex", 1);
+                    sp.SetUniform("erosiontex", 2);
+                    sp.SetUniform("terraintex", 3);
+                    sp.SetUniform("deltatime", deltaTime);
+                    //sp.SetUniform("depositRate", depositRate);
+                    //sp.SetUniform("erosionRate", erosionRate);
+                    //sp.SetUniform("hardErosionFactor", hardErosionFactor);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
+
+
+            // copy particles from buffer 1 back to 0
+            CopyParticlesStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                });
+
+            // copy velocity from buffer 0 back to 1
+            CopyVelocityStep.Render(
+                () =>
+                {
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("velocitytex", 0);
+                });
 
         }
 
@@ -443,20 +555,28 @@ namespace TerrainGeneration
             this.ParticleIndexVBO.SetData(index);
         }
 
-        private void RandomizeParticles(Texture destination)
+        private void RandomizeParticles(Texture destination, Texture VelocityDestination)
         {
             float[] data = new float[this.ParticleTexWidth * this.ParticleTexHeight * 4];
+            float[] datav = new float[this.ParticleTexWidth * this.ParticleTexHeight * 4];
             var r = new Random();
 
             for (int i = 0; i < this.ParticleTexWidth * this.ParticleTexHeight; i++)
             {
                 data[i * 4 + 0] = (float)r.NextDouble();  // x
                 data[i * 4 + 1] = (float)r.NextDouble();  // y 
-                data[i * 4 + 2] = 0f;    // carrying nothing
-                data[i * 4 + 3] = (float)r.NextDouble();  // particle life
+                data[i * 4 + 2] = 0f;       // height (maybe)
+                data[i * 4 + 3] = 0f;       // carrying
+
+                // velocity
+                datav[i * 4 + 0] = 0f;  // x
+                datav[i * 4 + 1] = 0f;  // y 
+                datav[i * 4 + 2] = 0f;       // height (maybe)
+                datav[i * 4 + 3] = 0f;       // carrying
             }
 
             destination.Upload(data);
+            VelocityDestination.Upload(datav);
         }
 
 
