@@ -818,7 +818,15 @@ void main(void)
 			//c.rgb = texture(miscTex2,p).b * vec3(0.0,0.0,10.0);// + texture(miscTex2,p).a * vec3(0.0,1.0,0.0);
 			
 			vec4 misc = texture(miscTex,p);
+			vec4 misc2 = texture(miscTex2,p);
 
+			c.rgb = vec3(0);
+			c.b = misc.r * 0.25;
+			c.r = misc2.r;
+
+			/*
+			-- particle erosion vis
+			vec4 misc = texture(miscTex,p);
 			vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
 			misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
 
@@ -826,6 +834,7 @@ void main(void)
 			misccol.g += misc.b * 256.0;  // depositing
 			
 			c.rgb = misccol * min(1.0,misc.r);
+			*/
 
 			/*
 			if (p.x < 1.0)

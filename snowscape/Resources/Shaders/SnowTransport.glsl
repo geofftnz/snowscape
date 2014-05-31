@@ -232,3 +232,39 @@ void main(void)
 }
 
 
+//|AccumulateDensity
+#version 140
+precision highp float;
+
+uniform sampler2D erosiontex;
+uniform sampler2D prevdensitytex;
+uniform float lowpass;
+uniform float scale;
+
+in vec2 texcoord;
+out float out_Density;
+
+void main(void)
+{
+	float prevDensity = texture(prevdensitytex, texcoord).r;
+	float newDensity = texture(erosiontex, texcoord).r * scale;
+
+	out_Density = mix(newDensity,prevDensity,lowpass);
+}
+
+//|CopyDensity
+#version 140
+precision highp float;
+
+uniform sampler2D densitytex;
+
+in vec2 texcoord;
+out float out_Density;
+
+void main(void)
+{
+	out_Density = textureLod(densitytex,texcoord,0).r;
+}
+
+
+
