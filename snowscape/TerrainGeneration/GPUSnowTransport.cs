@@ -71,7 +71,8 @@ namespace TerrainGeneration
         /// Particle state texture.
         /// 
         /// RG: xy of particle, 0-width/height in terrain space.
-        /// B: carrying amount
+        /// B: height of base of air column
+        /// A: carrying amount
         /// </summary>
         private Texture[] ParticleStateTexture = new Texture[2];
         public Texture CurrentParticleTexture { get { return this.ParticleStateTexture[0]; } }
@@ -88,8 +89,8 @@ namespace TerrainGeneration
         /// Particle density texture - used for pressure gradient
         /// single component
         /// </summary>
-        private Texture[] DensityTexture = new Texture[2];
-        public Texture CurrentDensityTexture { get { return this.DensityTexture[0]; } }
+        //private Texture[] DensityTexture = new Texture[2];
+        //public Texture CurrentDensityTexture { get { return this.DensityTexture[0]; } }
 
 
         /// <summary>
@@ -116,8 +117,8 @@ namespace TerrainGeneration
         // Step 4: Update particle state
         private GBufferShaderStep UpdateParticlesStep = new GBufferShaderStep("snow-updateparticles");
 
-        private GBufferShaderStep AccumulateDensityStep = new GBufferShaderStep("snow-density");
-        private GBufferShaderStep CopyDensityStep = new GBufferShaderStep("snow-copydensity");
+        //private GBufferShaderStep AccumulateDensityStep = new GBufferShaderStep("snow-density");
+        //private GBufferShaderStep CopyDensityStep = new GBufferShaderStep("snow-copydensity");
 
         // Copy particles from buffer 1 to buffer 0
         private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("snow-copyparticles");
@@ -155,10 +156,10 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_VELOCITYLOWPASS, 0.5f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_TERRAINFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
+            //this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_NOISEFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYLOWPASS, 0.98f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYSCALE, 0.5f, 0.0f, 1.0f));
+            //this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYLOWPASS, 0.98f, 0.0f, 1.0f, 0.001f));
+            //this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DENSITYSCALE, 0.5f, 0.0f, 1.0f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WINDANGLE, 30.0f, 0.0f, 360.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WINDSPEED, 1.0f, 0.0f, 10.0f));
@@ -185,13 +186,13 @@ namespace TerrainGeneration
 
                 this.TerrainTexture[i].UploadEmpty();
 
-                this.DensityTexture[i] =
-                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
-                    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-                this.DensityTexture[i].UploadEmpty();
+                //this.DensityTexture[i] =
+                //    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
+                //    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                //    .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                //    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                //    .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+                //this.DensityTexture[i].UploadEmpty();
 
                 this.ParticleStateTexture[i] =
                     new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
@@ -266,11 +267,11 @@ namespace TerrainGeneration
             CopyVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
             CopyVelocityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|CopyVelocity");
 
-            AccumulateDensityStep.SetOutputTexture(0, "out_Density", this.DensityTexture[1]);
-            AccumulateDensityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|AccumulateDensity");
+            //AccumulateDensityStep.SetOutputTexture(0, "out_Density", this.DensityTexture[1]);
+            //AccumulateDensityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|AccumulateDensity");
 
-            CopyDensityStep.SetOutputTexture(0, "out_Density", this.DensityTexture[0]);
-            CopyDensityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|CopyDensity");
+            //CopyDensityStep.SetOutputTexture(0, "out_Density", this.DensityTexture[0]);
+            //CopyDensityStep.Init(@"BasicQuad.vert", @"SnowTransport.glsl|CopyDensity");
         }
 
         public void ModifyTerrain()
@@ -344,19 +345,19 @@ namespace TerrainGeneration
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.VelocityTexture[1].Bind(TextureUnit.Texture1);
                     this.ParticleStateTexture[0].Bind(TextureUnit.Texture2);
-                    this.DensityTexture[0].Bind(TextureUnit.Texture3);
+                    //this.DensityTexture[0].Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("velocitytex", 1);
                     sp.SetUniform("particletex", 2);
-                    sp.SetUniform("densitytex", 3);
+                    //sp.SetUniform("densitytex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("windvelocity", wind);
                     sp.SetUniform("lowpass", (float)this.Parameters[P_VELOCITYLOWPASS].GetValue());
                     sp.SetUniform("terrainfactor", (float)this.Parameters[P_TERRAINFACTOR].GetValue());
-                    sp.SetUniform("densityfactor", (float)this.Parameters[P_DENSITYFACTOR].GetValue());
+                    //sp.SetUniform("densityfactor", (float)this.Parameters[P_DENSITYFACTOR].GetValue());
                     sp.SetUniform("noisefactor", (float)this.Parameters[P_NOISEFACTOR].GetValue());
                     sp.SetUniform("randseed", (float)rand.NextDouble());
                 });
@@ -390,31 +391,31 @@ namespace TerrainGeneration
                 }
             );
 
-            // update air density map
-            AccumulateDensityStep.Render(
-                () =>
-                {
-                    this.DensityTexture[0].Bind(TextureUnit.Texture0);
-                    this.ErosionAccumulationTexture.Bind(TextureUnit.Texture1);
-                },
-                (sp) =>
-                {
-                    sp.SetUniform("prevdensitytex", 0);
-                    sp.SetUniform("erosiontex", 1);
-                    sp.SetUniform("lowpass", (float)this.Parameters[P_DENSITYLOWPASS].GetValue());
-                    sp.SetUniform("scale", (float)this.Parameters[P_DENSITYSCALE].GetValue());
-                });
+            //// update air density map
+            //AccumulateDensityStep.Render(
+            //    () =>
+            //    {
+            //        this.DensityTexture[0].Bind(TextureUnit.Texture0);
+            //        this.ErosionAccumulationTexture.Bind(TextureUnit.Texture1);
+            //    },
+            //    (sp) =>
+            //    {
+            //        sp.SetUniform("prevdensitytex", 0);
+            //        sp.SetUniform("erosiontex", 1);
+            //        sp.SetUniform("lowpass", (float)this.Parameters[P_DENSITYLOWPASS].GetValue());
+            //        sp.SetUniform("scale", (float)this.Parameters[P_DENSITYSCALE].GetValue());
+            //    });
 
-            // copy air density map from 1 to 0
-            CopyDensityStep.Render(
-                () =>
-                {
-                    this.DensityTexture[1].Bind(TextureUnit.Texture0);
-                },
-                (sp) =>
-                {
-                    sp.SetUniform("densitytex", 0);
-                });
+            //// copy air density map from 1 to 0
+            //CopyDensityStep.Render(
+            //    () =>
+            //    {
+            //        this.DensityTexture[1].Bind(TextureUnit.Texture0);
+            //    },
+            //    (sp) =>
+            //    {
+            //        sp.SetUniform("densitytex", 0);
+            //    });
 
 
 
@@ -640,7 +641,7 @@ namespace TerrainGeneration
             {
                 data[i * 4 + 0] = (float)r.NextDouble();  // x
                 data[i * 4 + 1] = (float)r.NextDouble();  // y 
-                data[i * 4 + 2] = 0f;       // height (maybe)
+                data[i * 4 + 2] = 0f;       // height
                 data[i * 4 + 3] = 0f;       // carrying
 
                 // velocity

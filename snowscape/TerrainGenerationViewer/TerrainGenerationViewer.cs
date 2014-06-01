@@ -836,7 +836,7 @@ namespace Snowscape.TerrainGenerationViewer
             if (this.Terrain is GPUSnowTransport)
             {
                 miscTexture = ((GPUSnowTransport)this.Terrain).ErosionTex;
-                miscTexture2 = ((GPUSnowTransport)this.Terrain).CurrentDensityTexture;
+                //miscTexture2 = ((GPUSnowTransport)this.Terrain).CurrentDensityTexture;
             };
 
 

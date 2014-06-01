@@ -50,14 +50,14 @@ precision highp float;
 uniform sampler2D terraintex;
 uniform sampler2D velocitytex;
 uniform sampler2D particletex;
-uniform sampler2D densitytex;
+//uniform sampler2D densitytex;
 
 uniform float texsize;
 uniform vec2 windvelocity;
 uniform float lowpass;
 uniform float terrainfactor;
 uniform float noisefactor;
-uniform float densityfactor;
+//uniform float densityfactor;
 uniform float randseed;
 
 in vec2 texcoord;
@@ -83,15 +83,15 @@ vec3 getNormal(vec2 pos)
 	return normalize(vec3(h3-h4,h1-h2,2.0));
 }
 
-vec2 getDensityGradient(vec2 pos)
-{
-    float n = texture(densitytex,pos+tt.yx).r;
-	float s = texture(densitytex,pos+tt.yz).r;
-    float w = texture(densitytex,pos+tt.xy).r;
-	float e = texture(densitytex,pos+tt.zy).r;
-	return vec2(e-w,n-s);
-}
-
+//vec2 getDensityGradient(vec2 pos)
+//{
+    //float n = texture(densitytex,pos+tt.yx).r;
+	//float s = texture(densitytex,pos+tt.yz).r;
+    //float w = texture(densitytex,pos+tt.xy).r;
+	//float e = texture(densitytex,pos+tt.zy).r;
+	//return vec2(e-w,n-s);
+//}
+//
 vec2 getRandomVelocity(vec2 pos)
 {
 	vec2 r;
@@ -106,12 +106,12 @@ void main(void)
 	vec4 prevvel = texture(velocitytex,texcoord);
 
 	vec3 n = getNormal(particle.xy);
-	vec2 d = getDensityGradient(particle.xy);
+	//vec2 d = getDensityGradient(particle.xy);
 
 	vec2 newvel = 
 		windvelocity + 
 		n.xy * terrainfactor + 
-		d.xy * densityfactor + 
+		//d.xy * densityfactor + 
 		getRandomVelocity(particle.xy) * noisefactor;
 
 	out_Velocity = vec4(mix(newvel,prevvel.xy,lowpass),0,0);
