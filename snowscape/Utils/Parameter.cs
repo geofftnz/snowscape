@@ -60,6 +60,15 @@ namespace Utils
             return (object)this.Value;
         }
 
+        public R GetValue<R>()
+        {
+            if (this.Value is R)
+            {
+                return (R)GetValue();
+            }
+            return default(R);
+        }
+
         public bool Impacts(ParameterImpact impact)
         {
             return this.Impact == impact;

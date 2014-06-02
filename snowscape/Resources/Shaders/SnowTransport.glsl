@@ -59,6 +59,10 @@ uniform float terrainfactor;
 uniform float noisefactor;
 //uniform float densityfactor;
 uniform float randseed;
+uniform float deltatime;
+uniform float airceiling;
+uniform float airmass;
+uniform float windlowpass;
 
 in vec2 texcoord;
 out vec4 out_Velocity;
@@ -104,6 +108,14 @@ void main(void)
 {
 	vec4 particle = texture(particletex,texcoord);
 	vec4 prevvel = texture(velocitytex,texcoord);
+	
+	// TODO: Interpolate
+	float terrainheight = sampleHeight(particle.xy);
+
+	// calculate new base height of air column and write to vel.b
+	// don't let the air column be lower than the terrain
+	//float airheight = max(terrainheight, particle.b-(aircolumnfallrate*deltatime));
+	
 
 	vec3 n = getNormal(particle.xy);
 	//vec2 d = getDensityGradient(particle.xy);
@@ -114,7 +126,14 @@ void main(void)
 		//d.xy * densityfactor + 
 		getRandomVelocity(particle.xy) * noisefactor;
 
-	out_Velocity = vec4(mix(newvel,prevvel.xy,lowpass),0,0);
+	// wind speed is related to how much we're squashing the air column.
+	float newwindspeed = airmass / max(1.0,(airceiling - particle.b));
+
+	out_Velocity = vec4(
+						mix(newvel,prevvel.xy,lowpass),
+						terrainheight - particle.b,  // difference between air column base and terrain
+						mix(newwindspeed,prevvel.a,windlowpass)  // windspeed
+						);
 }
 
 
@@ -138,6 +157,8 @@ void main(void)
 	gl_Position = vec4(texcoord.xy*2.0-1.0,0.0,1.0);
 }
 
+
+
 //|Erosion
 #version 140
 precision highp float;
@@ -147,6 +168,8 @@ uniform sampler2D velocitytex;
 uniform float deltatime;
 uniform float depositRate;
 uniform float erosionRate;
+uniform float erosionheightthreshold;
+uniform float depositRateConst;
 
 in vec2 texcoord;
 in vec2 particlecoord;
@@ -160,16 +183,60 @@ void main(void)
 	vec4 particle = textureLod(particletex,particlecoord,0);
 	vec4 velocity = textureLod(velocitytex,particlecoord,0);
 
-	//float carryingCapacity = velocity.b;
-	//float carrying = particle.b;
+	//float carryingCapacity = velocity.a * carryingspeedcoefficent;
+	float carrying = particle.a;
+	float heightdiff = velocity.b; // height of base of air column above terrain.
 
-	//float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
-	//float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
+	// erosion based on wind speed, if air column base is at/near ground
+	float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
+	
+	// deposit 
+	float depositAmount = 
+		min(
+			carrying,
+			(carrying * depositRateConst) +
+				(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
+			) * deltatime;
 
-	out_Erosion = vec4(1.0, 0.0, 0.0, 0.0);
+	out_Erosion = vec4(1.0, erosionPotential, depositAmount, 0.0);
 }
 
 
+//|UpdateTerrain
+#version 140
+precision highp float;
+
+uniform sampler2D terraintex;
+uniform sampler2D erosiontex;
+
+uniform float packedSnowErosionFactor;
+
+in vec2 texcoord;
+out vec4 out_Terrain;
+
+//  Adds deposit amount E.b to powder L0.a
+//  Subtracts material from powder, then packed.
+
+void main(void)
+{
+	vec4 terrain = textureLod(terraintex,texcoord,0);
+	vec4 erosion = textureLod(erosiontex,texcoord,0);
+
+	float packedsnow = terrain.b;
+	float powder = terrain.a;
+
+	powder += erosion.b;  // add deposit amount to powder, make available for erosion
+
+	// calculate erosion from powder - lesser of potential and amount of powder
+	float powdererode = min(powder, erosion.g);
+	float packedsnowerode = min(packedsnow, max(erosion.g - powdererode,0.0) * packedSnowErosionFactor);
+
+	out_Terrain = vec4(
+		terrain.rg,
+		packedsnow - packedsnowerode, 
+		powder - powdererode
+		);
+}
 
 
 //|UpdateParticles
@@ -182,10 +249,14 @@ uniform sampler2D erosiontex;
 uniform sampler2D terraintex;
 
 uniform float deltatime;
-//uniform float depositRate;
-//uniform float erosionRate;
-//uniform float hardErosionFactor;
+uniform float depositRate;
+uniform float erosionRate;
+uniform float erosionheightthreshold;
+uniform float depositRateConst;
 uniform float texsize;
+uniform float aircolumnfallrate;
+uniform float packedSnowErosionFactor;
+
 
 in vec2 texcoord;
 out vec4 out_Particle;
@@ -203,11 +274,48 @@ void main(void)
 
 	vec4 newParticle = particle;
 
+
+	float carrying = particle.a;
+	float heightdiff = velocity.b; // height of base of air column above terrain.
+
+	// erosion based on wind speed, if air column base is at/near ground
+	float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
+	
+	// deposit 
+	float depositAmount = 
+		min(
+			carrying,
+			(carrying * depositRateConst) +
+				(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
+			) * deltatime;
+
+	// reduce our carrying amount by the amount we're depositing
+	newParticle.a = max(carrying - depositAmount,0.0);
+
+	// calculate total material being eroded from the terrain at our position.
+	float packedsnow = terrain.b;
+	float powder = terrain.a;
+	powder += erosion.b;  // add deposit amount to powder, make available for erosion
+	// calculate erosion from powder - lesser of potential and amount of powder
+	float powdererode = min(powder, erosion.g);
+	float packedsnowerode = min(packedsnow, max(erosion.g - powdererode,0.0) * packedSnowErosionFactor);
+	float totaleroded = powdererode + packedsnowerode;
+
+    //  Add material carried based on particle share of total V0.b / E(P0.rg).g -> P1.b
+	float particleerode = totaleroded * (erosionPotential / erosion.g);
+	newParticle.a += particleerode;
+
+
     //  move particle 
 	newParticle.xy = particle.xy + normalize(velocity.xy) * t * deltatime;
 
 	// keep in range
 	newParticle.xy = mod(newParticle.xy + vec2(1.0),vec2(1.0));
+
+	// calculate new base height of air column and write to particle.z
+	// don't let the air column be lower than the terrain
+	newParticle.z = max(dot(terrain,vec4(1.0)), particle.b-(aircolumnfallrate*deltatime));
+
 
 	out_Particle = newParticle;
 
@@ -245,39 +353,17 @@ void main(void)
 }
 
 
-//|AccumulateDensity
+//|CopyTerrain
 #version 140
 precision highp float;
 
-uniform sampler2D erosiontex;
-uniform sampler2D prevdensitytex;
-uniform float lowpass;
-uniform float scale;
+uniform sampler2D terraintex;
 
 in vec2 texcoord;
-out float out_Density;
+out vec4 out_Terrain;
 
 void main(void)
 {
-	float prevDensity = texture(prevdensitytex, texcoord).r;
-	float newDensity = texture(erosiontex, texcoord).r * scale;
-
-	out_Density = mix(newDensity,prevDensity,lowpass);
+	out_Terrain = textureLod(terraintex,texcoord,0);
 }
-
-//|CopyDensity
-#version 140
-precision highp float;
-
-uniform sampler2D densitytex;
-
-in vec2 texcoord;
-out float out_Density;
-
-void main(void)
-{
-	out_Density = textureLod(densitytex,texcoord,0).r;
-}
-
-
 
