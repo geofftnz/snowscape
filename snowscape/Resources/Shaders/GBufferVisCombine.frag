@@ -825,17 +825,27 @@ void main(void)
 			c.rgb += vec3(1) * misc.r * 0.33;
 			c.r += misc2.r;
 			*/
-			
-			// particle erosion vis
-			vec4 misc = texture(miscTex,p);
-			vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
-			misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
 
-			misccol.r += misc.g * 256.0;  // eroding
-			misccol.g += misc.b * 256.0;  // depositing
+			// snow erosion vis
+			vec4 misc = texture(miscTex,p);
+			vec3 misccol = vec3(0.0);
+			//vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
+			//misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
+
+			misccol = misc.gba * vec3(256.0,256.0,16.0);
 			
 			c.rgb = misccol * min(1.0,misc.r);
 			
+			//// particle erosion vis
+			//vec4 misc = texture(miscTex,p);
+			//vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
+			//misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
+//
+			//misccol.r += misc.g * 256.0;  // eroding
+			//misccol.g += misc.b * 256.0;  // depositing
+			//
+			//c.rgb = misccol * min(1.0,misc.r);
+			//
 
 			/*
 			if (p.x < 1.0)

@@ -185,7 +185,7 @@ namespace TerrainGeneration
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.25f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATECONST, 0.05f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.02f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.002f, 0.0f, 1.0f, 0.0001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONHEIGHTTHRESHOLD, 1.0f, 0.0f, 10.0f,0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PACKEDSNOWEROSIONFACTOR, 0.1f, 0.0f, 1.0f));

@@ -198,7 +198,7 @@ void main(void)
 				(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
 			) * deltatime;
 
-	out_Erosion = vec4(1.0, erosionPotential, depositAmount, 0.0);
+	out_Erosion = vec4(1.0, erosionPotential, depositAmount, carrying);
 }
 
 
