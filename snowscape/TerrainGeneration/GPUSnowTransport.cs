@@ -147,9 +147,12 @@ namespace TerrainGeneration
         private const string P_AIRCEILING = "snow-airceiling";
         private const string P_AIRMASS = "snow-airmass";
         private const string P_WINDLOWPASS = "snow-windlowpass";
+        private const string P_SPEEDCARRYING = "snow-speedcarrying";
 
         private const string P_DEPOSITRATE = "snow-deposit";
         private const string P_DEPOSITRATECONST = "snow-depositconst";
+        private const string P_DEPOSITRATEOVERSHOOT = "snow-depositovershoot";
+
         private const string P_EROSIONRATE = "snow-erosionrate";
         private const string P_EROSIONHEIGHTTHRESHOLD = "snow-erosionheight";
 
@@ -182,11 +185,13 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_AIRCEILING, 1000.0f, 0.0f, 10000.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_AIRMASS, 1000.0f, 0.0f, 10000.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WINDLOWPASS, 0.4f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SPEEDCARRYING, 0.1f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.25f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATECONST, 0.05f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATEOVERSHOOT, 0.5f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.002f, 0.0f, 1.0f, 0.0001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONHEIGHTTHRESHOLD, 1.0f, 0.0f, 10.0f,0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONHEIGHTTHRESHOLD, 1.0f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PACKEDSNOWEROSIONFACTOR, 0.1f, 0.0f, 1.0f));
         }
@@ -318,6 +323,9 @@ namespace TerrainGeneration
             float depositRateConst = this.Parameters[P_DEPOSITRATECONST].GetValue<float>();
             float erosionRate = this.Parameters[P_EROSIONRATE].GetValue<float>();
             float erosionHeightThreshold = this.Parameters[P_EROSIONHEIGHTTHRESHOLD].GetValue<float>();
+            float speedCarryingFactor = this.Parameters[P_SPEEDCARRYING].GetValue<float>();
+            float depositRateOvershoot = this.Parameters[P_DEPOSITRATEOVERSHOOT].GetValue<float>();
+
 
             float packedSnowErosionFactor = this.Parameters[P_PACKEDSNOWEROSIONFACTOR].GetValue<float>();
 
@@ -423,6 +431,8 @@ namespace TerrainGeneration
                     sp.SetUniform("deltatime", deltaTime);
                     sp.SetUniform("depositRate", depositRate);
                     sp.SetUniform("depositRateConst", depositRateConst);
+                    sp.SetUniform("depositRateOvershoot", depositRateOvershoot);
+                    sp.SetUniform("speedCarryingFactor", speedCarryingFactor);
                     sp.SetUniform("erosionRate", erosionRate);
                     sp.SetUniform("erosionheightthreshold", erosionHeightThreshold);
 
@@ -504,6 +514,8 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("aircolumnfallrate", (float)this.Parameters[P_AIRFALLRATE].GetValue());
                     sp.SetUniform("packedSnowErosionFactor", packedSnowErosionFactor);
+                    sp.SetUniform("depositRateOvershoot", depositRateOvershoot);
+                    sp.SetUniform("speedCarryingFactor", speedCarryingFactor);
                 });
 
 

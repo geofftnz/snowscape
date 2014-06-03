@@ -170,6 +170,8 @@ uniform float depositRate;
 uniform float erosionRate;
 uniform float erosionheightthreshold;
 uniform float depositRateConst;
+uniform float speedCarryingFactor;
+uniform float depositRateOvershoot;
 
 in vec2 texcoord;
 in vec2 particlecoord;
@@ -186,18 +188,27 @@ void main(void)
 	//float carryingCapacity = velocity.a * carryingspeedcoefficent;
 	float carrying = particle.a;
 	float heightdiff = velocity.b; // height of base of air column above terrain.
+	float carryingcapacity = velocity.a * speedCarryingFactor;
+
 
 	// erosion based on wind speed, if air column base is at/near ground
-	float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
-	
-	// deposit 
-	float depositAmount = 
-		min(
-			carrying,
-			(carrying * depositRateConst) +
-				(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
-			) * deltatime;
+	//float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
+	float erosionPotential = max(0.0,carryingcapacity - carrying) * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
 
+	float depositAmount = max(0.0,carrying - carryingcapacity) * depositRate * deltatime;
+	depositAmount += carrying * depositRateConst * deltatime;
+	depositAmount += (1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * deltatime * depositRateOvershoot;
+
+	depositAmount = min(depositAmount, carrying);
+	
+	//// deposit 
+	//float depositAmount = 
+		//min(
+			//carrying,
+			//(carrying * depositRateConst) +
+				//(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
+			//) * deltatime;
+//
 	out_Erosion = vec4(1.0, erosionPotential, depositAmount, carrying);
 }
 
@@ -256,6 +267,8 @@ uniform float depositRateConst;
 uniform float texsize;
 uniform float aircolumnfallrate;
 uniform float packedSnowErosionFactor;
+uniform float speedCarryingFactor;
+uniform float depositRateOvershoot;
 
 
 in vec2 texcoord;
@@ -277,18 +290,30 @@ void main(void)
 
 	float carrying = particle.a;
 	float heightdiff = velocity.b; // height of base of air column above terrain.
+	float carryingcapacity = velocity.a * speedCarryingFactor;
+
 
 	// erosion based on wind speed, if air column base is at/near ground
-	float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
-	
-	// deposit 
-	float depositAmount = 
-		min(
-			carrying,
-			(carrying * depositRateConst) +
-				(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
-			) * deltatime;
+	//float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
+	float erosionPotential = max(0.0,carryingcapacity - carrying) * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
 
+	float depositAmount = max(0.0,carrying - carryingcapacity) * depositRate * deltatime;
+	depositAmount += carrying * depositRateConst * deltatime;
+	depositAmount += (1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * deltatime * depositRateOvershoot;
+
+	depositAmount = min(depositAmount, carrying);
+
+	//// erosion based on wind speed, if air column base is at/near ground
+	//float erosionPotential = velocity.a * erosionRate * deltatime * (1.0-smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff));
+	//
+	//// deposit 
+	//float depositAmount = 
+		//min(
+			//carrying,
+			//(carrying * depositRateConst) +
+				//(1.0 + smoothstep(erosionheightthreshold*0.5,erosionheightthreshold+0.001,heightdiff)) * depositRate
+			//) * deltatime;
+//
 	// reduce our carrying amount by the amount we're depositing
 	newParticle.a = max(carrying - depositAmount,0.0);
 
