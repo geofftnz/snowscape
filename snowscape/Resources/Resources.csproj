@@ -46,6 +46,9 @@
     <Compile Include="Resources.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Shaders\SkyScatterCube2.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Shaders\ParticleErosion.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

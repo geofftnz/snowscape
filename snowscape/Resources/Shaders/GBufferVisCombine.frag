@@ -1,4 +1,8 @@
-﻿#version 330
+﻿/*
+better scattering / red horizon: http://glsl.heroku.com/e#17563.3
+layers with noise: http://glsl.heroku.com/e#17639.0
+*/
+#version 330
 precision highp float;
 uniform sampler2D normalTex;
 uniform sampler2D normalLargeScaleTex;
