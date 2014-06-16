@@ -46,7 +46,7 @@
     <Compile Include="Resources.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Shaders\SkyScatterCube2.frag">
+    <Content Include="Shaders\SkyScatterCube.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Shaders\ParticleErosion.glsl">
@@ -209,7 +209,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Shaders\SkyScatterCube.frag">
+    <Content Include="Shaders\SkyScatterCube_new.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
