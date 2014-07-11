@@ -36,7 +36,7 @@ namespace Snowscape
             {
                 using (var v = new Snowscape.TerrainGenerationViewer.TerrainGenerationViewer())
                 {
-                    v.Run(30);
+                    v.Run(60);
                 }
             }
             catch (Exception ex)

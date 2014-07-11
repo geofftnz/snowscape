@@ -8,7 +8,7 @@ namespace Utils
 {
     public class FrameCounter
     {
-        const int BUFLEN = 10;
+        const int BUFLEN = 30;
         private Stopwatch sw = new Stopwatch();
         private long[] tickBuffer = new long[BUFLEN];
         private int bufferPos = 0;

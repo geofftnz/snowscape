@@ -112,7 +112,7 @@ namespace Snowscape.TerrainGenerationViewer
         private Font font = new Font();
         private TextManager textManager = new TextManager("DefaultText", null);
 
-        private FrameCounter frameCounter = new FrameCounter();
+        private FrameCounter2 frameCounter = new FrameCounter2();
         private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
         private Thread updateThread;
@@ -225,9 +225,13 @@ namespace Snowscape.TerrainGenerationViewer
         public event CloseEventHandler OnClose;
 
         public TerrainGenerationViewer()
-            : base(640, 480, new GraphicsMode(), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
+            : base(800, 600, new GraphicsMode(new ColorFormat(8,8,8,8),24), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
-            // set default shader loader
+            this.VSync = VSyncMode.Off;
+            //this.TargetRenderFrequency = 60.0;
+            //this.TargetUpdateFrequency = 60.0;
+
+                  // set default shader loader
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../Resources/Shaders");
 
 
@@ -486,7 +490,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
-            this.VSync = VSyncMode.Off;
 
             // create VBOs/Shaders etc
 
@@ -908,7 +911,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             //if (this.frameCounter.Frames % 32 == 0)
             //{
-            frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}", frameCounter.FPSSmooth, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+            frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}", frameCounter.FPS, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
             textManager.AddOrUpdate(frameCounterText);
 
             float y = 0.1f;
@@ -1103,11 +1106,12 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Enable(EnableCap.DepthTest);
 
             //GL.Flush();
-
+            //GL.Finish();
             SwapBuffers();
 
             this.frameCounter.Frame();
 
+            Thread.Sleep(0);
         }
 
         private void RenderLighting(Vector3 sunVector)
