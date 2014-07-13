@@ -68,7 +68,7 @@ void main(void)
 	col = pow(col.rgb,vec3(1.0/2.2));
 
 	// TODO: Anti-alias
-
+	/*
 	// render histogram
 	vec2 p = (texcoord0 - vec2(0.5,0.9)) * vec2(2.2,9.2);
 	if (p.x >= 0.0 && p.y >= 0.0 && p.x < 1.0 && p.y < 1.0)
@@ -78,7 +78,7 @@ void main(void)
 		col *= 0.75;
 		col.rgb += (vec3(1.0)-step(h.rgb,vec3(p.y))) * 0.2;
 		col.rgb += vec3((1.0 - step(h.a,p.y)) * 0.5);
-	}
+	}*/
 	
 
 	// output

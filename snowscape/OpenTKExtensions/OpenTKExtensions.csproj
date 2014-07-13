@@ -81,6 +81,7 @@
     <Compile Include="TextManager.cs" />
     <Compile Include="Texture.cs" />
     <Compile Include="TextureParameter.cs" />
+    <Compile Include="UI\FrameTimeGraphRenderer.cs" />
     <Compile Include="Variable.cs" />
     <Compile Include="VBO.cs" />
     <Compile Include="Vector.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="ImageLoader.cs" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

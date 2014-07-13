@@ -41,7 +41,7 @@ namespace OpenTKExtensions
         {
             if (!Blocks.ContainsKey(b.Name))
             {
-                log.Trace("TextManager.Add ({0}): Adding \"{1}\"", this.Name,b.Text);
+                log.Trace("TextManager.Add ({0}): Adding \"{1}\"", this.Name, b.Text);
                 Blocks.Add(b.Name, b);
                 this.NeedsRefresh = true;
                 return true;
@@ -63,6 +63,23 @@ namespace OpenTKExtensions
             if (this.Blocks.ContainsKey(blockName))
             {
                 this.Blocks.Remove(blockName);
+                this.NeedsRefresh = true;
+                return true;
+            }
+            return false;
+        }
+        public bool RemoveAllByPrefix(string blockNamePrefix)
+        {
+            bool hit = false;
+
+            foreach (var blockToRemove in this.Blocks.Keys.Where(n => n.StartsWith(blockNamePrefix)).ToList())
+            {
+                this.Blocks.Remove(blockToRemove);
+                hit = true;
+            }
+
+            if (hit)
+            {
                 this.NeedsRefresh = true;
                 return true;
             }

@@ -61,5 +61,10 @@ namespace OpenTKExtensions
             return new Vector4(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z), Math.Abs(v.W));
         }
 
+        //public static Vector3 HexColRGB(this string s)
+        //{
+
+        //}
+
     }
 }

@@ -61,6 +61,7 @@
     <Compile Include="SimplexNoise.cs" />
     <Compile Include="TextureSynth.cs" />
     <Compile Include="TileMath.cs" />
+    <Compile Include="FrameTracker.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
