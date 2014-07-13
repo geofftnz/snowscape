@@ -716,7 +716,10 @@ void main(void)
 
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
 
-	//c.rgb = paramT.rgb;
+	// blend terrain height over y for distant samples
+	float h = sampleHeight(pos.xz);
+	float d = length(pos.xyz - eyePos.xyz);
+	pos.y = mix(pos.y, h, smoothstep(500.0, 1000.0,d));
 
 
 	

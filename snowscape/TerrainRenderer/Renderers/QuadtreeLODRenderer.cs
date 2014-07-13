@@ -142,7 +142,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 // can we render this tile without subdividing?
 
                 // we can render now once we've got to a small enough tile
-                if (this.TileSize <= 4)
+                if (this.TileSize <= 4)  //4
                 {
                     tileDetailRenderer.Width = GetDetailTileSize(reye,detailRadius);
                     tileDetailRenderer.Height = tileDetailRenderer.Width;
@@ -262,7 +262,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
                 //float distancepastdetail = (xformeye.Xz - new Vector2((float)tile.Width * 0.5f,(float)tile.Height * 0.5f)).Length - ;
 
-                distrenderer.Width = tile.Width / 4;
+                distrenderer.Width = tile.Width / 16;
                 distrenderer.Height = distrenderer.Width;
                 //distrenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                 distrenderer.Scale = 1.0f;
