@@ -697,56 +697,29 @@ float LinearizeDepth2(float depth)
 void main(void)
 {
     vec2 p = texcoord0.xy;
-    //vec4 posT = texture(posTex,p);
 	vec4 paramT = texture(paramTex,p);
     vec4 normalT = texture(normalTex,p);
     vec4 normalTL = texture(normalLargeScaleTex,p);
 	float depth = texture(depthTex,p).r;
 
-	//dither depth
-	//depth -= 0.0000001 * rand(vec3(texcoord0.xy * 497.0, hash(time*7.117)));
-	//depth = clamp(depth,0,1);
-
 	vec4 projpos = vec4(texcoord0.x * 2.0 - 1.0, texcoord0.y * 2.0 - 1.0, depth*2.0-1.0, 1.0);
-	vec4 pos = inverse(pre_projection_matrix) * projpos;
+	//vec4 pos = inverse(pre_projection_matrix) * projpos;
+	vec4 pos = pre_projection_matrix * projpos;
 	pos.xyz /= pos.w;
 
 
     vec4 c = vec4(0.0,0.0,0.0,1.0);
     float hitType = normalT.a;
-    //vec4 pos = vec4(posT.xyz + eyePos,0.0);
+    
     vec3 normal = normalize(normalT.xyz - vec3(0.5));
 	vec3 normalLargeScale = normalize(normalTL.xyz - vec3(0.5));
 
-	//vec3 wpos = posT.xyz; //pos.xyz - eyePos;
-
-	//0.1f, 4000.0f
-	//c.rgb = pos.xyz / 1024.0;
-	/*
-	if (hitType > 0.6){
-
-		if (texcoord0.x<0.5)
-		{
-			c.rgb = (pos.xyz / 8192.0);
-		}
-		else
-		{
-			vec4 projpos = vec4(texcoord0.x * 2.0 - 1.0, texcoord0.y * 2.0 - 1.0, depth*2.0-1.0, 1.0);
-			vec4 worldspacepos = inverse(pre_projection_matrix) * projpos;
-			worldspacepos.xyz /= worldspacepos.w;
-
-			c.rgb = worldspacepos.xyz / 8192.0;
-		}
-	}
-	else
-	{
-		c.rgb = 0.5;
-	}
-	*/
-
-	//c.rgb = normal * 0.5 + 0.5;
-	
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
+
+	//c.rgb = paramT.rgb;
+
+
+	
     if (hitType > 0.6)
 	{
         c.rgb = generateCol(pos.xyz,normal,normalLargeScale,paramT, eyePos, shadowAO.r, shadowAO.g);
@@ -771,149 +744,5 @@ void main(void)
         }
 	}
 	
-
-	/*
-    // lower right quadrant
-	p *= 2.0;
-	if (p.x >= 1.0 && p.y >= 1.0)
-	{
-		p -= vec2(1.0);
-		c.rgb = vec3(texture(indirectTex,p).r);
-
-		//vec4 ind = texture(indirectTex,p);
-		//c.rgb = ind.rgb * ind.a;
-	}*/
-	
-
-
-	
-	//vec2 p = texcoord0.xy * 2.0;
-	p *= 2.0;
-    // split screen into 4
-	
-	if (p.x < 1.0)
-	{
-        if (p.y < 1.0)
-		{
-            //vec3 pos = texture(posTex,p).xyz + eyePos;
-			//c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
-		}
-		else
-		{
-            //c = texture(paramTex,p-vec2(0.0,1.0));
-		}
-	}
-	else
-	{
-        if (p.y < 1.0)
-		{
-            //c = texture(shadeTex,p-vec2(1.0,0.0));
-            //c = vec4(0.0);
-		}
-		else
-		{
-            p -= vec2(1.0,1.0);
-			
-			//c.rgb = texture(miscTex,p).rgb * vec3(0.1,10.0,10.0);
-			//c.rgb = texture(miscTex2,p).b * vec3(0.0,0.0,10.0);// + texture(miscTex2,p).a * vec3(0.0,1.0,0.0);
-			
-			/*
-			vec4 misc = texture(miscTex,p);
-			vec4 misc2 = texture(miscTex2,p);
-
-			c.rgb = vec3(0);
-			c.rgb += vec3(1) * misc.r * 0.33;
-			c.r += misc2.r;
-			*/
-
-			// snow erosion vis
-			vec4 misc = texture(miscTex,p);
-			vec3 misccol = vec3(0.0);
-			//vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
-			//misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
-
-			misccol = misc.gba * vec3(256.0,256.0,16.0);
-			
-			c.rgb = misccol * min(1.0,misc.r);
-			
-			//// particle erosion vis
-			//vec4 misc = texture(miscTex,p);
-			//vec3 misccol = mix( gc(95,174,239),  gc(62,67,196),  misc.r * 0.25);  // light-dark water  
-			//misccol = mix( misccol,   gc(226,200,165),  misc.a * 5.0) ; // dirty water
-//
-			//misccol.r += misc.g * 256.0;  // eroding
-			//misccol.g += misc.b * 256.0;  // depositing
-			//
-			//c.rgb = misccol * min(1.0,misc.r);
-			//
-
-			/*
-			if (p.x < 1.0)
-			{
-				if (p.y < 1.0)
-				{
-					//vec4 pos = texture(posTex,p);// + eyePos;
-					////c.rgb = (pos.xyz / 2048.0) * 0.75 + mod(pos.xyz, vec3(1.0)) * 0.25;
-					////c.rgb = mod(pos.xyz * 0.2, vec3(1.0));
-					//c.r = mod(length(pos.xyz) * 0.01,1.0);
-					//c.g = 0;//mod((pos.y + eyePos.y) * 0.5,1.0);
-					//c.b = pos.a;
-				}
-				else
-				{
-					c.rgb = texture(paramTex,p-vec2(0.0,1.0)).rgb * 0.5;
-				}
-			}
-			else
-			{
-				if (p.y < 1.0)
-				{
-					c.rgb = pow(texture(normalTex,p-vec2(1.0,0.0)).xzy,vec3(2.2));
-					//c.rgb = vec3(0.7,0.7,1.0) * texture(cloudDepthTex,p-vec2(1.0,0.0)).b;
-					//c.rgb = vec3(texture(shadeTex,p-vec2(1.0,0.0)).rg,0.0);
-
-					//vec4 misc = texture(miscTex2,p-vec2(1.0,0.0));
-					//c.rgb = misc.rgb * 4.0;
-
-					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
-					//c.rgb = vec3(flow.b,flow.a,0.0);
-
-				}
-				else
-				{
-					c.rgb = pow(texture(normalLargeScaleTex,p-vec2(1.0,1.0)).xzy,vec3(2.2));
-					//c.rgb = vec3(1.0) * texture(cloudDepthTex,p-vec2(1.0,1.0)).a;
-
-					// sky dome
-					//vec3 skyp = vec3(0.0);
-					//skyp.xy = (p.xy - vec2(1.0,1.0)) * 2.0 - vec2(1.0);
-					//if (dot(skyp.xy,skyp.xy) <= 1.0)
-					//{
-						//skyp.z = 1.0 - length(skyp.xy);
-					//}
-					//c.rgb = getSkyColour(skyp.xzy);
-
-					//vec4 flow = texture(miscTex,p-vec2(1.0,1.0)).rgba;
-					//c.rgb = flow.rgb + vec3(1.0) * flow.a;
-					//c.rgb = vec3(flow.r,flow.g,0.0);
-					//c.rgb = flow.agb * vec3(1,0.01,1);
-
-					//vec2 vel = texture(miscTex,p-vec2(0.0,1.0)).rg;
-					//c.rgb = vec3(
-								//clamp(abs(vel) * 4.0,vec2(0.0),vec2(1.0)),
-								//0.0 );
-				}
-			}*/
-			
-		}
-	}
-	
-
-	// fog
-
-
 	out_Colour = vec4(c.rgb,1.0);
-    //out_Colour = vec4(sqrt(c.rgb),1.0);
-
-    //out_Colour = vec4(pow(c.rgb,vec3(0.45)),1.0);
 }

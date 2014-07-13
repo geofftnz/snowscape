@@ -65,10 +65,11 @@ namespace Snowscape.TerrainRenderer.HDR
             this.Height = height;
 
             this.gbuffer.SetSlot(0,
-                new GBuffer.TextureSlotParam(TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat, true, new List<ITextureParameter>
+                new GBuffer.TextureSlotParam(TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat, false, 
+                new List<ITextureParameter>
                 {
-                    new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear),
-                    new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest),
+                    new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest),
+                    new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest),
                     new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge),
                     new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge)
                 }));  // colour

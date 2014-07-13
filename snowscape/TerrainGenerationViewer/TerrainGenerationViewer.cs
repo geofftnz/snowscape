@@ -227,11 +227,9 @@ namespace Snowscape.TerrainGenerationViewer
         public event CloseEventHandler OnClose;
 
         public TerrainGenerationViewer()
-            : base(800, 600, new GraphicsMode(new ColorFormat(8, 8, 8, 8), 24), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
+            : base(800, 600, new GraphicsMode(new ColorFormat(8, 8, 8, 8), 24, 8), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
         {
             this.VSync = VSyncMode.Off;
-            //this.TargetRenderFrequency = 60.0;
-            //this.TargetUpdateFrequency = 60.0;
 
             // set default shader loader
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../Resources/Shaders");
@@ -265,6 +263,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Closing += new EventHandler<System.ComponentModel.CancelEventArgs>(TerrainGenerationViewer_Closing);
 
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
+
+            parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
 
             parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
@@ -845,12 +845,13 @@ namespace Snowscape.TerrainGenerationViewer
                 miscTexture = ((GPUSnowTransport)this.Terrain).ErosionTex;
                 //miscTexture2 = ((GPUSnowTransport)this.Terrain).CurrentDensityTexture;
             };
+            frameTracker.Step("scattering-texsetup", new Vector4(0.0f, 0.5f, 1.0f, 1.0f));
 
 
             var rp = new Lighting.LightingCombiner.RenderParams()
             {
                 //GBufferProjectionMatrix = Matrix4.Mult(mv, this.terrainProjection),
-                GBufferProjectionMatrix = Matrix4.Mult(this.terrainModelview, this.terrainProjection),
+                GBufferProjectionMatrix = Matrix4.Invert(Matrix4.Mult(this.terrainModelview, this.terrainProjection)),
                 DepthTexture = this.lightingStep.DepthTexture,
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
@@ -903,6 +904,7 @@ namespace Snowscape.TerrainGenerationViewer
                 NormalBlendFarDistance = (float)this.parameters["NormalBlendFarDistance"].GetValue()
 
             };
+            frameTracker.Step("scattering-params", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
             this.lightingStep.Render(rp);
 
@@ -911,10 +913,12 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
+            bool needToRenderLighting = false;
+            bool stepFence = (bool)this.parameters["glFinish"].GetValue();
+
             frameTracker.Step("interframe", new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
             frameTracker.StartFrame();
 
-            bool needToRenderLighting = false;
 
             //if (this.frameCounter.Frames % 32 == 0)
             //{
@@ -927,7 +931,7 @@ namespace Snowscape.TerrainGenerationViewer
             textManager.RemoveAllByPrefix("perf_");
             foreach (var timer in this.frameTracker.GetStepStats())
             {
-                textManager.AddOrUpdate(new TextBlock("perf_" + timer.Name, string.Format("{0}: {1:0.000} ms", timer.Name, timer.AverageTime * 1000.0), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
+                textManager.AddOrUpdate(new TextBlock("perf_" + timer.Name, string.Format("{0}: {1:0.000} ms", timer.Name, timer.AverageTime * 1000.0), new Vector3(0.01f, y, 0.0f), 0.00025f, timer.Colour));
                 y += 0.0125f;
             }
             frameTracker.Step("text-timers", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
@@ -976,30 +980,26 @@ namespace Snowscape.TerrainGenerationViewer
             // do GPU-based terrain generation
             if (!this.Terrain.NeedThread && !this.ThreadPaused)
             {
-                perfmon.Start("GPU Erosion");
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 1; i++)
                 {
                     this.Terrain.ModifyTerrain();
                     this.updateGPUIterations++;
                 }
-                perfmon.Stop("GPU Erosion");
-                //if (this.updateGPUIterations % 4 == 0)
-                //{
                 this.updateThreadIterations = this.updateGPUIterations;
-                //}
+                if (stepFence) { GL.Finish(); }
                 frameTracker.Step("terrain modify", new Vector4(0.8f, 0.6f, 0.0f, 1.0f));
             }
-            
+
 
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
             {
-                perfmon.Start("Generation Update");
                 if (this.Terrain.NeedThread)
                 {
                     CopyMapDataFromUpdateThread();
                     this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
                     this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
+                    if (stepFence) { GL.Finish(); }
                     frameTracker.Step("thread copy", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
                 }
                 else
@@ -1035,9 +1035,8 @@ namespace Snowscape.TerrainGenerationViewer
                 }
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
+                if (stepFence) { GL.Finish(); }
                 frameTracker.Step("GPU normals", new Vector4(0.7f, 1.0f, 0.0f, 1.0f));
-
-                perfmon.Stop("Generation Update");
 
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;
@@ -1052,22 +1051,18 @@ namespace Snowscape.TerrainGenerationViewer
             if (prevSunDirection != sunDirection || prevParamsVersion != currentParamsVersion || needToRenderLighting)
             {
                 // render lighting
-                perfmon.Start("Lighting");
                 this.RenderLighting(this.sunDirection);
-                perfmon.Stop("Lighting");
+                if (stepFence) { GL.Finish(); }
                 frameTracker.Step("lighting", new Vector4(0.3f, 1.0f, 0.0f, 1.0f));
 
                 // render indirect lighting
-                perfmon.Start("Indirect");
                 this.indirectIlluminationGenerator.Render(this.terrainGlobal.HeightTexture, this.terrainGlobal.ShadeTexture, this.terrainTile.NormalTexture, this.sunDirection);
-                perfmon.Stop("Indirect");
+                if (stepFence) { GL.Finish(); }
                 frameTracker.Step("indirect", new Vector4(0.0f, 0.9f, 0.0f, 1.0f));
 
-                perfmon.Start("SkyPreCalc");
                 this.RenderSky(this.eyePos, this.sunDirection, (float)this.parameters["groundLevel"].GetValue());
-                perfmon.Stop("SkyPreCalc");
+                if (stepFence) { GL.Finish(); }
                 frameTracker.Step("sky", new Vector4(0.0f, 1.0f, 0.4f, 1.0f));
-
 
                 this.prevSunDirection = this.sunDirection;
                 this.prevParamsVersion = this.currentParamsVersion;
@@ -1078,22 +1073,17 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.lightingStep.BindForWriting();
 
-            perfmon.Start("RenderTerrain");
             RenderTiles();
-            perfmon.Stop("RenderTerrain");
+            if (stepFence) { GL.Finish(); }
             frameTracker.Step("terrain render", new Vector4(0.0f, 0.8f, 1.0f, 1.0f));
 
-
-            perfmon.Start("RenderSkyRays");
             RenderSkyRayDirections();
-            perfmon.Stop("RenderSkyRays");
-            frameTracker.Step("skyray render", new Vector4(0.0f, 0.4f, 1.0f, 1.0f));
+            if (stepFence) { GL.Finish(); }
+            frameTracker.Step("skyray render", new Vector4(0.0f, 0.9f, 0.0f, 1.0f));
 
-            //this.gbuffer.UnbindFromWriting();
             this.lightingStep.UnbindFromWriting();
-
-            frameTracker.Step("render-completion", new Vector4(0.0f, 0.4f, 1.0f, 1.0f));
-
+            frameTracker.Step("render-completion", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+          
 
             //this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
             this.hdrExposure.WhiteLevel = (float)this.parameters["WhiteLevel"].GetValue();
@@ -1103,16 +1093,13 @@ namespace Snowscape.TerrainGenerationViewer
             // render gbuffer to hdr buffer
             this.hdrExposure.BindForWriting();
 
-            perfmon.Start("RenderGBufferCombiner");
             RenderGBufferCombiner();
-            perfmon.Stop("RenderGBufferCombiner");
 
             this.hdrExposure.UnbindFromWriting();
 
+            if (stepFence) { GL.Finish(); }
             frameTracker.Step("scattering", new Vector4(0.0f, 0.0f, 1.0f, 1.0f));
-
-
-
+            
             // render hdr buffer to screen
 
             GL.Viewport(this.ClientRectangle);
@@ -1120,23 +1107,19 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
-            perfmon.Start("HDR");
             this.hdrExposure.Render();
-            perfmon.Stop("HDR");
+
+            if (stepFence) { GL.Finish(); }
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
-            perfmon.Start("RefreshText");
             if (textManager.NeedsRefresh)
             {
                 textManager.Refresh();
             }
-            perfmon.Stop("RefreshText");
 
-            perfmon.Start("RenderText");
             textManager.Render(overlayProjection, overlayModelview);
-            perfmon.Stop("RenderText");
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
             //perfmon.Start("FrameTracker");
@@ -1158,13 +1141,14 @@ namespace Snowscape.TerrainGenerationViewer
 
             GL.Enable(EnableCap.DepthTest);
 
-            //GL.Flush();
-            //GL.Finish();
+            if (stepFence) { GL.Finish(); }
             SwapBuffers();
+
+            frameTracker.Step("swapbuffers", new Vector4(1.0f, 1.0f, 0.4f, 1.0f));
 
             this.frameCounter.Frame();
 
-            Thread.Sleep(0);
+            //Thread.Sleep(0);
         }
 
         private void RenderLighting(Vector3 sunVector)

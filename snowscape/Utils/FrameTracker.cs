@@ -165,6 +165,7 @@ namespace Utils
         public class StepStats
         {
             public string Name { get; set; }
+            public Vector4 Colour { get; set; }
             public double AverageTime { get; set; }
         }
 
@@ -172,8 +173,8 @@ namespace Utils
         {
             return 
                 from s in AllSteps()
-                group s.StepTime by s.Name into g
-                select new StepStats { Name = g.Key, AverageTime = g.Average() };
+                group s by s.Name into g
+                select new StepStats { Name = g.Key, AverageTime = g.Select(a=>a.StepTime).Average(), Colour = g.Select(a=>a.Colour).FirstOrDefault() };
         }
     }
 }
