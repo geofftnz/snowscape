@@ -66,6 +66,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private ITileRenderer tileRendererPatchDetail;
+        private ITileRenderer tileRendererPatchNormal;
         private ITileRenderer tileRendererPatchLow;
         private ITileRenderer tileRendererLOD;
         private ITileRenderer tileRendererQuadtree;
@@ -245,10 +246,11 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
             this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererPatchLow = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
+            this.tileRendererPatchNormal = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
+            this.tileRendererPatchLow = new GenerationVisPatchLowRenderer(TileWidth, TileHeight, patchCache);
             this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatchDetail);
             //this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchDetail);
-            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchDetail);
+            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchNormal, (IPatchRenderer)this.tileRendererPatchDetail);
 
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
 
@@ -500,6 +502,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
             this.tileRendererPatchDetail.Load();
+            this.tileRendererPatchNormal.Load();
             this.tileRendererPatchLow.Load();
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
@@ -583,7 +586,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainDetailTexture.Bind();
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
-            (this.tileRendererPatchLow as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
+            (this.tileRendererPatchNormal as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
 
             /*
             // create noise texture for clouds
@@ -1222,7 +1225,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             //RenderTile(this.terrainTile, 0f, 0f, tileRendererQuadtree);
 
-            (this.tileRendererPatchLow as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
+            (this.tileRendererPatchNormal as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
             for (int y = -1; y <= 1; y++)

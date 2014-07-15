@@ -46,6 +46,12 @@
     <Compile Include="Resources.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Shaders\GenVisPatchLow.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Shaders\GenVisPatchLow.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Shaders\ParticleErosion.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
