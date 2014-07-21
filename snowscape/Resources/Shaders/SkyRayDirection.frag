@@ -1,8 +1,8 @@
-﻿#version 330
+﻿#version 140
 precision highp float;
 
 uniform vec3 eyePos;
-noperspective in vec4 eyeTarget;
+in vec4 eyeTarget;
 
 out vec4 out_Normal;
 
