@@ -1,4 +1,4 @@
-﻿#version 330
+﻿#version 140
 precision highp float;
 uniform sampler2D normalTex;
 uniform sampler2D normalLargeScaleTex;
