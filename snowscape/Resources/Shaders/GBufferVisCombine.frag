@@ -590,7 +590,6 @@ float getAirDensity(float h)
 }
 
 // get the amount of light scattered towards the eye when looking at target
-// target is a terrain intersection
 vec4 getInscatterTerrain(vec3 eye, vec3 target)
 {
     vec3 p = eye;
@@ -672,6 +671,90 @@ vec4 getInscatterTerrain(vec3 eye, vec3 target)
 }
 
 
+// get the amount of light scattered towards the eye when looking at target
+// faking it:
+//   - no raymarching
+//   - if the ray is a sky ray, then calculate mie for sun regardless
+//   - if the ray is a terrain hit, then calculate mie for sun only if viewer is not in shadow
+vec4 getInscatterTerrain2Sky(vec3 eye, vec3 target)
+{
+    vec3 p = eye;
+    vec3 d = target-eye;
+    float l = length(target-eye);
+    vec3 c = vec3(0.0);
+    
+	//float distFactor = 0.01;
+	float distFactor = sampleDistanceFactor;
+
+    float alpha = dot(normalize(d), sunVector);
+    float mie_factor = phase(alpha,miePhase) * mieBrightness * nearMieBrightness;
+    // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
+    // raleigh brightness
+	//float adepth = adepthSky(vec3(0.0,0.9,0.0), sunVector);
+	float skylight_factor = skylightBrightness;
+
+	// get intensity of sky-light
+	vec3 skyLight = textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb;//getSkyLight(vec3(0.0,1.0,0.0));
+
+	vec3 influx = sunIntensity();
+    vec3 mie = vec3(0.0);
+    vec3 cmie = vec3(0.0);
+    vec3 raleigh = vec3(0.0);
+	vec3 skyLightScatter = vec3(0.0);
+
+	float dist = l * distFactor;
+
+	mie = absorb(dist, influx, scatterAbsorb) * mie_factor * l * distFactor;
+	raleigh = absorb(dist, Kral * influx, scatterAbsorb) * raleigh_factor * l * distFactor;
+	skyLightScatter = inscatter(dist, skyLight, scatterAbsorb) * skylight_factor * l * distFactor;
+
+	return vec4((mie + raleigh + skyLightScatter),1.0);
+}
+
+// get the amount of light scattered towards the eye when looking at target
+// faking it:
+//   - no raymarching
+//   - if the ray is a sky ray, then calculate mie for sun regardless
+//   - if the ray is a terrain hit, then calculate mie for sun only if viewer is not in shadow
+vec4 getInscatterTerrain2Terrain(vec3 eye, vec3 target)
+{
+    vec3 p = eye;
+    vec3 d = target-eye;
+    float l = length(target-eye);
+    vec3 c = vec3(0.0);
+    
+	//float distFactor = 0.01;
+	float distFactor = sampleDistanceFactor;
+
+    float alpha = dot(normalize(d), sunVector);
+    float mie_factor = phase(alpha,miePhase) * mieBrightness * nearMieBrightness;
+    // mie brightness
+	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
+    // raleigh brightness
+	//float adepth = adepthSky(vec3(0.0,0.9,0.0), sunVector);
+	float skylight_factor = skylightBrightness;
+
+	// get intensity of sky-light
+	vec3 skyLight = textureLod(skyCubeTex,vec3(0.0,1.0,0.0),9).rgb;//getSkyLight(vec3(0.0,1.0,0.0));
+
+	vec3 influx = sunIntensity();
+    vec3 mie = vec3(0.0);
+    vec3 cmie = vec3(0.0);
+    vec3 raleigh = vec3(0.0);
+	vec3 skyLightScatter = vec3(0.0);
+
+	float dist = l * distFactor;
+
+	float s = getShadow(p);
+
+	mie = absorb(dist, influx, scatterAbsorb) * mie_factor * l * distFactor * s;
+	raleigh = absorb(dist, Kral * influx, scatterAbsorb) * raleigh_factor * l * distFactor;
+	skyLightScatter = inscatter(dist, skyLight, scatterAbsorb) * skylight_factor * l * distFactor;
+
+	return vec4((mie + raleigh + skyLightScatter),1.0);
+}
+
 
 
 float LinearizeDepth(float z)
@@ -716,36 +799,64 @@ void main(void)
 
     vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
 
-	// blend terrain height over y for distant samples
+	// blend terrain height over y for distant samples (maybe height or shadow should be written out in the rasterisation phase)
 	float h = sampleHeight(pos.xz);
 	float d = length(pos.xyz - eyePos.xyz);
 	pos.y = mix(pos.y, h, smoothstep(500.0, 1000.0,d));
 
-
-	
-    if (hitType > 0.6)
+	if (p.x < 0.5) // normal render
 	{
-        c.rgb = generateCol(pos.xyz,normal,normalLargeScale,paramT, eyePos, shadowAO.r, shadowAO.g);
-		vec4 inst = getInscatterTerrain(eyePos,pos.xyz);
-        c.rgb *= inst.a;
-        c.rgb += inst.rgb;
-
-	}
-	else
-	{
-        if (hitType > 0.05)
+		if (hitType > 0.6)
 		{
-			vec3 skyDir = normal;
-			c.rgb += getSkyColour(skyDir);
-			vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * nearScatterDistance);
+			c.rgb = generateCol(pos.xyz,normal,normalLargeScale,paramT, eyePos, shadowAO.r, shadowAO.g);
+			vec4 inst = getInscatterTerrain(eyePos,pos.xyz);
 			c.rgb *= inst.a;
-            c.rgb += inst.rgb;
+			c.rgb += inst.rgb;
+
 		}
 		else
 		{
-            c = vec4(1.0,1.0,0.0,1.0);
-        }
+			if (hitType > 0.05)
+			{
+				vec3 skyDir = normal;
+				c.rgb += getSkyColour(skyDir);
+				vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * nearScatterDistance);
+				c.rgb *= inst.a;
+				c.rgb += inst.rgb;
+			}
+			else
+			{
+				c = vec4(1.0,1.0,0.0,1.0);
+			}
+		}
 	}
+	else  // non-scattering
+	{
+		if (hitType > 0.6)
+		{
+			c.rgb = generateCol(pos.xyz,normal,normalLargeScale,paramT, eyePos, shadowAO.r, shadowAO.g);
+			vec4 inst = getInscatterTerrain2Terrain(eyePos,pos.xyz);
+			c.rgb *= inst.a;
+			c.rgb += inst.rgb;
+
+		}
+		else
+		{
+			if (hitType > 0.05)
+			{
+				vec3 skyDir = normal;
+				c.rgb += getSkyColour(skyDir);
+				vec4 inst = getInscatterTerrain2Sky(eyePos,eyePos + skyDir * nearScatterDistance);
+				c.rgb *= inst.a;
+				c.rgb += inst.rgb;
+			}
+			else
+			{
+				c = vec4(1.0,1.0,0.0,1.0);
+			}
+		}
+	}
+
 	
 	out_Colour = vec4(c.rgb,1.0);
 }
