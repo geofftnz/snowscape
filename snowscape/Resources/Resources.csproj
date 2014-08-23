@@ -52,6 +52,10 @@
     <Content Include="Shaders\GenVisPatchLow.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Shaders\SkyScatterCube2.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Include="Shaders\atmospheric.glsl" />
     <None Include="Shaders\ParticleErosion.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

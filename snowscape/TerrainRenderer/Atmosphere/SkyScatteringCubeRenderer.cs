@@ -29,7 +29,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
 
         public void Init()
         {
-            gb.Init(@"SkyScatterCube.vert", @"SkyScatterCube.frag");
+            gb.Init(@"SkyScatterCube.vert", @"SkyScatterCube2.frag");
         }
 
         public void Render(Texture cubeMapTex, Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight)
@@ -43,7 +43,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                 sp.SetUniform("mieBrightness", mieBrightness);
                 sp.SetUniform("scatterAbsorb", scatterAbsorb);
                 sp.SetUniform("Kr", Kr);
-                sp.SetUniform("sunLight", sunLight);
+                sp.SetUniform("sunLight", sunLight*10.0f);
             };
 
             RenderFace(cubeMapTex, TextureTarget.TextureCubeMapPositiveX, Vector3.UnitX, -Vector3.UnitZ, -Vector3.UnitY, uniforms);

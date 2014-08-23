@@ -556,6 +556,8 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Enable(EnableCap.TextureCubeMap);
             GL.Enable(EnableCap.TextureCubeMapSeamless);
             this.skyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureBaseLevel, 0));
+            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMaxLevel, 0));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
             this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
