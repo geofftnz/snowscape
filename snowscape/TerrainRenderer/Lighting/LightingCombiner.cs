@@ -33,7 +33,7 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// </summary>
     public class LightingCombiner
     {
-        private GBuffer gbuffer = new GBuffer("lighting",true);
+        private GBuffer gbuffer = new GBuffer("lighting", true);
         private ShaderProgram program = new ShaderProgram("combiner");
         private GBufferCombiner gbufferCombiner;
         private Matrix4 projection = Matrix4.Identity;
@@ -148,13 +148,15 @@ namespace Snowscape.TerrainRenderer.Lighting
             {
                 ShaderProgram newprogram = new ShaderProgram(this.program.Name);
                 InitShader(newprogram);
-                var oldprogram = this.program;
+
+                this.program.Unload();
                 this.program = newprogram;
-                oldprogram.Unload();
+                this.gbufferCombiner.CombineProgram = this.program;
+                
             }
             catch (Exception ex)
             {
-                //GetCurrentClassLogger
+                log.Warn("Could not replace shader program {0}: {1}", this.program.Name, ex.GetType().Name + ": " + ex.Message);
             }
         }
 
@@ -215,7 +217,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);
                 sp.SetUniform("exposure", rp.Exposure);
-                sp.SetUniform("Kr",rp.Kr);
+                sp.SetUniform("Kr", rp.Kr);
                 sp.SetUniform("sunLight", rp.SunLight);
                 sp.SetUniform("scatterAbsorb", rp.ScatterAbsorb);
                 sp.SetUniform("mieBrightness", rp.MieBrightness);

@@ -223,6 +223,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private uint[] quadIndex = new uint[] { 0, 1, 2, 3 };
 
+        private bool reloadShaders = false;
+
         public class CloseEventArgs : EventArgs { }
         public delegate void CloseEventHandler(object source, CloseEventArgs e);
         public event CloseEventHandler OnClose;
@@ -412,6 +414,11 @@ namespace Snowscape.TerrainGenerationViewer
                     this.pauseUpdate = true;
 
                 }
+            }
+
+            if (e.Key == Key.L)
+            {
+                reloadShaders = true;
             }
         }
 
@@ -918,6 +925,12 @@ namespace Snowscape.TerrainGenerationViewer
         {
             bool needToRenderLighting = false;
             bool stepFence = (bool)this.parameters["glFinish"].GetValue();
+
+            if (this.reloadShaders)
+            {
+                this.lightingStep.ReloadShader();
+                this.reloadShaders = false;
+            }
 
             frameTracker.Step("interframe", new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
             frameTracker.StartFrame();
