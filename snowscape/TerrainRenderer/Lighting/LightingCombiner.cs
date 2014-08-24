@@ -6,6 +6,7 @@ using OpenTKExtensions;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Utils;
+using NLog;
 
 namespace Snowscape.TerrainRenderer.Lighting
 {
@@ -37,6 +38,8 @@ namespace Snowscape.TerrainRenderer.Lighting
         private GBufferCombiner gbufferCombiner;
         private Matrix4 projection = Matrix4.Identity;
         private Matrix4 modelview = Matrix4.Identity;
+
+        private static Logger log = LogManager.GetCurrentClassLogger();
 
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -117,6 +120,18 @@ namespace Snowscape.TerrainRenderer.Lighting
             this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // large-scale normal
             this.gbuffer.Init(this.Width, this.Height);
 
+            InitShader(program);
+
+            this.gbufferCombiner = new GBufferCombiner(this.gbuffer, this.program);
+
+            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
+            this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
+
+
+        }
+
+        private void InitShader(ShaderProgram program)
+        {
             program.Init(
                 @"GBufferVisCombine.vert",
                 @"GBufferVisCombine.frag",
@@ -125,13 +140,22 @@ namespace Snowscape.TerrainRenderer.Lighting
                     new Variable(0, "vertex"), 
                     new Variable(1, "in_texcoord0") 
                 });
+        }
 
-            this.gbufferCombiner = new GBufferCombiner(this.gbuffer, this.program);
-
-            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
-            this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
-
-
+        public void ReloadShader()
+        {
+            try
+            {
+                ShaderProgram newprogram = new ShaderProgram(this.program.Name);
+                InitShader(newprogram);
+                var oldprogram = this.program;
+                this.program = newprogram;
+                oldprogram.Unload();
+            }
+            catch (Exception ex)
+            {
+                //GetCurrentClassLogger
+            }
         }
 
         public void Resize(int width, int height)
