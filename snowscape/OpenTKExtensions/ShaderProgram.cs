@@ -334,5 +334,18 @@ namespace OpenTKExtensions
         //TODO: every other uniform type
 
 
+        public void Unload()
+        {
+            if (this.Handle != -1)
+            {
+                foreach (var shader in this.Shaders)
+                {
+                    shader.Unload();
+                }
+                GL.DeleteProgram(this.Handle);
+                this.Handle = -1;
+            }
+        }
+
     }
 }

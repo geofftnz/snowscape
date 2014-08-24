@@ -66,10 +66,14 @@ namespace OpenTKExtensions
         }
 
 
-
-
-
-
+        public void Unload()
+        {
+            if (this.Handle != -1)
+            {
+                GL.DeleteShader(this.Handle);
+                this.Handle = -1;
+            }
+        }
 
     }
 }
