@@ -12,8 +12,8 @@ namespace OpenTKExtensions.Framework
 
         // release any resources created in Load()
         void Unload();
-
-
+        
+        // current state of component
         ComponentStatus Status { get; }
     }
 }

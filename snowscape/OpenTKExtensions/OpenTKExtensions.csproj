@@ -62,7 +62,10 @@
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="Framework\ComponentStatus.cs" />
     <Compile Include="Framework\IComponent.cs" />
+    <Compile Include="Framework\IDynamicallyReloadable.cs" />
+    <Compile Include="Framework\IFrameData.cs" />
     <Compile Include="Framework\IRenderable.cs" />
+    <Compile Include="Framework\IUpdateable.cs" />
     <Compile Include="GBuffer.cs" />
     <Compile Include="GBufferCombiner.cs" />
     <Compile Include="GBufferRedirectableShaderStep.cs" />
