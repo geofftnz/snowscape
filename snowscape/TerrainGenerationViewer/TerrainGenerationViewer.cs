@@ -34,12 +34,9 @@ namespace Snowscape.TerrainGenerationViewer
         const int TileHeight = 1024;
 
         const int SkyRes = 512;
-        const int CloudRes = 512;
         const int DetailRes = 1024;
-
         const int TerrainParticleRes = 512;
 
-        const int TileLodScale = 4;
 
         public ITerrainGen Terrain { get; set; }
         private int TerrainGenPass = 1;
@@ -49,13 +46,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Matrix4 terrainProjection = Matrix4.Identity;
         private Matrix4 terrainModelview = Matrix4.Identity;
-
-        //private Matrix4 gbufferCombineProjection = Matrix4.Identity;
-        //private Matrix4 gbufferCombineModelview = Matrix4.Identity;
-
-
-        //private GBuffer gbuffer = new GBuffer("gb");
-        //private GBufferCombiner gbufferCombiner;
 
         private Lighting.LightingCombiner lightingStep = new Lighting.LightingCombiner();
 
@@ -93,12 +83,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Texture terrainDetailTexture;
 
-        //private Texture cloudTexture;
-        //private Texture cloudDepthTexture;
-        //private Atmosphere.CloudDepthRenderer cloudDepthRenderer = new Atmosphere.CloudDepthRenderer();
-        //private Vector3 cloudScale = new Vector3(0.0001f,600.0f,0.0001f);
-        //private Vector3 cloudScale = new Vector3(0.0002f, 600.0f, 0.0002f);
-
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
 
@@ -116,76 +100,6 @@ namespace Snowscape.TerrainGenerationViewer
         private FrameCounter2 frameCounter = new FrameCounter2();
         private TextBlock frameCounterText = new TextBlock("fps", "", new Vector3(0.01f, 0.05f, 0.0f), 0.0003f, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
 
-        private Thread updateThread;
-        private bool killThread = false;
-        private bool pauseThread = false;
-        private bool threadPaused = false;
-
-        private bool KillThread
-        {
-            get
-            {
-                bool temp;
-                lock (this)
-                {
-                    temp = this.killThread;
-                }
-                return temp;
-            }
-            set
-            {
-                lock (this)
-                {
-                    this.killThread = value;
-                }
-            }
-        }
-        private bool PauseThread
-        {
-            get
-            {
-                bool temp;
-                lock (this)
-                {
-                    temp = this.pauseThread;
-                }
-                return temp;
-            }
-            set
-            {
-                lock (this)
-                {
-                    this.pauseThread = value;
-                }
-            }
-        }
-        private bool ThreadPaused
-        {
-            get
-            {
-                if (!this.Terrain.NeedThread)
-                {
-                    // we don't need a thread for update, so return the requested value.
-                    return this.PauseThread;
-                }
-                bool temp;
-                lock (this)
-                {
-                    temp = this.threadPaused;
-                }
-                return temp;
-            }
-            set
-            {
-                lock (this)
-                {
-                    this.threadPaused = value;
-                }
-            }
-        }
-
-        private Terrain threadCopyMap;
-        private Terrain threadRenderMap;
 
         private bool pauseUpdate = false;
 
@@ -204,24 +118,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         private string terrainPath = @"../../../../terrains/";
 
-        private Vector2 view_offset = Vector2.Zero;
-
-
-        private Vector3[] quadPos = new Vector3[]{
-            new Vector3(0f,0f,0f),
-            new Vector3(0f,1f,0f),
-            new Vector3(1f,0f,0f),
-            new Vector3(1f,1f,0f)
-        };
-
-        private Vector2[] quadTexCoord = new Vector2[]{
-            new Vector2(0f,0f),
-            new Vector2(0f,1f),
-            new Vector2(1f,0f),
-            new Vector2(1f,1f)
-        };
-
-        private uint[] quadIndex = new uint[] { 0, 1, 2, 3 };
 
         private bool reloadShaders = false;
 
@@ -397,22 +293,11 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 if (pauseUpdate) // currently paused
                 {
-                    // resume thread
-                    this.PauseThread = false;
                     this.pauseUpdate = false;
                 }
                 else // currently running
                 {
-                    log.Info("Pausing Update - pausing thread");
-                    this.PauseThread = true;
-
-                    while (!this.ThreadPaused)
-                    {
-                        Thread.Sleep(1);
-                    }
-                    log.Info("Pausing Update - thread paused");
                     this.pauseUpdate = true;
-
                 }
             }
 
@@ -469,26 +354,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (this.Terrain.NeedThread)
-            {
-                // kill thread
-                log.Trace("Sending kill signal to update thread");
-                lock (this)
-                {
-                    this.killThread = true;
-                }
-
-                // wait for thread to complete
-                log.Trace("Waiting for thread to complete...");
-                this.updateThread.Join(2000);
-
-                if (this.updateThread.IsAlive)
-                {
-                    log.Warn("Thread.Join timeout - aborting");
-                    this.updateThread.Abort();
-                }
-            }
-
             log.Trace("Saving terrain into slot 0...");
             this.Terrain.Save(this.GetTerrainFileName(0, this.TerrainGenPass));
         }
@@ -636,18 +501,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
 
-
-            this.threadCopyMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
-            this.threadRenderMap = new Terrain(this.Terrain.Width, this.Terrain.Height);
-
             this.frameCounter.Start();
-
-            if (this.Terrain.NeedThread)
-            {
-                log.Trace("Starting update thread...");
-                this.updateThread = new Thread(new ThreadStart(this.UpdateThreadProc));
-                this.updateThread.Start();
-            }
 
             this.CalculateSunDirection();
 
@@ -666,74 +520,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveZ);
         }
 
-        private void UpdateThreadProc()
-        {
-            //bool killMe = false;
-            bool pauseMe = false;
-            uint iteration = 0;
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            double startTime = 0.0;
-            double updateTime = 0.0;
-
-            if (!this.Terrain.NeedThread)
-            {
-                return;
-            }
-
-
-            while (true)
-            {
-                // check for kill request.
-                if (this.KillThread)
-                {
-                    break;
-                }
-
-                bool pauseRequest = this.PauseThread;
-
-                if (pauseMe != pauseRequest)
-                {
-                    pauseMe = pauseRequest;
-                    this.ThreadPaused = pauseMe;
-                }
-
-                if (!pauseMe)
-                {
-                    startTime = sw.Elapsed.TotalMilliseconds;
-                    this.Terrain.ModifyTerrain();
-                    updateTime = sw.Elapsed.TotalMilliseconds - startTime;
-
-                    iteration++;
-
-                    if (iteration % 4 == 0)
-                    {
-                        lock (this)
-                        {
-                            this.threadCopyMap.CopyFrom(((TerrainGen)this.Terrain).Terrain);
-                            this.updateThreadIterations = iteration;
-                            this.updateThreadUpdateTime = this.updateThreadUpdateTime * 0.8 + 0.2 * updateTime;
-                            this.waterIterations = ((TerrainGen)this.Terrain).WaterIterations;
-                        }
-                    }
-                }
-                Thread.Sleep(1);
-            }
-
-        }
-
-        protected void CopyMapDataFromUpdateThread()
-        {
-            if (this.Terrain.NeedThread)
-            {
-                lock (this)
-                {
-                    perfmon.Start("Copy2");
-                    this.threadRenderMap.CopyFrom(this.threadCopyMap);
-                    perfmon.Stop("Copy2");
-                }
-            }
-        }
 
 
         void TerrainGenerationViewer_Unload(object sender, EventArgs e)
@@ -817,19 +603,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void ResetTerrain()
         {
-            log.Info("Resetting Terrain - pausing thread");
-            this.PauseThread = true;
-
-            while (!this.ThreadPaused)
-            {
-                Thread.Sleep(1);
-            }
-            log.Info("Resetting Terrain - thread paused");
-
             this.Terrain.ResetTerrain();
-
-            log.Info("Resetting Terrain - restarting thread");
-            this.PauseThread = false;
         }
 
 
@@ -980,22 +754,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             frameTracker.Step("text-params", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
 
-            /*
-            y += 0.02f;
-            textManager.AddOrUpdate(
-                new TextBlock(
-                    "eye",
-                    this.eyePos.ToString(),
-                    new Vector3(0.01f, y, 0.0f),
-                    0.0004f,
-                    new Vector4(1.0f, 1.0f, 1.0f, 1.0f)
-                    )
-                );*/
 
-
-            // do GPU-based terrain generation
-            if (!this.Terrain.NeedThread && !this.ThreadPaused)
+            if (!this.pauseUpdate)
             {
+                // do GPU-based terrain generation
                 for (int i = 0; i < 1; i++)
                 {
                     this.Terrain.ModifyTerrain();
@@ -1006,49 +768,34 @@ namespace Snowscape.TerrainGenerationViewer
                 frameTracker.Step("terrain modify", new Vector4(0.8f, 0.6f, 0.0f, 1.0f));
             }
 
-
             uint currentThreadIterations = updateThreadIterations;
             if (prevThreadIterations != currentThreadIterations)
             {
-                if (this.Terrain.NeedThread)
-                {
-                    CopyMapDataFromUpdateThread();
-                    this.terrainTile.SetDataFromTerrainGeneration(this.threadRenderMap, 0, 0);
-                    this.terrainGlobal.SetDataFromTerrain(this.threadRenderMap);
-                    if (stepFence) { GL.Finish(); }
-                    frameTracker.Step("thread copy", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
-                }
-                else
-                {
-                    //float[] tempData = this.Terrain.GetRawData();
-                    //this.terrainTile.SetDataFromTerrainGenerationRaw(tempData);
-                    //this.terrainGlobal.SetDataFromTerrainGenerationRaw(tempData);
 
-                    // TODO: fix
-                    if (this.Terrain is GPUWaterErosion)
-                    {
-                        var terr = this.Terrain as GPUWaterErosion;
-                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
-                    }
-                    if (this.Terrain is GPUParticleErosion)
-                    {
-                        var terr = this.Terrain as GPUParticleErosion;
-                        this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
-                        this.terrainTileLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
-                        this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
-                    }
-
-                    if (this.Terrain is GPUSnowTransport)
-                    {
-                        var terr = this.Terrain as GPUSnowTransport;
-                        this.terrainSnowGlobalLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainSnowTileLoader.Render(terr.CurrentTerrainTexture);
-                        this.terrainSnowTileParamLoader.Render(terr.CurrentTerrainTexture);
-                    }
-                    frameTracker.Step("GPU data copy", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+                // TODO: fix
+                if (this.Terrain is GPUWaterErosion)
+                {
+                    var terr = this.Terrain as GPUWaterErosion;
+                    this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
                 }
+                if (this.Terrain is GPUParticleErosion)
+                {
+                    var terr = this.Terrain as GPUParticleErosion;
+                    this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
+                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
+                    this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+                }
+
+                if (this.Terrain is GPUSnowTransport)
+                {
+                    var terr = this.Terrain as GPUSnowTransport;
+                    this.terrainSnowGlobalLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainSnowTileLoader.Render(terr.CurrentTerrainTexture);
+                    this.terrainSnowTileParamLoader.Render(terr.CurrentTerrainTexture);
+                }
+                frameTracker.Step("GPU data copy", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
 
                 this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
                 if (stepFence) { GL.Finish(); }
