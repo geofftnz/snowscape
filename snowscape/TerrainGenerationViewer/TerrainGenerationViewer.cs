@@ -22,6 +22,7 @@ using Lighting = Snowscape.TerrainRenderer.Lighting;
 using HDR = Snowscape.TerrainRenderer.HDR;
 using Snowscape.TerrainRenderer.Mesh;
 using Loaders = Snowscape.TerrainRenderer.Loaders;
+using OpenTKExtensions.Framework;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -36,6 +37,12 @@ namespace Snowscape.TerrainGenerationViewer
         const int SkyRes = 512;
         const int DetailRes = 1024;
         const int TerrainParticleRes = 512;
+
+        private GameComponentManager components = new GameComponentManager();
+        public GameComponentManager Components
+        {
+            get { return this.components; }
+        }
 
 
         public ITerrainGen Terrain { get; set; }
@@ -369,7 +376,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             // create VBOs/Shaders etc
 
-            this.terrainTile.Init();
+            this.terrainTile.Load();
             this.terrainGlobal.Init();
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();

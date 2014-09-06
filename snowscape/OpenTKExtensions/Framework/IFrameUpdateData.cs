@@ -5,7 +5,7 @@ using System.Text;
 
 namespace OpenTKExtensions.Framework
 {
-    public interface IFrameData
+    public interface IFrameUpdateData
     {
     }
 }

@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
+using OpenTKExtensions.Framework;
 using Utils;
 
 namespace Snowscape.TerrainRenderer
@@ -24,7 +25,7 @@ namespace Snowscape.TerrainRenderer
     /// - generate its bounding box from the supplied (full-scale) heightmap
     /// - generate its textures from a subset of the supplied full-scale textures
     /// </summary>
-    public class TerrainTile
+    public class TerrainTile : GameComponentBase
     {
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -58,8 +59,12 @@ namespace Snowscape.TerrainRenderer
             this.ModelMatrix = Matrix4.Identity;
         }
 
-        public void Init()
+
+        public override void Load()
         {
+            this.Status = ComponentStatus.Loading;
+            base.Load();
+
             // setup textures
             this.HeightTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
@@ -67,10 +72,6 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
-                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
-                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.MirroredRepeat))
-                //.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.MirroredRepeat));
 
             this.HeightTexture.UploadEmpty();
 
@@ -105,7 +106,20 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
             this.ParamTexture.UploadEmpty();
+
+            this.Status = ComponentStatus.Loaded;
         }
+
+        public override void Unload()
+        {
+            if (this.Status != ComponentStatus.Loaded) return;
+            this.Status = ComponentStatus.Unloading;
+            base.Unload();
+            //this.HeightTexture.Unload();
+
+            this.Status = ComponentStatus.Unloaded;
+        }
+
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
@@ -344,6 +358,8 @@ namespace Snowscape.TerrainRenderer
             while (y >= this.Height) y -= this.Height;
             return x + y * this.Width;
         }
+
+
 
     }
 }

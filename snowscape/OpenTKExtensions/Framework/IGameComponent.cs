@@ -5,7 +5,7 @@ using System.Text;
 
 namespace OpenTKExtensions.Framework
 {
-    public interface IComponent
+    public interface IGameComponent
     {
         // init the component, load any assets, init any graphics resources
         void Load();

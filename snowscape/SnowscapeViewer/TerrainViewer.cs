@@ -157,7 +157,7 @@ namespace Snowscape.Viewer
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
             textManager.Font = font;
 
-            this.tile.Init();
+            this.tile.Load();
             this.tile.SetupTestData();
 
             this.tile.ModelMatrix = Matrix4.CreateTranslation(16f, 0f, 0f);
