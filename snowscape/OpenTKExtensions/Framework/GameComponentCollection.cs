@@ -5,9 +5,9 @@ using System.Text;
 
 namespace OpenTKExtensions.Framework
 {
-    public class GameComponentManager : List<IGameComponent>, ICollection<IGameComponent>
+    public class GameComponentCollection : List<IGameComponent>, ICollection<IGameComponent>
     {
-        public GameComponentManager()
+        public GameComponentCollection()
         {
 
         }

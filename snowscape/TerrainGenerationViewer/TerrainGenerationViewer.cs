@@ -38,8 +38,8 @@ namespace Snowscape.TerrainGenerationViewer
         const int DetailRes = 1024;
         const int TerrainParticleRes = 512;
 
-        private GameComponentManager components = new GameComponentManager();
-        public GameComponentManager Components
+        private GameComponentCollection components = new GameComponentCollection();
+        public GameComponentCollection Components
         {
             get { return this.components; }
         }

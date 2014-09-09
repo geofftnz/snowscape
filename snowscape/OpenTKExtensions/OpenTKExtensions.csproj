@@ -61,7 +61,7 @@
     <Compile Include="FontMetaParser.cs" />
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="Framework\GameComponentBase.cs" />
-    <Compile Include="Framework\GameComponentManager.cs" />
+    <Compile Include="Framework\GameComponentCollection.cs" />
     <Compile Include="Framework\ComponentStatus.cs" />
     <Compile Include="Framework\IGameComponent.cs" />
     <Compile Include="Framework\IDynamicallyReloadable.cs" />

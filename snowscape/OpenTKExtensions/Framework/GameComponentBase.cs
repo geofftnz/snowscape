@@ -13,8 +13,8 @@ namespace OpenTKExtensions.Framework
             protected set;
         }
 
-        private GameComponentManager components = new GameComponentManager();
-        protected GameComponentManager Components
+        private GameComponentCollection components = new GameComponentCollection();
+        protected GameComponentCollection Components
         {
             get { return components; }
         }
@@ -33,6 +33,18 @@ namespace OpenTKExtensions.Framework
         {
             this.Components.Unload();
         }
+
+        public virtual void Update<F>(F frameData) where F : IFrameUpdateData
+        {
+            this.Components.Update(frameData);
+        }
+
+        public virtual void Render<F>(F frameData) where F : IFrameRenderData
+        {
+            this.Components.Render(frameData);
+        }
+
+
 
         protected void Add(IGameComponent subComponent)
         {
