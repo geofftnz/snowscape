@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using Utils;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer
 {
@@ -18,7 +19,7 @@ namespace Snowscape.TerrainRenderer
     /// - generate the sky-vis (AO) map into the G channel of the shademap
     /// 
     /// </summary>
-    public class TerrainLightingGenerator
+    public class TerrainLightingGenerator : GameComponentBase, IRenderable
     {
         // Needs:
         // Quad vertex VBO
@@ -32,27 +33,59 @@ namespace Snowscape.TerrainRenderer
         // shader
         private ShaderProgram program = new ShaderProgram("lighting");
 
-        public int Width { get; set; }
-        public int Height { get; set; }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+
+        public bool Visible { get; set; }
+        public int DrawOrder { get; set; }
+
+        // parameters
+        public Texture OutputTexture { get; set; }
+        public Vector3 SunVector { get; set; }
+        public Texture HeightTexture { get; set; }
+        public float MaxTerrainHeight { get; set; }
+
 
         public TerrainLightingGenerator(int width, int height)
+            : base()
         {
             this.Width = width;
             this.Height = height;
+
+            this.Visible = true;
+            this.DrawOrder = 0;
         }
 
-        public void Init(Texture outputTexture)
+        public override void Load()
         {
+            this.Status = ComponentStatus.Loading;
+
+            if (this.OutputTexture == null)
+            {
+                throw new InvalidOperationException("OutputTexture not set");
+            }
+
+            base.Load();
+
             // init VBOs
             this.InitVBOs();
 
             // init GBuffer
-            this.InitGBuffer(outputTexture);
+            this.InitGBuffer(this.OutputTexture);
 
             // init Shader
             this.InitShader();
 
+            this.Status = ComponentStatus.Loaded;
         }
+
+        public override void Unload()
+        {
+
+
+            base.Unload();
+        }
+
 
         private void InitShader()
         {
@@ -67,7 +100,7 @@ namespace Snowscape.TerrainRenderer
                 new string[]
                 {
                     "out_ShadowAO"
-                });            
+                });
         }
 
         private void InitGBuffer(Texture outputTexture)
@@ -93,22 +126,27 @@ namespace Snowscape.TerrainRenderer
             this.indexVBO.SetData(index);
         }
 
-        public void Render(Vector3 sunVector, Texture heightTexture, float minHeight, float maxHeight)
+        public void Render(IFrameRenderData frameData) 
         {
+            if (this.HeightTexture == null)
+            {
+                throw new InvalidOperationException("HeightTexture not set");
+            }
+
 
             // start gbuffer
             this.gbuffer.BindForWriting();
-            
+
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.DepthTest);
 
-            heightTexture.Bind(TextureUnit.Texture0);
+            this.HeightTexture.Bind(TextureUnit.Texture0);
 
             this.program
                 .UseProgram()
                 .SetUniform("heightTexture", 0)
-                .SetUniform("sunDirection", sunVector)
-                .SetUniform("maxHeight", maxHeight);
+                .SetUniform("sunDirection", this.SunVector)
+                .SetUniform("maxHeight", this.MaxTerrainHeight);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);

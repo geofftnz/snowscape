@@ -44,6 +44,16 @@ namespace Snowscape.TerrainGenerationViewer
             get { return this.components; }
         }
 
+        #region Components
+
+        private TerrainLightingGenerator terrainLighting;
+        
+        #endregion
+
+
+
+
+
 
         public ITerrainGen Terrain { get; set; }
         private int TerrainGenPass = 1;
@@ -68,7 +78,6 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererLOD;
         private ITileRenderer tileRendererQuadtree;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
-        private TerrainLightingGenerator terrainLighting;
         private Lighting.HeightmapNormalGenerator tileNormalGenerator = new Lighting.HeightmapNormalGenerator();
         private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator();
 
@@ -157,7 +166,12 @@ namespace Snowscape.TerrainGenerationViewer
             //this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchDetail);
             this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchNormal, (IPatchRenderer)this.tileRendererPatchDetail);
 
+
+
             this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
+            this.Components.Add(this.terrainLighting);
+
+
 
             this.camera = new WalkCamera(this.Keyboard, this.Mouse);
 
@@ -386,7 +400,11 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-            this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
+            //this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
+            this.terrainLighting.OutputTexture = this.terrainGlobal.ShadeTexture;
+
+
+
             this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
             this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
 
@@ -507,6 +525,10 @@ namespace Snowscape.TerrainGenerationViewer
                 this.parameters.Add(p);
             }
 
+
+            // load components
+            this.Components.Load();
+            
 
             this.frameCounter.Start();
 
@@ -924,7 +946,11 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderLighting(Vector3 sunVector)
         {
             //this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, this.terrainGlobal.MinHeight, this.terrainGlobal.MaxHeight);
-            this.terrainLighting.Render(sunVector, this.terrainGlobal.HeightTexture, 0.0f, 1000.0f);
+            this.terrainLighting.SunVector = sunVector;
+            this.terrainLighting.HeightTexture = this.terrainGlobal.HeightTexture;
+            this.terrainLighting.MaxTerrainHeight = 1000.0f;
+
+            this.terrainLighting.Render(new FrameRenderData()); ;
         }
 
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)

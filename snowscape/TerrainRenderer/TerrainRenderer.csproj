@@ -51,6 +51,7 @@
     <Compile Include="Atmosphere\SkyScatteringCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkyScatteringRenderer.cs" />
     <Compile Include="Atmosphere\RayDirectionRenderer.cs" />
+    <Compile Include="FrameRenderData.cs" />
     <Compile Include="HDR\HDRExposureMapper.cs" />
     <Compile Include="HDR\IToneMapper.cs" />
     <Compile Include="HDR\ReinhardToneMap.cs" />
