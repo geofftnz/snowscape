@@ -67,5 +67,29 @@ namespace OpenTKExtensions.Framework
             this.Components.RemoveAll(c => c is T);
         }
 
+        protected void LoadWrapper(Action loadAction)
+        {
+            if (this.Status != ComponentStatus.New && this.Status != ComponentStatus.Unloaded)
+            {
+                return;
+            }
+
+            this.Status = ComponentStatus.Loading;
+            loadAction();
+            this.Status = ComponentStatus.Loaded;
+        }
+
+        protected void UnloadWrapper(Action unloadAction)
+        {
+            if (this.Status != ComponentStatus.Loaded)
+            {
+                return;
+            }
+
+            this.Status = ComponentStatus.Unloading;
+            unloadAction();
+            this.Status = ComponentStatus.Unloaded;
+        }
+
     }
 }

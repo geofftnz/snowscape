@@ -54,7 +54,9 @@ namespace Snowscape.TerrainGenerationViewer
         #region Components
 
         private TerrainLightingGenerator terrainLighting;
-        
+        private TerrainTile terrainTile;
+        private TerrainGlobal terrainGlobal;
+
         #endregion
 
 
@@ -75,8 +77,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         private IPatchCache patchCache = new PatchCache();
 
-        private TerrainTile terrainTile;
-        private TerrainGlobal terrainGlobal;
         private ITileRenderer tileRenderer;
         private ITileRenderer tileRendererRaycast;
         private ITileRenderer tileRendererPatchDetail;
@@ -162,10 +162,14 @@ namespace Snowscape.TerrainGenerationViewer
             this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes);
 
 
-            this.terrainTile = new TerrainTile(TileWidth, TileHeight);
-            this.Components.Add(this.terrainTile, LoadOrder.Phase1);
+            #region create components
+            
+            this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
+            this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
 
-            this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
+            #endregion
+
+
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
             this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache);
@@ -399,8 +403,11 @@ namespace Snowscape.TerrainGenerationViewer
 
             // create VBOs/Shaders etc
 
-            this.terrainTile.Load();
-            this.terrainGlobal.Init();
+            this.terrainTile.Load();  // remove once dependencies are components
+            this.terrainGlobal.Load(); // remove once dependencies are components
+
+
+
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
             this.tileRendererPatchDetail.Load();
@@ -541,7 +548,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
 
-            
+
 
             this.frameCounter.Start();
 
@@ -566,6 +573,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Unload(object sender, EventArgs e)
         {
+            this.Components.Unload();
         }
 
         void TerrainGenerationViewer_Resize(object sender, EventArgs e)
@@ -888,7 +896,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.lightingStep.UnbindFromWriting();
             frameTracker.Step("render-completion", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
-          
+
 
             //this.hdrExposure.TargetLuminance = (float)this.parameters["TargetLuminance"].GetValue();
             this.hdrExposure.WhiteLevel = (float)this.parameters["WhiteLevel"].GetValue();
@@ -904,7 +912,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (stepFence) { GL.Finish(); }
             frameTracker.Step("scattering", new Vector4(0.0f, 0.0f, 1.0f, 1.0f));
-            
+
             // render hdr buffer to screen
 
             GL.Viewport(this.ClientRectangle);
