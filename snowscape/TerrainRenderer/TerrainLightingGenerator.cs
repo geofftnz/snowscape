@@ -56,34 +56,47 @@ namespace Snowscape.TerrainRenderer
             this.DrawOrder = 0;
         }
 
+        public TerrainLightingGenerator(int width, int height, Texture outputTexture)
+            : this(width, height)
+        {
+            this.OutputTexture = outputTexture;
+        }
+
         public override void Load()
         {
-            this.Status = ComponentStatus.Loading;
-
-            if (this.OutputTexture == null)
+            this.LoadWrapper(() =>
             {
-                throw new InvalidOperationException("OutputTexture not set");
-            }
 
-            base.Load();
+                if (this.OutputTexture == null)
+                {
+                    throw new InvalidOperationException("OutputTexture not set");
+                }
 
-            // init VBOs
-            this.InitVBOs();
+                base.Load();
 
-            // init GBuffer
-            this.InitGBuffer(this.OutputTexture);
+                // init VBOs
+                this.InitVBOs();
 
-            // init Shader
-            this.InitShader();
+                // init GBuffer
+                this.InitGBuffer(this.OutputTexture);
 
-            this.Status = ComponentStatus.Loaded;
+                // init Shader
+                this.InitShader();
+
+            });
         }
 
         public override void Unload()
         {
 
+            this.UnloadWrapper(() =>
+            {
 
-            base.Unload();
+                base.Unload();
+            });
+
+
+
         }
 
 
@@ -126,7 +139,7 @@ namespace Snowscape.TerrainRenderer
             this.indexVBO.SetData(index);
         }
 
-        public void Render(IFrameRenderData frameData) 
+        public void Render(IFrameRenderData frameData)
         {
             if (this.HeightTexture == null)
             {

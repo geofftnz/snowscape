@@ -163,9 +163,12 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             #region create components
-            
+
             this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
             this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
+
+
+            this.Components.Add(this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight, this.terrainGlobal.ShadeTexture), LoadOrder.Phase2);
 
             #endregion
 
@@ -181,8 +184,6 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-            this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight);
-            this.Components.Add(this.terrainLighting);
 
 
 
@@ -417,7 +418,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererQuadtree.Load();
 
             //this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
-            this.terrainLighting.OutputTexture = this.terrainGlobal.ShadeTexture;
+            //this.terrainLighting.OutputTexture = this.terrainGlobal.ShadeTexture;
 
 
 
