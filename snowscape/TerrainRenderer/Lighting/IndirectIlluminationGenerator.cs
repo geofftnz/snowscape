@@ -6,23 +6,47 @@ using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using OpenTK;
 using Utils;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Lighting
 {
-    public class IndirectIlluminationGenerator
+    public class IndirectIlluminationGenerator : GameComponentBase
     {
         private GBufferShaderStep gb = new GBufferShaderStep("indirectillum");
 
+        public Texture OutputTexture { get; set; }
+
         public IndirectIlluminationGenerator()
+            : base()
         {
 
         }
 
-        public void Init(Texture indirectIlluminationTexture)
+        public IndirectIlluminationGenerator(Texture outputTexture)
+            : this()
         {
-            gb.SetOutputTexture(0, "out_Indirect", indirectIlluminationTexture);
-            gb.Init(@"IndirectIllumination.vert", @"IndirectIllumination.frag");
+            this.OutputTexture = outputTexture;
         }
+
+
+        public override void Load()
+        {
+            this.LoadWrapper(() =>
+            {
+                base.Load();
+                gb.SetOutputTexture(0, "out_Indirect", this.OutputTexture);
+                gb.Init(@"IndirectIllumination.vert", @"IndirectIllumination.frag");
+            });
+        }
+
+        public override void Unload()
+        {
+            this.UnloadWrapper(() =>
+            {
+                base.Unload();
+            });
+        }
+
 
         public void Render(Texture heightmap, Texture shadowheight, Texture normalmap, Vector3 sunVector)
         {

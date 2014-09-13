@@ -22,6 +22,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         public Sampler HeightMapSampler { get; set; }
 
         public HeightmapNormalGenerator()
+            : base()
         {
         }
 
@@ -46,12 +47,12 @@ namespace Snowscape.TerrainRenderer.Lighting
                 gb.SetOutputTexture(0, "out_Normal", this.NormalTexture);
                 gb.Init(@"HeightmapNormals.vert", @"HeightmapNormals.frag");
             });
-            
+
         }
 
         public override void Unload()
         {
-            this.UnloadWrapper(() => 
+            this.UnloadWrapper(() =>
             {
                 base.Unload();
             });

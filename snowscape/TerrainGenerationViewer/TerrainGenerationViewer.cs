@@ -86,7 +86,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererQuadtree;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
         private Lighting.HeightmapNormalGenerator tileNormalGenerator;
-        private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator();
+        private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator;
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
@@ -170,10 +170,11 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Components.Add(this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight, this.terrainGlobal.ShadeTexture), LoadOrder.Phase2);
             this.Components.Add(this.tileNormalGenerator = new Lighting.HeightmapNormalGenerator(this.terrainTile.NormalTexture, this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
+            this.Components.Add(this.indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator(this.terrainGlobal.IndirectIlluminationTexture), LoadOrder.Phase2);
 
             #endregion
 
-            
+
 
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
@@ -428,7 +429,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             //this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
-            this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
+            //this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
 
             this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
             this.terrainTileLoader.Init(this.terrainTile.HeightTexture);
