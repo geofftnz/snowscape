@@ -85,7 +85,7 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererLOD;
         private ITileRenderer tileRendererQuadtree;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
-        private Lighting.HeightmapNormalGenerator tileNormalGenerator = new Lighting.HeightmapNormalGenerator();
+        private Lighting.HeightmapNormalGenerator tileNormalGenerator;
         private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator = new Lighting.IndirectIlluminationGenerator();
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
@@ -169,9 +169,11 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             this.Components.Add(this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight, this.terrainGlobal.ShadeTexture), LoadOrder.Phase2);
+            this.Components.Add(this.tileNormalGenerator = new Lighting.HeightmapNormalGenerator(this.terrainTile.NormalTexture, this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
 
             #endregion
 
+            
 
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
@@ -199,6 +201,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
 
+            #region Parameters
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
 
             parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
@@ -250,6 +253,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("NormalBlendNearDistance", 100.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("NormalBlendFarDistance", 500.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
+
+            #endregion
         }
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -422,7 +427,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-            this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
+            //this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
             this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
 
             this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
@@ -848,7 +853,7 @@ namespace Snowscape.TerrainGenerationViewer
                 }
                 frameTracker.Step("GPU data copy", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
 
-                this.tileNormalGenerator.Render(this.terrainGlobal.HeightTexture);
+                this.tileNormalGenerator.Render();
                 if (stepFence) { GL.Finish(); }
                 frameTracker.Step("GPU normals", new Vector4(0.7f, 1.0f, 0.0f, 1.0f));
 
