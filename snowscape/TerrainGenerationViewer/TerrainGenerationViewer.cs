@@ -44,6 +44,13 @@ namespace Snowscape.TerrainGenerationViewer
             get { return this.components; }
         }
 
+        public static class LoadOrder
+        {
+            public const int Phase1 = 10;
+            public const int Phase2 = 20;
+        }
+
+
         #region Components
 
         private TerrainLightingGenerator terrainLighting;
@@ -156,6 +163,8 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             this.terrainTile = new TerrainTile(TileWidth, TileHeight);
+            this.Components.Add(this.terrainTile, LoadOrder.Phase1);
+
             this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight);
             this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
             this.tileRendererRaycast = new GenerationVisRaycastRenderer();
@@ -505,6 +514,12 @@ namespace Snowscape.TerrainGenerationViewer
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
             textManager.Font = font;
 
+
+            // load components
+            this.Components.Load();
+
+
+
             SetProjection();
 
 
@@ -526,8 +541,6 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
 
-            // load components
-            this.Components.Load();
             
 
             this.frameCounter.Start();

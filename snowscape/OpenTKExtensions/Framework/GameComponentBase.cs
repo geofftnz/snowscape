@@ -13,6 +13,12 @@ namespace OpenTKExtensions.Framework
             protected set;
         }
 
+        public int LoadOrder
+        {
+            get;
+            set;
+        }
+
         private GameComponentCollection components = new GameComponentCollection();
         protected GameComponentCollection Components
         {
@@ -43,8 +49,6 @@ namespace OpenTKExtensions.Framework
         {
             this.Components.Render(frameData);
         }
-
-
 
         protected void Add(IGameComponent subComponent)
         {

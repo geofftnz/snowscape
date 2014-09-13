@@ -53,27 +53,22 @@ namespace Snowscape.TerrainRenderer
 
 
         public TerrainTile(int width, int height)
+            : base()
         {
             this.Width = width;
             this.Height = height;
             this.ModelMatrix = Matrix4.Identity;
+            this.InitTextures();
         }
 
-
-        public override void Load()
+        private void InitTextures()
         {
-            this.Status = ComponentStatus.Loading;
-            base.Load();
-
-            // setup textures
             this.HeightTexture =
                 new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-
-            this.HeightTexture.UploadEmpty();
 
             this.LinearSampler =
                 new Sampler()
@@ -82,14 +77,11 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-
             this.NormalTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-
-            this.NormalTexture.UploadEmpty();
 
             this.ShadeTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
@@ -97,14 +89,25 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-            this.ShadeTexture.UploadEmpty();
-
             this.ParamTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+        }
 
+
+        public override void Load()
+        {
+            if (this.Status == ComponentStatus.Loaded) return;
+
+            this.Status = ComponentStatus.Loading;
+            base.Load();
+
+            // setup textures
+            this.HeightTexture.UploadEmpty();
+            this.NormalTexture.UploadEmpty();
+            this.ShadeTexture.UploadEmpty();
             this.ParamTexture.UploadEmpty();
 
             this.Status = ComponentStatus.Loaded;
@@ -114,12 +117,17 @@ namespace Snowscape.TerrainRenderer
         {
             if (this.Status != ComponentStatus.Loaded) return;
             this.Status = ComponentStatus.Unloading;
+
+
+            this.HeightTexture.Unload();
+            this.NormalTexture.Unload();
+            this.ShadeTexture.Unload();
+            this.ParamTexture.Unload();
+
             base.Unload();
-            //this.HeightTexture.Unload();
 
             this.Status = ComponentStatus.Unloaded;
         }
-
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {

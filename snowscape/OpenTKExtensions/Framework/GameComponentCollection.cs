@@ -14,7 +14,7 @@ namespace OpenTKExtensions.Framework
 
         public void Load()
         {
-            foreach (var component in this)
+            foreach (var component in this.OrderBy(c=>c.LoadOrder))
             {
                 component.Load();
             }
@@ -22,7 +22,7 @@ namespace OpenTKExtensions.Framework
 
         public void Unload()
         {
-            foreach (var component in this)
+            foreach (var component in this.OrderByDescending(c => c.LoadOrder))
             {
                 component.Unload();
             }
@@ -42,6 +42,12 @@ namespace OpenTKExtensions.Framework
             {
                 component.Update(frameData);
             }
+        }
+
+        public void Add(IGameComponent component, int loadOrder)
+        {
+            component.LoadOrder = loadOrder;
+            this.Add(component);
         }
 
 

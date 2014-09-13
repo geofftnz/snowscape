@@ -12,7 +12,13 @@ namespace OpenTKExtensions.Framework
 
         // release any resources created in Load()
         void Unload();
-        
+
+        /// <summary>
+        /// Specifies the load order for the components.
+        /// Components are unloaded in reverse order
+        /// </summary>
+        int LoadOrder { get; set; }
+
         // current state of component
         ComponentStatus Status { get; }
     }
