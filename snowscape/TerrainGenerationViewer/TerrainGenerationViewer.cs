@@ -423,14 +423,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-            //this.terrainLighting.Init(this.terrainGlobal.ShadeTexture);
-            //this.terrainLighting.OutputTexture = this.terrainGlobal.ShadeTexture;
-
-
-
-            //this.tileNormalGenerator.Init(this.terrainTile.NormalTexture);
-            //this.indirectIlluminationGenerator.Init(this.terrainGlobal.IndirectIlluminationTexture);
-
             this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
             this.terrainTileLoader.Init(this.terrainTile.HeightTexture);
             this.terrainTileParamLoader.Init(this.terrainTile.ParamTexture);
@@ -440,36 +432,10 @@ namespace Snowscape.TerrainGenerationViewer
             terrainSnowTileParamLoader = new GBufferSimpleStep("snow-param-loader", @"TileLoader.glsl|SnowParam", "terraintex", "out_Param", this.terrainTile.ParamTexture);
 
 
-            //this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // pos
-            //this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
-            //this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
-
-            //var program = new ShaderProgram("combiner");
-
-            //program.Init(
-            //    @"GBufferVisCombine.vert",
-            //    @"GBufferVisCombine.frag",
-            //    new List<Variable> 
-            //    { 
-            //        new Variable(0, "vertex"), 
-            //        new Variable(1, "in_texcoord0") 
-            //    });
-
-            //this.gbufferCombiner = new GBufferCombiner(this.gbuffer, program);
-
             this.lightingStep.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
             this.hdrExposure.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             this.skyRayDirectionRenderer.Load();
-
-            /*
-            this.skyTexture = new Texture(SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
-            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
-            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            this.skyTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
-            this.skyTexture.UploadEmpty();
-            */
 
             this.skyRenderer.Init();
 
@@ -494,33 +460,12 @@ namespace Snowscape.TerrainGenerationViewer
             TextureSynth ts = new TextureSynth(DetailRes, DetailRes);
 
             this.terrainDetailTexture.Upload(ts.ApplyWrapNoise(6, 8.0f, 1.0f, h => Math.Abs(h), h => h).Normalise().GetData());
-            /*
-            this.terrainDetailTexture.Upload(
-                ts.ForEach((x, y, h) =>
-                    {
-                        return (float)(((x>>4) & 0x01) ^ ((y>>4) & 0x01));
-                    })
-                    .Normalise()
-                    .GetData());*/
 
             this.terrainDetailTexture.Bind();
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
             (this.tileRendererPatchNormal as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
 
-            /*
-            // create noise texture for clouds
-            this.cloudTexture = new NoiseTextureFactory(CloudRes, CloudRes).GenerateFloatTexture();
-            // generate texture for cloud depth
-            this.cloudDepthTexture = new Texture(CloudRes, CloudRes, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
-            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
-            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            this.cloudDepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
-            this.cloudDepthTexture.UploadEmpty();
-            // init cloud depth renderer
-            this.cloudDepthRenderer.Init(this.cloudDepthTexture);
-            */
             // GL state
             GL.Enable(EnableCap.DepthTest);
 
