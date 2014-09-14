@@ -57,6 +57,15 @@ namespace Snowscape.TerrainGenerationViewer
         private TerrainTile terrainTile;
         private TerrainGlobal terrainGlobal;
 
+
+        private Lighting.HeightmapNormalGenerator tileNormalGenerator;
+        private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator;
+
+        private GBufferSimpleStepComponent terrainSnowGlobalLoader;
+        private GBufferSimpleStepComponent terrainSnowTileLoader;
+        private GBufferSimpleStepComponent terrainSnowTileParamLoader;
+
+        private Loaders.TerrainGlobalLoader terrainGlobalLoader;
         #endregion
 
 
@@ -85,18 +94,13 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererLOD;
         private ITileRenderer tileRendererQuadtree;
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
-        private Lighting.HeightmapNormalGenerator tileNormalGenerator;
-        private Lighting.IndirectIlluminationGenerator indirectIlluminationGenerator;
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
-        private Loaders.TerrainGlobalLoader terrainGlobalLoader = new Loaders.TerrainGlobalLoader();
+
         private Loaders.TerrainTileLoader terrainTileLoader = new Loaders.TerrainTileLoader();
         private Loaders.TerrainTileParamLoader terrainTileParamLoader = new Loaders.TerrainTileParamLoader();
 
-        private GBufferSimpleStepComponent terrainSnowGlobalLoader;
-        private GBufferSimpleStepComponent terrainSnowTileLoader;
-        private GBufferSimpleStepComponent terrainSnowTileParamLoader;
 
 
         //private Texture skyTexture;
@@ -175,6 +179,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainSnowGlobalLoader = new GBufferSimpleStepComponent("snow-global-loader", @"TileLoader.glsl|SnowGlobal", "out_Height", this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainSnowTileLoader = new GBufferSimpleStepComponent("snow-tile-loader", @"TileLoader.glsl|SnowTile", "out_Height", this.terrainTile.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainSnowTileParamLoader = new GBufferSimpleStepComponent("snow-param-loader", @"TileLoader.glsl|SnowParam", "out_Param", this.terrainTile.ParamTexture), LoadOrder.Phase2);
+
+            this.Components.Add(this.terrainGlobalLoader = new Loaders.TerrainGlobalLoader(this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
 
 
             #endregion
@@ -428,7 +434,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-            this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
+            //this.terrainGlobalLoader.Init(this.terrainGlobal.HeightTexture);
             this.terrainTileLoader.Init(this.terrainTile.HeightTexture);
             this.terrainTileParamLoader.Init(this.terrainTile.ParamTexture);
 

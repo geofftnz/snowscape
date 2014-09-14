@@ -5,21 +5,34 @@ using System.Text;
 using OpenTKExtensions;
 using Utils;
 using OpenTK.Graphics.OpenGL;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Loaders
 {
-    public class TerrainGlobalLoader
+    public class TerrainGlobalLoader : GameComponentBase
     {
         private GBufferShaderStep gb = new GBufferShaderStep("terraingloballoader");
+        public Texture HeightTexture { get; set; }
 
         public TerrainGlobalLoader()
+            : base()
         {
-                
+            this.Loading += TerrainGlobalLoader_Loading;
         }
 
-        public void Init(Texture heightTexture)
+        public TerrainGlobalLoader(Texture heightTexture)
+            : this()
         {
-            gb.SetOutputTexture(0, "out_Height", heightTexture);
+            this.HeightTexture = heightTexture;
+        }
+
+        void TerrainGlobalLoader_Loading(object sender, EventArgs e)
+        {
+            if (this.HeightTexture == null)
+            {
+                throw new InvalidOperationException("TerrainGlobalLoader - height texture not set");
+            }
+            gb.SetOutputTexture(0, "out_Height", this.HeightTexture);
             gb.Init(@"BasicQuad.vert", @"TerrainGlobalLoader.frag");
         }
 
