@@ -24,7 +24,9 @@ namespace Snowscape.TerrainRenderer.Lighting
         public HeightmapNormalGenerator()
             : base()
         {
+            this.Loading += HeightmapNormalGenerator_Loading;
         }
+
 
         public HeightmapNormalGenerator(Texture normalTexture)
             : this()
@@ -38,24 +40,11 @@ namespace Snowscape.TerrainRenderer.Lighting
             this.HeightMap = heightMap;
         }
 
-        public override void Load()
+
+        void HeightmapNormalGenerator_Loading(object sender, EventArgs e)
         {
-            this.LoadWrapper(() =>
-            {
-                base.Load();
-
-                gb.SetOutputTexture(0, "out_Normal", this.NormalTexture);
-                gb.Init(@"HeightmapNormals.vert", @"HeightmapNormals.frag");
-            });
-
-        }
-
-        public override void Unload()
-        {
-            this.UnloadWrapper(() =>
-            {
-                base.Unload();
-            });
+            gb.SetOutputTexture(0, "out_Normal", this.NormalTexture);
+            gb.Init(@"HeightmapNormals.vert", @"HeightmapNormals.frag");
         }
 
 

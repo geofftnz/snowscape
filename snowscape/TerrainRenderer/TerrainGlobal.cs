@@ -51,6 +51,8 @@ namespace Snowscape.TerrainRenderer
             this.Width = width;
             this.Height = height;
             this.InitTextures();
+            this.Loading += TerrainGlobal_Loading;
+            this.Unloading += TerrainGlobal_Unloading;
         }
 
         public void InitTextures()
@@ -82,29 +84,20 @@ namespace Snowscape.TerrainRenderer
 
         }
 
-        public override void Load()
+        void TerrainGlobal_Loading(object sender, EventArgs e)
         {
-            this.LoadWrapper(() =>
-            {
-                base.Load();
-
-                this.HeightTexture.UploadEmpty();
-                this.ShadeTexture.UploadEmpty();
-                this.IndirectIlluminationTexture.UploadEmpty();
-            });
+            this.HeightTexture.UploadEmpty();
+            this.ShadeTexture.UploadEmpty();
+            this.IndirectIlluminationTexture.UploadEmpty();
         }
 
-        public override void Unload()
+        void TerrainGlobal_Unloading(object sender, EventArgs e)
         {
-            this.UnloadWrapper(() =>
-            {
-                this.HeightTexture.Unload();
-                this.ShadeTexture.Unload();
-                this.IndirectIlluminationTexture.Unload();
-
-                base.Unload();
-            });
+            this.HeightTexture.Unload();
+            this.ShadeTexture.Unload();
+            this.IndirectIlluminationTexture.Unload();
         }
+
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain)
         {

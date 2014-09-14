@@ -19,7 +19,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         public IndirectIlluminationGenerator()
             : base()
         {
-
+            this.Loading += IndirectIlluminationGenerator_Loading;
         }
 
         public IndirectIlluminationGenerator(Texture outputTexture)
@@ -29,22 +29,10 @@ namespace Snowscape.TerrainRenderer.Lighting
         }
 
 
-        public override void Load()
+        void IndirectIlluminationGenerator_Loading(object sender, EventArgs e)
         {
-            this.LoadWrapper(() =>
-            {
-                base.Load();
-                gb.SetOutputTexture(0, "out_Indirect", this.OutputTexture);
-                gb.Init(@"IndirectIllumination.vert", @"IndirectIllumination.frag");
-            });
-        }
-
-        public override void Unload()
-        {
-            this.UnloadWrapper(() =>
-            {
-                base.Unload();
-            });
+            gb.SetOutputTexture(0, "out_Indirect", this.OutputTexture);
+            gb.Init(@"IndirectIllumination.vert", @"IndirectIllumination.frag");
         }
 
 

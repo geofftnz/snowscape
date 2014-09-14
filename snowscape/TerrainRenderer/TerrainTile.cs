@@ -59,6 +59,9 @@ namespace Snowscape.TerrainRenderer
             this.Height = height;
             this.ModelMatrix = Matrix4.Identity;
             this.InitTextures();
+
+            this.Loading += TerrainTile_Loading;
+            this.Unloading += TerrainTile_Unloading;
         }
 
         private void InitTextures()
@@ -96,38 +99,23 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
         }
 
-
-        public override void Load()
+        void TerrainTile_Loading(object sender, EventArgs e)
         {
-            if (this.Status == ComponentStatus.Loaded) return;
-
-            this.Status = ComponentStatus.Loading;
-            base.Load();
-
             // setup textures
             this.HeightTexture.UploadEmpty();
             this.NormalTexture.UploadEmpty();
             this.ShadeTexture.UploadEmpty();
             this.ParamTexture.UploadEmpty();
-
-            this.Status = ComponentStatus.Loaded;
         }
 
-        public override void Unload()
+        void TerrainTile_Unloading(object sender, EventArgs e)
         {
-            if (this.Status != ComponentStatus.Loaded) return;
-            this.Status = ComponentStatus.Unloading;
-
-
             this.HeightTexture.Unload();
             this.NormalTexture.Unload();
             this.ShadeTexture.Unload();
             this.ParamTexture.Unload();
-
-            base.Unload();
-
-            this.Status = ComponentStatus.Unloaded;
         }
+
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {

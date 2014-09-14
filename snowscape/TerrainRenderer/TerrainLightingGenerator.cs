@@ -54,7 +54,10 @@ namespace Snowscape.TerrainRenderer
 
             this.Visible = true;
             this.DrawOrder = 0;
+
+            this.Loading += TerrainLightingGenerator_Loading;
         }
+
 
         public TerrainLightingGenerator(int width, int height, Texture outputTexture)
             : this(width, height)
@@ -62,41 +65,24 @@ namespace Snowscape.TerrainRenderer
             this.OutputTexture = outputTexture;
         }
 
-        public override void Load()
+
+        void TerrainLightingGenerator_Loading(object sender, EventArgs e)
         {
-            this.LoadWrapper(() =>
+            if (this.OutputTexture == null)
             {
+                throw new InvalidOperationException("OutputTexture not set");
+            }
 
-                if (this.OutputTexture == null)
-                {
-                    throw new InvalidOperationException("OutputTexture not set");
-                }
+            base.Load();
 
-                base.Load();
+            // init VBOs
+            this.InitVBOs();
 
-                // init VBOs
-                this.InitVBOs();
+            // init GBuffer
+            this.InitGBuffer(this.OutputTexture);
 
-                // init GBuffer
-                this.InitGBuffer(this.OutputTexture);
-
-                // init Shader
-                this.InitShader();
-
-            });
-        }
-
-        public override void Unload()
-        {
-
-            this.UnloadWrapper(() =>
-            {
-
-                base.Unload();
-            });
-
-
-
+            // init Shader
+            this.InitShader();
         }
 
 

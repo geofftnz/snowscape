@@ -14,24 +14,15 @@ namespace OpenTKExtensions
             : base()
         {
             step = new GBufferSimpleStep(name, fragmentSource, name + "tex", outputTextureName, outputTexture);
+
+            this.Loading += GBufferSimpleStepComponent_Loading;
         }
 
-        public override void Load()
+        void GBufferSimpleStepComponent_Loading(object sender, EventArgs e)
         {
-            this.LoadWrapper(() =>
-            {
-                base.Load();
-                step.Init();
-            });
+            step.Init();
         }
 
-        public override void Unload()
-        {
-            this.UnloadWrapper(() =>
-            {
-                base.Unload();
-            });
-        }
 
         public void Render(Texture inputTexture, Action<ShaderProgram> SetUniforms = null)
         {
