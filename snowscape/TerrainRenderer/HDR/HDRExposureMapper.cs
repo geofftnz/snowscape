@@ -6,10 +6,11 @@ using OpenTKExtensions;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Utils;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.HDR
 {
-    public class HDRExposureMapper
+    public class HDRExposureMapper : GameComponentBase
     {
         private const int HISTOGRAMWIDTH = 256;
 
@@ -28,17 +29,6 @@ namespace Snowscape.TerrainRenderer.HDR
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        //public float FastExposure { get; set; }
-        //public float SlowExposure { get; set; }
-        //public float Exposure
-        //{
-        //    get
-        //    {
-        //        return 0.8f.Lerp(this.SlowExposure, this.FastExposure);
-        //    }
-        //}
-
-        //public float TargetLuminance { get; set; }
 
         public float WhiteLevel { get; set; }
         public float BlackLevel { get; set; }
@@ -47,25 +37,29 @@ namespace Snowscape.TerrainRenderer.HDR
 
 
         public HDRExposureMapper()
+            : base()
         {
             this.WhiteLevel = 1.0f;
-            //this.FastExposure = -1.0f;
-            //this.SlowExposure = -1.0f;
-            //this.TargetLuminance = 0.4f;
             this.Exposure = -1.0f;
             this.BlackLevel = 0.0f;
 
             this.ToneMapper = new ReinhardToneMap() { WhiteLevel = 2.0f };
-            //this.ToneMapper = new Uncharted2ToneMap();
+
+            this.Loading += HDRExposureMapper_Loading;
         }
 
-        public void Init(int width, int height)
+        public HDRExposureMapper(int width, int height)
+            : this()
         {
             this.Width = width;
             this.Height = height;
+        }
+
+        void HDRExposureMapper_Loading(object sender, EventArgs e)
+        {
 
             this.gbuffer.SetSlot(0,
-                new GBuffer.TextureSlotParam(TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat, false, 
+                new GBuffer.TextureSlotParam(TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat, false,
                 new List<ITextureParameter>
                 {
                     new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest),
@@ -195,8 +189,8 @@ namespace Snowscape.TerrainRenderer.HDR
 
             UpdateHistogram(
                 leveldata
-                    .Select(c=>c.Xyz - new Vector3(this.BlackLevel))
-                    //.Select(c => Vector3.One - (c * this.Exposure).Exp())
+                    .Select(c => c.Xyz - new Vector3(this.BlackLevel))
+                //.Select(c => Vector3.One - (c * this.Exposure).Exp())
                     .Select(c => (c * -this.Exposure))
                     .Select(c => this.ToneMapper.Tonemap(c))
                     .Select(c => c.Pow(1.0f / 2.2f))
