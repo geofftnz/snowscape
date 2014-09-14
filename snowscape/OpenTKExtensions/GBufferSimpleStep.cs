@@ -16,8 +16,12 @@ namespace OpenTKExtensions
     /// </summary>
     public class GBufferSimpleStep
     {
-        private readonly GBufferShaderStep gb;
-        private readonly string inputTextureName;
+        private GBufferShaderStep gb;
+        private string inputTextureName;
+        private string outputTextureName;
+        private Texture outputTexture;
+        private string fragmentSource;
+        
 
         public GBufferSimpleStep(
             string name, 
@@ -27,9 +31,16 @@ namespace OpenTKExtensions
             Texture outputTexture)
         {
             this.inputTextureName = inputTextureName;
+            this.outputTextureName = outputTextureName;
+            this.outputTexture = outputTexture;
+            this.fragmentSource = fragmentSource;
 
             gb = new GBufferShaderStep(name);
 
+        }
+
+        public void Init()
+        {
             gb.SetOutputTexture(0, outputTextureName, outputTexture);
             gb.Init(@"BasicQuad.vert", fragmentSource);
         }
@@ -49,7 +60,6 @@ namespace OpenTKExtensions
                 }
             });
         }
-
 
     }
 }

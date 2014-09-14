@@ -74,6 +74,7 @@
     <Compile Include="GBufferRedirectableShaderStep.cs" />
     <Compile Include="GBufferShaderStep.cs" />
     <Compile Include="GBufferSimpleStep.cs" />
+    <Compile Include="GBufferSimpleStepComponent.cs" />
     <Compile Include="IDrawableComponent.cs" />
     <Compile Include="ISamplerParameter.cs" />
     <Compile Include="Loaders\FileSystemLoader.cs" />
