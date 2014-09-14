@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NLog;
 
 namespace OpenTKExtensions.Framework
 {
     public class GameComponentBase : IGameComponent
     {
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
         public ComponentStatus Status
         {
             get;
@@ -19,93 +22,22 @@ namespace OpenTKExtensions.Framework
             set;
         }
 
-        //private GameComponentCollection components = new GameComponentCollection();
-        //protected GameComponentCollection Components
-        //{
-        //    get { return components; }
-        //}
-
-
-
-
 
         public GameComponentBase()
         {
             this.Status = ComponentStatus.New;
         }
 
-        /*
-        public virtual void Load()
-        {
-            this.Components.Load();
-        }
-
-        public virtual void Unload()
-        {
-            this.Components.Unload();
-        }*/
-
-        /*
-        public virtual void Update<F>(F frameData) where F : IFrameUpdateData
-        {
-            this.Components.Update(frameData);
-        }
-
-        public virtual void Render<F>(F frameData) where F : IFrameRenderData
-        {
-            this.Components.Render(frameData);
-        }*/
-
-        //protected void Add(IGameComponent subComponent)
-        //{
-        //    if (subComponent == null) throw new ArgumentNullException("subComponent");
-        //    this.Components.Add(subComponent);
-        //}
-
-        //protected void Remove(IGameComponent subComponent)
-        //{
-        //    if (subComponent == null) throw new ArgumentNullException("subComponent");
-        //    this.Components.Remove(subComponent);
-        //}
-
-        //protected void RemoveAllOf<T>()
-        //{
-        //    this.Components.RemoveAll(c => c is T);
-        //}
-
-        /*
-        protected void LoadWrapper(Action loadAction)
-        {
-            if (this.Status != ComponentStatus.New && this.Status != ComponentStatus.Unloaded)
-            {
-                return;
-            }
-
-            this.Status = ComponentStatus.Loading;
-            loadAction();
-            this.Status = ComponentStatus.Loaded;
-        }
-
-        protected void UnloadWrapper(Action unloadAction)
-        {
-            if (this.Status != ComponentStatus.Loaded)
-            {
-                return;
-            }
-
-            this.Status = ComponentStatus.Unloading;
-            unloadAction();
-            this.Status = ComponentStatus.Unloaded;
-        }*/
-
-
         /// <summary>
         /// Loads the component and all subcomponents
         /// </summary>
         public void Load()
         {
+            log.Info("GameComponentBase.Load({0}) loading", this.GetType().Name);
+
             if (this.Status != ComponentStatus.New && this.Status != ComponentStatus.Unloaded)
             {
+                log.Info("GameComponentBase.Load({0}) already loaded", this.GetType().Name);
                 return;
                 //throw new InvalidOperationException("Component was not in a valid state to load.");
             }
@@ -114,12 +46,17 @@ namespace OpenTKExtensions.Framework
             this.OnLoading(EventArgs.Empty);
             this.Status = ComponentStatus.Loaded;
             this.OnLoaded(EventArgs.Empty);
+
+            log.Info("GameComponentBase.Load({0}) loaded", this.GetType().Name);
         }
 
         public void Unload()
         {
+            log.Info("GameComponentBase.Unload({0}) unloading", this.GetType().Name);
+
             if (this.Status != ComponentStatus.Loaded)
             {
+                log.Info("GameComponentBase.Unload({0}) already unloaded", this.GetType().Name);
                 return;
                 //throw new InvalidOperationException("Component was not in a valid state to unload.");
             }
@@ -127,6 +64,7 @@ namespace OpenTKExtensions.Framework
             this.Status = ComponentStatus.Unloading;
             this.OnUnloading(EventArgs.Empty);
             this.Status = ComponentStatus.Unloaded;
+            log.Info("GameComponentBase.Unload({0}) unloaded", this.GetType().Name);
         }
 
 
