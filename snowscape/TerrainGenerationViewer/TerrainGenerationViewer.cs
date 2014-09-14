@@ -71,6 +71,7 @@ namespace Snowscape.TerrainGenerationViewer
         private Loaders.TerrainTileParamLoader terrainTileParamLoader;
 
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer;
+        private Atmosphere.SkyScatteringCubeRenderer skyRenderer;
 
         private Lighting.LightingCombiner lightingStep;
         private HDR.HDRExposureMapper hdrExposure;
@@ -103,14 +104,8 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererQuadtree;
 
 
+        
 
-
-
-
-        //private Texture skyTexture;
-        private Atmosphere.SkyScatteringCubeRenderer skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes);
-
-        private Texture skyCubeTexture;
 
         private Texture terrainDetailTexture;
 
@@ -178,6 +173,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
 
             this.Components.Add(this.skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer(), LoadOrder.Phase1);
+            this.Components.Add(this.skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -434,13 +430,6 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
 
-            // create VBOs/Shaders etc
-
-            this.terrainTile.Load();  // remove once dependencies are components
-            this.terrainGlobal.Load(); // remove once dependencies are components
-
-
-
             this.tileRenderer.Load();
             this.tileRendererRaycast.Load();
             this.tileRendererPatchDetail.Load();
@@ -449,19 +438,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-
-            this.skyRenderer.Init();
-
-            GL.Enable(EnableCap.TextureCubeMap);
-            GL.Enable(EnableCap.TextureCubeMapSeamless);
-            this.skyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            this.skyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest));
-
-            this.SetupCubeMap();
 
 
             this.terrainDetailTexture = new Texture(DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
@@ -522,17 +498,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.frameTrackerRenderer.Init();
         }
 
-        private void SetupCubeMap()
-        {
-            this.skyCubeTexture.Bind();
-            this.skyCubeTexture.ApplyParameters();
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeX);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeY);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapNegativeZ);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveX);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveY);
-            this.skyCubeTexture.UploadEmpty(TextureTarget.TextureCubeMapPositiveZ);
-        }
 
 
 
@@ -654,7 +619,7 @@ namespace Snowscape.TerrainGenerationViewer
                 DepthTexture = this.lightingStep.DepthTexture,
                 HeightTexture = this.terrainGlobal.HeightTexture,
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
-                SkyCubeTexture = this.skyCubeTexture,
+                SkyCubeTexture = this.skyRenderer.SkyCubeTexture,
                 IndirectIlluminationTexture = this.terrainGlobal.IndirectIlluminationTexture,
                 EyePos = this.eyePos,
                 SunDirection = this.sunDirection,
@@ -942,7 +907,6 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
             this.skyRenderer.Render(
-                this.skyCubeTexture,
                 eyePos,
                 sunVector,
                 groundLevel,
