@@ -70,6 +70,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Loaders.TerrainTileLoader terrainTileLoader;
         private Loaders.TerrainTileParamLoader terrainTileParamLoader;
 
+        private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer;
+
         private Lighting.LightingCombiner lightingStep;
         private HDR.HDRExposureMapper hdrExposure;
 
@@ -99,7 +101,6 @@ namespace Snowscape.TerrainGenerationViewer
         private ITileRenderer tileRendererPatchLow;
         private ITileRenderer tileRendererLOD;
         private ITileRenderer tileRendererQuadtree;
-        private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer();
 
 
 
@@ -171,8 +172,14 @@ namespace Snowscape.TerrainGenerationViewer
 
             #region create components
 
+            // phase 1 
+
             this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
             this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
+
+            this.Components.Add(this.skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer(), LoadOrder.Phase1);
+
+            // phase 2 (dependencies on phase 1)
 
             this.Components.Add(this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight, this.terrainGlobal.ShadeTexture), LoadOrder.Phase2);
             this.Components.Add(this.tileNormalGenerator = new Lighting.HeightmapNormalGenerator(this.terrainTile.NormalTexture, this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
@@ -185,6 +192,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainGlobalLoader = new Loaders.TerrainGlobalLoader(this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainTileLoader = new Loaders.TerrainTileLoader(this.terrainTile.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainTileParamLoader = new Loaders.TerrainTileParamLoader(this.terrainTile.ParamTexture), LoadOrder.Phase2);
+
+            // phase 3 (other high-level stuff)
 
             this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
@@ -440,8 +449,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-
-            this.skyRayDirectionRenderer.Load();
 
             this.skyRenderer.Init();
 

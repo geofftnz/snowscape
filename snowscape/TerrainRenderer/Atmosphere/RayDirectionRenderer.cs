@@ -6,6 +6,7 @@ using OpenTKExtensions;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Utils;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Atmosphere
 {
@@ -19,19 +20,19 @@ namespace Snowscape.TerrainRenderer.Atmosphere
     /// - render ray direction based on the given projection
     /// 
     /// </summary>
-    public class RayDirectionRenderer
+    public class RayDirectionRenderer : GameComponentBase
     {
         private VBO vertexVBO = new VBO("sky-vertex");
-        //private VBO vcoordVBO = new VBO("sky-vcoord");
         private VBO indexVBO = new VBO("sky-index", BufferTarget.ElementArrayBuffer);
         private ShaderProgram program = new ShaderProgram("sky-prog");
 
         public RayDirectionRenderer()
+            : base()
         {
-
+            this.Loading += RayDirectionRenderer_Loading;
         }
 
-        public void Load()
+        void RayDirectionRenderer_Loading(object sender, EventArgs e)
         {
             InitQuad();
             InitShader();
@@ -40,7 +41,6 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         public void Render(Matrix4 projection, Matrix4 view, Vector3 eyePos)
         {
             Matrix4 invProjectionView = Matrix4.Invert(Matrix4.Mult(view, projection));
-            //Matrix4 invProjectionView = Matrix4.Mult(Matrix4.Invert(view), Matrix4.Invert(projection));
 
             GL.Disable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
@@ -50,7 +50,6 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                 .SetUniform("inverse_projectionview_matrix", invProjectionView)
                 .SetUniform("eyePos", eyePos);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
-            //this.vcoordVBO.Bind(this.program.VariableLocation("vcoord"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
         }
@@ -87,7 +86,6 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                            };
 
             this.vertexVBO.SetData(vertex);
-            //this.vcoordVBO.SetData(vertex);
             this.indexVBO.SetData(index);
         }
 
