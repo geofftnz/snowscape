@@ -67,6 +67,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Loaders.TerrainGlobalLoader terrainGlobalLoader;
         private Loaders.TerrainTileLoader terrainTileLoader;
+        private Loaders.TerrainTileParamLoader terrainTileParamLoader;
 
         #endregion
 
@@ -99,7 +100,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private HDR.HDRExposureMapper hdrExposure = new HDR.HDRExposureMapper();
 
-        private Loaders.TerrainTileParamLoader terrainTileParamLoader = new Loaders.TerrainTileParamLoader();
+
 
 
 
@@ -182,7 +183,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Components.Add(this.terrainGlobalLoader = new Loaders.TerrainGlobalLoader(this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainTileLoader = new Loaders.TerrainTileLoader(this.terrainTile.HeightTexture), LoadOrder.Phase2);
-
+            this.Components.Add(this.terrainTileParamLoader = new Loaders.TerrainTileParamLoader(this.terrainTile.ParamTexture), LoadOrder.Phase2);
             #endregion
 
 
@@ -434,7 +435,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-            this.terrainTileParamLoader.Init(this.terrainTile.ParamTexture);
 
 
             this.lightingStep.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);

@@ -5,23 +5,34 @@ using System.Text;
 using OpenTKExtensions;
 using Utils;
 using OpenTK.Graphics.OpenGL;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Loaders
 {
-    public class TerrainTileParamLoader
+    public class TerrainTileParamLoader : GameComponentBase
     {
         private GBufferShaderStep gb = new GBufferShaderStep("terraintileparamloader");
 
+        public Texture ParamTexture { get; set; }
+
         public TerrainTileParamLoader()
+            : base()
         {
-                
+            this.Loading += TerrainTileParamLoader_Loading;
         }
 
-        public void Init(Texture paramTexture)
+        public TerrainTileParamLoader(Texture paramTexture)
+            : this()
         {
-            gb.SetOutputTexture(0, "out_Param", paramTexture);
+            this.ParamTexture = paramTexture;
+        }
+
+        void TerrainTileParamLoader_Loading(object sender, EventArgs e)
+        {
+            gb.SetOutputTexture(0, "out_Param", this.ParamTexture);
             gb.Init(@"BasicQuad.vert", @"TerrainTileParamLoader.frag");
         }
+
 
         public void Render(Texture terrainTexture)
         {
