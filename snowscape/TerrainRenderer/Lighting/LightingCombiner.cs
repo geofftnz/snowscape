@@ -7,6 +7,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Utils;
 using NLog;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Lighting
 {
@@ -31,7 +32,7 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// - render the gbuffer from the previous step into a new colour buffer
     /// 
     /// </summary>
-    public class LightingCombiner
+    public class LightingCombiner : GameComponentBase
     {
         private GBuffer gbuffer = new GBuffer("lighting", true);
         private ShaderProgram program = new ShaderProgram("combiner");
@@ -106,18 +107,27 @@ namespace Snowscape.TerrainRenderer.Lighting
 
 
         public LightingCombiner()
+            : base()
         {
 
+            
+            this.Loading += LightingCombiner_Loading;
         }
 
-        public void Init(int width, int height)
+
+        public LightingCombiner(int width, int height)
+            : this()
         {
             this.Width = width;
             this.Height = height;
+        }
 
+        void LightingCombiner_Loading(object sender, EventArgs e)
+        {
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // param
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // detail normal
             this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // large-scale normal
+
             this.gbuffer.Init(this.Width, this.Height);
 
             InitShader(program);
@@ -126,8 +136,6 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
             this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
-
-
         }
 
         private void InitShader(ShaderProgram program)
@@ -152,7 +160,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 this.program.Unload();
                 this.program = newprogram;
                 this.gbufferCombiner.CombineProgram = this.program;
-                
+
             }
             catch (Exception ex)
             {

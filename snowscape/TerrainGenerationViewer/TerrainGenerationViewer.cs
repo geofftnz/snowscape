@@ -69,6 +69,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Loaders.TerrainTileLoader terrainTileLoader;
         private Loaders.TerrainTileParamLoader terrainTileParamLoader;
 
+        private Lighting.LightingCombiner lightingStep;
+
         #endregion
 
 
@@ -85,7 +87,6 @@ namespace Snowscape.TerrainGenerationViewer
         private Matrix4 terrainProjection = Matrix4.Identity;
         private Matrix4 terrainModelview = Matrix4.Identity;
 
-        private Lighting.LightingCombiner lightingStep = new Lighting.LightingCombiner();
 
         private IPatchCache patchCache = new PatchCache();
 
@@ -172,6 +173,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
             this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
 
+            this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase1);
 
             this.Components.Add(this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight, this.terrainGlobal.ShadeTexture), LoadOrder.Phase2);
             this.Components.Add(this.tileNormalGenerator = new Lighting.HeightmapNormalGenerator(this.terrainTile.NormalTexture, this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
@@ -435,9 +437,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.tileRendererLOD.Load();
             this.tileRendererQuadtree.Load();
 
-
-
-            this.lightingStep.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            
             this.hdrExposure.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             this.skyRayDirectionRenderer.Load();
