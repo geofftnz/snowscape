@@ -7,6 +7,7 @@ using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using Utils;
 using Snowscape.TerrainRenderer.Mesh;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Renderers
 {
@@ -16,7 +17,7 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// This will use a mesh and a portion of a heightmap and associated textures.
     /// The mesh is designed to seamlessly tile to adjacent patches, assuming the source textures wrap around.
     /// </summary>
-    public class GenerationVisPatchDetailRenderer : ITileRenderer, Snowscape.TerrainRenderer.Renderers.IPatchRenderer
+    public class GenerationVisPatchDetailRenderer : GameComponentBase, ITileRenderer, IPatchRenderer
     {
         private TerrainPatchMesh mesh;
         private ShaderProgram shader = new ShaderProgram("vistilepatchdetail");
@@ -59,6 +60,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         public float DetailTexScale { get; set; }
 
         public GenerationVisPatchDetailRenderer(int width, int height, IPatchCache patchCache)
+            : base()
         {
             if (width != height)
             {
@@ -73,9 +75,11 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.DetailTexScale = 0.1f;
 
             this.detailWeight = Vector4.One;
+
+            this.Loading += GenerationVisPatchDetailRenderer_Loading;
         }
 
-        public void Load()
+        void GenerationVisPatchDetailRenderer_Loading(object sender, EventArgs e)
         {
             InitShader();
         }
@@ -141,15 +145,6 @@ namespace Snowscape.TerrainRenderer.Renderers
             Sampler.Unbind(TextureUnit.Texture0);
 
         }
-
-
-
-        public void Unload()
-        {
-            throw new NotImplementedException();
-        }
-
-
 
 
     }

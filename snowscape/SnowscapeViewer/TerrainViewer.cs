@@ -12,6 +12,7 @@ using OpenTKExtensions.Camera;
 using OpenTK.Input;
 using Snowscape.TerrainRenderer;
 using Snowscape.TerrainRenderer.Renderers;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.Viewer
 {
@@ -50,7 +51,7 @@ namespace Snowscape.Viewer
         private TerrainTile tile = new TerrainTile(TILESIZE, TILESIZE);
         //private ITileRenderer renderer = new BoundingBoxRenderer();
         //private ITileRenderer renderer = new MeshRenderer(64,64);
-        private List<ITileRenderer> renderers = new List<ITileRenderer>();
+        private List<IGameComponent> renderers = new List<IGameComponent>();
         private int currentRenderer = 0;
 
 

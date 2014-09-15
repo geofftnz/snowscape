@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OpenTK;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Renderers
 {
@@ -19,8 +20,6 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// </summary>
     public interface ITileRenderer
     {
-        void Load();
         void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye);
-        void Unload();
     }
 }

@@ -76,6 +76,11 @@ namespace Snowscape.TerrainGenerationViewer
         private Lighting.LightingCombiner lightingStep;
         private HDR.HDRExposureMapper hdrExposure;
 
+        private QuadtreeLODRenderer tileRendererQuadtree;
+        private GenerationVisPatchDetailRenderer tileRendererPatchDetail;
+        private GenerationVisPatchLowRenderer tileRendererPatchLow;
+        private GenerationVisPatchRenderer tileRendererPatch;
+
         #endregion
 
 
@@ -95,16 +100,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         private IPatchCache patchCache = new PatchCache();
 
-        private ITileRenderer tileRenderer;
-        private ITileRenderer tileRendererRaycast;
-        private ITileRenderer tileRendererPatchDetail;
-        private ITileRenderer tileRendererPatchNormal;
-        private ITileRenderer tileRendererPatchLow;
-        private ITileRenderer tileRendererLOD;
-        private ITileRenderer tileRendererQuadtree;
-
-
-        
 
 
         private Texture terrainDetailTexture;
@@ -160,8 +155,6 @@ namespace Snowscape.TerrainGenerationViewer
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../Resources/Shaders");
 
 
-            //this.Terrain = new TerrainGen(TileWidth, TileHeight);
-            //this.Terrain = new GPUWaterErosion(TileWidth, TileHeight);
             this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes);
 
 
@@ -174,6 +167,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Components.Add(this.skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer(), LoadOrder.Phase1);
             this.Components.Add(this.skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes), LoadOrder.Phase1);
+
+            this.Components.Add(this.tileRendererPatchLow = new GenerationVisPatchLowRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -189,25 +186,16 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainTileLoader = new Loaders.TerrainTileLoader(this.terrainTile.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainTileParamLoader = new Loaders.TerrainTileParamLoader(this.terrainTile.ParamTexture), LoadOrder.Phase2);
 
+            this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, this.tileRendererPatch, this.tileRendererPatchDetail), LoadOrder.Phase2);
+
             // phase 3 (other high-level stuff)
 
             this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
-            
+
+
+
             #endregion
-
-
-
-            this.tileRenderer = new GenerationVisMeshRenderer(TileWidth, TileHeight);
-            this.tileRendererRaycast = new GenerationVisRaycastRenderer();
-            this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererPatchNormal = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererPatchLow = new GenerationVisPatchLowRenderer(TileWidth, TileHeight, patchCache);
-            this.tileRendererLOD = new CompositeLODRenderer(this.tileRendererRaycast, this.tileRenderer, this.tileRendererPatchDetail);
-            //this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererRaycast, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchDetail);
-            this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, (IPatchRenderer)this.tileRendererPatchNormal, (IPatchRenderer)this.tileRendererPatchDetail);
-
-
 
 
 
@@ -430,16 +418,6 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
 
-            this.tileRenderer.Load();
-            this.tileRendererRaycast.Load();
-            this.tileRendererPatchDetail.Load();
-            this.tileRendererPatchNormal.Load();
-            this.tileRendererPatchLow.Load();
-            this.tileRendererLOD.Load();
-            this.tileRendererQuadtree.Load();
-
-
-
             this.terrainDetailTexture = new Texture(DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
             this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
             this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
@@ -453,7 +431,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.terrainDetailTexture.Bind();
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
-            (this.tileRendererPatchNormal as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
+            (this.tileRendererPatch as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
 
             // GL state
             GL.Enable(EnableCap.DepthTest);
@@ -529,11 +507,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.overlayModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
         }
 
-        //private void SetGBufferCombineProjection()
-        //{
-        //    this.gbufferCombineProjection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
-        //    this.gbufferCombineModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
-        //}
 
         private void SetTerrainProjection()
         {
@@ -933,42 +906,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderTiles()
         {
-            //RenderTile(this.terrainTile, 0f, 0f, this.tileRendererRaycast);
 
-            //RenderTile(this.terrainTile, -1f, -1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, -1f, 0f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, -1f, 1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 0f, -1f, this.tileRendererRaycast);
-
-            //((GenerationVisPatchRenderer)tileRendererPatch).Scale = 1.0f / 16.0f;
-            //((GenerationVisPatchRenderer)tileRendererPatch).Offset = (new Vector2((float)0.0, (float)0.0) / 16.0f);
-            //RenderTile(this.terrainTile, 0f, 0f, tileRendererPatch);
-
-            /*
-            for (int y = 0; y < TileLodScale; y++)
-            {
-                for (int x = 0; x < TileLodScale; x++)
-                {
-                    var tileRenderer = (x == 0 && y == 0) ? this.tileRendererPatch : this.tileRendererPatchLow;
-
-
-                    ((GenerationVisPatchRenderer)tileRenderer).Scale = 1.0f / (float)TileLodScale;
-                    ((GenerationVisPatchRenderer)tileRenderer).Offset = (new Vector2((float)x, (float)y) / (float)TileLodScale);
-                    RenderTile(this.terrainTile, 0f, 0f, tileRenderer);
-                }
-            }*/
-
-
-
-
-            //RenderTile(this.terrainTile, 0f, 1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 1f, -1f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 1f, 0f, this.tileRendererRaycast);
-            //RenderTile(this.terrainTile, 1f, 1f, this.tileRendererRaycast);
-
-            //RenderTile(this.terrainTile, 0f, 0f, tileRendererQuadtree);
-
-            (this.tileRendererPatchNormal as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
+            (this.tileRendererPatch as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
             for (int y = -1; y <= 1; y++)

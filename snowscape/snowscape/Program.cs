@@ -19,7 +19,22 @@ namespace Snowscape
             log.Info("Snowscape START");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Startup());
+            //Application.Run(new Startup());
+
+            try
+            {
+                using (var v = new Snowscape.TerrainGenerationViewer.TerrainGenerationViewer())
+                {
+                    v.Run(60);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, ex.GetType().Name);
+                throw;
+            }
+
+
             log.Info("Snowscape END");
         }
     }

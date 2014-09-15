@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTKExtensions;
+using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Renderers
 {
@@ -20,7 +21,7 @@ namespace Snowscape.TerrainRenderer.Renderers
     ///   - if the viewer's detail radius is inside our sub
     ///   - otherwise split and recurse.
     /// </summary>
-    public class QuadtreeLODRenderer : ITileRenderer
+    public class QuadtreeLODRenderer : GameComponentBase, ITileRenderer
     {
         private ITileRenderer fullTileDistantRenderer; // full tile in distance.
         private ITileRenderer fullTileNearRenderer; // full tile nearer.
@@ -144,7 +145,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 // we can render now once we've got to a small enough tile
                 if (this.TileSize <= 4)  //4
                 {
-                    tileDetailRenderer.Width = GetDetailTileSize(reye,detailRadius);
+                    tileDetailRenderer.Width = GetDetailTileSize(reye, detailRadius);
                     tileDetailRenderer.Height = tileDetailRenderer.Width;
                     tileDetailRenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                     tileDetailRenderer.Scale = (float)this.TileSize / (float)tile.Width;
@@ -200,7 +201,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 // bottom right child
                 new QuadTreeNode()
                 {
-                    TopLeft = new QuadTreeVertex() { Position = centre }, 
+                    TopLeft = new QuadTreeVertex() { Position = centre },
                     TopRight = new QuadTreeVertex() { Position = new Vector3(this.BottomRight.Position.X, 0f, centre.Z) },
                     BottomLeft = new QuadTreeVertex() { Position = new Vector3(centre.X, 0f, this.BottomRight.Position.Z) },
                     BottomRight = this.BottomRight,
@@ -211,6 +212,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         }
 
         public QuadtreeLODRenderer(ITileRenderer fullTileDistant, ITileRenderer fullTileNear, IPatchRenderer subTile, IPatchRenderer subTileDetail)
+            : base()
         {
             this.fullTileDistantRenderer = fullTileDistant;
             this.fullTileNearRenderer = fullTileNear;
@@ -218,12 +220,9 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.subTileDetailRenderer = subTileDetail;
             this.DetailRadius = 24.0f;
             this.DistantTileRadius = 512.0f;
+
         }
 
-        public void Load()
-        {
-            // assume child renderers are loaded by caller
-        }
 
         public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye)
         {
@@ -266,7 +265,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 distrenderer.Height = distrenderer.Width;
                 //distrenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                 distrenderer.Scale = 1.0f;
-                distrenderer.Offset = new Vector2(0.0f,0.0f);
+                distrenderer.Offset = new Vector2(0.0f, 0.0f);
 
                 fullTileDistantRenderer.Render(tile, projection, view, eye);
             }
@@ -289,9 +288,5 @@ namespace Snowscape.TerrainRenderer.Renderers
             }
         }
 
-        public void Unload()
-        {
-
-        }
     }
 }
