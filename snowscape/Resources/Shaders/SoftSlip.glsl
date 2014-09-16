@@ -25,11 +25,12 @@ precision highp float;
 uniform sampler2D terraintex;
 
 uniform float texsize;
-uniform float threshold;
+//uniform float threshold;
 uniform float maxdiff;
 uniform float sliprate;
 uniform float minslip;
 uniform float maxslip;
+uniform float saturationslip;
 
 in vec2 texcoord;
 
@@ -37,6 +38,7 @@ out vec4 out_SlipO;
 out vec4 out_SlipD;
 
 float t = 1.0 / texsize;
+vec3 tt = vec3(-t,0,t);
 float diag = 0.707;
 
 float sampleHeight(vec2 pos)
@@ -45,25 +47,47 @@ float sampleHeight(vec2 pos)
 	return l.r + l.g;
 }
 
+float getHeight(vec4 l)
+{
+	return l.r + l.g;
+}
+
 void main(void)
 {
 	vec4 l = texture(terraintex,texcoord);
-	float h = l.r + l.g - maxdiff;    // reduce height by our max slope - makes following calculation easier
 
-	vec3 tt = vec3(-t,0,t);
+	vec4 ter_n = texture(terraintex,texcoord + tt.yx);
+	vec4 ter_s = texture(terraintex,texcoord + tt.yz);
+	vec4 ter_w = texture(terraintex,texcoord + tt.xy);
+	vec4 ter_e = texture(terraintex,texcoord + tt.zy);
+	vec4 ter_nw = texture(terraintex,texcoord + tt.xx);
+	vec4 ter_ne = texture(terraintex,texcoord + tt.zx);
+	vec4 ter_sw = texture(terraintex,texcoord + tt.xz);
+	vec4 ter_se = texture(terraintex,texcoord + tt.zz);
+
+	float saturation = l.b;
+	saturation += ter_n.b;
+	saturation += ter_s.b;
+	saturation += ter_w.b;
+	saturation += ter_e.b;
+	saturation += (ter_nw.b + ter_ne.b + ter_sw.b + ter_se.b) * diag;
+	saturation *= saturationslip;
+
+	float h = l.r + l.g - maxdiff / (1.0 + saturation * saturationslip);    // reduce height by our max slope - makes following calculation easier
+
 
 	vec4 outflowO = vec4(0);
 	vec4 outflowD = vec4(0);
 	
-	outflowO.r = max(0,h - sampleHeight(texcoord + tt.yx));	 // N
-	outflowO.g = max(0,h - sampleHeight(texcoord + tt.yz));	 // S
-	outflowO.b = max(0,h - sampleHeight(texcoord + tt.xy));	 // W
-	outflowO.a = max(0,h - sampleHeight(texcoord + tt.zy));	 // E
+	outflowO.r = max(0,h - getHeight(ter_n));	 // N
+	outflowO.g = max(0,h - getHeight(ter_s));	 // S
+	outflowO.b = max(0,h - getHeight(ter_w));	 // W
+	outflowO.a = max(0,h - getHeight(ter_e));	 // E
 
-	outflowD.r = max(0,h - sampleHeight(texcoord + tt.xx));	 // NW
-	outflowD.g = max(0,h - sampleHeight(texcoord + tt.zx));	 // NE
-	outflowD.b = max(0,h - sampleHeight(texcoord + tt.xz));	 // SW
-	outflowD.a = max(0,h - sampleHeight(texcoord + tt.zz));	 // SE
+	outflowD.r = max(0,h - getHeight(ter_nw));	 // NW
+	outflowD.g = max(0,h - getHeight(ter_ne));	 // NE
+	outflowD.b = max(0,h - getHeight(ter_sw));	 // SW
+	outflowD.a = max(0,h - getHeight(ter_se));	 // SE
 	outflowD *= diag; // correction for diagonal transfers
 
 	float ptotal = dot(outflowO,vec4(1)) + dot(outflowD,vec4(1)); // add components

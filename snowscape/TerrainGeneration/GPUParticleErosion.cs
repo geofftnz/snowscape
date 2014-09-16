@@ -106,6 +106,7 @@ namespace TerrainGeneration
         private const string P_PARTICLEWATERDEPTH = "erosion-particlewaterdepth";
         private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
         private const string P_SLIPRATE = "erosion-sliprate";
+        private const string P_SATURATIONSLIP = "erosion-saturationslip";
         private const string P_DEATHRATE = "erosion-deathrate";
 
         private const string P_FALLRAND = "erosion-fallrandom";
@@ -136,7 +137,7 @@ namespace TerrainGeneration
         /// 
         /// R: Rock (hard).
         /// G: Soil (soft).
-        /// B: Water depth. (for vis only)
+        /// B: Water depth.
         /// A: nothing
         /// 
         /// managed here, copied to terrain tile and terrain global
@@ -239,10 +240,11 @@ namespace TerrainGeneration
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONSLIP, 5.0f, 0.0f, 20.0f, 0.01f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.25f, 0.0f, 2.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.05f, 0.0f, 2.0f, 0.001f));
 
             // setup textures
             for (int i = 0; i < 2; i++)
@@ -503,6 +505,7 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("maxdiff", (float)this.Parameters[P_SLIPTHRESHOLD].GetValue());
                     sp.SetUniform("sliprate", (float)this.Parameters[P_SLIPRATE].GetValue());
+                    sp.SetUniform("saturationslip", (float)this.Parameters[P_SATURATIONSLIP].GetValue());
 
                     //sp.SetUniform("threshold", (float)this.Parameters[P_SLIPRATE].GetValue());
                     //sp.SetUniform("minslip", (float)this.Parameters[P_SLIPRATE].GetValue());

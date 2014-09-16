@@ -168,8 +168,8 @@ namespace TerrainGeneration
             this.ParticleTexWidth = particleTexWidth;
             this.ParticleTexHeight = particleTexHeight;
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SNOWRATE, 0.0002f, 0.0f, 0.05f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 0.62f, 0.0f, 4.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SNOWRATE, 0.0001f, 0.0f, 0.005f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 0.78f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_VELOCITYLOWPASS, 0.5f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_TERRAINFACTOR, 0.0f, 0.0f, 1.0f, 0.001f));
