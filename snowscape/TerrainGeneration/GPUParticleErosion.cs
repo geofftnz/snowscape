@@ -107,6 +107,8 @@ namespace TerrainGeneration
         private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
         private const string P_SLIPRATE = "erosion-sliprate";
         private const string P_SATURATIONSLIP = "erosion-saturationslip";
+        private const string P_SATURATIONRATE = "erosion-saturationrate";
+        private const string P_SATURATIONTHRESHOLD = "erosion-satthreshold";
         private const string P_DEATHRATE = "erosion-deathrate";
 
         private const string P_FALLRAND = "erosion-fallrandom";
@@ -226,25 +228,27 @@ namespace TerrainGeneration
         public void Init()
         {
             // setup parameters
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.8f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.05f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.02f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.04f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.5f, 0.0f, 1.0f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.1f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.2f, 0.0f, 100.0f,0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.05f, 0.0f, 10.0f,0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.5f, 0.0f, 10.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.98f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.07f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.99f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.003f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONSLIP, 5.0f, 0.0f, 20.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONSLIP, 50.0f, 0.0f, 200.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONTHRESHOLD, 0.007f, 0.0f, 0.1f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONRATE, 0.1f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.05f, 0.0f, 2.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.02f, 0.0f, 2.0f, 0.001f));
 
             // setup textures
             for (int i = 0; i < 2; i++)
@@ -506,6 +510,8 @@ namespace TerrainGeneration
                     sp.SetUniform("maxdiff", (float)this.Parameters[P_SLIPTHRESHOLD].GetValue());
                     sp.SetUniform("sliprate", (float)this.Parameters[P_SLIPRATE].GetValue());
                     sp.SetUniform("saturationslip", (float)this.Parameters[P_SATURATIONSLIP].GetValue());
+                    sp.SetUniform("saturationthreshold", (float)this.Parameters[P_SATURATIONTHRESHOLD].GetValue());
+                    sp.SetUniform("saturationrate", (float)this.Parameters[P_SATURATIONRATE].GetValue());
 
                     //sp.SetUniform("threshold", (float)this.Parameters[P_SLIPRATE].GetValue());
                     //sp.SetUniform("minslip", (float)this.Parameters[P_SLIPRATE].GetValue());

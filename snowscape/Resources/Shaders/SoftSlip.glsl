@@ -31,6 +31,8 @@ uniform float sliprate;
 uniform float minslip;
 uniform float maxslip;
 uniform float saturationslip;
+uniform float saturationthreshold;
+uniform float saturationrate;
 
 in vec2 texcoord;
 
@@ -71,8 +73,8 @@ void main(void)
 	saturation += ter_w.b;
 	saturation += ter_e.b;
 	saturation += (ter_nw.b + ter_ne.b + ter_sw.b + ter_se.b) * diag;
-	saturation *= saturationslip;
-
+	saturation = max(0.0,saturation - saturationthreshold);
+	
 	float h = l.r + l.g - maxdiff / (1.0 + saturation * saturationslip);    // reduce height by our max slope - makes following calculation easier
 
 
@@ -92,7 +94,7 @@ void main(void)
 
 	float ptotal = dot(outflowO,vec4(1)) + dot(outflowD,vec4(1)); // add components
 	
-	float pscale = (min(ptotal,l.g) * clamp(1.0 / ptotal,0.0,1.0)) * sliprate;
+	float pscale = (min(ptotal,l.g) * clamp(1.0 / ptotal,0.0,1.0)) * min(0.02, sliprate + saturation * saturationrate);
 
 	out_SlipO = outflowO * pscale;
 	out_SlipD = outflowD * pscale;
