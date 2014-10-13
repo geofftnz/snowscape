@@ -45,6 +45,33 @@ namespace OpenTKExtensions
         {
             if (this.IsInit) return;
 
+            var vertex = new Vector3[3];
+            var texcoord = new Vector2[3];
+            uint[] index = { 0, 1, 2 };
+
+            int i = 0;
+
+            vertex[i] = new Vector3(0.0f, 0.0f, 0.0f);
+            texcoord[i] = new Vector2(0.0f, 0.0f);
+            i++;
+            vertex[i] = new Vector3(2.0f, 0.0f, 0.0f);
+            texcoord[i] = new Vector2(2.0f, 0.0f);
+            i++;
+            vertex[i] = new Vector3(0.0f, 2.0f, 0.0f);
+            texcoord[i] = new Vector2(0.0f, 2.0f);
+            i++;
+
+            this.gbufferCombineVertexVBO.SetData(vertex);
+            this.gbufferCombineTexcoordVBO.SetData(texcoord);
+            this.gbufferCombineIndexVBO.SetData(index);
+
+            this.IsInit = true;
+        }
+
+        public void Init_quad()
+        {
+            if (this.IsInit) return;
+
             var vertex = new Vector3[4];
             var texcoord = new Vector2[4];
             uint[] index = { 0, 1, 3, 1, 2, 3 };

@@ -170,6 +170,21 @@ namespace OpenTKExtensions
         private void InitVBOs()
         {
             Vector3[] vertex = {
+                                    new Vector3(-1f,-1f,0f),
+                                    new Vector3(3f,-1f,0f),
+                                    new Vector3(-1f,3f,0f)
+                                };
+            uint[] index = {
+                                0,1,2
+                            };
+
+            this.vertexVBO.SetData(vertex);
+            this.indexVBO.SetData(index);
+        }
+
+        private void InitVBOsq()
+        {
+            Vector3[] vertex = {
                                     new Vector3(-1f,1f,0f),
                                     new Vector3(-1f,-1f,0f),
                                     new Vector3(1f,1f,0f),
