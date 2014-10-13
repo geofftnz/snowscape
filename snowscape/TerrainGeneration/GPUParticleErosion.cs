@@ -228,22 +228,22 @@ namespace TerrainGeneration
         public void Init()
         {
             // setup parameters
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.02f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.04f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.06f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.05f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.5f, 0.0f, 1.0f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.1f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.05f, 0.0f, 10.0f,0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.3f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.25f, 0.0f, 10.0f,0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.07f, 0.0f, 1.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.99f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.00f, 0.0f, 1.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.94f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.003f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONSLIP, 50.0f, 0.0f, 200.0f, 0.01f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONTHRESHOLD, 0.007f, 0.0f, 0.1f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONTHRESHOLD, 0.0016f, 0.0f, 0.1f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONRATE, 0.1f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.001f));

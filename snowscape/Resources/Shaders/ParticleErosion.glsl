@@ -25,7 +25,7 @@ float diag = 0.707;
 float sampleHeight(vec2 pos)
 {
 	vec3 l = texture(terraintex,pos).rgb;
-	return dot(l, vec3(1.0,1.0,waterHeightFactor));
+	return dot(l, vec3(1.0,1.0,waterHeightFactor));  //hard + soft + waterdepth
 }
 
 void main(void)
@@ -166,7 +166,7 @@ void main(void)
 	out_Terrain = vec4(
 		hard - harderode, 
 		soft - softerode,
-		terrain.b * waterLowpass + erosion.r * waterDepthFactor,
+		terrain.b * waterLowpass + erosion.r * waterDepthFactor,   // water saturation
 		erosion.a / max(1.0,erosion.r)  //average sediment carried
 		);
 }

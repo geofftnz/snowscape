@@ -254,8 +254,8 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));
 
-            parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.001f, 0.0001f, 10.0f, v => v + 0.0001f, v => v - 0.0001f));
-            parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.1f, 1.0f, 2.0f, v => v + 0.001f, v => v - 0.001f));
+            parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.002f, 0.0001f, 10.0f, v => v + 0.0001f, v => v - 0.0001f));
+            parameters.Add(new Parameter<float>("ScatteringStepGrowthFactor", 1.2f, 1.0f, 2.0f, v => v + 0.001f, v => v - 0.001f));
 
             parameters.Add(new Parameter<float>("SnowSlopeDepthAdjust", 0.1f, 0.0f, 100.0f, v => v * 1.02f, v => v * 0.98f));
 
