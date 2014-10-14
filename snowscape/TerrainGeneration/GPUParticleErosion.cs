@@ -619,38 +619,48 @@ namespace TerrainGeneration
         {
             var data = new float[this.Width * this.Height * 4];
 
-            using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None, 256 * 1024))
+            try
             {
-                using (var sr = new BinaryReader(fs))
+                using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None, 256*1024))
                 {
-                    int magic = sr.ReadInt32();
-                    if (magic != FILEMAGIC)
+                    using (var sr = new BinaryReader(fs))
                     {
-                        throw new Exception("Not a terrain file");
+                        int magic = sr.ReadInt32();
+                        if (magic != FILEMAGIC)
+                        {
+                            throw new Exception("Not a terrain file");
+                        }
+
+                        int w, h;
+
+                        w = sr.ReadInt32();
+                        h = sr.ReadInt32();
+
+                        if (w != this.Width || h != this.Height)
+                        {
+                            // TODO: handle size changes
+                            throw new Exception(
+                                string.Format("Terrain size {0}x{1} did not match generator size {2}x{3}", w, h,
+                                    this.Width, this.Height));
+                        }
+
+                        for (int i = 0; i < w*h; i++)
+                        {
+                            data[i*4 + 0] = sr.ReadSingle();
+                            data[i*4 + 1] = sr.ReadSingle();
+                            data[i*4 + 2] = 0f;
+                            sr.ReadSingle();
+                            data[i*4 + 3] = 0f;
+                            sr.ReadSingle();
+                        }
+
+                        sr.Close();
                     }
-
-                    int w, h;
-
-                    w = sr.ReadInt32();
-                    h = sr.ReadInt32();
-
-                    if (w != this.Width || h != this.Height)
-                    {
-                        // TODO: handle size changes
-                        throw new Exception(string.Format("Terrain size {0}x{1} did not match generator size {2}x{3}", w, h, this.Width, this.Height));
-                    }
-
-                    for (int i = 0; i < w * h; i++)
-                    {
-                        data[i * 4 + 0] = sr.ReadSingle();
-                        data[i * 4 + 1] = sr.ReadSingle();
-                        data[i * 4 + 2] = 0f; sr.ReadSingle();
-                        data[i * 4 + 3] = 0f; sr.ReadSingle();
-                    }
-
-                    sr.Close();
+                    fs.Close();
                 }
-                fs.Close();
+            }
+            catch (Exception)
+            {
             }
 
             UploadTerrain(data);

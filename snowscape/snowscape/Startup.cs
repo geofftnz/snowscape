@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Snowscape.Viewer;
+//using Snowscape.Viewer;
 
 namespace Snowscape
 {
@@ -21,10 +21,10 @@ namespace Snowscape
         {
             this.Hide();
 
-            using (var v = new Snowscape.Viewer.TerrainViewer())
-            {
-                v.Run(30);
-            }
+            //using (var v = new Snowscape.Viewer.TerrainViewer())
+            //{
+            //    v.Run(30);
+            //}
             this.Show();
         }
 
