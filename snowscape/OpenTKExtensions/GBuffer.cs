@@ -304,8 +304,8 @@ namespace OpenTKExtensions
             this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest));
             this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest));
             this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.DepthTextureMode, (int)All.Intensity));
-            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureCompareMode, (int)TextureCompareMode.CompareRToTexture));
-            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureCompareFunc, (int)All.Lequal));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureCompareMode, (int)TextureCompareMode.None));
+            this.DepthTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureCompareFunc, (int)All.None));
             this.DepthTexture.Init();
             this.DepthTexture.UploadEmpty();
             this.DepthTexture.Bind();
