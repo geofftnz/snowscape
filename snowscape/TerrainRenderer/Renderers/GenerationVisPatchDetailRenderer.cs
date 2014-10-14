@@ -111,7 +111,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.CullFace(CullFaceMode.Back);  // we only want to render front-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-            tile.LinearSampler.Bind(TextureUnit.Texture0);
+            //tile.LinearSampler.Bind(TextureUnit.Texture0);
             tile.ParamTexture.Bind(TextureUnit.Texture1);
             tile.NormalTexture.Bind(TextureUnit.Texture2);
 
