@@ -143,7 +143,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 // can we render this tile without subdividing?
 
                 // we can render now once we've got to a small enough tile
-                if (this.TileSize <= 4)  //4
+                if (this.TileSize <= 8)  //4
                 {
                     tileDetailRenderer.Width = GetDetailTileSize(reye, detailRadius);
                     tileDetailRenderer.Height = tileDetailRenderer.Width;
@@ -218,7 +218,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.fullTileNearRenderer = fullTileNear;
             this.subTileRenderer = subTile;
             this.subTileDetailRenderer = subTileDetail;
-            this.DetailRadius = 24.0f;
+            this.DetailRadius = 8.0f;
             this.DistantTileRadius = 512.0f;
 
         }

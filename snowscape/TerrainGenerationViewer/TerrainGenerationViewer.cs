@@ -81,6 +81,7 @@ namespace Snowscape.TerrainGenerationViewer
         private GenerationVisPatchDetailRenderer tileRendererPatchDetail;
         private GenerationVisPatchLowRenderer tileRendererPatchLow;
         private GenerationVisPatchRenderer tileRendererPatch;
+        private WireframePatchRenderer tileRendererWireframe;
 
         #endregion
 
@@ -173,6 +174,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tileRendererPatchLow = new GenerationVisPatchLowRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tileRendererWireframe = new WireframePatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -188,7 +190,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainTileLoader = new Loaders.TerrainTileLoader(this.terrainTile.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainTileParamLoader = new Loaders.TerrainTileParamLoader(this.terrainTile.ParamTexture), LoadOrder.Phase2);
 
-            this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, this.tileRendererPatch, this.tileRendererPatchDetail), LoadOrder.Phase2);
+            //this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, this.tileRendererPatch, this.tileRendererPatchDetail), LoadOrder.Phase2);
+            this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererWireframe, this.tileRendererWireframe, this.tileRendererWireframe, this.tileRendererWireframe), LoadOrder.Phase2);
 
             // phase 3 (other high-level stuff)
 

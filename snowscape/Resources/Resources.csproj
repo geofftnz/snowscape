@@ -58,6 +58,9 @@
     <Content Include="Shaders\GlobalLighting_Raymarch.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Shaders\WireframePatch.glsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Shaders\ParticleErosion.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
