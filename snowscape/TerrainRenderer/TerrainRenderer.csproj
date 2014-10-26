@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Atmosphere\CloudDepthRenderer.cs" />
+    <Compile Include="Atmosphere\SkyCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkyScatteringCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkyScatteringRenderer.cs" />
     <Compile Include="Atmosphere\RayDirectionRenderer.cs" />

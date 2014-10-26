@@ -62,6 +62,12 @@
     <Content Include="Shaders\TerrainGeneration.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Shaders\SkyCube.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Shaders\SkyCube.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Shaders\SnowTransport.glsl" />
     <None Include="Shaders\SoftSlip.glsl" />
     <None Include="Shaders\TileLoader.glsl" />
