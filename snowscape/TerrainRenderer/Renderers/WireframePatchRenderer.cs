@@ -21,7 +21,7 @@ namespace Snowscape.TerrainRenderer.Renderers
     {
         //private TerrainPatchMesh mesh;
 
-        const int MESHRES = 33;  // power of 2 + 1
+        const int MESHRES = 256+1;  // power of 2 + 1
         private VBO vertexVBO = new VBO("wfpatch-vertex");
         private VBO boxcoordVBO = new VBO("wfpatch-boxcoord");
         private VBO indexVBO = new VBO("wfpatch-index", BufferTarget.ElementArrayBuffer);
