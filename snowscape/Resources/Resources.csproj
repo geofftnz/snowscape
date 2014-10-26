@@ -52,6 +52,12 @@
     <Content Include="Shaders\GenVisPatchLow.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Shaders\GlobalLighting.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Shaders\GlobalLighting_Raymarch.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Shaders\ParticleErosion.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

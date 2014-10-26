@@ -59,6 +59,7 @@
     <Compile Include="HDR\Uncharted2ToneMap.cs" />
     <Compile Include="Lighting\HeightmapNormalGenerator.cs" />
     <Compile Include="Lighting\IndirectIlluminationGenerator.cs" />
+    <Compile Include="Lighting\OldLightingCombiner.cs" />
     <Compile Include="Lighting\LightingCombiner.cs" />
     <Compile Include="Loaders\TerrainTileParamLoader.cs" />
     <Compile Include="Loaders\TerrainTileLoader.cs" />

@@ -12,15 +12,16 @@ using OpenTKExtensions.Framework;
 namespace Snowscape.TerrainRenderer.Lighting
 {
     /// <summary>
-    /// LightingCombiner
+    /// OldLightingCombiner
     /// 
-    /// Takes the gbuffer rendered from terrain tiles and other objects and performs lighting and 
-    /// atmospheric scattering. Scattering is very intensive, so there's a fake version as well.
+    /// Takes the output of the rasterising/raycasting step (GBuffer of position/composition etc) and
+    /// performs the colour generation and lighting. This is output to a FP16 colour buffer, ready for 
+    /// exposure and gamma correction. Output texture will have mipmaps generated on it so that it can 
+    /// be read back for exposure calculation.
     /// 
     /// Input:
-    /// slot 0: diffuse colour + pre-baked shadow.
-    /// slot 1: shading parameters RGBA = Roughness, Specular Exponent, Specular amount, Sparkle amount
-    /// slot 2: normal + AO (since we're looking up the shadow texture anyway)
+    /// slot 0: Position texture
+    /// slot 1: Param texture
     /// 
     /// Output:
     /// colour
@@ -31,11 +32,13 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// - render the gbuffer from the previous step into a new colour buffer
     /// 
     /// </summary>
-    public class LightingCombiner : GameComponentBase
+    public class OldLightingCombiner : GameComponentBase
     {
         private GBuffer gbuffer = new GBuffer("lighting", true);
         private ShaderProgram program = new ShaderProgram("combiner");
         private GBufferCombiner gbufferCombiner;
+        private Matrix4 projection = Matrix4.Identity;
+        private Matrix4 modelview = Matrix4.Identity;
 
         private static Logger log = LogManager.GetCurrentClassLogger();
 
@@ -103,7 +106,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         }
 
 
-        public LightingCombiner()
+        public OldLightingCombiner()
             : base()
         {
 
@@ -112,7 +115,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         }
 
 
-        public LightingCombiner(int width, int height)
+        public OldLightingCombiner(int width, int height)
             : this()
         {
             this.Width = width;
@@ -123,20 +126,23 @@ namespace Snowscape.TerrainRenderer.Lighting
         {
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // rgb+shadow
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // rough+specexp+specpwr+sparkle
-            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal+ao
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal
 
             this.gbuffer.Init(this.Width, this.Height);
 
             InitShader(program);
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, this.program);
+
+            this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.001f, 10.0f);
+            this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
         }
 
         private void InitShader(ShaderProgram program)
         {
             program.Init(
-                @"GlobalLighting.vert",
-                @"GlobalLighting_RayMarch.frag",
+                @"GBufferVisCombine.vert",
+                @"GBufferVisCombine.frag",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 
@@ -193,13 +199,15 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             rp.HeightTexture.Bind(TextureUnit.Texture3);
             rp.ShadeTexture.Bind(TextureUnit.Texture4);
+            //rp.CloudTexture.Bind(TextureUnit.Texture4);
+            //rp.CloudDepthTexture.Bind(TextureUnit.Texture5);
             rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture5);
             rp.SkyCubeTexture.Bind(TextureUnit.Texture6);
             rp.DepthTexture.Bind(TextureUnit.Texture7);
             rp.MiscTexture.Bind(TextureUnit.Texture8);
             rp.MiscTexture2.Bind(TextureUnit.Texture9);
 
-            this.gbufferCombiner.Render(Matrix4.Identity, Matrix4.Identity, (sp) =>
+            this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
                 sp.SetUniform("pre_projection_matrix", rp.GBufferProjectionMatrix);
                 sp.SetUniform("eyePos", rp.EyePos);
