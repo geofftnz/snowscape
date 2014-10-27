@@ -23,6 +23,7 @@ using HDR = Snowscape.TerrainRenderer.HDR;
 using Snowscape.TerrainRenderer.Mesh;
 using Loaders = Snowscape.TerrainRenderer.Loaders;
 using OpenTKExtensions.Framework;
+using Snowscape.TerrainRenderer.Renderers.LOD;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -684,6 +685,9 @@ namespace Snowscape.TerrainGenerationViewer
             }
             frameTracker.Step("text-timers", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
 
+            textManager.AddOrUpdate(new TextBlock("numPatches", string.Format("patches: {0}", numPatches), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1f,1f,1f,1f)));
+            y += 0.0125f;
+
             //foreach (var timer in this.perfmon.AllAverageTimes())
             //{
             //    textManager.AddOrUpdate(new TextBlock("perf" + timer.Item1, string.Format("{0}: {1:0.000} ms", timer.Item1, timer.Item2), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1.0f, 1.0f, 1.0f, 0.5f)));
@@ -909,6 +913,55 @@ namespace Snowscape.TerrainGenerationViewer
             //this.skyRayDirectionRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos);
             this.skyCubeRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos, this.skyRenderer.SkyCubeTexture);
         }
+
+
+        private int numPatches=0;
+        /*
+        private void RenderTiles()
+        {
+            IPatchRenderer tileRenderer = this.tileRendererWireframe;
+
+            var patches = GetAllPatches().ToArray();
+            numPatches = patches.Length;
+
+            foreach (var p in patches)
+            {
+                tileRenderer.Width = p.TileSize;
+                tileRenderer.Height = p.TileSize;
+                tileRenderer.Scale = p.Scale;
+                tileRenderer.Offset = p.Offset;
+                tileRenderer.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            }
+        }*/
+
+        private IPatchGenerator patchGenerator = new PatchGenerator();
+
+        private void RenderTiles2()
+        {
+            numPatches = 0;
+            IPatchRenderer tileRenderer = this.tileRendererWireframe;
+
+
+            for (int y = -1; y <= 1; y++)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    terrainTile.ModelMatrix = Matrix4.CreateTranslation((float)x * (float)terrainTile.Width, 0f, (float)y * (float)terrainTile.Height);
+
+                    foreach (var p in patchGenerator.GetPatches(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos))
+                    {
+                        tileRenderer.Width = p.TileSize;
+                        tileRenderer.Height = p.TileSize;
+                        tileRenderer.Scale = p.Scale;
+                        tileRenderer.Offset = p.Offset;
+                        tileRenderer.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+
+                        numPatches++;
+                    }
+                }
+            }
+        }
+
 
         private void RenderTiles()
         {

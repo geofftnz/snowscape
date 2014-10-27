@@ -72,6 +72,9 @@
     <Compile Include="Renderers\CompositeLODRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchLowRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchDetailRenderer.cs" />
+    <Compile Include="Renderers\LOD\IPatchGenerator.cs" />
+    <Compile Include="Renderers\LOD\PatchDescriptor.cs" />
+    <Compile Include="Renderers\LOD\PatchGenerator.cs" />
     <Compile Include="Renderers\WireframePatchRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchRenderer.cs" />
     <Compile Include="Renderers\GenerationVisRaycastRenderer.cs" />
