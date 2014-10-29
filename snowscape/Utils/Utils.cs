@@ -122,5 +122,28 @@ namespace Utils
             }
         }
 
+        public static float DistanceToSquare(float x1, float y1, float x2, float y2, float px, float py)
+        {
+            if (px >= x1 && px <= x2 && py >= y1 && py <= y2)
+            {
+                return 0f;
+            }
+
+            float cx = (x1 + x2) * 0.5f;
+            float cy = (y1 + y2) * 0.5f;
+            float rx = Math.Abs(x2 - x1) * 0.5f;
+            float ry = Math.Abs(y2 - y1) * 0.5f;
+
+            float nx = Math.Abs(px - cx) - rx; 
+            float ny = Math.Abs(py - cy) - ry;
+
+            float nx2 = Math.Max(nx, 0.0f);
+            float ny2 = Math.Max(ny, 0.0f);
+
+            return Utils.Min(Utils.Max(nx, ny), 0f) + (float)Math.Sqrt(nx2 * nx2 + ny2 * ny2);
+
+            //return -1f;
+        }
+
     }
 }

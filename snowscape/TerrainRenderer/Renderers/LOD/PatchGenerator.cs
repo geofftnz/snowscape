@@ -22,7 +22,7 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
 
             public int depth;
             public float x1, x2, y1, y2, xc, yc;
-            public int[] lod = { 0, 0, 0, 0 };
+            public int[] lod = { 0, 0, 0, 0, 0};
             public int tileSize;
 
             public QNode()

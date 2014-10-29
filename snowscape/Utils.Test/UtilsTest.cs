@@ -27,5 +27,25 @@ namespace Utils.Test
             Assert.AreEqual(1, 5.Wrap(4));
             Assert.AreEqual(3, (-1).Wrap(4));
         }
+
+        [TestMethod]
+        public void DistanceToSquare_PointInside()
+        {
+            float d = Utils.DistanceToSquare(1f, 1f, 4f, 4f, 2f, 2f);
+            Assert.AreEqual(0f, d);
+        }
+
+        [TestMethod]
+        public void DistanceToSquare_PointOutside()
+        {
+            float d;
+            
+            d = Utils.DistanceToSquare(1f, 1f, 4f, 4f, 1f, 5f);
+            Assert.AreEqual(1f, d);
+
+            d = Utils.DistanceToSquare(1f, 1f, 4f, 4f, 5f, 5f);
+            Assert.IsTrue(Math.Abs(d-(float)Math.Sqrt(2.0)) < 0.000001f);
+
+        }
     }
 }
