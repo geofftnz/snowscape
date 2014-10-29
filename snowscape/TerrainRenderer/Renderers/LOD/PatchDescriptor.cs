@@ -11,6 +11,9 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
         // Reference to the tile we're rendering
         public TerrainTile tile { get; set; }
 
+        // Model matrix for the tile (HACK: since it's local for the tile)
+        public Matrix4 tileModelMatrix { get; set; }
+
         // size of this patch in tile coordinates
         public int TileSize { get; set; }
 
