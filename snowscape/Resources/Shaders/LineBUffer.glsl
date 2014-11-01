@@ -13,6 +13,7 @@ out vec4 out_col;
 void main() {
 
     gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vertex, 1.0);
+	//gl_Position = vec4(vertex, 1.0);
 	out_col = colour;
 
 }
@@ -24,7 +25,9 @@ precision highp float;
 
 in vec4 out_col;
 
+out vec4 out_Colour;
+
 void main(void)
 {
-	gl_Fragcolor = out_col;
+	out_Colour = out_col;
 }

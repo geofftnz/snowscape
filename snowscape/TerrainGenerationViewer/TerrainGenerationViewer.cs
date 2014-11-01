@@ -24,6 +24,7 @@ using Snowscape.TerrainRenderer.Mesh;
 using Loaders = Snowscape.TerrainRenderer.Loaders;
 using OpenTKExtensions.Framework;
 using Snowscape.TerrainRenderer.Renderers.LOD;
+using OpenTKExtensions.Components;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -83,6 +84,8 @@ namespace Snowscape.TerrainGenerationViewer
         private GenerationVisPatchLowRenderer tileRendererPatchLow;
         private GenerationVisPatchRenderer tileRendererPatch;
         private WireframePatchRenderer tileRendererWireframe;
+
+        private LineBuffer lineBuffer;
 
         #endregion
 
@@ -199,7 +202,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
 
-
+            this.Components.Add(this.lineBuffer = new LineBuffer(), LoadOrder.Phase3);
 
             #endregion
 
@@ -847,6 +850,15 @@ namespace Snowscape.TerrainGenerationViewer
             textManager.Render(overlayProjection, overlayModelview);
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
+            //Matrix4 lineBufferModel = Matrix4.CreateScale(0.5f) * Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f);
+            this.lineBuffer.ClearLines();
+            this.lineBuffer.AddLine(new Vector3(0.1f, 0.1f, 0.0f), new Vector3(0.9f, 0.9f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+            this.lineBuffer.AddLine(new Vector3(0.1f, 0.9f, 0.0f), new Vector3(0.9f, 0.1f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
+
+            this.lineBuffer.Render(Matrix4.Identity, overlayModelview, overlayProjection);
+            frameTracker.Step("linebuffer-render", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+
+
             //perfmon.Start("FrameTracker");
             //this.frameTrackerRenderer.SetData(this.frameTracker.GetBarData(), this.frameTracker.GetBarColour());
             //perfmon.Stop("FrameTracker");
@@ -863,6 +875,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.frameTrackerRenderer.Render(overlayProjection, overlayModelview, 0.5f);
             frameTracker.Step("frametracker-render", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+
 
             GL.Enable(EnableCap.DepthTest);
 

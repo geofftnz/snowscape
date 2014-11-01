@@ -16,6 +16,7 @@ namespace OpenTKExtensions.Components
         private Vector4[] colour;
         private uint[] index;
         private int numLines=0;
+        private bool needRefresh = false;
 
         private VBO vertexVBO = new VBO("linebuffer-v");
         private VBO colourVBO = new VBO("linebuffer-c");
@@ -97,11 +98,29 @@ namespace OpenTKExtensions.Components
                 colour[i+1] = col;
 
                 this.numLines++;
+                needRefresh = true;
+            }
+        }
+
+        public void RefreshBuffers()
+        {
+            if (needRefresh)
+            {
+                vertexVBO.SetData(vertex);
+                colourVBO.SetData(colour);
+
+                needRefresh = false;
             }
         }
 
         public void Render(Matrix4 model, Matrix4 view, Matrix4 projection)
         {
+            RefreshBuffers();
+
+            //GL.Disable(EnableCap.Texture2D);
+            //GL.Disable(EnableCap.CullFace);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             this.shader
                 .UseProgram()
