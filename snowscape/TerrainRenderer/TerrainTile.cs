@@ -36,8 +36,8 @@ namespace Snowscape.TerrainRenderer
         public Texture ParamTexture { get; private set; }
         public Sampler LinearSampler { get; private set; }
 
-        //public float MinHeight { get; private set; }
-        //public float MaxHeight { get; private set; }
+        public float MinHeight { get; private set; }
+        public float MaxHeight { get; private set; }
 
         private Matrix4 modelMatrix;
         public Matrix4 ModelMatrix
