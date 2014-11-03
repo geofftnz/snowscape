@@ -29,6 +29,9 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
         // closest distance to viewer
         public float Distance { get; set; }
 
+        // level of detail
+        public int LOD { get; set; }
+
         public PatchDescriptor()
         {
                 

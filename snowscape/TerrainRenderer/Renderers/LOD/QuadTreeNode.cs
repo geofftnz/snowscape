@@ -122,7 +122,7 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
             float patchDistance = distance.Min();
 
             // recusion limit, or not enough lod difference
-            if (depth > 6 || LODDiff < 2)
+            if (depth > 6 || LODDiff <= 2)
             {
                 yield return new PatchDescriptor
                 {
@@ -131,7 +131,8 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
                     TileSize = tileSize,
                     MeshSize = GetMeshSize(tileSize, patchLOD),
                     Offset = vertex[(int)Corner.BottomNearLeft].Xz,// / (float)this.tile.Width,
-                    Distance = patchDistance
+                    Distance = patchDistance,
+                    LOD = patchLOD
                 };
             }
             else

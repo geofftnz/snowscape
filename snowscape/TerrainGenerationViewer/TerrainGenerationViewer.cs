@@ -914,16 +914,16 @@ namespace Snowscape.TerrainGenerationViewer
             //    }
             //}
 
-            Frustum f = new Frustum(this.camera.View * this.camera.Projection);
+            //Frustum f = new Frustum(this.camera.View * this.camera.Projection);
             //Vector3 vup = new Vector3(0f, -1f, 0f);
 
 
-            var patches = GetAllTilePatches(f).ToList();
+            //var patches = GetAllTilePatches(f).ToList();
             Vector4[] box = new Vector4[4];
 
             this.lineBuffer.SetColour(new Vector4(0f, 1f, 0f, 0.5f));
 
-            foreach (var patch in patches)
+            foreach (var patch in tilePatches)
             {
                 for (int i = 0; i < 4; i++)
                 {
@@ -944,7 +944,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
 
-            DebugRenderFrustum(f);
+            DebugRenderFrustum(viewfrustum);
 
             //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + Vector3.Cross(vup, f.LeftPlane.Xyz) * 1024f).TopDown(), new Vector4(1f, 0f, 0f, 0.5f));
             //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + Vector3.Cross(vup, f.RightPlane.Xyz) * 1024f).TopDown(), new Vector4(0f, 1f, 0f, 0.5f));
@@ -1129,6 +1129,8 @@ namespace Snowscape.TerrainGenerationViewer
         }*/
 
         private IPatchGenerator patchGenerator = new PatchGenerator();
+        private List<PatchDescriptor> tilePatches = new List<PatchDescriptor>();
+        private Frustum viewfrustum;
 
         private IEnumerable<PatchDescriptor> GetAllTilePatches(Frustum f)
         {
@@ -1150,16 +1152,59 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderTiles()
         {
 
+            viewfrustum = new Frustum(this.camera.View * this.camera.Projection);
+
             (this.tileRendererPatch as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
+            tilePatches = GetAllTilePatches(viewfrustum).ToList();
+
+            foreach (var patch in tilePatches)
+            {
+                terrainTile.ModelMatrix = patch.TileModelMatrix;
+
+                this.tileRendererWireframe.Width = patch.MeshSize;
+                this.tileRendererWireframe.Height = patch.MeshSize;
+                this.tileRendererWireframe.Scale = patch.Scale;
+                this.tileRendererWireframe.Offset = patch.Offset;
+                this.tileRendererWireframe.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+                /*
+                if (patch.LOD < 0)
+                {
+                    this.tileRendererPatchLow.Width = patch.MeshSize;
+                    this.tileRendererPatchLow.Height = patch.MeshSize;
+                    this.tileRendererPatchLow.Scale = patch.Scale;
+                    this.tileRendererPatchLow.Offset = patch.Offset;
+                    this.tileRendererPatchLow.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+                }
+                else if (patch.LOD <= 2)
+                {
+                    this.tileRendererPatch.Width = patch.MeshSize;
+                    this.tileRendererPatch.Height = patch.MeshSize;
+                    this.tileRendererPatch.Scale = patch.Scale;
+                    this.tileRendererPatch.Offset = patch.Offset;
+                    this.tileRendererPatch.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+                }
+                else
+                {
+                    this.tileRendererPatchDetail.Width = patch.MeshSize;
+                    this.tileRendererPatchDetail.Height = patch.MeshSize;
+                    this.tileRendererPatchDetail.Scale = patch.Scale;
+                    this.tileRendererPatchDetail.Offset = patch.Offset;
+                    this.tileRendererPatchDetail.DetailScale = (float)patch.TileSize / (float)patch.MeshSize;
+
+                    this.tileRendererPatchDetail.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+                }*/
+            }
+
+            /*
             for (int y = -1; y <= 1; y++)
             {
                 for (int x = -1; x <= 1; x++)
                 {
                     RenderTile(this.terrainTile, (float)x, (float)y, tileRendererQuadtree);
                 }
-            }
+            }*/
 
         }
 
