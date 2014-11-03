@@ -13,6 +13,10 @@ namespace OpenTKExtensions
         {
             return new Vector3(v.X, v.Z, 0f);
         }
+        public static Vector3 TopDown(this Vector4 v)
+        {
+            return new Vector3(v.X, v.Z, 0f);
+        }
 
         public static Vector4 ThreePlaneIntersect(Vector4 p1,Vector4 p2,Vector4 p3)
         {

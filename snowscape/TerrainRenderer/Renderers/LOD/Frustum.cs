@@ -105,7 +105,7 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
         /// </summary>
         /// <param name="ps"></param>
         /// <returns></returns>
-        public ObjectClipResult TestBox(Vector3[] ps)
+        public ObjectClipResult TestBox(Vector4[] ps)
         {
             float mMinX, mMinY, mMinZ, mMaxX, mMaxY, mMaxZ;
 

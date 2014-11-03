@@ -11,6 +11,6 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
     /// </summary>
     public interface IPatchGenerator
     {
-        IEnumerable<PatchDescriptor> GetPatches(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye);
+        IEnumerable<PatchDescriptor> GetPatches(TerrainTile tile, Frustum f, Vector3 eye);
     }
 }

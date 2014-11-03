@@ -9,10 +9,10 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
     public class PatchDescriptor
     {
         // Reference to the tile we're rendering
-        public TerrainTile tile { get; set; }
+        public TerrainTile Tile { get; set; }
 
         // Model matrix for the tile (HACK: since it's local for the tile)
-        public Matrix4 tileModelMatrix { get; set; }
+        public Matrix4 TileModelMatrix { get; set; }
 
         // size of this patch in tile coordinates
         public int TileSize { get; set; }
@@ -26,6 +26,8 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
         // offset of this patch in tile coordinates
         public Vector2 Offset { get; set; }
 
+        // closest distance to viewer
+        public float Distance { get; set; }
 
         public PatchDescriptor()
         {

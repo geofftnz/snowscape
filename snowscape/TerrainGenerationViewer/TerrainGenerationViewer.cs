@@ -897,28 +897,52 @@ namespace Snowscape.TerrainGenerationViewer
         private void DrawViewFrustum()
         {
             this.lineBuffer.ClearLines();
-            float tilesize = (float)TileWidth;
+            //float tilesize = (float)TileWidth;
 
-            Vector4 col = new Vector4(1f, 1f, 1f, 0.5f);
+            //Vector4 col = new Vector4(1f, 1f, 1f, 0.5f);
 
-            // output example tiles
+            //// output example tiles
 
-            for (int y = -1; y <= 1; y++)
-            {
-                for (int x = -1; x <= 1; x++)
-                {
-                    lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x+1) * tilesize, (float)y * tilesize, 0f), col);
-                    lineBuffer.AddLine(new Vector3((float)(x+1) * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x + 1) * tilesize, (float)(y+1) * tilesize, 0f), col);
-                    lineBuffer.AddLine(new Vector3((float)(x+1) * tilesize, (float)(y+1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)(y+1) * tilesize, 0f), col);
-                    lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)(y+1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)y * tilesize, 0f), col);
-                }
-            }
-
-
-
+            //for (int y = -1; y <= 1; y++)
+            //{
+            //    for (int x = -1; x <= 1; x++)
+            //    {
+            //        lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x+1) * tilesize, (float)y * tilesize, 0f), col);
+            //        lineBuffer.AddLine(new Vector3((float)(x+1) * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x + 1) * tilesize, (float)(y+1) * tilesize, 0f), col);
+            //        lineBuffer.AddLine(new Vector3((float)(x+1) * tilesize, (float)(y+1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)(y+1) * tilesize, 0f), col);
+            //        lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)(y+1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)y * tilesize, 0f), col);
+            //    }
+            //}
 
             Frustum f = new Frustum(this.camera.View * this.camera.Projection);
-            Vector3 vup = new Vector3(0f, -1f, 0f);
+            //Vector3 vup = new Vector3(0f, -1f, 0f);
+
+
+            var patches = GetAllTilePatches(f).ToList();
+            Vector4[] box = new Vector4[4];
+
+            this.lineBuffer.SetColour(new Vector4(0f, 1f, 0f, 0.5f));
+
+            foreach (var patch in patches)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    box[i] = patch.Tile.BoundingBox[i];
+                    
+                    box[i].X *= (float)patch.TileSize / (float)patch.Tile.Width;
+                    box[i].Z *= (float)patch.TileSize / (float)patch.Tile.Width;
+                    box[i].X += patch.Offset.X;
+                    box[i].Z += patch.Offset.Y;
+
+                    //box[i] = Vector4.Transform(box[i], patch.TileModelMatrix);
+                }
+                lineBuffer.MoveTo(box[0].TopDown());
+                lineBuffer.LineTo(box[1].TopDown());
+                lineBuffer.LineTo(box[3].TopDown());
+                lineBuffer.LineTo(box[2].TopDown());
+                lineBuffer.LineTo(box[0].TopDown());
+            }
+
 
             DebugRenderFrustum(f);
 
@@ -934,7 +958,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             // point clipping tests
 
-            col = DebugRenderFrustumCollisionTest(tilesize, f);
+            //col = DebugRenderFrustumCollisionTest(tilesize, f);
             /*
             for (int y = -30; y <= 30; y++)
             {
@@ -970,7 +994,7 @@ namespace Snowscape.TerrainGenerationViewer
             Vector3 pofs = new Vector3(50.0f, 50.0f, 0.0f);
             Vector4 col = new Vector4(1f);
 
-            Vector3[] box = new Vector3[8];
+            Vector4[] box = new Vector4[8];
             float minHeight = 0f, maxHeight = 40f;
             float ofs = tilesize * 0.095f;
 
@@ -978,17 +1002,17 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 for (int x = -30; x <= 30; x++)
                 {
-                    var tp = new Vector3((float)x * tilesize * 0.1f, minHeight, (float)y * tilesize * 0.1f);
+                    var tp = new Vector4((float)x * tilesize * 0.1f, minHeight, (float)y * tilesize * 0.1f, 1.0f);
 
                     int i = 0;
-                    box[i++] = tp + new Vector3(ofs, 0f, 0f);
-                    box[i++] = tp + new Vector3(ofs, 0f, ofs);
-                    box[i++] = tp + new Vector3(0f, 0f, ofs);
-                    box[i++] = tp + new Vector3(0f, 0f, 0f);
-                    box[i++] = tp + new Vector3(ofs, maxHeight - minHeight, 0f);
-                    box[i++] = tp + new Vector3(ofs, maxHeight - minHeight, ofs);
-                    box[i++] = tp + new Vector3(0f, maxHeight - minHeight, ofs);
-                    box[i++] = tp + new Vector3(0f, maxHeight - minHeight, 0f);
+                    box[i++] = tp + new Vector4(ofs, 0f, 0f, 0f);
+                    box[i++] = tp + new Vector4(ofs, 0f, ofs, 0f);
+                    box[i++] = tp + new Vector4(0f, 0f, ofs, 0f);
+                    box[i++] = tp + new Vector4(0f, 0f, 0f, 0f);
+                    box[i++] = tp + new Vector4(ofs, maxHeight - minHeight, 0f, 0f);
+                    box[i++] = tp + new Vector4(ofs, maxHeight - minHeight, ofs, 0f);
+                    box[i++] = tp + new Vector4(0f, maxHeight - minHeight, ofs, 0f);
+                    box[i++] = tp + new Vector4(0f, maxHeight - minHeight, 0f, 0f);
 
                     var hit = f.TestBox(box);
 
@@ -1106,27 +1130,17 @@ namespace Snowscape.TerrainGenerationViewer
 
         private IPatchGenerator patchGenerator = new PatchGenerator();
 
-        private void RenderTiles2()
+        private IEnumerable<PatchDescriptor> GetAllTilePatches(Frustum f)
         {
-            numPatches = 0;
-            IPatchRenderer tileRenderer = this.tileRendererWireframe;
-
-
             for (int y = -1; y <= 1; y++)
             {
                 for (int x = -1; x <= 1; x++)
                 {
                     terrainTile.ModelMatrix = Matrix4.CreateTranslation((float)x * (float)terrainTile.Width, 0f, (float)y * (float)terrainTile.Height);
 
-                    foreach (var p in patchGenerator.GetPatches(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos))
+                    foreach (var p in patchGenerator.GetPatches(terrainTile, f, this.eyePos))
                     {
-                        tileRenderer.Width = p.TileSize;
-                        tileRenderer.Height = p.TileSize;
-                        tileRenderer.Scale = p.Scale;
-                        tileRenderer.Offset = p.Offset;
-                        tileRenderer.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
-
-                        numPatches++;
+                        yield return p;
                     }
                 }
             }
