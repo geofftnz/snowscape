@@ -465,6 +465,7 @@ namespace Snowscape.TerrainGenerationViewer
             try
             {
                 this.Terrain.Load(this.GetTerrainFileName(0));
+                this.terrainTile.SetHeightRange(this.Terrain.GetMinHeight(), this.Terrain.GetMaxHeight());
             }
             catch (FileNotFoundException)
             {

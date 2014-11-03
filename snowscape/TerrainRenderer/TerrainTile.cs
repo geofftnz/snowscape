@@ -39,6 +39,12 @@ namespace Snowscape.TerrainRenderer
         public float MinHeight { get; private set; }
         public float MaxHeight { get; private set; }
 
+        /// <summary>
+        /// bounding box for this tile, used for frustum culling
+        /// </summary>
+        private Vector4[] boundingBox = new Vector4[8];
+        public Vector4[] BoundingBox { get { return boundingBox; } }
+
         private Matrix4 modelMatrix;
         public Matrix4 ModelMatrix
         {
@@ -57,8 +63,12 @@ namespace Snowscape.TerrainRenderer
         {
             this.Width = width;
             this.Height = height;
+            this.MinHeight = 0f;
+            this.MaxHeight = 1f;
+
             this.ModelMatrix = Matrix4.Identity;
             this.InitTextures();
+
 
             this.Loading += TerrainTile_Loading;
             this.Unloading += TerrainTile_Unloading;
@@ -119,6 +129,9 @@ namespace Snowscape.TerrainRenderer
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
+
+            SetHeightRange(terrain.Map.Select(c => c.Height).Min(), terrain.Map.Select(c => c.Height).Max());
+
             // height from cells
             UploadHeightTextureFromTerrain(terrain, offsetX, offsetY);
 
@@ -135,6 +148,8 @@ namespace Snowscape.TerrainRenderer
 
         public void SetDataFromTerrainGeneration(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
+            SetHeightRange(terrain.Map.Select(c => c.Height).Min(), terrain.Map.Select(c => c.Height).Max());
+
             // height from cells
             UploadHeightTextureFromTerrain(terrain, offsetX, offsetY);
 
@@ -154,6 +169,13 @@ namespace Snowscape.TerrainRenderer
             // param texture - cell components
             UploadVisParamTexture(data);
         }
+
+        public void SetHeightRange(float minheight, float maxheight)
+        {
+            this.MinHeight = minheight;
+            this.MaxHeight = maxheight;
+        }
+
 
         private void UploadVisParamTexture(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {

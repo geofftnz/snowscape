@@ -743,5 +743,16 @@ namespace TerrainGeneration
         }
 
 
+
+
+        public float GetMinHeight()
+        {
+            throw new NotImplementedException();
+        }
+
+        public float GetMaxHeight()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
