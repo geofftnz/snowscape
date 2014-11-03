@@ -63,8 +63,7 @@ namespace Snowscape.TerrainRenderer
         {
             this.Width = width;
             this.Height = height;
-            this.MinHeight = 0f;
-            this.MaxHeight = 1f;
+            this.SetHeightRange(0f, 1f);
 
             this.ModelMatrix = Matrix4.Identity;
             this.InitTextures();
@@ -174,6 +173,32 @@ namespace Snowscape.TerrainRenderer
         {
             this.MinHeight = minheight;
             this.MaxHeight = maxheight;
+            this.InitBoundingBox();
+        }
+
+        private void InitBoundingBox()
+        {
+            int i = 0;
+            float x = (float)this.Width;
+            float z = (float)this.Height;
+
+            // bottom
+            // 0 1
+            // 2 3  
+            //
+            // top 
+            // 4 5
+            // 6 7
+
+            boundingBox[i++] = new Vector4(0f, MinHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(x, MinHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(0f, MinHeight, z, 1f);
+            boundingBox[i++] = new Vector4(x, MinHeight, z, 1f);
+
+            boundingBox[i++] = new Vector4(0f, MaxHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(x, MaxHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(0f, MaxHeight, z, 1f);
+            boundingBox[i++] = new Vector4(x, MaxHeight, z, 1f);
         }
 
 
