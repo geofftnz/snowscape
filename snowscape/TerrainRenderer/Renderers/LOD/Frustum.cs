@@ -42,6 +42,16 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
         public Vector4 NearPlane { get { return clippingPlane[(int)ClippingPlane.Near]; } }
         public Vector4 FarPlane { get { return clippingPlane[(int)ClippingPlane.Far]; } }
 
+        public Vector4 NearTopLeftCorner { get { return corner[0]; } }
+        public Vector4 NearBottomLeftCorner { get { return corner[1]; } }
+        public Vector4 NearTopRightCorner { get { return corner[2]; } }
+        public Vector4 NearBottomRightCorner { get { return corner[3]; } }
+
+        public Vector4 FarTopLeftCorner { get { return corner[4]; } }
+        public Vector4 FarBottomLeftCorner { get { return corner[5]; } }
+        public Vector4 FarTopRightCorner { get { return corner[6]; } }
+        public Vector4 FarBottomRightCorner { get { return corner[7]; } }
+
 
         public Frustum(Matrix4 viewProjection)
         {

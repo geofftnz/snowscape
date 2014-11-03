@@ -24,6 +24,8 @@ namespace OpenTKExtensions.Components
 
         private ShaderProgram shader = new ShaderProgram("linebuffer");
 
+        private Vector3 current = Vector3.Zero;
+        private Vector4 currentColour = new Vector4(1f);
 
         public LineBuffer(int maxlines)
         {
@@ -100,6 +102,27 @@ namespace OpenTKExtensions.Components
                 this.numLines++;
                 needRefresh = true;
             }
+        }
+
+        public void MoveTo(Vector3 p0)
+        {
+            current = p0;
+        }
+
+        public void LineTo(Vector3 p0, Vector4 col)
+        {
+            AddLine(current, p0, col);
+            current = p0;
+        }
+
+        public void LineTo(Vector3 p0)
+        {
+            LineTo(p0, currentColour);
+        }
+
+        public void SetColour(Vector4 col)
+        {
+            currentColour = col;
         }
 
         public void RefreshBuffers()
