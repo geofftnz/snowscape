@@ -267,15 +267,17 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
 
         public static int GetMeshSize(int tileSize, int LOD)
         {
+            int meshSize = tileSize;
+
             if (LOD < 0)
             {
-                return tileSize >> (-LOD);
+                meshSize = tileSize >> (-LOD);
             }
             if (LOD > 0)
             {
-                return tileSize << LOD;
+                meshSize = tileSize << LOD;
             }
-            return tileSize;
+            return meshSize.ClampInclusive(4,1024);
         }
 
 

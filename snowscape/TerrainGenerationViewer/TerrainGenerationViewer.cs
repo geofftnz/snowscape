@@ -816,6 +816,11 @@ namespace Snowscape.TerrainGenerationViewer
             SetTerrainProjection();
 
 
+            viewfrustum = new Frustum(this.camera.View * this.camera.Projection);
+            tilePatches = GetAllTilePatches(viewfrustum).ToList();
+            frameTracker.Step("terrain LOD", new Vector4(1.0f, 0.8f, 0.0f, 1.0f));
+
+
             this.lightingStep.BindForWriting();
 
             RenderTiles();
@@ -1183,9 +1188,9 @@ namespace Snowscape.TerrainGenerationViewer
             QuadTreeNode.MaxLODDiff = parameters["loddiff"].GetValue<int>();
             QuadTreeNode.MaxDepth = parameters["maxdepth"].GetValue<int>();
 
-            for (int y = -1; y <= 1; y++)
+            for (int y = -2; y <= 2; y++)
             {
-                for (int x = -1; x <= 1; x++)
+                for (int x = -2; x <= 2; x++)
                 {
                     terrainTile.ModelMatrix = Matrix4.CreateTranslation((float)x * (float)terrainTile.Width, 0f, (float)y * (float)terrainTile.Height);
 
@@ -1201,12 +1206,10 @@ namespace Snowscape.TerrainGenerationViewer
         private void RenderTiles()
         {
 
-            viewfrustum = new Frustum(this.camera.View * this.camera.Projection);
 
             (this.tileRendererPatch as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
-            tilePatches = GetAllTilePatches(viewfrustum).ToList();
 
             foreach (var patch in tilePatches.OrderBy(p=>p.Distance))
             {
