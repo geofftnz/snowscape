@@ -137,8 +137,8 @@ namespace Snowscape.TerrainRenderer.Renderers
             // right
             for (int i = 0; i < MESHRES; i++)
             {
-                vertex[ii] = GetVertex(0, i);
-                boxcoord[ii] = GetBoxcoord(0, i);
+                vertex[ii] = GetVertex(MESHRES - 1, i);
+                boxcoord[ii] = GetBoxcoord(MESHRES - 1, i);
                 ii++;
             }
 

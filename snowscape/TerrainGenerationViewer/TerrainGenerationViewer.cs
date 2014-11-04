@@ -103,7 +103,11 @@ namespace Snowscape.TerrainGenerationViewer
         private Matrix4 terrainProjection = Matrix4.Identity;
         private Matrix4 terrainModelview = Matrix4.Identity;
 
-        private Matrix4 lineBufferModel = Matrix4.CreateScale(1.0f / (float)(TileWidth * 3)) * Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) * Matrix4.CreateScale(0.5f) * Matrix4.CreateScale(-1f, 1f, 1f) * Matrix4.CreateTranslation(1.0f, 0f, 0f);
+        private Matrix4 lineBufferModel = Matrix4.CreateScale(1.0f / (float)(TileWidth * 3)) *
+                                          Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) * 
+                                          Matrix4.CreateScale(0.5f) * 
+                                          Matrix4.CreateScale(-1f, 1f, 1f) * 
+                                          Matrix4.CreateTranslation(1.0f, 0f, 0f);
 
         private IPatchCache patchCache = new PatchCache();
 
@@ -925,16 +929,31 @@ namespace Snowscape.TerrainGenerationViewer
 
             foreach (var patch in tilePatches)
             {
+                box[0] = new Vector4(0f, 0f, 0f, 1f);
+                box[1] = new Vector4(1f, 0f, 0f, 1f);
+                box[2] = new Vector4(0f, 0f, 1f, 1f);
+                box[3] = new Vector4(1f, 0f, 1f, 1f);
+
                 for (int i = 0; i < 4; i++)
                 {
-                    box[i] = patch.Tile.BoundingBox[i];
-                    
-                    box[i].X *= (float)patch.TileSize / (float)patch.Tile.Width;
-                    box[i].Z *= (float)patch.TileSize / (float)patch.Tile.Width;
+                    /*
+	                    v.xz *= scale;
+	                    v.xz += offset;
+	                    v.x *= boxparam.x;
+	                    v.z *= boxparam.y;
+                     */
+                    //box[i] = patch.Tile.BoundingBox[i];
+
+                    box[i].X *= patch.Scale;
+                    box[i].Z *= patch.Scale;
+
                     box[i].X += patch.Offset.X;
                     box[i].Z += patch.Offset.Y;
 
-                    //box[i] = Vector4.Transform(box[i], patch.TileModelMatrix);
+                    box[i].X *= (float)patch.Tile.Width;
+                    box[i].Z *= (float)patch.Tile.Height;
+
+                    box[i] = Vector4.Transform(box[i], patch.TileModelMatrix);
                 }
                 lineBuffer.MoveTo(box[0].TopDown());
                 lineBuffer.LineTo(box[1].TopDown());

@@ -21,7 +21,7 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
         public int MeshSize { get; set; }
 
         // scale of this patch (difference between mesh and tile coordinate systems)
-        public float Scale { get { return TileSize / MeshSize; } }
+        public float Scale { get; set; }
 
         // offset of this patch in tile coordinates
         public Vector2 Offset { get; set; }
