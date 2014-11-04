@@ -11,6 +11,10 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
     public class QuadTreeNode
     {
 
+        public static float DetailDistanceScale = 8f;
+        public static int MaxLODDiff = 1;
+        public static int MaxDepth = 6;
+
         public enum Corner
         {
             BottomNearLeft = 0,
@@ -135,7 +139,7 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
             float patchDistance = distance.Min();
 
             // recusion limit, or not enough lod difference
-            if (depth > 6 || LODDiff < 2)
+            if (depth > MaxDepth || LODDiff <= MaxLODDiff)
             {
                 yield return new PatchDescriptor
                 {
@@ -241,7 +245,7 @@ namespace Snowscape.TerrainRenderer.Renderers.LOD
 
         public static int GetLOD(float distance, int depth)
         {
-            float d = 16f;
+            float d = DetailDistanceScale.Clamp(1f,100f);
             float dd = 2f;
             if (distance < d && depth > 3) return 4;
             d *= dd;

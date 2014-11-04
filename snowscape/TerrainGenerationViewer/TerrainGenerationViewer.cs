@@ -91,8 +91,9 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-
-
+        private IPatchGenerator patchGenerator = new PatchGenerator();
+        private List<PatchDescriptor> tilePatches = new List<PatchDescriptor>();
+        private Frustum viewfrustum;
 
         public ITerrainGen Terrain { get; set; }
         private int TerrainGenPass = 1;
@@ -143,6 +144,10 @@ namespace Snowscape.TerrainGenerationViewer
         private int textureUpdateCount = 0;
         private uint currentParamsVersion = 0;
         private uint prevParamsVersion = 0;
+
+        private int numPatches = 0;
+        private int numTriangles = 0;
+
 
         private PerfMonitor perfmon = new PerfMonitor();
         private FrameTracker frameTracker = new FrameTracker();
@@ -228,6 +233,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             #region Parameters
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
+
+            parameters.Add(new Parameter<float>("detailscale", 6.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
+            parameters.Add(new Parameter<int>("loddiff", 1, 1, 4, v => v + 1, v => v - 1));
+            parameters.Add(new Parameter<int>("maxdepth", 8, 0, 12, v => v + 1, v => v - 1));
 
             parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
@@ -668,6 +677,8 @@ namespace Snowscape.TerrainGenerationViewer
             bool needToRenderLighting = false;
             bool stepFence = (bool)this.parameters["glFinish"].GetValue();
 
+            GL.Finish();
+
             if (this.reloadShaders)
             {
                 this.lightingStep.ReloadShader();
@@ -694,7 +705,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
             frameTracker.Step("text-timers", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
 
-            textManager.AddOrUpdate(new TextBlock("numPatches", string.Format("patches: {0}", numPatches), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1f, 1f, 1f, 1f)));
+            textManager.AddOrUpdate(new TextBlock("numPatches", string.Format("patches: {0:00}  tri: {1:#,###,##0}", numPatches, numTriangles), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1f, 1f, 1f, 1f)));
             y += 0.0125f;
 
             //foreach (var timer in this.perfmon.AllAverageTimes())
@@ -846,6 +857,12 @@ namespace Snowscape.TerrainGenerationViewer
             if (stepFence) { GL.Finish(); }
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
+
+            // estimate total tile mesh size
+            numPatches = this.tilePatches.Count;
+            numTriangles = this.tilePatches.Select(p => p.MeshSize * p.MeshSize).Sum();
+
+
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             if (textManager.NeedsRefresh)
@@ -858,7 +875,6 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             DrawViewFrustum();
-
             frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
 
             //this.lineBuffer.AddLine(new Vector3(0.1f, 0.1f, 0.0f), new Vector3(0.9f, 0.9f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
@@ -1141,7 +1157,6 @@ namespace Snowscape.TerrainGenerationViewer
         }
 
 
-        private int numPatches = 0;
         /*
         private void RenderTiles()
         {
@@ -1160,12 +1175,14 @@ namespace Snowscape.TerrainGenerationViewer
             }
         }*/
 
-        private IPatchGenerator patchGenerator = new PatchGenerator();
-        private List<PatchDescriptor> tilePatches = new List<PatchDescriptor>();
-        private Frustum viewfrustum;
 
         private IEnumerable<PatchDescriptor> GetAllTilePatches(Frustum f)
         {
+
+            QuadTreeNode.DetailDistanceScale = parameters["detailscale"].GetValue<float>();
+            QuadTreeNode.MaxLODDiff = parameters["loddiff"].GetValue<int>();
+            QuadTreeNode.MaxDepth = parameters["maxdepth"].GetValue<int>();
+
             for (int y = -1; y <= 1; y++)
             {
                 for (int x = -1; x <= 1; x++)
@@ -1191,7 +1208,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             tilePatches = GetAllTilePatches(viewfrustum).ToList();
 
-            foreach (var patch in tilePatches)
+            foreach (var patch in tilePatches.OrderBy(p=>p.Distance))
             {
                 terrainTile.ModelMatrix = patch.TileModelMatrix;
 
