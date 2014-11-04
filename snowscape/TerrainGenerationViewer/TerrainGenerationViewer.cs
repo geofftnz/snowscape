@@ -104,9 +104,9 @@ namespace Snowscape.TerrainGenerationViewer
         private Matrix4 terrainModelview = Matrix4.Identity;
 
         private Matrix4 lineBufferModel = Matrix4.CreateScale(1.0f / (float)(TileWidth * 3)) *
-                                          Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) * 
-                                          Matrix4.CreateScale(0.5f) * 
-                                          Matrix4.CreateScale(-1f, 1f, 1f) * 
+                                          Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) *
+                                          Matrix4.CreateScale(0.5f) *
+                                          Matrix4.CreateScale(-1f, 1f, 1f) *
                                           Matrix4.CreateTranslation(1.0f, 0f, 0f);
 
         private IPatchCache patchCache = new PatchCache();
@@ -934,6 +934,19 @@ namespace Snowscape.TerrainGenerationViewer
                 box[2] = new Vector4(0f, 0f, 1f, 1f);
                 box[3] = new Vector4(1f, 0f, 1f, 1f);
 
+                switch (patch.LOD)
+                {
+                    case -4: this.lineBuffer.SetColour(new Vector4(0.4f, 0f, 0f, 0.5f));break;
+                    case -3: this.lineBuffer.SetColour(new Vector4(0.6f, 0f, 0f, 0.5f));break;
+                    case -2: this.lineBuffer.SetColour(new Vector4(0.8f, 0f, 0f, 0.5f));break;
+                    case -1: this.lineBuffer.SetColour(new Vector4(1.0f, 0f, 0f, 0.5f));break;
+                    case 0: this.lineBuffer.SetColour(new Vector4(1.0f, 0.5f, 0f, 0.5f));break;
+                    case 1: this.lineBuffer.SetColour(new Vector4(1.0f, 0.8f, 0f, 0.5f));break;
+                    case 2: this.lineBuffer.SetColour(new Vector4(1.0f, 1.0f, 0f, 0.5f));break;
+                    case 3: this.lineBuffer.SetColour(new Vector4(0.5f, 1.0f, 0f, 0.5f));break;
+                    case 4: this.lineBuffer.SetColour(new Vector4(0.0f, 1.0f, 0f, 0.5f));break;
+                }
+
                 for (int i = 0; i < 4; i++)
                 {
                     /*
@@ -1182,12 +1195,14 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 terrainTile.ModelMatrix = patch.TileModelMatrix;
 
+                /*
                 this.tileRendererWireframe.Width = patch.MeshSize;
                 this.tileRendererWireframe.Height = patch.MeshSize;
                 this.tileRendererWireframe.Scale = patch.Scale;
                 this.tileRendererWireframe.Offset = patch.Offset;
                 this.tileRendererWireframe.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
-                /*
+                 */
+                
                 if (patch.LOD < 0)
                 {
                     this.tileRendererPatchLow.Width = patch.MeshSize;
@@ -1213,7 +1228,7 @@ namespace Snowscape.TerrainGenerationViewer
                     this.tileRendererPatchDetail.DetailScale = (float)patch.TileSize / (float)patch.MeshSize;
 
                     this.tileRendererPatchDetail.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
-                }*/
+                }
             }
 
             /*
