@@ -1231,7 +1231,7 @@ namespace Snowscape.TerrainGenerationViewer
                     this.tileRendererPatchLow.Offset = patch.Offset;
                     this.tileRendererPatchLow.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
                 }
-                else if (patch.LOD <= 2)
+                else if (patch.LOD < 1)
                 {
                     this.tileRendererPatch.Width = patch.MeshSize;
                     this.tileRendererPatch.Height = patch.MeshSize;

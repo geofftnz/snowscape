@@ -707,7 +707,8 @@ void main(void)
 
 
 	// output diffuse
-	c = diffuseT.rgb;
+	//c = diffuseT.rgb;
+	c = normalT.rgb;
 
 
 	
