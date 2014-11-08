@@ -70,6 +70,7 @@
     <Compile Include="NoiseTexture.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
     <Compile Include="Renderers\CompositeLODRenderer.cs" />
+    <Compile Include="Renderers\PatchLowRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchLowRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchDetailRenderer.cs" />
     <Compile Include="Renderers\LOD\Frustum.cs" />
