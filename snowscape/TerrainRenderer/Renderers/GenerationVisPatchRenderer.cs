@@ -95,7 +95,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 });
         }
 
-        public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eyePos)
+        public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eyePos)
         {
             var boxparam = tile.GetBoxParam();
 

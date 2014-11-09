@@ -20,6 +20,6 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// </summary>
     public interface ITileRenderer
     {
-        void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye);
+        void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eye);
     }
 }

@@ -138,7 +138,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 return baseRes;
             }
 
-            public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye, Vector3 reye, float detailRadius, IPatchRenderer tileRenderer, IPatchRenderer tileDetailRenderer)
+            public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eye, Vector3 reye, float detailRadius, IPatchRenderer tileRenderer, IPatchRenderer tileDetailRenderer)
             {
                 // can we render this tile without subdividing?
 
@@ -150,7 +150,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                     tileDetailRenderer.DetailScale = (float)this.TileSize / (float)tileDetailRenderer.Width;
                     tileDetailRenderer.Scale = (float)this.TileSize / (float)tile.Width;
                     tileDetailRenderer.Offset = (this.TopLeft.Position.Xz / (float)tile.Width);
-                    tileDetailRenderer.Render(tile, projection, view, eye);
+                    tileDetailRenderer.Render(tile, terrainGlobal, projection, view, eye);
                     return;
                 }
 
@@ -161,7 +161,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                     tileRenderer.Height = this.TileSize;
                     tileRenderer.Scale = (float)this.TileSize / (float)tile.Width;
                     tileRenderer.Offset = (this.TopLeft.Position.Xz / (float)tile.Width);
-                    tileRenderer.Render(tile, projection, view, eye);
+                    tileRenderer.Render(tile, terrainGlobal, projection, view, eye);
                     return;
                 }
 
@@ -176,7 +176,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                     BottomLeft = new QuadTreeVertex() { Position = new Vector3(this.TopLeft.Position.X, 0f, centre.Z) },
                     BottomRight = new QuadTreeVertex() { Position = centre },
                     TileSize = this.TileSize / 2
-                }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
+                }.Render(tile, terrainGlobal, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
                 // top right child
                 new QuadTreeNode()
@@ -186,7 +186,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                     BottomLeft = new QuadTreeVertex() { Position = centre },
                     BottomRight = new QuadTreeVertex() { Position = new Vector3(this.TopRight.Position.X, 0f, centre.Z) },
                     TileSize = this.TileSize / 2
-                }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
+                }.Render(tile, terrainGlobal, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
                 // bottom left child
                 new QuadTreeNode()
@@ -196,7 +196,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                     BottomLeft = this.BottomLeft,
                     BottomRight = new QuadTreeVertex() { Position = new Vector3(centre.X, 0f, this.BottomLeft.Position.Z) },
                     TileSize = this.TileSize / 2
-                }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
+                }.Render(tile, terrainGlobal, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
                 // bottom right child
                 new QuadTreeNode()
@@ -206,7 +206,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                     BottomLeft = new QuadTreeVertex() { Position = new Vector3(centre.X, 0f, this.BottomRight.Position.Z) },
                     BottomRight = this.BottomRight,
                     TileSize = this.TileSize / 2
-                }.Render(tile, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
+                }.Render(tile, terrainGlobal, projection, view, eye, reye, detailRadius, tileRenderer, tileDetailRenderer);
 
             }
         }
@@ -224,7 +224,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         }
 
 
-        public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye)
+        public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eye)
         {
             var xformeye = Vector3.Transform(eye, tile.InverseModelMatrix);
 
@@ -267,7 +267,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 distrenderer.Scale = 1.0f;
                 distrenderer.Offset = new Vector2(0.0f, 0.0f);
 
-                fullTileDistantRenderer.Render(tile, projection, view, eye);
+                fullTileDistantRenderer.Render(tile, terrainGlobal, projection, view, eye);
             }
             else // check inner detail radius
             {
@@ -279,11 +279,11 @@ namespace Snowscape.TerrainRenderer.Renderers
                     (fullTileNearRenderer as IPatchRenderer).Width = tile.Width;
                     (fullTileNearRenderer as IPatchRenderer).Height = tile.Height;
 
-                    fullTileNearRenderer.Render(tile, projection, view, eye);
+                    fullTileNearRenderer.Render(tile, terrainGlobal, projection, view, eye);
                 }
                 else
                 {
-                    root.Render(tile, projection, view, eye, xformeye, this.DetailRadius, this.subTileRenderer, this.subTileDetailRenderer);
+                    root.Render(tile, terrainGlobal, projection, view, eye, xformeye, this.DetailRadius, this.subTileRenderer, this.subTileDetailRenderer);
                 }
             }
         }

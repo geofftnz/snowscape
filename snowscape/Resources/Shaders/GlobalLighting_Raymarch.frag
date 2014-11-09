@@ -2,9 +2,10 @@
 precision highp float;
 
 // textures from gbuffer
-uniform sampler2D diffuseTex;  // 0
-uniform sampler2D paramTex;    // 1
-uniform sampler2D normalTex;   // 2
+uniform sampler2D colourTex;  // 0
+uniform sampler2D normalTex;   // 1
+uniform sampler2D shadingTex;    // 2
+uniform sampler2D lightingTex;    // 3
 
 // global textures
 uniform sampler2D heightTex;
@@ -691,9 +692,10 @@ float LinearizeDepth2(float depth)
 
 void main(void)
 {
-	vec4 diffuseT = texture(diffuseTex,texcoord0.xy);
-    vec4 paramT = texture(paramTex,texcoord0.xy);
+	vec4 colourT = texture(colourTex,texcoord0.xy);
     vec4 normalT = texture(normalTex,texcoord0.xy);
+    vec4 shadingT = texture(shadingTex,texcoord0.xy);
+    vec4 lightingT = texture(lightingTex,texcoord0.xy);
 	float depth = texture(depthTex,texcoord0.xy).r;
 
 	vec4 projpos = vec4(texcoord0.x * 2.0 - 1.0, texcoord0.y * 2.0 - 1.0, depth*2.0-1.0, 1.0);
@@ -702,13 +704,13 @@ void main(void)
 
     vec3 c = vec3(0.0,0.0,0.0);
     
-    vec3 normal = normalize(normalT.xyz - vec3(0.5));
-    vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
+    //vec3 normal = normalize(normalT.xyz - vec3(0.5));
+    //vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
 
 
 	// output diffuse
 	//c = diffuseT.rgb;
-	c = normalT.rgb;
+	c = colourT.rgb;
 
 
 	

@@ -84,6 +84,7 @@ namespace Snowscape.TerrainGenerationViewer
         private GenerationVisPatchLowRenderer tileRendererPatchLow;
         private GenerationVisPatchRenderer tileRendererPatch;
         private WireframePatchRenderer tileRendererWireframe;
+        private PatchLowRenderer tilePatchLowRenderer;
 
         private LineBuffer lineBuffer;
 
@@ -189,6 +190,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererWireframe = new WireframePatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tilePatchLowRenderer = new PatchLowRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -1210,6 +1212,8 @@ namespace Snowscape.TerrainGenerationViewer
             (this.tileRendererPatch as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
+            IPatchRenderer patchRenderer = tilePatchLowRenderer;
+
 
             foreach (var patch in tilePatches.OrderBy(p=>p.Distance))
             {
@@ -1223,32 +1227,25 @@ namespace Snowscape.TerrainGenerationViewer
                 this.tileRendererWireframe.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
                  */
                 
-                if (patch.LOD < 0)
+                if (patch.LOD <= -1)  // low res
                 {
-                    this.tileRendererPatchLow.Width = patch.MeshSize;
-                    this.tileRendererPatchLow.Height = patch.MeshSize;
-                    this.tileRendererPatchLow.Scale = patch.Scale;
-                    this.tileRendererPatchLow.Offset = patch.Offset;
-                    this.tileRendererPatchLow.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+                    patchRenderer = tilePatchLowRenderer;
                 }
-                else if (patch.LOD < 1)
+                else if (patch.LOD <= 0) // medium res - patch at terrain res or below. Detail normals & materials.
                 {
-                    this.tileRendererPatch.Width = patch.MeshSize;
-                    this.tileRendererPatch.Height = patch.MeshSize;
-                    this.tileRendererPatch.Scale = patch.Scale;
-                    this.tileRendererPatch.Offset = patch.Offset;
-                    this.tileRendererPatch.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+                    patchRenderer = tilePatchLowRenderer;
                 }
-                else
+                else // high res - patch at higher res - generated detail heights / normals / materials
                 {
-                    this.tileRendererPatchDetail.Width = patch.MeshSize;
-                    this.tileRendererPatchDetail.Height = patch.MeshSize;
-                    this.tileRendererPatchDetail.Scale = patch.Scale;
-                    this.tileRendererPatchDetail.Offset = patch.Offset;
-                    this.tileRendererPatchDetail.DetailScale = (float)patch.TileSize / (float)patch.MeshSize;
+                    patchRenderer = tilePatchLowRenderer;
+                }
 
-                    this.tileRendererPatchDetail.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
-                }
+                patchRenderer.Width = patch.MeshSize;
+                patchRenderer.Height = patch.MeshSize;
+                patchRenderer.Scale = patch.Scale;
+                patchRenderer.Offset = patch.Offset;
+                patchRenderer.DetailScale = (float)patch.TileSize / (float)patch.MeshSize;
+                patchRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos);
             }
 
             /*
@@ -1267,7 +1264,7 @@ namespace Snowscape.TerrainGenerationViewer
             tile.ModelMatrix = Matrix4.CreateTranslation(TileXOffset * (float)tile.Width, 0f, TileZOffset * (float)tile.Height);
 
             //this.tileRendererLOD.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
-            renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            renderer.Render(tile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 
         protected string GetTerrainFileName(int index)

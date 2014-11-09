@@ -67,10 +67,10 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.DetailScale = 1.0f;
             this.DetailTexScale = 0.1f;
 
-            this.Loading += GenerationVisPatchLowRenderer_Loading;
+            this.Loading += PatchLowRenderer_Loading;
         }
 
-        void GenerationVisPatchLowRenderer_Loading(object sender, EventArgs e)
+        void PatchLowRenderer_Loading(object sender, EventArgs e)
         {
             InitShader();
         }
@@ -79,8 +79,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.shader.Init(
-                @"GenVisPatchLow.vert",
-                @"GenVisPatchLow.frag",
+                @"PatchRender.glsl|LowVertex",
+                @"PatchRender.glsl|LowFragment",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 
@@ -88,13 +88,14 @@ namespace Snowscape.TerrainRenderer.Renderers
                 },
                 new string[]
                 {
-                    "out_Param",
+                    "out_Colour",
                     "out_Normal",
-                    "out_NormalLargeScale"
+                    "out_Shading",
+                    "out_Lighting"
                 });
         }
 
-        public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eyePos)
+        public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eyePos)
         {
             var boxparam = tile.GetBoxParam();
 
@@ -102,8 +103,16 @@ namespace Snowscape.TerrainRenderer.Renderers
             GL.CullFace(CullFaceMode.Back);  // we only want to render front-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-            tile.ParamTexture.Bind(TextureUnit.Texture1);
-            tile.NormalTexture.Bind(TextureUnit.Texture2);
+            //tile.ParamTexture.Bind(TextureUnit.Texture1);
+            //tile.NormalTexture.Bind(TextureUnit.Texture2);
+
+//uniform sampler2D heightTex;
+//uniform mat4 transform_matrix;
+//uniform vec4 boxparam;
+//uniform vec3 eyePos;
+//uniform float patchSize;
+//uniform float scale;
+//uniform vec2 offset;
 
             this.shader
                 .UseProgram()

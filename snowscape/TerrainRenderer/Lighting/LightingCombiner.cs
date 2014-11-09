@@ -121,9 +121,10 @@ namespace Snowscape.TerrainRenderer.Lighting
 
         void LightingCombiner_Loading(object sender, EventArgs e)
         {
-            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // rgb+shadow
-            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // rough+specexp+specpwr+sparkle
-            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal+ao
+            this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // colour: rgb, material
+            this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal+?
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // shading: roughness, specexp, specpwr, sparkle
+            this.gbuffer.SetSlot(3, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte));  // lighting - shadow, AO, emmissive, subsurface
 
             this.gbuffer.Init(this.Width, this.Height);
 
@@ -190,30 +191,32 @@ namespace Snowscape.TerrainRenderer.Lighting
         public void Render(RenderParams rp)
         {
 
-
-            rp.HeightTexture.Bind(TextureUnit.Texture3);
-            rp.ShadeTexture.Bind(TextureUnit.Texture4);
-            rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture5);
-            rp.SkyCubeTexture.Bind(TextureUnit.Texture6);
-            rp.DepthTexture.Bind(TextureUnit.Texture7);
-            rp.MiscTexture.Bind(TextureUnit.Texture8);
-            rp.MiscTexture2.Bind(TextureUnit.Texture9);
+            
+            rp.HeightTexture.Bind(TextureUnit.Texture4);
+            rp.ShadeTexture.Bind(TextureUnit.Texture5);
+            rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture6);
+            rp.SkyCubeTexture.Bind(TextureUnit.Texture7);
+            rp.DepthTexture.Bind(TextureUnit.Texture8);
 
             this.gbufferCombiner.Render(Matrix4.Identity, Matrix4.Identity, (sp) =>
             {
                 sp.SetUniform("pre_projection_matrix", rp.GBufferProjectionMatrix);
                 sp.SetUniform("eyePos", rp.EyePos);
                 sp.SetUniform("sunVector", rp.SunDirection);
-                sp.SetUniform("paramTex", 0);
+
+                sp.SetUniform("colourTex", 0);
                 sp.SetUniform("normalTex", 1);
-                sp.SetUniform("normalLargeScaleTex", 2);
-                sp.SetUniform("heightTex", 3);
-                sp.SetUniform("shadeTex", 4);
-                sp.SetUniform("indirectTex", 5);
-                sp.SetUniform("skyCubeTex", 6);
-                sp.SetUniform("depthTex", 7);
-                sp.SetUniform("miscTex", 8);
-                sp.SetUniform("miscTex2", 9);
+                sp.SetUniform("shadingTex", 2);
+                sp.SetUniform("lightingTex", 3);
+
+                sp.SetUniform("heightTex", 4);
+                sp.SetUniform("shadeTex", 5);
+                sp.SetUniform("indirectTex", 6);
+                sp.SetUniform("skyCubeTex", 7);
+                sp.SetUniform("depthTex", 8);
+
+                //sp.SetUniform("miscTex", 8);
+                //sp.SetUniform("miscTex2", 9);
                 sp.SetUniform("minHeight", rp.MinHeight);
                 sp.SetUniform("maxHeight", rp.MaxHeight);
                 sp.SetUniform("exposure", rp.Exposure);
