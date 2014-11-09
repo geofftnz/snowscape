@@ -21,6 +21,18 @@ uniform vec4 boxparam;
 uniform vec3 eyePos;
 uniform vec3 sunVector;
 
+uniform float groundLevel;
+uniform float rayleighBrightness;
+uniform float mieBrightness;
+uniform float miePhase;// = 0.97;
+uniform float rayleighPhase;// = -0.01;
+uniform float skyPrecalcBoundary;  // 16
+
+uniform float scatterAbsorb;
+uniform vec3 Kr;
+//uniform vec3 eye;
+uniform vec3 sunLight;
+
 /*
 uniform float minHeight;
 uniform float maxHeight;
@@ -51,11 +63,14 @@ uniform float normalBlendNearDistance;
 uniform float normalBlendFarDistance;
 */
 
-
 in vec2 texcoord0;
 out vec4 out_Colour;
 
 float texel = 1.0 / boxparam.x;
+
+// expected variables for atmospheric scattering
+float earthAtmosphereRadius = 6450.0;
+#include "atmospheric.glsl"
 
 
 /*
@@ -702,6 +717,10 @@ void main(void)
 	vec4 pos = pre_projection_matrix * projpos;
 	pos.xyz /= pos.w;
 
+	vec3 dir = pos.xyz-eyePos.xyz;
+	float len = length(dir);
+	dir = normalize(dir);
+
     vec3 c = vec3(0.0,0.0,0.0);
     
 	vec3 normal = normalT.rgb;
@@ -718,12 +737,20 @@ void main(void)
 	//c.rgb = normalT.rgb;
 
 	vec3 ambientlight = vec3(0.7,0.8,1.0) * 0.1;
-	vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
+	//vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
 
-	vec3 sun = (sunlight * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0);
+	vec3 sun = (sunLight * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0);
 	vec3 ambient = ambientlight * lightingT.g;
 
 	c = colourT.rgb * (sun + ambient + vec3(lightingT.b));
+
+	// incoming scattering
+
+	float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+
+	//c = vec3(len / 1024.0);
+	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, distnorm);
+	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 	
 	/*
     if (hitType > 0.6)

@@ -3,11 +3,11 @@ precision highp float;
 
 uniform vec3 sunVector;
 uniform float groundLevel;
-
 uniform float rayleighBrightness;
 uniform float mieBrightness;
 uniform float miePhase;// = 0.97;
 uniform float rayleighPhase;// = -0.01;
+uniform float skyPrecalcBoundary;  // 16
 
 uniform float scatterAbsorb;
 uniform vec3 Kr;
@@ -24,8 +24,6 @@ out vec3 out_Sky;
 
 // expected variables for atmospheric scattering
 float earthAtmosphereRadius = 6450.0;
-// set up boundary between near and far scattering
-float boundary = 16.0 / earthAtmosphereRadius;  // 4km
 
 
 #include "atmospheric.glsl"
@@ -39,6 +37,9 @@ void main(void)
 
 	// we're in a cube of radius 1.0
 	// assume eye is at 0,0,0
+
+	// set up boundary between near and far scattering
+	float boundary = skyPrecalcBoundary / earthAtmosphereRadius;  // 4km
 
 	vec3 dir = normalize(facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
 

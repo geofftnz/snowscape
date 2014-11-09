@@ -21,6 +21,7 @@
 //float rayleighBrightness = 5.0;
 //float miePhase = 0.97;
 //float rayleighPhase = -0.01;
+//float skyPrecalcBoundary;
 //vec3 Kr = vec3(0.1287, 0.2698, 0.7216);
 //vec3 sunLight = vec3(1.0,0.98,0.9)*10.0;
 

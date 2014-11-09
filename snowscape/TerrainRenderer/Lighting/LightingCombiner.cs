@@ -72,6 +72,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float RaleighBrightness { get; set; }
             public float SkylightBrightness { get; set; }
             public float GroundLevel { get; set; }
+            public float SkyPrecalcBoundary { get; set; }
             public int TileWidth { get; set; }
             public int TileHeight { get; set; }
             public Vector3 SunLight { get; set; }
@@ -226,6 +227,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("raleighBrightness", rp.RaleighBrightness);
                 sp.SetUniform("skylightBrightness", rp.SkylightBrightness);
                 sp.SetUniform("groundLevel", rp.GroundLevel);
+                sp.SetUniform("skyPrecalcBoundary", rp.SkyPrecalcBoundary);
                 sp.SetUniform("sampleDistanceFactor", rp.SampleDistanceFactor);
                 sp.SetUniform("nearScatterDistance", rp.NearScatterDistance);
                 sp.SetUniform("nearMieBrightness", rp.NearMieBrightness);
