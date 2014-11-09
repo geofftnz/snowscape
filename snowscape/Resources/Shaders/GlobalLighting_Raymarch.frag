@@ -710,7 +710,10 @@ void main(void)
 
 	// output diffuse
 	//c = diffuseT.rgb;
-	c = colourT.rgb;
+	//c = colourT.rgb;
+
+	c.rg = lightingT.rg;
+	//c.rgb = normalT.rgb;
 
 
 	

@@ -20,7 +20,7 @@ namespace Snowscape.TerrainRenderer.Renderers
     public class PatchLowRenderer : GameComponentBase, ITileRenderer, IPatchRenderer
     {
         private TerrainPatchMesh mesh;
-        private ShaderProgram shader = new ShaderProgram("vistilepatch");
+        private ShaderProgram shader = new ShaderProgram("patchlow");
 
         public IPatchCache PatchCache { get; set; }
 
@@ -99,34 +99,30 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             var boxparam = tile.GetBoxParam();
 
+            //Matrix4 transform = projection * view * tile.ModelMatrix;
+            Matrix4 transform = tile.ModelMatrix * view * projection;
+
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);  // we only want to render front-faces
 
             tile.HeightTexture.Bind(TextureUnit.Texture0);
-            //tile.ParamTexture.Bind(TextureUnit.Texture1);
-            //tile.NormalTexture.Bind(TextureUnit.Texture2);
-
-//uniform sampler2D heightTex;
-//uniform mat4 transform_matrix;
-//uniform vec4 boxparam;
-//uniform vec3 eyePos;
-//uniform float patchSize;
-//uniform float scale;
-//uniform vec2 offset;
+            tile.ParamTexture.Bind(TextureUnit.Texture1);
+            tile.NormalTexture.Bind(TextureUnit.Texture2);
+            terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
 
             this.shader
                 .UseProgram()
-                .SetUniform("projection_matrix", projection)
-                .SetUniform("model_matrix", tile.ModelMatrix)
-                .SetUniform("view_matrix", view)
+                .SetUniform("transform_matrix", transform)
                 .SetUniform("heightTex", 0)
                 .SetUniform("paramTex", 1)
                 .SetUniform("normalTex", 2)
+                .SetUniform("shadeTex", 3)
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("boxparam", boxparam)
                 .SetUniform("patchSize", this.Width)
                 .SetUniform("scale", this.Scale)
-                .SetUniform("offset", this.Offset);
+                .SetUniform("offset", this.Offset)
+                .SetUniform("detailTexScale", this.DetailTexScale);
             this.mesh.Bind(this.shader.VariableLocation("vertex"), this.shader.VariableLocation("in_boxcoord"));
             this.mesh.Render();
 

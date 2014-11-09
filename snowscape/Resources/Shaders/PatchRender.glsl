@@ -15,6 +15,7 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec2 texcoord;
+//out float height;
 
 float t = 1.0 / boxparam.x;
 
@@ -34,7 +35,7 @@ void main() {
 	vec3 b = in_boxcoord;
 	b.xz *= scale;
 	b.xz += offset;
-	vec2 texcoord = b.xz;
+	texcoord = b.xz;
 
 	float h = sampleHeight(texcoord);
 
@@ -52,8 +53,7 @@ void main() {
 	b.y = h;
     
     boxcoord = b;
-
-	texcoord = boxcoord.xz/boxparam.xy;
+	//height = h;
 
 }
 
@@ -64,24 +64,35 @@ precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
+uniform sampler2D shadeTex;
 uniform vec4 boxparam;
 uniform float patchSize;
 uniform float scale;
 uniform vec2 offset;
-uniform float detailTexScale; // 0.1
+uniform float detailTexScale; 
 
 in vec3 boxcoord;
 in vec2 texcoord;
+//in float height;
 
-out vec4 out_AlbedoShadow;
+out vec4 out_Colour;
+out vec4 out_Normal;
 out vec4 out_Shading;
-out vec4 out_NormalAO;
+out vec4 out_Lighting;
 
 
 void main(void)
 {
+	vec2 shadowAO = texture(shadeTex,texcoord).rg;
+	float height = textureLod(heightTex,texcoord,0).r;
+
+	out_Colour = vec4(0.2,0.2,0.2,0.1);
     out_Normal = texture(normalTex,texcoord);
-	out_NormalLargeScale = out_Normal;
-	out_Param = texture(paramTex,texcoord);
+
+	float shadow = smoothstep(-1.0,-0.02,height - shadowAO.r);
+
+	out_Shading = vec4(0.0);
+	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
+	//out_Param = texture(paramTex,texcoord);
 
 }

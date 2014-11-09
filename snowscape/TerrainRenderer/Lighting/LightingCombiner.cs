@@ -18,12 +18,10 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// atmospheric scattering. Scattering is very intensive, so there's a fake version as well.
     /// 
     /// Input:
-    /// slot 0: diffuse colour + pre-baked shadow.
-    /// slot 1: shading parameters RGBA = Roughness, Specular Exponent, Specular amount, Sparkle amount
-    /// slot 2: normal + AO (since we're looking up the shadow texture anyway)
-    /// 
-    /// Output:
-    /// colour
+    /// 0 colour: rgb, material
+    /// 1 normal
+    /// 2 shading: roughness, specexp, specpwr, sparkle
+    /// 3 lighting - shadow, AO, emmissive, subsurfacecolour
     /// 
     /// Knows about:
     /// 

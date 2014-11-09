@@ -70,7 +70,9 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                 new string[]
                 {
                     "out_Colour",
-                    "out_Normal"
+                    "out_Normal",
+                    "out_Shading",
+                    "out_Lighting"
                 });
 
         }
