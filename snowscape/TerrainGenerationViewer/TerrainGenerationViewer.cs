@@ -260,15 +260,15 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028  0.1
 
-            parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("mieBrightness", 0.02f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f));
-            parameters.Add(new Parameter<float>("raleighBrightness", 0.03f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("raleighBrightness", 5.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("skylightBrightness", 3.8f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.0003f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
 
-            parameters.Add(new Parameter<float>("groundLevel", 0.985f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f, ParameterImpact.PreCalcLighting)); // 0.995 0.98
+            parameters.Add(new Parameter<float>("groundLevel", 0.995f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f, ParameterImpact.PreCalcLighting)); // 0.995 0.98
 
             parameters.Add(new Parameter<float>("AmbientBias", 0.80f, 0.0f, 10.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
             parameters.Add(new Parameter<float>("IndirectBias", 0.05f, 0.0f, 10.0f, v => v + 0.005f, v => v - 0.005f)); // 0.995 0.98
@@ -881,8 +881,8 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
 
-            DrawViewFrustum();
-            frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+            //DrawViewFrustum();
+            //frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
 
             //this.lineBuffer.AddLine(new Vector3(0.1f, 0.1f, 0.0f), new Vector3(0.9f, 0.9f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
             //this.lineBuffer.AddLine(new Vector3(0.1f, 0.9f, 0.0f), new Vector3(0.9f, 0.1f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
@@ -1141,7 +1141,9 @@ namespace Snowscape.TerrainGenerationViewer
                 eyePos,
                 sunVector,
                 groundLevel,
+                -0.01f,
                 (float)this.parameters["raleighBrightness"].GetValue(),
+                (float)this.parameters["miePhase"].GetValue(),
                 (float)this.parameters["mieBrightness"].GetValue(),
                 (float)this.parameters["scatterAbsorb"].GetValue(),
                 new Vector3(

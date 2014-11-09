@@ -58,6 +58,7 @@
     <Content Include="Shaders\GlobalLighting_Raymarch.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Shaders\Atmospheric.glsl" />
     <None Include="Shaders\PatchRender.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
