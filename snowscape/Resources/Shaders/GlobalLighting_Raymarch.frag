@@ -736,7 +736,7 @@ void main(void)
 	//c.rg = lightingT.rg;
 	//c.rgb = normalT.rgb;
 
-	vec3 ambientlight = vec3(0.7,0.8,1.0) * 0.1;
+	vec3 ambientlight = vec3(0.7,0.8,1.0) * 0.3;
 	//vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
 
 	vec3 sun = (sunLight * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0);
@@ -746,7 +746,8 @@ void main(void)
 
 	// incoming scattering
 
-	float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+	float distnorm = skyPrecalcBoundary  / earthAtmosphereRadius;  // len  * 0.256
 
 	//c = vec3(len / 1024.0);
 	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, distnorm);

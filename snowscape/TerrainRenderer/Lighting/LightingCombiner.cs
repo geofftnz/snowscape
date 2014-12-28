@@ -122,7 +122,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         {
             this.gbuffer.SetSlot(0, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // colour: rgb, material
             this.gbuffer.SetSlot(1, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // normal+?
-            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat));  // shading: roughness, specexp, specpwr, sparkle
+            this.gbuffer.SetSlot(2, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte));  // shading: roughness, specexp, specpwr, sparkle
             this.gbuffer.SetSlot(3, new GBuffer.TextureSlotParam(PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte));  // lighting - shadow, AO, emmissive, subsurface
 
             this.gbuffer.Init(this.Width, this.Height);
