@@ -886,8 +886,8 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
 
-            //DrawViewFrustum();
-            //frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+            DrawViewFrustum();
+            frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
 
             //this.lineBuffer.AddLine(new Vector3(0.1f, 0.1f, 0.0f), new Vector3(0.9f, 0.9f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
             //this.lineBuffer.AddLine(new Vector3(0.1f, 0.9f, 0.0f), new Vector3(0.9f, 0.1f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
