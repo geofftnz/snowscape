@@ -86,7 +86,7 @@ namespace Snowscape.TerrainGenerationViewer
         private WireframePatchRenderer tileRendererWireframe;
         private PatchLowRenderer tilePatchLowRenderer;
 
-        private LineBuffer lineBuffer;
+        private UI.Debug.QuadTreeLodDebugRenderer quadTreeLodDebugRenderer;
 
         #endregion
 
@@ -105,11 +105,6 @@ namespace Snowscape.TerrainGenerationViewer
         private Matrix4 terrainProjection = Matrix4.Identity;
         private Matrix4 terrainModelview = Matrix4.Identity;
 
-        private Matrix4 lineBufferModel = Matrix4.CreateScale(1.0f / (float)(TileWidth * 3)) *
-                                          Matrix4.CreateTranslation(0.5f, 0.5f, 0.0f) *
-                                          Matrix4.CreateScale(0.5f) *
-                                          Matrix4.CreateScale(-1f, 1f, 1f) *
-                                          Matrix4.CreateTranslation(1.0f, 0f, 0f);
 
         private IPatchCache patchCache = new PatchCache();
 
@@ -214,7 +209,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
 
-            this.Components.Add(this.lineBuffer = new LineBuffer(32768), LoadOrder.Phase3);
+            this.Components.Add(this.quadTreeLodDebugRenderer = new UI.Debug.QuadTreeLodDebugRenderer(), LoadOrder.Phase3);
 
             #endregion
 
@@ -681,6 +676,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
+            FrameRenderData renderData = new FrameRenderData();
+
             bool needToRenderLighting = false;
             bool stepFence = (bool)this.parameters["glFinish"].GetValue();
 
@@ -886,19 +883,15 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
 
-            DrawViewFrustum();
+
+            quadTreeLodDebugRenderer.tilePatches = this.tilePatches;
+            quadTreeLodDebugRenderer.viewFrustum = this.viewfrustum;
+            quadTreeLodDebugRenderer.overlayModelview = this.overlayModelview;
+            quadTreeLodDebugRenderer.overlayProjection = this.overlayProjection;
+            quadTreeLodDebugRenderer.Render(renderData);
             frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+            
 
-            //this.lineBuffer.AddLine(new Vector3(0.1f, 0.1f, 0.0f), new Vector3(0.9f, 0.9f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
-            //this.lineBuffer.AddLine(new Vector3(0.1f, 0.9f, 0.0f), new Vector3(0.9f, 0.1f, 0.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
-
-            this.lineBuffer.Render(lineBufferModel, overlayModelview, overlayProjection);
-            frameTracker.Step("linebuffer-render", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
-
-
-            //perfmon.Start("FrameTracker");
-            //this.frameTrackerRenderer.SetData(this.frameTracker.GetBarData(), this.frameTracker.GetBarColour());
-            //perfmon.Stop("FrameTracker");
 
             this.frameTrackerRenderer.Clear();
             foreach (var quad in this.frameTracker.GetQuads())
@@ -924,210 +917,6 @@ namespace Snowscape.TerrainGenerationViewer
             this.frameCounter.Frame();
 
             //Thread.Sleep(0);
-        }
-
-        private void DrawViewFrustum()
-        {
-            this.lineBuffer.ClearLines();
-            //float tilesize = (float)TileWidth;
-
-            //Vector4 col = new Vector4(1f, 1f, 1f, 0.5f);
-
-            //// output example tiles
-
-            //for (int y = -1; y <= 1; y++)
-            //{
-            //    for (int x = -1; x <= 1; x++)
-            //    {
-            //        lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x+1) * tilesize, (float)y * tilesize, 0f), col);
-            //        lineBuffer.AddLine(new Vector3((float)(x+1) * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x + 1) * tilesize, (float)(y+1) * tilesize, 0f), col);
-            //        lineBuffer.AddLine(new Vector3((float)(x+1) * tilesize, (float)(y+1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)(y+1) * tilesize, 0f), col);
-            //        lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)(y+1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)y * tilesize, 0f), col);
-            //    }
-            //}
-
-            //Frustum f = new Frustum(this.camera.View * this.camera.Projection);
-            //Vector3 vup = new Vector3(0f, -1f, 0f);
-
-
-            //var patches = GetAllTilePatches(f).ToList();
-            Vector4[] box = new Vector4[4];
-
-            this.lineBuffer.SetColour(new Vector4(0f, 1f, 0f, 0.5f));
-
-            foreach (var patch in tilePatches)
-            {
-                box[0] = new Vector4(0f, 0f, 0f, 1f);
-                box[1] = new Vector4(1f, 0f, 0f, 1f);
-                box[2] = new Vector4(0f, 0f, 1f, 1f);
-                box[3] = new Vector4(1f, 0f, 1f, 1f);
-
-                switch (patch.LOD)
-                {
-                    case -4: this.lineBuffer.SetColour(new Vector4(0.4f, 0f, 0f, 0.5f));break;
-                    case -3: this.lineBuffer.SetColour(new Vector4(0.6f, 0f, 0f, 0.5f));break;
-                    case -2: this.lineBuffer.SetColour(new Vector4(0.8f, 0f, 0f, 0.5f));break;
-                    case -1: this.lineBuffer.SetColour(new Vector4(1.0f, 0f, 0f, 0.5f));break;
-                    case 0: this.lineBuffer.SetColour(new Vector4(1.0f, 0.5f, 0f, 0.5f));break;
-                    case 1: this.lineBuffer.SetColour(new Vector4(1.0f, 0.8f, 0f, 0.5f));break;
-                    case 2: this.lineBuffer.SetColour(new Vector4(1.0f, 1.0f, 0f, 0.5f));break;
-                    case 3: this.lineBuffer.SetColour(new Vector4(0.5f, 1.0f, 0f, 0.5f));break;
-                    case 4: this.lineBuffer.SetColour(new Vector4(0.0f, 1.0f, 0f, 0.5f));break;
-                }
-
-                for (int i = 0; i < 4; i++)
-                {
-                    /*
-	                    v.xz *= scale;
-	                    v.xz += offset;
-	                    v.x *= boxparam.x;
-	                    v.z *= boxparam.y;
-                     */
-                    //box[i] = patch.Tile.BoundingBox[i];
-
-                    box[i].X *= patch.Scale;
-                    box[i].Z *= patch.Scale;
-
-                    box[i].X += patch.Offset.X;
-                    box[i].Z += patch.Offset.Y;
-
-                    box[i].X *= (float)patch.Tile.Width;
-                    box[i].Z *= (float)patch.Tile.Height;
-
-                    box[i] = Vector4.Transform(box[i], patch.TileModelMatrix);
-                }
-                lineBuffer.MoveTo(box[0].TopDown());
-                lineBuffer.LineTo(box[1].TopDown());
-                lineBuffer.LineTo(box[3].TopDown());
-                lineBuffer.LineTo(box[2].TopDown());
-                lineBuffer.LineTo(box[0].TopDown());
-            }
-
-
-            DebugRenderFrustum(viewfrustum);
-
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + Vector3.Cross(vup, f.LeftPlane.Xyz) * 1024f).TopDown(), new Vector4(1f, 0f, 0f, 0.5f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + Vector3.Cross(vup, f.RightPlane.Xyz) * 1024f).TopDown(), new Vector4(0f, 1f, 0f, 0.5f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + f.LeftPlane.Xyz * 1024f).TopDown(), new Vector4(1f, 0f, 0f, 1f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + f.RightPlane.Xyz * 1024f).TopDown(), new Vector4(0f, 1f, 0f, 1f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + f.TopPlane.Xyz * 1024f).TopDown(), new Vector4(0f, 0.5f, 1f, 1f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + f.BottomPlane.Xyz * 1024f).TopDown(), new Vector4(0f, 0f, 1f, 1f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + f.NearPlane.Xyz * 1024f).TopDown(), new Vector4(1f, 0.0f, 1f, 1f));
-            //lineBuffer.AddLine(this.eyePos.TopDown(), (this.eyePos + f.FarPlane.Xyz * 1024f).TopDown(), new Vector4(0.6f, 0f, 0.6f, 1f));
-
-
-            // point clipping tests
-
-            //col = DebugRenderFrustumCollisionTest(tilesize, f);
-            /*
-            for (int y = -30; y <= 30; y++)
-            {
-                for (int x = -30; x <= 30; x++)
-                {
-                    var tp = new Vector3((float)x * tilesize * 0.1f,0f,(float)y* tilesize * 0.1f);
-
-                    if (f.TestPoint(tp) == Frustum.PointClipResult.Inside)
-                    {
-                        col = cGreen;
-                    }
-                    else
-                    {
-                        col = cRed;
-                    }
-
-                    lineBuffer.AddLine(tp.TopDown(), tp.TopDown() + pofs, col);
-                    //lineBuffer.AddLine(new Vector3((float)(x + 1) * tilesize, (float)y * tilesize, 0f), new Vector3((float)(x + 1) * tilesize, (float)(y + 1) * tilesize, 0f), col);
-                    //lineBuffer.AddLine(new Vector3((float)(x + 1) * tilesize, (float)(y + 1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)(y + 1) * tilesize, 0f), col);
-                    //lineBuffer.AddLine(new Vector3((float)x * tilesize, (float)(y + 1) * tilesize, 0f), new Vector3((float)(x) * tilesize, (float)y * tilesize, 0f), col);
-                }
-            }*/
-
-
-            //Vector4 clipleft = vup.cross
-        }
-
-        private Vector4 DebugRenderFrustumCollisionTest(float tilesize, Frustum f)
-        {
-            Vector4 cGreen = new Vector4(0f, 1f, 0f, .5f);
-            Vector4 cYellow = new Vector4(1f, 1f, 0f, .5f);
-            Vector4 cRed = new Vector4(1f, 0f, 0f, .5f);
-            Vector3 pofs = new Vector3(50.0f, 50.0f, 0.0f);
-            Vector4 col = new Vector4(1f);
-
-            Vector4[] box = new Vector4[8];
-            float minHeight = 0f, maxHeight = 40f;
-            float ofs = tilesize * 0.095f;
-
-            for (int y = -30; y <= 30; y++)
-            {
-                for (int x = -30; x <= 30; x++)
-                {
-                    var tp = new Vector4((float)x * tilesize * 0.1f, minHeight, (float)y * tilesize * 0.1f, 1.0f);
-
-                    int i = 0;
-                    box[i++] = tp + new Vector4(ofs, 0f, 0f, 0f);
-                    box[i++] = tp + new Vector4(ofs, 0f, ofs, 0f);
-                    box[i++] = tp + new Vector4(0f, 0f, ofs, 0f);
-                    box[i++] = tp + new Vector4(0f, 0f, 0f, 0f);
-                    box[i++] = tp + new Vector4(ofs, maxHeight - minHeight, 0f, 0f);
-                    box[i++] = tp + new Vector4(ofs, maxHeight - minHeight, ofs, 0f);
-                    box[i++] = tp + new Vector4(0f, maxHeight - minHeight, ofs, 0f);
-                    box[i++] = tp + new Vector4(0f, maxHeight - minHeight, 0f, 0f);
-
-                    var hit = f.TestBox(box);
-
-                    switch (hit)
-                    {
-                        case Frustum.ObjectClipResult.TotallyOutside:
-                            col = cRed;
-                            break;
-                        case Frustum.ObjectClipResult.PartiallyInside:
-                            col = cYellow;
-                            break;
-                        case Frustum.ObjectClipResult.TotallyInside:
-                            col = cGreen;
-                            break;
-                    }
-
-                    lineBuffer.AddLine(box[0].TopDown(), box[1].TopDown(), col);
-                    lineBuffer.AddLine(box[1].TopDown(), box[2].TopDown(), col);
-                    lineBuffer.AddLine(box[2].TopDown(), box[3].TopDown(), col);
-                    lineBuffer.AddLine(box[3].TopDown(), box[0].TopDown(), col);
-                }
-            }
-
-            return col;
-        }
-
-        private void DebugRenderFrustum(Frustum f)
-        {
-            lineBuffer.SetColour(new Vector4(1f, 1f, 1f, 1f));
-            lineBuffer.MoveTo(f.NearTopLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearTopRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarTopRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarTopLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearTopLeftCorner.Xyz.TopDown());
-
-            lineBuffer.SetColour(new Vector4(1f, 1f, 1f, .5f));
-            lineBuffer.MoveTo(f.NearBottomLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearBottomRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarBottomRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarBottomLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearBottomLeftCorner.Xyz.TopDown());
-
-            lineBuffer.SetColour(new Vector4(1f, 0f, 0f, 1f));
-            lineBuffer.MoveTo(f.NearTopLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarTopLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarBottomLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearBottomLeftCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearTopLeftCorner.Xyz.TopDown());
-
-            lineBuffer.SetColour(new Vector4(0f, 1f, 0f, 1f));
-            lineBuffer.MoveTo(f.NearTopRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarTopRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.FarBottomRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearBottomRightCorner.Xyz.TopDown());
-            lineBuffer.LineTo(f.NearTopRightCorner.Xyz.TopDown());
         }
 
         private void RenderLighting(Vector3 sunVector)

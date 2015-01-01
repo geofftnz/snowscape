@@ -51,9 +51,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FrameRenderData.cs" />
     <Compile Include="TerrainGenerationViewer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UI\Debug\QuadTreeLodDebugRenderer.cs" />
+    <Compile Include="UI\DebugUI\QuadTreeLodDebugRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OpenTKExtensions\OpenTKExtensions.csproj">
