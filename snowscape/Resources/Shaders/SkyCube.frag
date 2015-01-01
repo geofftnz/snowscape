@@ -18,5 +18,5 @@ void main(void)
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(0.0,0.0,1.0,0.0);
 
-	gl_FragDepth = 0.999999;
+	//gl_FragDepth = 0.999999;
 }
