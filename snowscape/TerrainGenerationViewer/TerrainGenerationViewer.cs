@@ -85,6 +85,8 @@ namespace Snowscape.TerrainGenerationViewer
         private GenerationVisPatchRenderer tileRendererPatch;
         private WireframePatchRenderer tileRendererWireframe;
         private PatchLowRenderer tilePatchLowRenderer;
+        private PatchMediumRenderer tilePatchMediumRenderer;
+        private PatchHighRenderer tilePatchHighRenderer;
 
         private UI.Debug.QuadTreeLodDebugRenderer quadTreeLodDebugRenderer;
 
@@ -185,7 +187,10 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererWireframe = new WireframePatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+
             this.Components.Add(this.tilePatchLowRenderer = new PatchLowRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tilePatchMediumRenderer = new PatchMediumRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tilePatchHighRenderer = new PatchHighRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -1016,25 +1021,17 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 terrainTile.ModelMatrix = patch.TileModelMatrix;
 
-                /*
-                this.tileRendererWireframe.Width = patch.MeshSize;
-                this.tileRendererWireframe.Height = patch.MeshSize;
-                this.tileRendererWireframe.Scale = patch.Scale;
-                this.tileRendererWireframe.Offset = patch.Offset;
-                this.tileRendererWireframe.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
-                 */
-                
                 if (patch.LOD <= -1)  // low res
                 {
                     patchRenderer = tilePatchLowRenderer;
                 }
                 else if (patch.LOD <= 0) // medium res - patch at terrain res or below. Detail normals & materials.
                 {
-                    patchRenderer = tilePatchLowRenderer;
+                    patchRenderer = tilePatchMediumRenderer;
                 }
                 else // high res - patch at higher res - generated detail heights / normals / materials
                 {
-                    patchRenderer = tilePatchLowRenderer;
+                    patchRenderer = tilePatchHighRenderer;
                 }
 
                 patchRenderer.Width = patch.MeshSize;
@@ -1044,15 +1041,6 @@ namespace Snowscape.TerrainGenerationViewer
                 patchRenderer.DetailScale = (float)patch.TileSize / (float)patch.MeshSize;
                 patchRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos);
             }
-
-            /*
-            for (int y = -1; y <= 1; y++)
-            {
-                for (int x = -1; x <= 1; x++)
-                {
-                    RenderTile(this.terrainTile, (float)x, (float)y, tileRendererQuadtree);
-                }
-            }*/
 
         }
 

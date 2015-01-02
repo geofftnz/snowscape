@@ -17,10 +17,10 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// This will use a mesh and a portion of a heightmap and associated textures.
     /// The mesh is designed to seamlessly tile to adjacent patches, assuming the source textures wrap around.
     /// </summary>
-    public class PatchMediumRenderer : GameComponentBase, ITileRenderer, IPatchRenderer
+    public class PatchHighRenderer : GameComponentBase, ITileRenderer, IPatchRenderer
     {
         private TerrainPatchMesh mesh;
-        private ShaderProgram shader = new ShaderProgram("patchmedium");
+        private ShaderProgram shader = new ShaderProgram("patchhigh");
 
         public IPatchCache PatchCache { get; set; }
 
@@ -52,7 +52,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         public Texture DetailTexture { get; set; }
         public float DetailTexScale { get; set; }
 
-        public PatchMediumRenderer(int width, int height, IPatchCache patchCache)
+        public PatchHighRenderer(int width, int height, IPatchCache patchCache)
             : base()
         {
             if (width != height)
@@ -67,10 +67,10 @@ namespace Snowscape.TerrainRenderer.Renderers
             this.DetailScale = 1.0f;
             this.DetailTexScale = 0.1f;
 
-            this.Loading += PatchMediumRenderer_Loading;
+            this.Loading += PatchHighRenderer_Loading;
         }
 
-        void PatchMediumRenderer_Loading(object sender, EventArgs e)
+        void PatchHighRenderer_Loading(object sender, EventArgs e)
         {
             InitShader();
         }
@@ -79,8 +79,8 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             // setup shader
             this.shader.Init(
-                @"PatchRender.glsl|MediumVertex",
-                @"PatchRender.glsl|MediumFragment",
+                @"PatchRender.glsl|HighVertex",
+                @"PatchRender.glsl|HighFragment",
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex"), 
