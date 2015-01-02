@@ -10,6 +10,7 @@ namespace OpenTKExtensions.Loaders
     {
         const int MAXLEVELS = 32; // maximum level of #include levels
         const char SPLITCHAR = '|';
+        const string THISFILE = @".";
 
         public string BaseDirectory { get; set; }
 
@@ -23,7 +24,7 @@ namespace OpenTKExtensions.Loaders
             this.BaseDirectory = BaseDirectory;
         }
 
-        public string LoadRaw(string sourceName)
+        public SourceContent LoadRaw(string sourceName, string baseSourceName)
         {
             // split source name into parts before and after SPLITCHAR (|)
             // first part is actual filename
@@ -31,19 +32,27 @@ namespace OpenTKExtensions.Loaders
             string[] parts = sourceName.Split(SPLITCHAR);
             string fileName = sourceName, partName = null;
 
+            // sourceName included the split character (eg: "hello.glsl|part1"), so treat the first part as the filename and the second part as the part name to extract
             if (parts.Length > 1)
             {
-                fileName = parts[0];
+                // if the source file name is THISFILE ("."), then it's a reference to the parent file
+                fileName = parts[0].Equals(THISFILE) ? baseSourceName : parts[0];
                 partName = parts[1];
             }
 
-            return File.ReadAllText(GetFilePath(fileName)).ExtractPart(partName); 
+            string content = File.ReadAllText(GetFilePath(fileName)).ExtractPart(partName);
+
+            return new SourceContent
+            {
+                Name = new SourceName { Name = fileName, Part = partName },
+                Content = content
+            };
         }
 
-        public string Load(string sourceName)
+        public SourceContent Load(string sourceName, string baseSourceName)
         {
 
-            return this.LoadRaw(sourceName).Preprocess(MAXLEVELS, this);
+            return this.LoadRaw(sourceName, baseSourceName).Preprocess(MAXLEVELS, this);
         }
 
         private string GetFilePath(string fileName)

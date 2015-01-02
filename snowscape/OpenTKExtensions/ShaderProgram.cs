@@ -198,8 +198,8 @@ namespace OpenTKExtensions
 
             if (loader != null)
             {
-                vsrc = loader.Load(vertexSource);
-                fsrc = loader.Load(fragmentSource);
+                vsrc = loader.Load(vertexSource).Content;
+                fsrc = loader.Load(fragmentSource).Content;
             }
             else  // source is raw
             {

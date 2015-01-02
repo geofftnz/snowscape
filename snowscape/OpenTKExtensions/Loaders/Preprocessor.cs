@@ -12,7 +12,7 @@ namespace OpenTKExtensions.Loaders
         private static string DEFAULTPREFIX = @"//|";
 
 
-        public static string Preprocess(this string source, int levelsRemaining, IShaderLoader loader)
+        public static SourceContent Preprocess(this SourceContent sourceContent, int levelsRemaining, IShaderLoader loader)
         {
             if (levelsRemaining < 0)
             {
@@ -25,7 +25,7 @@ namespace OpenTKExtensions.Loaders
 
             var sb = new StringBuilder();
 
-            foreach (var token in source.Tokens())
+            foreach (var token in sourceContent.Content.Tokens())
             {
                 switch (token.Type)
                 {
@@ -33,13 +33,18 @@ namespace OpenTKExtensions.Loaders
                         sb.Append(token.Content);
                         break;
                     case TokenType.Include:
-                        sb.Append(loader.LoadRaw(token.Content).Preprocess(levelsRemaining - 1, loader));
+                        sb.Append(loader.LoadRaw(token.Content, sourceContent.Name.Name).Preprocess(levelsRemaining - 1, loader).Content);
                         break;
                 }
             }
 
 
-            return sb.ToString();
+            var content = sb.ToString();
+            return new SourceContent
+            {
+                Name = sourceContent.Name,
+                Content = content
+            };
         }
 
 

@@ -84,6 +84,8 @@
     <Compile Include="ITextureParameter.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="Loaders\Preprocessor.cs" />
+    <Compile Include="Loaders\SourceContent.cs" />
+    <Compile Include="Loaders\SourceName.cs" />
     <Compile Include="RenderInfo.cs" />
     <Compile Include="Sampler.cs" />
     <Compile Include="SamplerParameter.cs" />
