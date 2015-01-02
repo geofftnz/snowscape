@@ -1,4 +1,11 @@
-﻿//|CubicHeightSample
+﻿//|Common
+
+float SmoothShadow(float heightdiff)
+{
+	return smoothstep(-0.5,-0.02,heightdiff);
+}
+
+//|CubicHeightSample
 // 4-tap b-spline bicubic interpolation.
 // credit to http://vec3.ca/bicubic-filtering-in-fewer-taps/
 float sampleHeight(vec2 pos, float scale)
@@ -77,6 +84,7 @@ vec3 getNormal(vec2 pos, float scale)
 
 //|LowVertex
 #version 140
+#include ".|Common"
  
 uniform sampler2D heightTex;
 
@@ -133,8 +141,8 @@ void main() {
 }
 
 //|LowFragment
-
 #version 140
+#include ".|Common"
 precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
@@ -163,7 +171,7 @@ void main(void)
 	out_Colour = vec4(0.2,0.2,0.6,0.1);
     out_Normal = texture(normalTex,texcoord);
 
-	float shadow = smoothstep(-1.0,-0.02,height - shadowAO.r);
+	float shadow = SmoothShadow(height - shadowAO.r);
 
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
@@ -228,8 +236,8 @@ void main() {
 }
 
 //|MediumFragment
-
 #version 140
+#include ".|Common"
 precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
@@ -258,7 +266,7 @@ void main(void)
 	out_Colour = vec4(0.2,0.6,0.2,0.1);
     out_Normal = texture(normalTex,texcoord);
 
-	float shadow = smoothstep(-1.0,-0.02,height - shadowAO.r);
+	float shadow = SmoothShadow(height - shadowAO.r);
 
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
@@ -268,7 +276,7 @@ void main(void)
 
 //|HighVertex
 #version 140
- 
+#include ".|Common"
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 
@@ -341,8 +349,8 @@ void main() {
 }
 
 //|HighFragment
-
 #version 140
+#include ".|Common"
 precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
@@ -373,9 +381,16 @@ void main(void)
 	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
 
 	out_Colour = vec4(0.6,0.2,0.2,0.1);
-    out_Normal = vec4(normalize(normal),1.0);
 
-	float shadow = smoothstep(-1.0,-0.02,height - shadowAO.r);
+
+	// calculate normal of detail heightmap at detailpos
+	mat3 nm = mat3(tangent,normal,binormal);
+	vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
+	vec3 n = normalize(dn * nm);
+	
+    out_Normal = vec4(n,1.0);
+
+	float shadow = SmoothShadow(height - shadowAO.r);
 
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
