@@ -5,6 +5,55 @@ float SmoothShadow(float heightdiff)
 	return smoothstep(-0.5,-0.02,heightdiff);
 }
 
+#include "noise3d.glsl"
+
+// gets a tuple of material (x) and displacement (y) for a given point.
+//
+// todo: implement as material stack
+//
+// pos: base terrain pos (bicubic interpolation of base terrain) - used as noise source coordinate
+// basenormal: base terrain normal (bicubic interpolation of base terrain) - used for slope
+// param: thickness of terrain layers
+// scale: resolution (x) and height (y) of detail
+vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
+{
+	float displacement = snoise(pos * scale.x) * scale.y;
+	return vec2(0.0,displacement);
+}
+
+struct DetailSample
+{
+	vec3 normal;
+	vec2 materialdisp;
+};
+
+DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, float t_)
+{
+	DetailSample res;
+	vec3 t = vec3(-t_,0.0,t_);
+
+	vec2 h0 = getDetailHeightSample(pos,basenormal,param,scale);
+
+	//   3
+	// 1 0 2
+	//   4
+	// get adjacent samples
+	// todo: approximate by using the same basenormal & param. Ideally these should be fetched from the texture again.
+	float h1 = getDetailHeightSample(pos + t.xyy,basenormal,param,scale).y;
+	float h2 = getDetailHeightSample(pos + t.zyy,basenormal,param,scale).y;
+	float h3 = getDetailHeightSample(pos + t.yyx,basenormal,param,scale).y;
+	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,param,scale).y;
+
+	res.materialdisp = h0;
+	res.normal = normalize(vec3(h2-h1,t_,h4-h3));
+
+	return res;
+}
+
+
+
+
+
 //|CubicHeightSample
 // 4-tap b-spline bicubic interpolation.
 // credit to http://vec3.ca/bicubic-filtering-in-fewer-taps/
@@ -84,7 +133,6 @@ vec3 getNormal(vec2 pos, float scale)
 
 //|LowVertex
 #version 140
-#include ".|Common"
  
 uniform sampler2D heightTex;
 
@@ -100,6 +148,8 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec2 texcoord;
+
+#include ".|Common"
 
 float t = 1.0 / boxparam.x;
 
@@ -142,7 +192,6 @@ void main() {
 
 //|LowFragment
 #version 140
-#include ".|Common"
 precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
@@ -162,6 +211,7 @@ out vec4 out_Normal;
 out vec4 out_Shading;
 out vec4 out_Lighting;
 
+#include ".|Common"
 
 void main(void)
 {
@@ -195,6 +245,8 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec2 texcoord;
+
+#include ".|Common"
 
 float t = 1.0 / boxparam.x;
 
@@ -237,7 +289,6 @@ void main() {
 
 //|MediumFragment
 #version 140
-#include ".|Common"
 precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
@@ -257,6 +308,7 @@ out vec4 out_Normal;
 out vec4 out_Shading;
 out vec4 out_Lighting;
 
+#include ".|Common"
 
 void main(void)
 {
@@ -276,9 +328,9 @@ void main(void)
 
 //|HighVertex
 #version 140
-#include ".|Common"
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
+uniform sampler2D paramTex;
 
 uniform mat4 transform_matrix;
 uniform vec4 boxparam;
@@ -290,12 +342,14 @@ uniform vec2 offset;
 in vec3 vertex;
 in vec3 in_boxcoord;
 
+out vec3 basevertex;
 out vec3 boxcoord;
 out vec3 normal;
 out vec3 binormal;
 out vec3 tangent;
 out vec2 texcoord;
 
+#include ".|Common"
 
 float t = 1.0 / boxparam.x;
 
@@ -323,6 +377,7 @@ void main() {
 
 	float h = sampleHeight(texcoord,boxparam.x);
 	normal = getNormal(texcoord,boxparam.x);
+	vec4 param = texture2D(paramTex,texcoord);
 
 	// calculate tangent and binormal
 	// tangent is in X direction, so is the cross product of normal (Y) and Z
@@ -338,6 +393,14 @@ void main() {
 	v.z *= boxparam.y;
 	v.y = h + v.y;
 
+	basevertex = v;
+
+	// todo: add displacement in direction of normal
+	// get detail
+	vec2 detail = getDetailHeightSample(v, normal, param, vec2(4.0,0.05));
+	
+	v += normal * detail.y;
+
     gl_Position = transform_matrix * vec4(v, 1.0);
 
 	b.x *= boxparam.x;
@@ -350,7 +413,6 @@ void main() {
 
 //|HighFragment
 #version 140
-#include ".|Common"
 precision highp float;
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
@@ -362,6 +424,7 @@ uniform float scale;
 uniform vec2 offset;
 uniform float detailTexScale; 
 
+in vec3 basevertex;
 in vec3 boxcoord;
 in vec3 normal;
 in vec3 binormal;
@@ -373,6 +436,7 @@ out vec4 out_Normal;
 out vec4 out_Shading;
 out vec4 out_Lighting;
 
+#include ".|Common"
 
 void main(void)
 {
@@ -382,6 +446,7 @@ void main(void)
 
 	out_Colour = vec4(0.6,0.2,0.2,0.1);
 
+	// sample detail
 
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
