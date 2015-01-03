@@ -1,6 +1,6 @@
 ﻿//|Common
 
-vec2 detailScale = vec2(4.0,0.01);
+vec2 detailScale = vec2(0.2,0.2);  // detailTexScale is uniform
 float sampleOfs = 1.0/1024.0;
 
 float SmoothShadow(float heightdiff)
@@ -154,6 +154,7 @@ uniform vec3 eyePos;
 uniform float patchSize;
 uniform float scale;
 uniform vec2 offset;
+uniform float detailTexScale; 
 
 in vec3 vertex;
 in vec3 in_boxcoord;
@@ -251,6 +252,7 @@ uniform vec3 eyePos;
 uniform float patchSize;
 uniform float scale;
 uniform vec2 offset;
+uniform float detailTexScale; 
 
 in vec3 vertex;
 in vec3 in_boxcoord;
@@ -350,6 +352,7 @@ uniform vec3 eyePos;
 uniform float patchSize;
 uniform float scale;
 uniform vec2 offset;
+uniform float detailTexScale; 
 
 in vec3 vertex;
 in vec3 in_boxcoord;
