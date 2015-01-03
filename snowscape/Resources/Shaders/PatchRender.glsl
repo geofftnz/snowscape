@@ -1,11 +1,23 @@
 ﻿//|Common
 
+vec2 detailScale = vec2(4.0,0.01);
+float sampleOfs = 1.0/1024.0;
+
 float SmoothShadow(float heightdiff)
 {
 	return smoothstep(-0.5,-0.02,heightdiff);
 }
 
-#include "noise3d.glsl"
+#include "noise2d.glsl"
+
+float sfbm(vec2 pos)
+{
+	float a = snoise(pos); 
+	a += snoise(pos * 2.0) * 0.5; 
+	a += snoise(pos * 4.0) * 0.25; 
+	a += snoise(pos * 8.0) * 0.125; 
+	return a;
+}
 
 // gets a tuple of material (x) and displacement (y) for a given point.
 //
@@ -17,7 +29,7 @@ float SmoothShadow(float heightdiff)
 // scale: resolution (x) and height (y) of detail
 vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
 {
-	float displacement = snoise(pos * scale.x) * scale.y;
+	float displacement = sfbm(pos.xz * scale.x) * scale.y;
 	return vec2(0.0,displacement);
 }
 
@@ -45,7 +57,7 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, flo
 	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,param,scale).y;
 
 	res.materialdisp = h0;
-	res.normal = normalize(vec3(h2-h1,t_,h4-h3));
+	res.normal = normalize(vec3(h2-h1,2.0 * t_,h4-h3));
 
 	return res;
 }
@@ -397,7 +409,7 @@ void main() {
 
 	// todo: add displacement in direction of normal
 	// get detail
-	vec2 detail = getDetailHeightSample(v, normal, param, vec2(4.0,0.05));
+	vec2 detail = getDetailHeightSample(v, normal, param, detailScale);
 	
 	v += normal * detail.y;
 
@@ -441,17 +453,19 @@ out vec4 out_Lighting;
 void main(void)
 {
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
+	vec4 param = texture2D(paramTex,texcoord);
 
 	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
 
 	out_Colour = vec4(0.6,0.2,0.2,0.1);
 
 	// sample detail
+	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, sampleOfs);
 
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
-	vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
-	vec3 n = normalize(dn * nm);
+	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
+	vec3 n = normalize(detail.normal * nm);
 	
     out_Normal = vec4(n,1.0);
 
