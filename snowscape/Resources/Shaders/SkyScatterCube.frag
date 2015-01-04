@@ -3,9 +3,12 @@ precision highp float;
 
 uniform vec3 sunVector;
 uniform float groundLevel;
-
-uniform float raleighBrightness;
+uniform float rayleighBrightness;
 uniform float mieBrightness;
+uniform float miePhase;// = 0.97;
+uniform float rayleighPhase;// = -0.01;
+uniform float skyPrecalcBoundary;  // 16
+
 uniform float scatterAbsorb;
 uniform vec3 Kr;
 uniform vec3 eye;
@@ -19,7 +22,42 @@ in vec2 sky2d;
 
 out vec3 out_Sky;
 
+// expected variables for atmospheric scattering
+float earthAtmosphereRadius = 6450.0;
 
+
+#include "atmospheric.glsl"
+
+
+void main(void)
+{
+
+	// let's assume we're looking down the z axis
+	// screen will be x,y
+
+	// we're in a cube of radius 1.0
+	// assume eye is at 0,0,0
+
+	// set up boundary between near and far scattering
+	float boundary = skyPrecalcBoundary / earthAtmosphereRadius;  // 4km
+
+	vec3 dir = normalize(facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
+
+	out_Sky = getRayMarchedScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, boundary,10000.0);
+
+
+	//if (dir.x > 0.0){
+		//out_Sky = getInscatterSky(eye, dir);
+	//}
+	//else{
+		//out_Sky = getInscatterSkyMulti(eye, dir);
+	//}
+//
+}
+
+
+
+/*
 // other vars
 vec3 Kr2 = Kr;
 vec3 Kral = Kr;
@@ -195,11 +233,11 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
 	float alpha = dot(dir, sunVector);
     float mie_factor = phase(alpha,0.99) * mieBrightness;
     // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
-    // raleigh brightness
+	float rayleigh_factor = phase(alpha,-0.01) * rayleighBrightness;
+    // rayleigh brightness
 
 	vec3 mie = vec3(0.0);
-    vec3 raleigh = vec3(0.0);
+    vec3 rayleigh = vec3(0.0);
     float nsteps = 50.0;
     float stepsize = 1.0 / nsteps;
     float step_length = ray_length / nsteps;
@@ -223,13 +261,13 @@ vec3 getInscatterSky(vec3 eye, vec3 dir)
         // todo: + sample_dist ?
 
 		vec3 influx = absorb(sample_depth, sunIntensity, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
-        raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor) * getAirDensity(p);
+        rayleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor) * getAirDensity(p);
         //mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
     }
 
-	raleigh *= raleigh_factor * ray_length;
+	rayleigh *= rayleigh_factor * ray_length;
     //mie *= mie_factor * ray_length;
-    return vec3(raleigh + mie);
+    return vec3(rayleigh + mie);
 }
 
 
@@ -243,11 +281,11 @@ vec3 getInscatterSkyMulti(vec3 eye, vec3 dir)
 	float alpha = dot(dir, sunVector);
     float mie_factor = phase(alpha,0.99) * mieBrightness;
     // mie brightness
-	float raleigh_factor = phase(alpha,-0.01) * raleighBrightness;
-    // raleigh brightness
+	float rayleigh_factor = phase(alpha,-0.01) * rayleighBrightness;
+    // rayleigh brightness
 
 	vec3 mie = vec3(0.0);
-    vec3 raleigh = vec3(0.0);
+    vec3 rayleigh = vec3(0.0);
     float nsteps = 50.0;
     float stepsize = 1.0 / nsteps;
     float step_length = ray_length / nsteps;
@@ -280,37 +318,15 @@ vec3 getInscatterSkyMulti(vec3 eye, vec3 dir)
 		vec3 sunIntensity2 = sunIntensity + secondaryScattering * 16.;
 
 		vec3 influx = absorb(sample_depth, sunIntensity2, scatteramount) * horizonLight(psun,sunVector,groundLevel,scatteramount);
-        raleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
+        rayleigh += absorb(sample_dist, Kral * influx, ralabsorbfactor);
         //mie += absorb(sample_dist, influx, mieabsorbfactor) * horizonBlock(p, -dir, groundLevel);
     }
 
-	raleigh *= raleigh_factor * ray_length;
+	rayleigh *= rayleigh_factor * ray_length;
     //mie *= mie_factor * ray_length;
-    return vec3(raleigh + mie);
+    return vec3(rayleigh + mie);
 }
+*/
 
 
 
-
-void main(void)
-{
-
-	// let's assume we're looking down the z axis
-	// screen will be x,y
-
-	// we're in a cube of radius 1.0
-	// assume eye is at 0,0,0
-
-	vec3 dir = normalize(facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
-
-	out_Sky = getInscatterSky(eye, dir);
-
-
-	//if (dir.x > 0.0){
-		//out_Sky = getInscatterSky(eye, dir);
-	//}
-	//else{
-		//out_Sky = getInscatterSkyMulti(eye, dir);
-	//}
-//
-}

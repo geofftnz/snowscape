@@ -27,5 +27,6 @@ vec3 getNormal(vec2 pos)
 
 void main(void)
 {
-	out_Normal = vec4(getNormal(texcoord) * 0.5 + vec3(0.5),1.0);
+	//out_Normal = vec4(getNormal(texcoord) * 0.5 + vec3(0.5),1.0);
+	out_Normal = vec4(getNormal(texcoord),1.0);
 }

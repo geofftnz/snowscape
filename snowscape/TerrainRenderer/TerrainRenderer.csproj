@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Atmosphere\CloudDepthRenderer.cs" />
+    <Compile Include="Atmosphere\SkyCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkyScatteringCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkyScatteringRenderer.cs" />
     <Compile Include="Atmosphere\RayDirectionRenderer.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="HDR\Uncharted2ToneMap.cs" />
     <Compile Include="Lighting\HeightmapNormalGenerator.cs" />
     <Compile Include="Lighting\IndirectIlluminationGenerator.cs" />
+    <Compile Include="Lighting\OldLightingCombiner.cs" />
     <Compile Include="Lighting\LightingCombiner.cs" />
     <Compile Include="Loaders\TerrainTileParamLoader.cs" />
     <Compile Include="Loaders\TerrainTileLoader.cs" />
@@ -68,8 +70,17 @@
     <Compile Include="NoiseTexture.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
     <Compile Include="Renderers\CompositeLODRenderer.cs" />
+    <Compile Include="Renderers\PatchHighRenderer.cs" />
+    <Compile Include="Renderers\PatchMediumRenderer.cs" />
+    <Compile Include="Renderers\PatchLowRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchLowRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchDetailRenderer.cs" />
+    <Compile Include="Renderers\LOD\Frustum.cs" />
+    <Compile Include="Renderers\LOD\IPatchGenerator.cs" />
+    <Compile Include="Renderers\LOD\PatchDescriptor.cs" />
+    <Compile Include="Renderers\LOD\PatchGenerator.cs" />
+    <Compile Include="Renderers\LOD\QuadTreeNode.cs" />
+    <Compile Include="Renderers\WireframePatchRenderer.cs" />
     <Compile Include="Renderers\GenerationVisPatchRenderer.cs" />
     <Compile Include="Renderers\GenerationVisRaycastRenderer.cs" />
     <Compile Include="Renderers\GenerationVisMeshRenderer.cs" />

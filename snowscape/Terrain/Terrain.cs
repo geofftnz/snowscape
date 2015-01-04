@@ -388,6 +388,15 @@ namespace Snowscape.TerrainStorage
             return yfrac.Lerp(xfrac.Lerp(h00, h10), xfrac.Lerp(h01, h11));
         }
 
+        public float GetMinHeight()
+        {
+            return this.Map.Select(c => c.Height).Min();
+        }
+
+        public float GetMaxHeight()
+        {
+            return this.Map.Select(c => c.Height).Max();
+        }
 
         private static Func<int, int, int> C1024 = (x, y) => ((x + 1024) & 1023) + (((y + 1024) & 1023) << 10);
         private static Func<int, int> CX1024 = (i) => i & 1023;

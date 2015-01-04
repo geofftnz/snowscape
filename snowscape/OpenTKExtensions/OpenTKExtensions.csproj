@@ -56,6 +56,7 @@
     <Compile Include="Camera\ICamera.cs" />
     <Compile Include="Camera\QuaternionCamera.cs" />
     <Compile Include="Camera\WalkCamera.cs" />
+    <Compile Include="Components\LineBuffer.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FontCharacter.cs" />
     <Compile Include="FontMetaParser.cs" />
@@ -67,8 +68,10 @@
     <Compile Include="Framework\IDynamicallyReloadable.cs" />
     <Compile Include="Framework\IFrameRenderData.cs" />
     <Compile Include="Framework\IFrameUpdateData.cs" />
+    <Compile Include="Framework\IReloadable.cs" />
     <Compile Include="Framework\IRenderable.cs" />
     <Compile Include="Framework\IUpdateable.cs" />
+    <Compile Include="Framework\ReloadResult.cs" />
     <Compile Include="GBuffer.cs" />
     <Compile Include="GBufferCombiner.cs" />
     <Compile Include="GBufferRedirectableShaderStep.cs" />
@@ -83,11 +86,14 @@
     <Compile Include="ITextureParameter.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="Loaders\Preprocessor.cs" />
+    <Compile Include="Loaders\SourceContent.cs" />
+    <Compile Include="Loaders\SourceName.cs" />
     <Compile Include="RenderInfo.cs" />
     <Compile Include="Sampler.cs" />
     <Compile Include="SamplerParameter.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="ShaderProgram.cs" />
+    <Compile Include="ShaderReloader.cs" />
     <Compile Include="TextBlock.cs" />
     <Compile Include="TextManager.cs" />
     <Compile Include="Texture.cs" />

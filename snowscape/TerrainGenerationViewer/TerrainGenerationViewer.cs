@@ -23,6 +23,8 @@ using HDR = Snowscape.TerrainRenderer.HDR;
 using Snowscape.TerrainRenderer.Mesh;
 using Loaders = Snowscape.TerrainRenderer.Loaders;
 using OpenTKExtensions.Framework;
+using Snowscape.TerrainRenderer.Renderers.LOD;
+using OpenTKExtensions.Components;
 
 
 namespace Snowscape.TerrainGenerationViewer
@@ -71,6 +73,7 @@ namespace Snowscape.TerrainGenerationViewer
         private Loaders.TerrainTileParamLoader terrainTileParamLoader;
 
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer;
+        private Atmosphere.SkyCubeRenderer skyCubeRenderer;
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer;
 
         private Lighting.LightingCombiner lightingStep;
@@ -80,13 +83,20 @@ namespace Snowscape.TerrainGenerationViewer
         private GenerationVisPatchDetailRenderer tileRendererPatchDetail;
         private GenerationVisPatchLowRenderer tileRendererPatchLow;
         private GenerationVisPatchRenderer tileRendererPatch;
+        private WireframePatchRenderer tileRendererWireframe;
+        private PatchLowRenderer tilePatchLowRenderer;
+        private PatchMediumRenderer tilePatchMediumRenderer;
+        private PatchHighRenderer tilePatchHighRenderer;
+
+        private UI.Debug.QuadTreeLodDebugRenderer quadTreeLodDebugRenderer;
 
         #endregion
 
 
 
-
-
+        private IPatchGenerator patchGenerator = new PatchGenerator();
+        private List<PatchDescriptor> tilePatches = new List<PatchDescriptor>();
+        private Frustum viewfrustum;
 
         public ITerrainGen Terrain { get; set; }
         private int TerrainGenPass = 1;
@@ -133,6 +143,10 @@ namespace Snowscape.TerrainGenerationViewer
         private uint currentParamsVersion = 0;
         private uint prevParamsVersion = 0;
 
+        private int numPatches = 0;
+        private int numTriangles = 0;
+
+
         private PerfMonitor perfmon = new PerfMonitor();
         private FrameTracker frameTracker = new FrameTracker();
         private OpenTKExtensions.UI.FrameTimeGraphRenderer frameTrackerRenderer = new OpenTKExtensions.UI.FrameTimeGraphRenderer(FrameTracker.BUFLEN, FrameTracker.MAXSTEPS);
@@ -167,10 +181,16 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Components.Add(this.skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer(), LoadOrder.Phase1);
             this.Components.Add(this.skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes), LoadOrder.Phase1);
+            this.Components.Add(this.skyCubeRenderer = new Atmosphere.SkyCubeRenderer(), LoadOrder.Phase1);
 
             this.Components.Add(this.tileRendererPatchLow = new GenerationVisPatchLowRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatchDetail = new GenerationVisPatchDetailRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tileRendererWireframe = new WireframePatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
+
+            this.Components.Add(this.tilePatchLowRenderer = new PatchLowRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tilePatchMediumRenderer = new PatchMediumRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tilePatchHighRenderer = new PatchHighRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -186,14 +206,15 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.terrainTileLoader = new Loaders.TerrainTileLoader(this.terrainTile.HeightTexture), LoadOrder.Phase2);
             this.Components.Add(this.terrainTileParamLoader = new Loaders.TerrainTileParamLoader(this.terrainTile.ParamTexture), LoadOrder.Phase2);
 
-            this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, this.tileRendererPatch, this.tileRendererPatchDetail), LoadOrder.Phase2);
+            //this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererPatchLow, this.tileRendererPatchLow, this.tileRendererPatch, this.tileRendererPatchDetail), LoadOrder.Phase2);
+            this.Components.Add(this.tileRendererQuadtree = new QuadtreeLODRenderer(this.tileRendererWireframe, this.tileRendererWireframe, this.tileRendererWireframe, this.tileRendererWireframe), LoadOrder.Phase2);
 
             // phase 3 (other high-level stuff)
 
             this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
 
-
+            this.Components.Add(this.quadTreeLodDebugRenderer = new UI.Debug.QuadTreeLodDebugRenderer(), LoadOrder.Phase3);
 
             #endregion
 
@@ -215,6 +236,10 @@ namespace Snowscape.TerrainGenerationViewer
             #region Parameters
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
 
+            parameters.Add(new Parameter<float>("detailscale", 6.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
+            parameters.Add(new Parameter<int>("loddiff", 1, 1, 4, v => v + 1, v => v - 1));
+            parameters.Add(new Parameter<int>("maxdepth", 8, 0, 12, v => v + 1, v => v - 1));
+
             parameters.Add(new Parameter<float>("exposure", -1.0f, -100.0f, -0.0005f, v => v * 1.05f, v => v * 0.95f));
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
             parameters.Add(new Parameter<float>("BlackLevel", 0.0f, 0.0f, 100.0f, v => v += 0.01f, v => v -= 0.01f));
@@ -227,23 +252,27 @@ namespace Snowscape.TerrainGenerationViewer
             //vec3(0.100,0.598,0.662) * 1.4
             //0.18867780436772762, 0.4978442963618773, 0.6616065586417131
             parameters.Add(new Parameter<float>("Kr_r", 0.1287f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Kr_g", 0.1898f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("Kr_g", 0.2698f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Kr_b", 0.7216f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));  // 0.6616
             parameters.Add(new Parameter<float>("Sun_r", 5.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Sun_g", 4.4f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Sun_b", 4.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
+            parameters.Add(new Parameter<float>("Sun_g", 4.9f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("Sun_b", 4.5f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028  0.1
 
-            parameters.Add(new Parameter<float>("mieBrightness", 0.005f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("skyPrecalcBoundary", 16.0f, 0.1f, 128.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+
+            parameters.Add(new Parameter<float>("mieBrightness", 0.02f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f));
-            parameters.Add(new Parameter<float>("raleighBrightness", 0.03f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("raleighBrightness", 5.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+
+            
             parameters.Add(new Parameter<float>("skylightBrightness", 3.8f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.0003f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
 
-            parameters.Add(new Parameter<float>("groundLevel", 0.985f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f, ParameterImpact.PreCalcLighting)); // 0.995 0.98
+            parameters.Add(new Parameter<float>("groundLevel", 0.995f, 0.5f, 0.99999f, v => v + 0.0001f, v => v - 0.0001f, ParameterImpact.PreCalcLighting)); // 0.995 0.98
 
             parameters.Add(new Parameter<float>("AmbientBias", 0.80f, 0.0f, 10.0f, v => v + 0.002f, v => v - 0.002f)); // 0.995 0.98
             parameters.Add(new Parameter<float>("IndirectBias", 0.05f, 0.0f, 10.0f, v => v + 0.005f, v => v - 0.005f)); // 0.995 0.98
@@ -455,6 +484,7 @@ namespace Snowscape.TerrainGenerationViewer
             try
             {
                 this.Terrain.Load(this.GetTerrainFileName(0));
+                this.terrainTile.SetHeightRange(this.Terrain.GetMinHeight(), this.Terrain.GetMaxHeight());
             }
             catch (FileNotFoundException)
             {
@@ -615,6 +645,7 @@ namespace Snowscape.TerrainGenerationViewer
                 RaleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
                 SkylightBrightness = (float)this.parameters["skylightBrightness"].GetValue(),
                 GroundLevel = (float)this.parameters["groundLevel"].GetValue(),
+                SkyPrecalcBoundary = this.parameters["skyPrecalcBoundary"].GetValue<float>(),
                 TileWidth = this.terrainTile.Width,
                 TileHeight = this.terrainTile.Height,
                 SampleDistanceFactor = (float)this.parameters["sampleDistanceFactor"].GetValue(),
@@ -650,12 +681,16 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
+            FrameRenderData renderData = new FrameRenderData();
+
             bool needToRenderLighting = false;
             bool stepFence = (bool)this.parameters["glFinish"].GetValue();
 
+            GL.Finish();
+
             if (this.reloadShaders)
             {
-                this.lightingStep.ReloadShader();
+                this.Components.Reload();
                 this.reloadShaders = false;
             }
 
@@ -678,6 +713,9 @@ namespace Snowscape.TerrainGenerationViewer
                 y += 0.0125f;
             }
             frameTracker.Step("text-timers", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
+
+            textManager.AddOrUpdate(new TextBlock("numPatches", string.Format("patches: {0:00}  tri: {1:#,###,##0}", numPatches, numTriangles), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1f, 1f, 1f, 1f)));
+            y += 0.0125f;
 
             //foreach (var timer in this.perfmon.AllAverageTimes())
             //{
@@ -787,6 +825,11 @@ namespace Snowscape.TerrainGenerationViewer
             SetTerrainProjection();
 
 
+            viewfrustum = new Frustum(this.camera.View * this.camera.Projection);
+            tilePatches = GetAllTilePatches(viewfrustum).ToList();
+            frameTracker.Step("terrain LOD", new Vector4(1.0f, 0.8f, 0.0f, 1.0f));
+
+
             this.lightingStep.BindForWriting();
 
             RenderTiles();
@@ -828,6 +871,12 @@ namespace Snowscape.TerrainGenerationViewer
             if (stepFence) { GL.Finish(); }
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
+
+            // estimate total tile mesh size
+            numPatches = this.tilePatches.Count;
+            numTriangles = this.tilePatches.Select(p => p.MeshSize * p.MeshSize).Sum();
+
+
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
             if (textManager.NeedsRefresh)
@@ -838,9 +887,16 @@ namespace Snowscape.TerrainGenerationViewer
             textManager.Render(overlayProjection, overlayModelview);
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
-            //perfmon.Start("FrameTracker");
-            //this.frameTrackerRenderer.SetData(this.frameTracker.GetBarData(), this.frameTracker.GetBarColour());
-            //perfmon.Stop("FrameTracker");
+
+
+            quadTreeLodDebugRenderer.tilePatches = this.tilePatches;
+            quadTreeLodDebugRenderer.viewFrustum = this.viewfrustum;
+            quadTreeLodDebugRenderer.overlayModelview = this.overlayModelview;
+            quadTreeLodDebugRenderer.overlayProjection = this.overlayProjection;
+            quadTreeLodDebugRenderer.Render(renderData);
+            frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+            
+
 
             this.frameTrackerRenderer.Clear();
             foreach (var quad in this.frameTracker.GetQuads())
@@ -854,6 +910,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.frameTrackerRenderer.Render(overlayProjection, overlayModelview, 0.5f);
             frameTracker.Step("frametracker-render", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+
 
             GL.Enable(EnableCap.DepthTest);
 
@@ -883,7 +940,9 @@ namespace Snowscape.TerrainGenerationViewer
                 eyePos,
                 sunVector,
                 groundLevel,
+                -0.01f,
                 (float)this.parameters["raleighBrightness"].GetValue(),
+                (float)this.parameters["miePhase"].GetValue(),
                 (float)this.parameters["mieBrightness"].GetValue(),
                 (float)this.parameters["scatterAbsorb"].GetValue(),
                 new Vector3(
@@ -895,27 +954,92 @@ namespace Snowscape.TerrainGenerationViewer
                         (float)this.parameters["Sun_r"].GetValue(),
                         (float)this.parameters["Sun_g"].GetValue(),
                         (float)this.parameters["Sun_b"].GetValue()
-                    )
+                    ),
+                this.parameters["skyPrecalcBoundary"].GetValue<float>()
                 );
         }
 
         private void RenderSkyRayDirections()
         {
-            this.skyRayDirectionRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos);
+            //this.skyRayDirectionRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos);
+            this.skyCubeRenderer.Render(this.terrainProjection, this.terrainModelview, this.eyePos, this.skyRenderer.SkyCubeTexture);
         }
+
+
+        /*
+        private void RenderTiles()
+        {
+            IPatchRenderer tileRenderer = this.tileRendererWireframe;
+
+            var patches = GetAllPatches().ToArray();
+            numPatches = patches.Length;
+
+            foreach (var p in patches)
+            {
+                tileRenderer.Width = p.TileSize;
+                tileRenderer.Height = p.TileSize;
+                tileRenderer.Scale = p.Scale;
+                tileRenderer.Offset = p.Offset;
+                tileRenderer.Render(terrainTile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            }
+        }*/
+
+
+        private IEnumerable<PatchDescriptor> GetAllTilePatches(Frustum f)
+        {
+
+            QuadTreeNode.DetailDistanceScale = parameters["detailscale"].GetValue<float>();
+            QuadTreeNode.MaxLODDiff = parameters["loddiff"].GetValue<int>();
+            QuadTreeNode.MaxDepth = parameters["maxdepth"].GetValue<int>();
+
+            for (int y = -2; y <= 2; y++)
+            {
+                for (int x = -2; x <= 2; x++)
+                {
+                    terrainTile.ModelMatrix = Matrix4.CreateTranslation((float)x * (float)terrainTile.Width, 0f, (float)y * (float)terrainTile.Height);
+
+                    foreach (var p in patchGenerator.GetPatches(terrainTile, f, this.eyePos))
+                    {
+                        yield return p;
+                    }
+                }
+            }
+        }
+
 
         private void RenderTiles()
         {
 
+
             (this.tileRendererPatch as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
 
-            for (int y = -1; y <= 1; y++)
+            IPatchRenderer patchRenderer = tilePatchLowRenderer;
+
+
+            foreach (var patch in tilePatches.OrderBy(p=>p.Distance))
             {
-                for (int x = -1; x <= 1; x++)
+                terrainTile.ModelMatrix = patch.TileModelMatrix;
+
+                if (patch.LOD <= -1)  // low res
                 {
-                    RenderTile(this.terrainTile, (float)x, (float)y, tileRendererQuadtree);
+                    patchRenderer = tilePatchLowRenderer;
                 }
+                else if (patch.LOD <= 0) // medium res - patch at terrain res or below. Detail normals & materials.
+                {
+                    patchRenderer = tilePatchMediumRenderer;
+                }
+                else // high res - patch at higher res - generated detail heights / normals / materials
+                {
+                    patchRenderer = tilePatchHighRenderer;
+                }
+
+                patchRenderer.Width = patch.MeshSize;
+                patchRenderer.Height = patch.MeshSize;
+                patchRenderer.Scale = patch.Scale;
+                patchRenderer.Offset = patch.Offset;
+                patchRenderer.DetailScale = (float)patch.TileSize / (float)patch.MeshSize;
+                patchRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos);
             }
 
         }
@@ -925,7 +1049,7 @@ namespace Snowscape.TerrainGenerationViewer
             tile.ModelMatrix = Matrix4.CreateTranslation(TileXOffset * (float)tile.Width, 0f, TileZOffset * (float)tile.Height);
 
             //this.tileRendererLOD.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
-            renderer.Render(tile, this.terrainProjection, this.terrainModelview, this.eyePos);
+            renderer.Render(tile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos);
         }
 
         protected string GetTerrainFileName(int index)

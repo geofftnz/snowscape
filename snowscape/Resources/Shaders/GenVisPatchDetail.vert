@@ -80,8 +80,7 @@ float sampleHeight(vec2 pos, float weight)
 		textureLod(heightTex,vec2(t0.x,t0.y),0).r * s0.x * s0.y +
 		textureLod(heightTex,vec2(t1.x,t0.y),0).r * s1.x * s0.y +
 		textureLod(heightTex,vec2(t0.x,t1.y),0).r * s0.x * s1.y +
-		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y;// + 
-		//getHeightDetail(pos);
+		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y;
 }
 
 vec3 getNormal(vec2 pos, float weight)

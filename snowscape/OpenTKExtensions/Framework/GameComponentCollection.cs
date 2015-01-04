@@ -44,6 +44,14 @@ namespace OpenTKExtensions.Framework
             }
         }
 
+        public void Reload()
+        {
+            foreach (var component in this.Select(c => c as IReloadable).Where(c => c != null))
+            {
+                component.Reload();
+            }
+        }
+
         public void Add(IGameComponent component, int loadOrder)
         {
             component.LoadOrder = loadOrder;

@@ -69,18 +69,21 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         }
 
 
-        public void Render(Vector3 eye, Vector3 sunVector, float groundLevel, float raleighBrightness, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight)
+        public void Render(Vector3 eye, Vector3 sunVector, float groundLevel, float rayleighPhase, float rayleighBrightness, float miePhase, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight, float skyPrecalcBoundary)
         {
             Action<ShaderProgram> uniforms = (sp) =>
             {
                 sp.SetUniform("eye", eye);
                 sp.SetUniform("sunVector", sunVector);
                 sp.SetUniform("groundLevel", groundLevel);
-                sp.SetUniform("raleighBrightness", raleighBrightness);
+                sp.SetUniform("rayleighBrightness", rayleighBrightness);
                 sp.SetUniform("mieBrightness", mieBrightness);
+                sp.SetUniform("rayleighPhase", rayleighPhase);
+                sp.SetUniform("miePhase", miePhase);
                 sp.SetUniform("scatterAbsorb", scatterAbsorb);
                 sp.SetUniform("Kr", Kr);
                 sp.SetUniform("sunLight", sunLight);
+                sp.SetUniform("skyPrecalcBoundary", skyPrecalcBoundary);
             };
 
             RenderFace(SkyCubeTexture, TextureTarget.TextureCubeMapPositiveX, Vector3.UnitX, -Vector3.UnitZ, -Vector3.UnitY, uniforms);

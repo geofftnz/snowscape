@@ -10,7 +10,7 @@ namespace Utils
     public class FrameTracker
     {
         // number of frames of history to track
-        public static int BUFLEN = 256;
+        public static int BUFLEN = 128;
         public static int MAXSTEPS = 32;
 
 

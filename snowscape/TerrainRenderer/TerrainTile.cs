@@ -34,10 +34,16 @@ namespace Snowscape.TerrainRenderer
         public Texture NormalTexture { get; private set; }
         public Texture ShadeTexture { get; private set; }
         public Texture ParamTexture { get; private set; }
-        public Sampler LinearSampler { get; private set; }
+        //public Sampler LinearSampler { get; private set; }
 
-        //public float MinHeight { get; private set; }
-        //public float MaxHeight { get; private set; }
+        public float MinHeight { get; private set; }
+        public float MaxHeight { get; private set; }
+
+        /// <summary>
+        /// bounding box for this tile, used for frustum culling
+        /// </summary>
+        private Vector4[] boundingBox = new Vector4[8];
+        public Vector4[] BoundingBox { get { return boundingBox; } }
 
         private Matrix4 modelMatrix;
         public Matrix4 ModelMatrix
@@ -57,8 +63,11 @@ namespace Snowscape.TerrainRenderer
         {
             this.Width = width;
             this.Height = height;
+            this.SetHeightRange(0f, 1f);
+
             this.ModelMatrix = Matrix4.Identity;
             this.InitTextures();
+
 
             this.Loading += TerrainTile_Loading;
             this.Unloading += TerrainTile_Unloading;
@@ -73,14 +82,14 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-            this.LinearSampler =
-                new Sampler()
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Linear))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMinFilter, (int)TextureMinFilter.Linear))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.Repeat))
-                .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.Repeat));
+            //this.LinearSampler =
+            //    new Sampler()
+            //    .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMagFilter, (int)TextureMagFilter.Linear))
+            //    .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureMinFilter, (int)TextureMinFilter.Linear))
+            //    .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapS, (int)TextureWrapMode.Repeat))
+            //    .SetParameter(new SamplerObjectParameterInt(SamplerParameter.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-            this.NormalTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte)
+            this.NormalTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -119,6 +128,9 @@ namespace Snowscape.TerrainRenderer
 
         public void SetDataFromTerrain(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
+
+            SetHeightRange(terrain.Map.Select(c => c.Height).Min(), terrain.Map.Select(c => c.Height).Max());
+
             // height from cells
             UploadHeightTextureFromTerrain(terrain, offsetX, offsetY);
 
@@ -135,6 +147,8 @@ namespace Snowscape.TerrainRenderer
 
         public void SetDataFromTerrainGeneration(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {
+            SetHeightRange(terrain.Map.Select(c => c.Height).Min(), terrain.Map.Select(c => c.Height).Max());
+
             // height from cells
             UploadHeightTextureFromTerrain(terrain, offsetX, offsetY);
 
@@ -154,6 +168,39 @@ namespace Snowscape.TerrainRenderer
             // param texture - cell components
             UploadVisParamTexture(data);
         }
+
+        public void SetHeightRange(float minheight, float maxheight)
+        {
+            this.MinHeight = minheight;
+            this.MaxHeight = maxheight;
+            this.InitBoundingBox();
+        }
+
+        private void InitBoundingBox()
+        {
+            int i = 0;
+            float x = (float)this.Width;
+            float z = (float)this.Height;
+
+            // bottom
+            // 0 1
+            // 2 3  
+            //
+            // top 
+            // 4 5
+            // 6 7
+
+            boundingBox[i++] = new Vector4(0f, MinHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(x, MinHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(0f, MinHeight, z, 1f);
+            boundingBox[i++] = new Vector4(x, MinHeight, z, 1f);
+
+            boundingBox[i++] = new Vector4(0f, MaxHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(x, MaxHeight, 0f, 1f);
+            boundingBox[i++] = new Vector4(0f, MaxHeight, z, 1f);
+            boundingBox[i++] = new Vector4(x, MaxHeight, z, 1f);
+        }
+
 
         private void UploadVisParamTexture(TerrainStorage.Terrain terrain, int offsetX, int offsetY)
         {

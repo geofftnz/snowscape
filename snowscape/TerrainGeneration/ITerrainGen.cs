@@ -20,5 +20,17 @@ namespace TerrainGeneration
         void Save(string filename);
         float[] GetRawData();
         IEnumerable<IParameter> GetParameters();
+
+        /// <summary>
+        /// Returns the lower bound for height in the terrain. 
+        /// </summary>
+        /// <returns></returns>
+        float GetMinHeight();
+
+        /// <summary>
+        /// Returns the upper bound for height in the terrain.
+        /// </summary>
+        /// <returns></returns>
+        float GetMaxHeight();
     }
 }

@@ -31,7 +31,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
         }
 
-        public void Render(TerrainTile tile, Matrix4 projection, Matrix4 view, Vector3 eye)
+        public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eye)
         {
             /*
             Vector3[] box = {
@@ -62,10 +62,10 @@ namespace Snowscape.TerrainRenderer.Renderers
 
             if (distanceToCentre < 500.0f)  // todo: reference to pixels
             {
-                distantRenderer.Render(tile, projection, view, eye);
+                distantRenderer.Render(tile, terrainGlobal, projection, view, eye);
                 return;
             }
-            middleRenderer.Render(tile, projection, view, eye);
+            middleRenderer.Render(tile, terrainGlobal, projection, view, eye);
             
         }
 

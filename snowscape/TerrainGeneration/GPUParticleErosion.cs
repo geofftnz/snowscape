@@ -125,6 +125,9 @@ namespace TerrainGeneration
 
         public float WaterHeightFactor { get { return (float)this.Parameters[P_WATERHEIGHT].GetValue(); } }
 
+        private float initialMinHeight = 0f;
+        private float initialMaxHeight = 1000f;
+
         public GPUParticleErosion(int width, int height, int particleTexWidth, int particleTexHeight)
         {
             this.Width = width;
@@ -618,6 +621,8 @@ namespace TerrainGeneration
         public void Load(string filename)
         {
             var data = new float[this.Width * this.Height * 4];
+            this.initialMinHeight = float.MaxValue;
+            this.initialMaxHeight = float.MinValue;
 
             try
             {
@@ -652,6 +657,10 @@ namespace TerrainGeneration
                             sr.ReadSingle();
                             data[i*4 + 3] = 0f;
                             sr.ReadSingle();
+
+                            float hh = data[i * 4 + 0] + data[i * 4 + 1];
+                            this.initialMinHeight = hh < this.initialMinHeight ? hh : this.initialMinHeight;
+                            this.initialMaxHeight = hh > this.initialMaxHeight ? hh : this.initialMaxHeight;
                         }
 
                         sr.Close();
@@ -717,6 +726,9 @@ namespace TerrainGeneration
 
             UploadTerrain(data);
 
+            this.initialMinHeight = terrain.GetMinHeight();
+            this.initialMaxHeight = terrain.GetMaxHeight();
+
         }
 
         private void RandomizeParticles(Texture destination)
@@ -740,6 +752,17 @@ namespace TerrainGeneration
         public IEnumerable<IParameter> GetParameters()
         {
             return this.Parameters;
+        }
+
+
+        public float GetMinHeight()
+        {
+            return initialMinHeight;
+        }
+
+        public float GetMaxHeight()
+        {
+            return initialMaxHeight;
         }
     }
 }

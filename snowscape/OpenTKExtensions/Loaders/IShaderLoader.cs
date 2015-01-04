@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using OpenTKExtensions.Loaders;
 
 namespace OpenTKExtensions
 {
@@ -13,13 +14,13 @@ namespace OpenTKExtensions
         /// </summary>
         /// <param name="sourceName"></param>
         /// <returns></returns>
-        string LoadRaw(string sourceName);
+        SourceContent LoadRaw(string sourceName, string baseSourceName = @"");
 
         /// <summary>
         /// Loads a text resource and performs preprocessing
         /// </summary>
         /// <param name="sourceName"></param>
         /// <returns></returns>
-        string Load(string sourceName);
+        SourceContent Load(string sourceName, string baseSourceName = @"");
     }
 }

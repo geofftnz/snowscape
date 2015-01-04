@@ -17,7 +17,7 @@ namespace OpenTKExtensions.Test
 
             var loader = new FileSystemLoader("d:/test/shaders");
 
-            string source = loader.Load("rootshader.frag");
+            string source = loader.Load("rootshader.frag","").Content;
 
             Assert.AreNotEqual(string.Empty, source);
 

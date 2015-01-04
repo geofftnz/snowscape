@@ -735,8 +735,9 @@ void main(void)
 	{
         if (hitType > 0.05)
 		{
-			vec3 skyDir = normal;
-			c.rgb += getSkyColour(skyDir);
+			vec3 skyDir = normalT.xyz;//normalize(pos.xyz - eyePos.xyz);
+			//c.rgb += getSkyColour(skyDir);
+			c.rgb = paramT.rgb;
 			vec4 inst = getInscatterTerrain(eyePos,eyePos + skyDir * nearScatterDistance);
 			c.rgb *= inst.a;
             c.rgb += inst.rgb;
