@@ -329,10 +329,13 @@ namespace TerrainGeneration
 
             float packedSnowErosionFactor = this.Parameters[P_PACKEDSNOWEROSIONFACTOR].GetValue<float>();
 
-
             Vector2 wind = new Vector2((float)Math.Cos(wind_angle * deg2rad) * wind_speed, (float)-Math.Sin(wind_angle * deg2rad) * wind_speed);
 
             float deltaTime = 0.5f;
+
+
+            //GL.DepthMask(false);
+            //GL.Disable(EnableCap.DepthTest);
 
             SnowfallStep.Render(
                 () =>
@@ -384,6 +387,7 @@ namespace TerrainGeneration
                 });
 
 
+            /*
             // calculate new particle velocity
             // start with prevailing wind
             // adjust for terrain normal
@@ -475,7 +479,7 @@ namespace TerrainGeneration
             //    {
             //        sp.SetUniform("densitytex", 0);
             //    });
-
+            
             UpdateLayersStep.Render(
                 () =>
                 {
@@ -540,7 +544,7 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("velocitytex", 0);
                 });
-
+            
             // copy terrain from buffer 1 back to 0
             CopyTerrainStep.Render(
                 () =>
@@ -551,7 +555,7 @@ namespace TerrainGeneration
                 {
                     sp.SetUniform("terraintex", 0);
                 });
-
+            */
         }
 
 

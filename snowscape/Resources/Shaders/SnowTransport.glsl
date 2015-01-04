@@ -153,7 +153,7 @@ void main(void)
 	particlecoord = vertex.xy;
 
 	// use vertex as lookup into particle texture to get actual position
-	texcoord = textureLod(particletex,vertex,0).xy;
+	texcoord = textureLod(particletex,vertex.xy,0).xy;
 	gl_Position = vec4(texcoord.xy*2.0-1.0,0.0,1.0);
 }
 

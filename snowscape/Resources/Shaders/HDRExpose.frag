@@ -38,6 +38,7 @@ void main(void)
 	//vec3 col = texture(colTex,texcoord0).rgb;
 	vec3 col = textureLod(colTex,texcoord0,0).rgb;
 
+
 	// chromatic aberration
 	//vec2 posFromCentre = texcoord0.xy - vec2(0.5);
 	//vec3 col;
