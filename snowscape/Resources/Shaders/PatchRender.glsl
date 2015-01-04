@@ -1,7 +1,9 @@
 ﻿//|Common
 
-vec2 detailScale = vec2(0.2,0.2);  // detailTexScale is uniform
-float sampleOfs = 1.0/1024.0;
+float t = 1.0 / boxparam.x;
+const vec2 detailScale = vec2(0.2,0.2);  // detailTexScale is uniform
+const float sampleOfs = 1.0/1024.0;
+const float minduv = 0.0001;
 
 float SmoothShadow(float heightdiff)
 {
@@ -30,6 +32,9 @@ float sfbm(vec2 pos)
 vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
 {
 	float displacement = sfbm(pos.xz * scale.x) * scale.y;
+	displacement += snoise(pos.xz * scale.x * 64.0) * scale.y * 0.01;
+	displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.001;
+
 	return vec2(0.0,displacement);
 }
 
@@ -164,7 +169,7 @@ out vec2 texcoord;
 
 #include ".|Common"
 
-float t = 1.0 / boxparam.x;
+
 
 float getHeight(vec2 pos)
 {
@@ -257,12 +262,12 @@ uniform float detailTexScale;
 in vec3 vertex;
 in vec3 in_boxcoord;
 
+out vec3 basevertex;
 out vec3 boxcoord;
 out vec2 texcoord;
 
 #include ".|Common"
 
-float t = 1.0 / boxparam.x;
 
 float getHeight(vec2 pos)
 {
@@ -291,6 +296,8 @@ void main() {
 	v.z *= boxparam.y;
 	v.y = h + v.y;
 
+	basevertex = v;
+
     gl_Position = transform_matrix * vec4(v, 1.0);
 
 	b.x *= boxparam.x;
@@ -314,6 +321,7 @@ uniform float scale;
 uniform vec2 offset;
 uniform float detailTexScale; 
 
+in vec3 basevertex;
 in vec3 boxcoord;
 in vec2 texcoord;
 
@@ -323,17 +331,44 @@ out vec4 out_Shading;
 out vec4 out_Lighting;
 
 #include ".|Common"
+#include ".|CubicNormalSample"
 
 void main(void)
 {
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	float height = textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(0.2,0.6,0.2,0.1);
-    out_Normal = texture(normalTex,texcoord);
+
+   	vec4 param = texture2D(paramTex,texcoord);
+	//out_Normal = texture(normalTex,texcoord);
+
+	// get bicubic interpolated normal
+	vec3 normal = getNormal(texcoord,boxparam.x);
+
+	// calculate tangent and binormal
+	// tangent is in X direction, so is the cross product of normal (Y) and Z
+	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	vec3 binormal = normalize(cross(t1,normal));
+	vec3 tangent = normalize(cross(normal,binormal));
+
+	// get screen-space derivative
+	vec2 duv = abs(fwidth(texcoord));
+	duv.x = max(minduv,duv.x + duv.y);
+
+	// sample detail
+	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
+
+	// calculate normal of detail heightmap at detailpos
+	mat3 nm = mat3(tangent,normal,binormal);
+	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
+	vec3 n = normalize(detail.normal * nm);
+	
+    out_Normal = vec4(n,1.0);
+
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
+	out_Colour = vec4(0.2,0.6,0.2,0.1);
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
@@ -366,7 +401,6 @@ out vec2 texcoord;
 
 #include ".|Common"
 
-float t = 1.0 / boxparam.x;
 
 float getHeight(vec2 pos)
 {
@@ -462,8 +496,12 @@ void main(void)
 
 	out_Colour = vec4(0.6,0.2,0.2,0.1);
 
+	// get screen-space derivative
+	vec2 duv = abs(fwidth(texcoord));
+	duv.x = max(minduv,duv.x + duv.y);
+
 	// sample detail
-	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, sampleOfs);
+	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
 
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
