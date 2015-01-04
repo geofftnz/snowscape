@@ -690,7 +690,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (this.reloadShaders)
             {
-                this.lightingStep.ReloadShader();
+                this.Components.Reload();
                 this.reloadShaders = false;
             }
 

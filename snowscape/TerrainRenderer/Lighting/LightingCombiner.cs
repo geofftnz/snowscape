@@ -29,7 +29,7 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// - render the gbuffer from the previous step into a new colour buffer
     /// 
     /// </summary>
-    public class LightingCombiner : GameComponentBase
+    public class LightingCombiner : GameComponentBase, IReloadable
     {
         private GBuffer gbuffer = new GBuffer("lighting", true);
         private ShaderProgram program = new ShaderProgram("combiner");
@@ -127,13 +127,14 @@ namespace Snowscape.TerrainRenderer.Lighting
 
             this.gbuffer.Init(this.Width, this.Height);
 
-            InitShader(program);
+            Reload();
 
             this.gbufferCombiner = new GBufferCombiner(this.gbuffer, this.program);
         }
 
-        private void InitShader(ShaderProgram program)
+        private ShaderProgram LoadShader()
         {
+            var program = new ShaderProgram(this.GetType().Name);
             program.Init(
                 @"GlobalLighting.vert",
                 @"GlobalLighting_RayMarch.frag",
@@ -142,24 +143,22 @@ namespace Snowscape.TerrainRenderer.Lighting
                     new Variable(0, "vertex"), 
                     new Variable(1, "in_texcoord0") 
                 });
+            return program;
         }
 
-        public void ReloadShader()
+        private void SetShader(ShaderProgram newprogram)
         {
-            try
+            if (this.program != null)
             {
-                ShaderProgram newprogram = new ShaderProgram(this.program.Name);
-                InitShader(newprogram);
-
                 this.program.Unload();
-                this.program = newprogram;
-                this.gbufferCombiner.CombineProgram = this.program;
+            }
+            this.program = newprogram;
+            this.gbufferCombiner.CombineProgram = this.program;
+        }
 
-            }
-            catch (Exception ex)
-            {
-                log.Warn("Could not replace shader program {0}: {1}", this.program.Name, ex.GetType().Name + ": " + ex.Message);
-            }
+        public void Reload()
+        {
+            this.ReloadShader(this.LoadShader, this.SetShader, log);
         }
 
         public void Resize(int width, int height)
@@ -249,6 +248,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("boxparam", new Vector4((float)rp.TileWidth, (float)rp.TileHeight, 0.0f, 1.0f));
             });
         }
+
 
 
 
