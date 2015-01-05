@@ -106,7 +106,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             : base()
         {
 
-            
+
             this.Loading += LightingCombiner_Loading;
         }
 
@@ -153,7 +153,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 this.program.Unload();
             }
             this.program = newprogram;
-            this.gbufferCombiner.CombineProgram = this.program;
+            this.gbufferCombiner.Maybe(gb => gb.CombineProgram = this.program);
         }
 
         public void Reload()
@@ -189,7 +189,7 @@ namespace Snowscape.TerrainRenderer.Lighting
         public void Render(RenderParams rp)
         {
 
-            
+
             rp.HeightTexture.Bind(TextureUnit.Texture4);
             rp.ShadeTexture.Bind(TextureUnit.Texture5);
             rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture6);

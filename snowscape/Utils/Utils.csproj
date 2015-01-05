@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileSystemPoller.cs" />
     <Compile Include="FrameCounter2.cs" />
     <Compile Include="FrameCounter.cs" />
     <Compile Include="Intersect.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="ParameterCollection.cs" />
     <Compile Include="PerfMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RendererHelper.cs" />
     <Compile Include="SimplexNoise.cs" />
     <Compile Include="TextureSynth.cs" />
     <Compile Include="TileMath.cs" />

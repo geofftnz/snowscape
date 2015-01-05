@@ -151,9 +151,11 @@ namespace Snowscape.TerrainGenerationViewer
         private FrameTracker frameTracker = new FrameTracker();
         private OpenTKExtensions.UI.FrameTimeGraphRenderer frameTrackerRenderer = new OpenTKExtensions.UI.FrameTimeGraphRenderer(FrameTracker.BUFLEN, FrameTracker.MAXSTEPS);
 
-        private string terrainPath = @"../../../../terrains/";
+        private const string TERRAINPATH = @"../../../../terrains/";
+        private const string SHADERPATH = @"../../../Resources/Shaders";
 
-
+        //private FileSystemWatcher shaderWatcher;
+        private FileSystemPoller shaderDirectoryPoller;
         private bool reloadShaders = false;
 
         public class CloseEventArgs : EventArgs { }
@@ -166,8 +168,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.VSync = VSyncMode.Off;
 
             // set default shader loader
-            ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(@"../../../Resources/Shaders");
-
+            ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(SHADERPATH);
 
             this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes);
 
@@ -235,6 +236,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             #region Parameters
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
+            parameters.Add(new Parameter<bool>("autoreload", false, false, true, v => true, v => false));
+            //parameters.Add(new Parameter<bool>("mouselook", true, false, true, v => true, v => false));
 
             parameters.Add(new Parameter<float>("detailscale", 6.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
             parameters.Add(new Parameter<int>("loddiff", 1, 1, 4, v => v + 1, v => v - 1));
@@ -295,7 +298,32 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("NormalBlendFarDistance", 500.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
 
             #endregion
+
+
+            shaderDirectoryPoller = new FileSystemPoller(SHADERPATH);
+
+            //shaderWatcher = new FileSystemWatcher();
+            //shaderWatcher.Path = Path.GetFullPath(SHADERPATH);
+            //shaderWatcher.Filter = "*.glsl";
+            //shaderWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName | NotifyFilters.CreationTime | NotifyFilters.Attributes;
+            //shaderWatcher.Changed += shaderWatcher_Changed;
+            //shaderWatcher.Error += shaderWatcher_Error;
+            //shaderWatcher.EnableRaisingEvents = true;
+
         }
+
+        //void shaderWatcher_Error(object sender, ErrorEventArgs e)
+        //{
+        //    log.Warn("FileSystemWatcher: {0}",e.GetException().Message);
+        //}
+
+        //void shaderWatcher_Changed(object sender, FileSystemEventArgs e)
+        //{
+        //    if (this.parameters["autoreload"].GetValue<bool>())
+        //    {
+        //        this.reloadShaders = true;
+        //    }
+        //}
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
         {
@@ -556,6 +584,15 @@ namespace Snowscape.TerrainGenerationViewer
             this.camera.Update(e.Time);
             this.eyePos = (this.camera as WalkCamera).EyePos;
 
+            if (this.parameters["autoreload"].GetValue<bool>() && (updateCounter % 200 == 0))
+            {
+                shaderDirectoryPoller.Poll();
+                if (shaderDirectoryPoller.HasChanges)
+                {
+                    this.reloadShaders = true;
+                    shaderDirectoryPoller.Reset();
+                }
+            }
 
             updateCounter++;
         }
@@ -1059,7 +1096,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         protected string GetTerrainFileName(int index, int pass)
         {
-            return string.Format("{0}Terrain{1}.1024.pass{2}.ter", this.terrainPath, index, pass);
+            return string.Format("{0}Terrain{1}.1024.pass{2}.ter", TERRAINPATH, index, pass);
         }
     }
 }
