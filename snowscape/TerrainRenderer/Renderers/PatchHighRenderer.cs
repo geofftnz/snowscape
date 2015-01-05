@@ -17,7 +17,7 @@ namespace Snowscape.TerrainRenderer.Renderers
     /// This will use a mesh and a portion of a heightmap and associated textures.
     /// The mesh is designed to seamlessly tile to adjacent patches, assuming the source textures wrap around.
     /// </summary>
-    public class PatchHighRenderer : GameComponentBase, ITileRenderer, IPatchRenderer
+    public class PatchHighRenderer : GameComponentBase, ITileRenderer, IPatchRenderer, IReloadable
     {
         private TerrainPatchMesh mesh;
         private ShaderProgram shader = new ShaderProgram("patchhigh");
@@ -72,13 +72,14 @@ namespace Snowscape.TerrainRenderer.Renderers
 
         void PatchHighRenderer_Loading(object sender, EventArgs e)
         {
-            InitShader();
+            Reload();
         }
 
-        private void InitShader()
+        private ShaderProgram LoadShader()
         {
+            var program = new ShaderProgram(this.GetType().Name);
             // setup shader
-            this.shader.Init(
+            program.Init(
                 @"PatchRender.glsl|HighVertex",
                 @"PatchRender.glsl|HighFragment",
                 new List<Variable> 
@@ -93,7 +94,23 @@ namespace Snowscape.TerrainRenderer.Renderers
                     "out_Shading",
                     "out_Lighting"
                 });
+            return program;
         }
+
+        private void SetShader(ShaderProgram newprogram)
+        {
+            if (this.shader != null)
+            {
+                this.shader.Unload();
+            }
+            this.shader = newprogram;
+        }
+
+        public void Reload()
+        {
+            this.ReloadShader(this.LoadShader, this.SetShader, log);
+        }
+
 
         public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eyePos)
         {

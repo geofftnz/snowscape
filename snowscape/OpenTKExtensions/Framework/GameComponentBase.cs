@@ -8,7 +8,7 @@ namespace OpenTKExtensions.Framework
 {
     public class GameComponentBase : IGameComponent
     {
-        private static Logger log = LogManager.GetCurrentClassLogger();
+        protected static Logger log = LogManager.GetCurrentClassLogger();
 
         public ComponentStatus Status
         {

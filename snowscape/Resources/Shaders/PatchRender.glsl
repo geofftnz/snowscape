@@ -16,8 +16,8 @@ float sfbm(vec2 pos)
 {
 	float a = snoise(pos); 
 	a += snoise(pos * 2.0) * 0.5; 
-	a += snoise(pos * 4.0) * 0.25; 
-	a += snoise(pos * 8.0) * 0.125; 
+	//a += snoise(pos * 4.0) * 0.25; 
+	//a += snoise(pos * 8.0) * 0.125; 
 	return a;
 }
 
@@ -236,7 +236,7 @@ void main(void)
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	float height = textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(0.2,0.2,0.6,0.1);
+	out_Colour = vec4(0.5,0.5,0.5,0.1); 
     out_Normal = texture(normalTex,texcoord);
 
 	float shadow = SmoothShadow(height - shadowAO.r);
@@ -250,6 +250,7 @@ void main(void)
 #version 140
  
 uniform sampler2D heightTex;
+uniform sampler2D normalTex;
 
 uniform mat4 transform_matrix;
 uniform vec4 boxparam;
@@ -263,6 +264,9 @@ in vec3 vertex;
 in vec3 in_boxcoord;
 
 out vec3 basevertex;
+out vec3 normal;
+out vec3 binormal;
+out vec3 tangent;
 out vec3 boxcoord;
 out vec2 texcoord;
 
@@ -288,6 +292,12 @@ void main() {
 	texcoord = b.xz;
 
 	float h = sampleHeight(texcoord);
+	normal = textureLod(normalTex,texcoord,0).rgb;
+	// calculate tangent and binormal
+	// tangent is in X direction, so is the cross product of normal (Y) and Z
+	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	binormal = normalize(cross(t1,normal));
+	tangent = normalize(cross(normal,binormal));
 
 	vec3 v = vertex;
 	v.xz *= scale;
@@ -322,6 +332,9 @@ uniform vec2 offset;
 uniform float detailTexScale; 
 
 in vec3 basevertex;
+in vec3 normal;
+in vec3 binormal;
+in vec3 tangent;
 in vec3 boxcoord;
 in vec2 texcoord;
 
@@ -331,7 +344,7 @@ out vec4 out_Shading;
 out vec4 out_Lighting;
 
 #include ".|Common"
-#include ".|CubicNormalSample"
+//#include ".|CubicNormalSample"
 
 void main(void)
 {
@@ -343,13 +356,14 @@ void main(void)
 	//out_Normal = texture(normalTex,texcoord);
 
 	// get bicubic interpolated normal
-	vec3 normal = getNormal(texcoord,boxparam.x);
+	//vec3 normal = getNormal(texcoord,boxparam.x);
+	//vec3 normal = textureLod(normalTex,texcoord,0).rgb;
 
 	// calculate tangent and binormal
 	// tangent is in X direction, so is the cross product of normal (Y) and Z
-	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
-	vec3 binormal = normalize(cross(t1,normal));
-	vec3 tangent = normalize(cross(normal,binormal));
+	//vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	//vec3 binormal = normalize(cross(t1,normal));
+	//vec3 tangent = normalize(cross(normal,binormal));
 
 	// get screen-space derivative
 	vec2 duv = abs(fwidth(texcoord));
@@ -368,7 +382,7 @@ void main(void)
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
-	out_Colour = vec4(0.2,0.6,0.2,0.1);
+	out_Colour = vec4(0.5,0.5,0.5,0.1);
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
@@ -494,7 +508,7 @@ void main(void)
 
 	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(0.6,0.2,0.2,0.1);
+	out_Colour = vec4(0.5,0.5,0.5,0.1);
 
 	// get screen-space derivative
 	vec2 duv = abs(fwidth(texcoord));

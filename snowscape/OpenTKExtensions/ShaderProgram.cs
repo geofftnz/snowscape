@@ -194,6 +194,9 @@ namespace OpenTKExtensions
 
         public ShaderProgram Init(string vertexSource, string fragmentSource, IList<Variable> variables, string[] fragDataOutputs, IShaderLoader loader)
         {
+
+            log.Info("ShaderProgram.Init ({0}) loading", this.Name);
+
             string vsrc, fsrc;
 
             if (loader != null)
