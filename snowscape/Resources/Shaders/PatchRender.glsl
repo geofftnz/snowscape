@@ -16,10 +16,13 @@ float sfbm(vec2 pos)
 {
 	float a = snoise(pos); 
 	a += snoise(pos * 2.0) * 0.5; 
-	//a += snoise(pos * 4.0) * 0.25; 
+	a += snoise(pos * 4.0) * 0.25; 
 	//a += snoise(pos * 8.0) * 0.125; 
+	//a += snoise(pos * 16.0) * 0.0625; 
+	//a += snoise(pos * 32.0) * 0.03125; 
 	return a;
 }
+
 
 // gets a tuple of material (x) and displacement (y) for a given point.
 //
@@ -68,6 +71,12 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, flo
 }
 
 
+//|FragmentCommon
+float getDetailBias()
+{
+	vec2 duv = abs(fwidth(texcoord));
+	return min(1.0,2.0 / (1.0 + dot(duv,duv)*10000000.0));
+}
 
 
 
@@ -230,13 +239,14 @@ out vec4 out_Shading;
 out vec4 out_Lighting;
 
 #include ".|Common"
+#include ".|FragmentCommon"
 
 void main(void)
 {
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	float height = textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(0.5,0.5,0.5,0.1); 
+	out_Colour = vec4(getDetailBias(),0.5,0.5,0.1); 
     out_Normal = texture(normalTex,texcoord);
 
 	float shadow = SmoothShadow(height - shadowAO.r);
@@ -344,6 +354,7 @@ out vec4 out_Shading;
 out vec4 out_Lighting;
 
 #include ".|Common"
+#include ".|FragmentCommon"
 //#include ".|CubicNormalSample"
 
 void main(void)
@@ -353,6 +364,8 @@ void main(void)
 
 
    	vec4 param = texture2D(paramTex,texcoord);
+
+	float detailBias = getDetailBias();
 	//out_Normal = texture(normalTex,texcoord);
 
 	// get bicubic interpolated normal
@@ -372,6 +385,8 @@ void main(void)
 	// sample detail
 	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
 
+	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
+
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
 	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
@@ -382,7 +397,7 @@ void main(void)
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
-	out_Colour = vec4(0.5,0.5,0.5,0.1);
+	out_Colour = vec4(detailBias,0.5,0.5,0.1);
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
@@ -500,15 +515,24 @@ out vec4 out_Shading;
 out vec4 out_Lighting;
 
 #include ".|Common"
+#include ".|FragmentCommon"
+
+float getDUV()
+{
+	vec2 duv = abs(fwidth(texcoord));
+	return duv.x + duv.y;
+}
+
 
 void main(void)
 {
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	vec4 param = texture2D(paramTex,texcoord);
+	float detailBias = getDetailBias();
 
 	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(0.5,0.5,0.5,0.1);
+	out_Colour = vec4(detailBias,0.5,0.5,0.1); 
 
 	// get screen-space derivative
 	vec2 duv = abs(fwidth(texcoord));
@@ -516,6 +540,8 @@ void main(void)
 
 	// sample detail
 	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
+	
+	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
