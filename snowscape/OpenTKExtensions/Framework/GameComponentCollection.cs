@@ -14,7 +14,7 @@ namespace OpenTKExtensions.Framework
 
         public void Load()
         {
-            foreach (var component in this.OrderBy(c=>c.LoadOrder))
+            foreach (var component in this.OrderBy(c => c.LoadOrder))
             {
                 component.Load();
             }
@@ -46,7 +46,8 @@ namespace OpenTKExtensions.Framework
 
         public void Reload()
         {
-            foreach (var component in this.Select(c => c as IReloadable).Where(c => c != null))
+            foreach (var component in this.SelectMany(c => (c as IReloadable).Enum()))
+            //foreach (var component in this.Select(c => c as IReloadable).Where(c => c != null))
             {
                 component.Reload();
             }

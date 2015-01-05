@@ -66,5 +66,19 @@ namespace OpenTKExtensions
 
         //}
 
+
+        public static IEnumerable<T> Enum<T>(this T a) where T : class
+        {
+            if (a != null) 
+                yield return a;
+        }
+
+        public static IEnumerable<T> Enum<T>(this T? a) where T : struct
+        {
+            if (a.HasValue)
+                yield return a.Value;
+        }
+
+
     }
 }
