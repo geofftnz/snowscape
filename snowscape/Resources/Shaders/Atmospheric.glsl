@@ -281,7 +281,7 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 
 vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterAbsorb, float minDistance, float maxDistance)
 {
-	vec3 col = vec3(0);
+	vec3 col = vec3(0.0);
 	
 	float dist = min(maxDistance,adepthSkyGround(eye, dir2, groundLevel));
 	
@@ -302,7 +302,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 	
 	for (float t=0.0;t<=1.0;t+=0.05)
 	{
-		p += dir * dist * dt;
+		p = eye + dir * dist * t;
 		
 		float airDensityAtP = airDensityNorm(length(p));
 		totalAir += airDensityAtP * dist * dt;
@@ -358,6 +358,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		lightToEye += ral * influxAtP * Kr * dist * dt;
 		
 		col += absorb(dist * t, lightToEye, 1.0-totalAir);
+		col += vec3(0.1,0.01,0.03);
 			
 	}
 	

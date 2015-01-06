@@ -744,6 +744,8 @@ void main(void)
 
 	c = colourT.rgb * (sun + ambient + vec3(lightingT.b));
 
+	//c = texture(skyCubeTex,normal).rgb;
+
 	// incoming scattering
 
 	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256

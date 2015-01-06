@@ -25,10 +25,10 @@ namespace OpenTKExtensions
             this.Height = height;
         }
 
-        protected override void InitGBuffer()
-        {
-            gbuffer.Init(this.Width, this.Height);
-        }
+        //protected override void InitGBuffer()
+        //{
+        //    gbuffer.Init(this.Width, this.Height);
+        //}
 
         public virtual void Render(Action textureBinds, Action<ShaderProgram> setUniforms, params GBuffer.TextureSlot[] outputTextures)
         {

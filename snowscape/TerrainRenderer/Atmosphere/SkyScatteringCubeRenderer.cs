@@ -18,7 +18,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
     /// - ground level
     /// 
     /// </summary>
-    public class SkyScatteringCubeRenderer : GameComponentBase
+    public class SkyScatteringCubeRenderer : GameComponentBase, IReloadable
     {
         // Needs:
         private GBufferRedirectableShaderStep gb;
@@ -32,8 +32,6 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         {
             this.SkyRes = resolution;
 
-            gb = new GBufferRedirectableShaderStep("sky_scatter_cube", resolution, resolution);
-
             this.SkyCubeTexture = new Texture(SkyRes, SkyRes, TextureTarget.TextureCubeMap, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
             this.SkyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge));
             this.SkyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
@@ -41,6 +39,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
             this.SkyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
             this.SkyCubeTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapNearest));
 
+            gb = new GBufferRedirectableShaderStep("sky_scatter_cube", resolution, resolution);
 
             this.Loading += SkyScatteringCubeRenderer_Loading;
         }
@@ -49,9 +48,23 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         {
             SetupCubeMap();
 
+            var tex = new Texture(SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb,PixelType.HalfFloat);
+            tex.UploadEmpty();
+
             // TODO: need to find and fix the FBO IncompleteMissingAttachment error
-            gb.SetOutputTexture(0, "out_Sky", this.SkyCubeTexture, TextureTarget.TextureCubeMapPositiveX);
+            gb.SetOutputTexture(0, "out_Sky", tex, TextureTarget.Texture2D);
             gb.Init(@"SkyScatterCube.vert", @"SkyScatterCube.frag");
+            gb.ClearOutputTexture(0);
+
+            tex.Unload();
+        }
+
+        public void Reload()
+        {
+            if (gb != null)
+            {
+                gb.ReloadShader();
+            }
         }
 
 
@@ -114,5 +127,6 @@ namespace Snowscape.TerrainRenderer.Atmosphere
             new GBuffer.TextureSlot(0, cubeMapTex, target)
             );
         }
+
     }
 }

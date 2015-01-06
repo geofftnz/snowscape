@@ -17,7 +17,7 @@ float sfbm(vec2 pos)
 	float a = snoise(pos); 
 	a += snoise(pos * 2.0) * 0.5; 
 	a += snoise(pos * 4.0) * 0.25; 
-	//a += snoise(pos * 8.0) * 0.125; 
+	a += snoise(pos * 8.0) * 0.125; 
 	//a += snoise(pos * 16.0) * 0.0625; 
 	//a += snoise(pos * 32.0) * 0.03125; 
 	return a;

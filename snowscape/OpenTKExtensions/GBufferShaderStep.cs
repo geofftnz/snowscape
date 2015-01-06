@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK.Graphics.OpenGL;
 using OpenTK;
+using NLog;
 
 namespace OpenTKExtensions
 {
@@ -14,6 +15,8 @@ namespace OpenTKExtensions
     /// </summary>
     public class GBufferShaderStep
     {
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
         public class TextureSlot
         {
             public string Name { get; set; }
@@ -45,11 +48,14 @@ namespace OpenTKExtensions
         // GBuffer to encapsulate our output texture.
         protected GBuffer gbuffer;
         // Shader
+        private string vsSource = "";
+        private string fsSource = "";
         protected ShaderProgram program;
 
         // texture slots
         protected const int MAXSLOTS = 16;
         protected TextureSlot[] textureSlot = new TextureSlot[MAXSLOTS];
+
 
 
         public GBufferShaderStep()
@@ -78,6 +84,15 @@ namespace OpenTKExtensions
         public void SetOutputTexture(int slot, string name, Texture tex)
         {
             SetOutputTexture(slot, name, tex, TextureTarget.Texture2D);
+        }
+
+        public void ClearOutputTexture(int slot)
+        {
+            if (slot < 0 || slot >= MAXSLOTS)
+            {
+                throw new ArgumentOutOfRangeException("slot");
+            }
+            this.textureSlot[slot] = null;
         }
 
         public void Init(string vertexShaderSource, string fragmentShaderSource)
@@ -129,16 +144,58 @@ namespace OpenTKExtensions
 
         private void InitShader(string vertexShaderSource, string fragmentShaderSource)
         {
+            vsSource = vertexShaderSource;
+            fsSource = fragmentShaderSource;
+
+            ReloadShader();
+
+        }
+
+        private ShaderProgram LoadShaderProgram()
+        {
+            var program = new ShaderProgram(Name);
+
             // setup shader
-            this.program.Init(
-                vertexShaderSource,
-                fragmentShaderSource,
+            program.Init(
+                vsSource,
+                fsSource,
                 new List<Variable> 
                 { 
                     new Variable(0, "vertex")
                 },
                 this.textureSlot.Where(ts => ts != null).Select(ts => ts.Name).ToArray()
                 );
+
+            return program;
+        }
+
+        public bool ReloadShader()
+        {
+            try
+            {
+                ShaderProgram p = LoadShaderProgram();
+
+                if (p == null)
+                {
+                    throw new InvalidOperationException("ReloadShader() returned null, but didn't throw an exception");
+                }
+
+                if (this.program != null)
+                {
+                    this.program.Unload();
+                }
+                this.program = p;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (log != null)
+                {
+                    log.Warn("Could not reload shader program {0}: {1}", Name, ex.GetType().Name + ": " + ex.Message);
+                }
+            }
+            return false;
+
         }
 
         protected virtual void InitGBuffer()
