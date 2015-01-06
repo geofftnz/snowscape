@@ -729,6 +729,7 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.Components.Reload();
                 this.reloadShaders = false;
+                needToRenderLighting = true;
             }
 
             frameTracker.Step("interframe", new Vector4(0.8f, 0.8f, 0.8f, 1.0f));

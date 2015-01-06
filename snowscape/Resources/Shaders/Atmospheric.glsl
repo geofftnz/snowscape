@@ -283,7 +283,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 {
 	vec3 col = vec3(0.0);
 	
-	float dist = min(maxDistance,adepthSkyGround(eye, dir2, groundLevel));
+	float dist = min(maxDistance,adepthSkyGround(eye, dir2, groundLevel)) - minDistance;
 	
 	// advance minDistance along ray
 	eye = eye + dir2 * minDistance;
@@ -358,7 +358,6 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		lightToEye += ral * influxAtP * Kr * dist * dt;
 		
 		col += absorb(dist * t, lightToEye, 1.0-totalAir);
-		col += vec3(0.1,0.01,0.03);
 			
 	}
 	
