@@ -262,12 +262,12 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("Sun_g", 4.9f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Sun_b", 4.5f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
 
-            parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f));  // 0.028  0.1
+            parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));  // 0.028  0.1
 
             parameters.Add(new Parameter<float>("skyPrecalcBoundary", 16.0f, 0.1f, 128.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
 
             parameters.Add(new Parameter<float>("mieBrightness", 0.02f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f));
+            parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("raleighBrightness", 5.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
 
 
