@@ -148,7 +148,7 @@ float adepthSkyGround(vec3 eye, vec3 dir, float groundLevel)
 // exponential absorbtion - @pyalot http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 vec3 absorb(float dist, vec3 col, float f)
 {
-    return col - col * pow(Kr, vec3(f / dist));
+    return col - col * pow(Kr, vec3(f / max(dist,0.0000000001)));
 }
 
 vec3 absorb(float dist, vec3 col, vec3 K, float f)
