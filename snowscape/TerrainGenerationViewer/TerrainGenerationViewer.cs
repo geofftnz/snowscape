@@ -237,6 +237,7 @@ namespace Snowscape.TerrainGenerationViewer
             #region Parameters
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("autoreload", false, false, true, v => true, v => false));
+            parameters.Add(new Parameter<bool>("quadtreevis", false, false, true, v => true, v => false));
             //parameters.Add(new Parameter<bool>("mouselook", true, false, true, v => true, v => false));
 
             parameters.Add(new Parameter<float>("detailscale", 6.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
@@ -269,7 +270,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("miePhase", 0.99f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f));
             parameters.Add(new Parameter<float>("raleighBrightness", 5.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
 
-            
+
             parameters.Add(new Parameter<float>("skylightBrightness", 3.8f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
@@ -716,12 +717,17 @@ namespace Snowscape.TerrainGenerationViewer
         }
 
 
-        void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
+        private void TerrainGenerationViewer_RenderFrame(object sender, FrameEventArgs e)
         {
             FrameRenderData renderData = new FrameRenderData();
 
             bool needToRenderLighting = false;
-            bool stepFence = (bool)this.parameters["glFinish"].GetValue();
+            bool stepFence = this.parameters["glFinish"].GetValue<bool>();
+
+
+            // set component visibility from parameters
+            quadTreeLodDebugRenderer.Visible = this.parameters["quadtreevis"].GetValue<bool>();
+
 
             GL.Finish();
 
@@ -738,7 +744,8 @@ namespace Snowscape.TerrainGenerationViewer
 
             //if (this.frameCounter.Frames % 32 == 0)
             //{
-            frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}", frameCounter.FPS, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
+            frameCounterText.Text = string.Format("FPS: {0:0} Upd:{1:###0} {2:0.0}ms Water:{3:#,###,###,##0}",
+                frameCounter.FPS, this.updateThreadIterations, this.updateThreadUpdateTime, this.waterIterations);
             textManager.AddOrUpdate(frameCounterText);
             frameTracker.Step("text-fps", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
 
@@ -747,12 +754,16 @@ namespace Snowscape.TerrainGenerationViewer
             textManager.RemoveAllByPrefix("perf_");
             foreach (var timer in this.frameTracker.GetStepStats())
             {
-                textManager.AddOrUpdate(new TextBlock("perf_" + timer.Name, string.Format("{0}: {1:0.000} ms", timer.Name, timer.AverageTime * 1000.0), new Vector3(0.01f, y, 0.0f), 0.00025f, timer.Colour));
+                textManager.AddOrUpdate(new TextBlock("perf_" + timer.Name,
+                    string.Format("{0}: {1:0.000} ms", timer.Name, timer.AverageTime * 1000.0),
+                    new Vector3(0.01f, y, 0.0f), 0.00025f, timer.Colour));
                 y += 0.0125f;
             }
             frameTracker.Step("text-timers", new Vector4(0.8f, 0.0f, 0.0f, 1.0f));
 
-            textManager.AddOrUpdate(new TextBlock("numPatches", string.Format("patches: {0:00}  tri: {1:#,###,##0}", numPatches, numTriangles), new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1f, 1f, 1f, 1f)));
+            textManager.AddOrUpdate(new TextBlock("numPatches",
+                string.Format("patches: {0:00}  tri: {1:#,###,##0}", numPatches, numTriangles),
+                new Vector3(0.01f, y, 0.0f), 0.00025f, new Vector4(1f, 1f, 1f, 1f)));
             y += 0.0125f;
 
             //foreach (var timer in this.perfmon.AllAverageTimes())
@@ -762,7 +773,7 @@ namespace Snowscape.TerrainGenerationViewer
             //}
 
             y += 0.02f;
-            for (int i = 0; i < this.parameters.DisplayLength; i++)  //this.parameters.Count
+            for (int i = 0; i < this.parameters.DisplayLength; i++) //this.parameters.Count
             {
                 int paramindex = i + this.parameters.DisplayOffset;
 
@@ -793,7 +804,10 @@ namespace Snowscape.TerrainGenerationViewer
                     this.updateGPUIterations++;
                 }
                 this.updateThreadIterations = this.updateGPUIterations;
-                if (stepFence) { GL.Finish(); }
+                if (stepFence)
+                {
+                    GL.Finish();
+                }
                 frameTracker.Step("terrain modify", new Vector4(0.8f, 0.6f, 0.0f, 1.0f));
             }
 
@@ -827,7 +841,10 @@ namespace Snowscape.TerrainGenerationViewer
                 frameTracker.Step("GPU data copy", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
 
                 this.tileNormalGenerator.Render();
-                if (stepFence) { GL.Finish(); }
+                if (stepFence)
+                {
+                    GL.Finish();
+                }
                 frameTracker.Step("GPU normals", new Vector4(0.7f, 1.0f, 0.0f, 1.0f));
 
                 textureUpdateCount++;
@@ -844,16 +861,26 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 // render lighting
                 this.RenderLighting(this.sunDirection);
-                if (stepFence) { GL.Finish(); }
+                if (stepFence)
+                {
+                    GL.Finish();
+                }
                 frameTracker.Step("lighting", new Vector4(0.3f, 1.0f, 0.0f, 1.0f));
 
                 // render indirect lighting
-                this.indirectIlluminationGenerator.Render(this.terrainGlobal.HeightTexture, this.terrainGlobal.ShadeTexture, this.terrainTile.NormalTexture, this.sunDirection);
-                if (stepFence) { GL.Finish(); }
+                this.indirectIlluminationGenerator.Render(this.terrainGlobal.HeightTexture,
+                    this.terrainGlobal.ShadeTexture, this.terrainTile.NormalTexture, this.sunDirection);
+                if (stepFence)
+                {
+                    GL.Finish();
+                }
                 frameTracker.Step("indirect", new Vector4(0.0f, 0.9f, 0.0f, 1.0f));
 
                 this.RenderSky(this.eyePos, this.sunDirection, (float)this.parameters["groundLevel"].GetValue());
-                if (stepFence) { GL.Finish(); }
+                if (stepFence)
+                {
+                    GL.Finish();
+                }
                 frameTracker.Step("sky", new Vector4(0.0f, 1.0f, 0.4f, 1.0f));
 
                 this.prevSunDirection = this.sunDirection;
@@ -871,11 +898,17 @@ namespace Snowscape.TerrainGenerationViewer
             this.lightingStep.BindForWriting();
 
             RenderTiles();
-            if (stepFence) { GL.Finish(); }
+            if (stepFence)
+            {
+                GL.Finish();
+            }
             frameTracker.Step("terrain render", new Vector4(0.0f, 0.8f, 1.0f, 1.0f));
 
             RenderSkyRayDirections();
-            if (stepFence) { GL.Finish(); }
+            if (stepFence)
+            {
+                GL.Finish();
+            }
             frameTracker.Step("skyray render", new Vector4(0.0f, 0.9f, 0.0f, 1.0f));
 
             this.lightingStep.UnbindFromWriting();
@@ -894,7 +927,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.hdrExposure.UnbindFromWriting();
 
-            if (stepFence) { GL.Finish(); }
+            if (stepFence)
+            {
+                GL.Finish();
+            }
             frameTracker.Step("scattering", new Vector4(0.0f, 0.0f, 1.0f, 1.0f));
 
             // render hdr buffer to screen
@@ -906,7 +942,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.hdrExposure.Render();
 
-            if (stepFence) { GL.Finish(); }
+            if (stepFence)
+            {
+                GL.Finish();
+            }
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
 
@@ -927,13 +966,16 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-            quadTreeLodDebugRenderer.tilePatches = this.tilePatches;
-            quadTreeLodDebugRenderer.viewFrustum = this.viewfrustum;
-            quadTreeLodDebugRenderer.overlayModelview = this.overlayModelview;
-            quadTreeLodDebugRenderer.overlayProjection = this.overlayProjection;
-            quadTreeLodDebugRenderer.Render(renderData);
-            frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
-            
+            if (quadTreeLodDebugRenderer.Visible)
+            {
+                quadTreeLodDebugRenderer.tilePatches = this.tilePatches;
+                quadTreeLodDebugRenderer.viewFrustum = this.viewfrustum;
+                quadTreeLodDebugRenderer.overlayModelview = this.overlayModelview;
+                quadTreeLodDebugRenderer.overlayProjection = this.overlayProjection;
+                quadTreeLodDebugRenderer.Render(renderData);
+                frameTracker.Step("frustum", new Vector4(1.0f, 0.0f, 0.4f, 1.0f));
+            }
+
 
 
             this.frameTrackerRenderer.Clear();
@@ -1055,7 +1097,7 @@ namespace Snowscape.TerrainGenerationViewer
             IPatchRenderer patchRenderer = tilePatchLowRenderer;
 
 
-            foreach (var patch in tilePatches.OrderBy(p=>p.Distance))
+            foreach (var patch in tilePatches.OrderBy(p => p.Distance))
             {
                 terrainTile.ModelMatrix = patch.TileModelMatrix;
 
