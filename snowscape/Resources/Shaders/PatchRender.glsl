@@ -10,6 +10,11 @@ float SmoothShadow(float heightdiff)
 	return smoothstep(-0.5,-0.02,heightdiff);
 }
 
+float getHighDetailBlendFactor(vec3 pos)
+{
+	return 1.0 - smoothstep(50.0,200.0,pos.z);
+}
+
 #include "noise2d.glsl"
 
 float sfbm(vec2 pos)
@@ -74,8 +79,9 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, flo
 //|FragmentCommon
 float getDetailBias()
 {
-	vec2 duv = abs(fwidth(texcoord));
-	return min(1.0,2.0 / (1.0 + dot(duv,duv)*10000000.0));
+	//vec2 duv = abs(fwidth(texcoord));
+	//return min(1.0,2.0 / (1.0 + dot(duv,duv)*10000000.0));
+	return highDetailBlend;
 }
 
 
@@ -175,6 +181,7 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec2 texcoord;
+out float highDetailBlend;
 
 #include ".|Common"
 
@@ -207,13 +214,16 @@ void main() {
 	v.z *= boxparam.y;
 	v.y = h + v.y;
 
-    gl_Position = transform_matrix * vec4(v, 1.0);
+	vec4 tv = transform_matrix * vec4(v, 1.0);
+	highDetailBlend = getHighDetailBlendFactor(tv);
+    gl_Position = tv;
 
 	b.x *= boxparam.x;
 	b.z *= boxparam.y;
 	b.y = h;
     
     boxcoord = b;
+
 
 }
 
@@ -232,6 +242,7 @@ uniform float detailTexScale;
 
 in vec3 boxcoord;
 in vec2 texcoord;
+in float highDetailBlend;
 
 out vec4 out_Colour;
 out vec4 out_Normal;
@@ -279,6 +290,7 @@ out vec3 binormal;
 out vec3 tangent;
 out vec3 boxcoord;
 out vec2 texcoord;
+out float highDetailBlend;
 
 #include ".|Common"
 
@@ -317,8 +329,10 @@ void main() {
 	v.y = h + v.y;
 
 	basevertex = v;
+	vec4 tv = transform_matrix * vec4(v, 1.0);
+	highDetailBlend = getHighDetailBlendFactor(tv);
+    gl_Position = tv;
 
-    gl_Position = transform_matrix * vec4(v, 1.0);
 
 	b.x *= boxparam.x;
 	b.z *= boxparam.y;
@@ -347,6 +361,7 @@ in vec3 binormal;
 in vec3 tangent;
 in vec3 boxcoord;
 in vec2 texcoord;
+in float highDetailBlend;
 
 out vec4 out_Colour;
 out vec4 out_Normal;
@@ -427,6 +442,7 @@ out vec3 normal;
 out vec3 binormal;
 out vec3 tangent;
 out vec2 texcoord;
+out float highDetailBlend;
 
 #include ".|Common"
 
@@ -479,7 +495,10 @@ void main() {
 	
 	v += normal * detail.y;
 
-    gl_Position = transform_matrix * vec4(v, 1.0);
+	vec4 tv = transform_matrix * vec4(v, 1.0);
+	highDetailBlend = getHighDetailBlendFactor(tv);
+    gl_Position = tv;
+
 
 	b.x *= boxparam.x;
 	b.z *= boxparam.y;
@@ -508,6 +527,7 @@ in vec3 normal;
 in vec3 binormal;
 in vec3 tangent;
 in vec2 texcoord;
+in float highDetailBlend;
 
 out vec4 out_Colour;
 out vec4 out_Normal;
