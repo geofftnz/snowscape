@@ -89,6 +89,7 @@ namespace Snowscape.TerrainGenerationViewer
         private PatchHighRenderer tilePatchHighRenderer;
 
         private UI.Debug.QuadTreeLodDebugRenderer quadTreeLodDebugRenderer;
+        private UI.Debug.TextureDebugRenderer textureDebugRenderer;
 
         #endregion
 
@@ -216,6 +217,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
 
             this.Components.Add(this.quadTreeLodDebugRenderer = new UI.Debug.QuadTreeLodDebugRenderer(), LoadOrder.Phase3);
+            this.Components.Add(this.textureDebugRenderer = new UI.Debug.TextureDebugRenderer(), LoadOrder.Phase3);
 
             #endregion
 
@@ -502,7 +504,8 @@ namespace Snowscape.TerrainGenerationViewer
             // load components
             this.Components.Load();
 
-
+            // extract textures for debug renderer
+            this.textureDebugRenderer.Add(this.Components.OfType<IListTextures>().SelectMany(t=>t.Textures()));
 
             SetProjection();
 
@@ -947,6 +950,9 @@ namespace Snowscape.TerrainGenerationViewer
                 GL.Finish();
             }
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
+
+            // textures
+            this.textureDebugRenderer.Render(renderData);
 
 
             // estimate total tile mesh size

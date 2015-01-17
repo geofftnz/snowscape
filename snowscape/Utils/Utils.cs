@@ -134,7 +134,7 @@ namespace Utils
             float rx = Math.Abs(x2 - x1) * 0.5f;
             float ry = Math.Abs(y2 - y1) * 0.5f;
 
-            float nx = Math.Abs(px - cx) - rx; 
+            float nx = Math.Abs(px - cx) - rx;
             float ny = Math.Abs(py - cy) - ry;
 
             float nx2 = Math.Max(nx, 0.0f);
