@@ -68,6 +68,7 @@
     <Compile Include="Framework\IDynamicallyReloadable.cs" />
     <Compile Include="Framework\IFrameRenderData.cs" />
     <Compile Include="Framework\IFrameUpdateData.cs" />
+    <Compile Include="Framework\IListTextures.cs" />
     <Compile Include="Framework\IReloadable.cs" />
     <Compile Include="Framework\IRenderable.cs" />
     <Compile Include="Framework\IUpdateable.cs" />

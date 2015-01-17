@@ -18,7 +18,7 @@ namespace Snowscape.TerrainRenderer
     /// - amount of sky visible from each sample (for AO)
     /// - min / max height of terrain, to set exit conditions of rays
     /// </summary>
-    public class TerrainGlobal : GameComponentBase
+    public class TerrainGlobal : GameComponentBase, IListTextures
     {
         /// <summary>
         /// Height - single component float32
@@ -59,7 +59,7 @@ namespace Snowscape.TerrainRenderer
         {
             // setup textures
             this.HeightTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
+                new Texture("Height", this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -67,7 +67,7 @@ namespace Snowscape.TerrainRenderer
 
 
             this.ShadeTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rg16f, PixelFormat.Rg, PixelType.HalfFloat)
+                new Texture("Shade", this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rg16f, PixelFormat.Rg, PixelType.HalfFloat)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -75,13 +75,20 @@ namespace Snowscape.TerrainRenderer
 
 
             this.IndirectIlluminationTexture =
-                new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R16f, PixelFormat.Red, PixelType.HalfFloat)
+                new Texture("Indirect", this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.R16f, PixelFormat.Red, PixelType.HalfFloat)
                 //new Texture(this.Width, this.Height,TextureTarget.Texture2D, PixelInternalFormat.Rgba8, PixelFormat.Rgba, PixelType.UnsignedByte)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
+        }
+
+        public IEnumerable<Texture> Textures()
+        {
+            yield return this.HeightTexture;
+            yield return this.ShadeTexture;
+            yield return this.IndirectIlluminationTexture;
         }
 
         void TerrainGlobal_Loading(object sender, EventArgs e)
@@ -149,6 +156,7 @@ namespace Snowscape.TerrainRenderer
 
             this.HeightTexture.Upload(height);
         }
+
 
     }
 }
