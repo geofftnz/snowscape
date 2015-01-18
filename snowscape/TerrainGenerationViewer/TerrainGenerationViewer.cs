@@ -240,6 +240,9 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("autoreload", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("quadtreevis", false, false, true, v => true, v => false));
+
+            parameters.Add(new Parameter<bool>("debugtextures", false, false, true, v => true, v => false));
+            parameters.Add(new Parameter<int>("currenttexture", 0, 0, 100000, v => textureDebugRenderer.Next(), v => textureDebugRenderer.Previous()));
             //parameters.Add(new Parameter<bool>("mouselook", true, false, true, v => true, v => false));
 
             parameters.Add(new Parameter<float>("detailscale", 6.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
@@ -730,6 +733,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             // set component visibility from parameters
             quadTreeLodDebugRenderer.Visible = this.parameters["quadtreevis"].GetValue<bool>();
+            textureDebugRenderer.Visible = this.parameters["debugtextures"].GetValue<bool>();
 
 
             GL.Finish();
@@ -952,7 +956,10 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
             // textures
-            this.textureDebugRenderer.Render(renderData);
+            if (this.textureDebugRenderer.Visible)
+            {
+                this.textureDebugRenderer.Render(renderData);
+            }
 
 
             // estimate total tile mesh size

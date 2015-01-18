@@ -49,7 +49,7 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
         // Needs:
         protected VBO vertexVBO = new VBO("v");
         protected VBO texcoordVBO = new VBO("t");
-        protected VBO indexVBO = new VBO("I",BufferTarget.ElementArrayBuffer);
+        protected VBO indexVBO = new VBO("I", BufferTarget.ElementArrayBuffer);
 
         private string vsSource = "";
         private string fsSource = "";
@@ -201,6 +201,17 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             {
                 Add(texture);
             }
+        }
+
+        public int Previous()
+        {
+            if (currentTexture > 0) currentTexture--;
+            return currentTexture;
+        }
+        public int Next()
+        {
+            if (currentTexture >= 0 && currentTexture < this.Textures.Count - 1) currentTexture++;
+            return currentTexture;
         }
 
         public bool Visible { get; set; }
