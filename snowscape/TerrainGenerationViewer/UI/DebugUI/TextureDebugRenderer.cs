@@ -26,6 +26,11 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             Normal,
 
             /// <summary>
+            /// R, scaled
+            /// </summary>
+            Height,
+
+            /// <summary>
             /// DO NOT USE - used to mark the end of the enum.
             /// </summary>
             MAX
@@ -91,6 +96,21 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
                 out vec4 out_Colour;
 
+                float c255 = 1.0/255.0;
+
+                vec3 gc(float r,float g,float b){
+                    return vec3(r,g,b) * c255;
+                }
+
+                vec3 getHeightCol(float h){
+
+                    vec3 c = mix(gc(24,53,27),gc(161,173,116),clamp(h,0.0,100.0) / 100.0);
+                    c = mix(c,gc(224,168,152),clamp(h-100,0.0,100.0) / 100.0);
+                    c = mix(c,gc(229,229,229),clamp(h-200,0.0,100.0) / 100.0);
+
+                    return c;
+                }
+
                 void main(void) {
 
                     vec4 t = texture(tex,texcoord);
@@ -104,6 +124,7 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                         case 3: c = vec3(t.b); break;
                         case 4: c = vec3(t.a); break;
                         case 5: c = t.rgb * 0.5 + 0.5; break;  // normal
+                        case 6: c = getHeightCol(t.r); break;
                     }
 
                     out_Colour = vec4(c,1.0);
@@ -184,6 +205,16 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
         }
 
+        private RenderMode GuessRenderMode(Texture t)
+        {
+            if (t.Name.IndexOf("height", StringComparison.OrdinalIgnoreCase) != -1) return RenderMode.Height;
+            //if (t.Name.IndexOf("normal", StringComparison.OrdinalIgnoreCase) != -1) return RenderMode.Normal;
+
+            if (t.Format == PixelFormat.Red) return RenderMode.R;
+
+            return RenderMode.RGB;
+        }
+
 
 
         public void Add(Texture texture, RenderMode renderMode = RenderMode.RGB)
@@ -193,6 +224,10 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                 textures.Add(new TextureInfo { Texture = texture, RenderMode = renderMode });
                 currentTexture = textures.Count - 1;
             }
+        }
+        public void Add(Texture texture)
+        {
+            Add(texture, GuessRenderMode(texture));
         }
 
         public void Add(IEnumerable<Texture> textures)
