@@ -51,10 +51,27 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             get { return textures; }
         }
 
+        public Font Font
+        {
+            get
+            {
+                return textManager.Font;
+            }
+            set
+            {
+                textManager.Font = value;
+            }
+        }
+
         // Needs:
         protected VBO vertexVBO = new VBO("v");
         protected VBO texcoordVBO = new VBO("t");
         protected VBO indexVBO = new VBO("I", BufferTarget.ElementArrayBuffer);
+        protected Matrix4 transform = Matrix4.Identity;
+
+        // text
+        protected Font font;
+        protected TextManager textManager = new TextManager("debugtexture-text", null);
 
         private string vsSource = "";
         private string fsSource = "";
@@ -73,8 +90,12 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
         void TextureDebugRenderer_Loading(object sender, EventArgs e)
         {
+            transform = Matrix4.Mult(Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 1.0f, 0.0f, 0.0001f, 10.0f), Matrix4.CreateTranslation(0.0f, 0.0f, 1.0f));
+
             vsSource = @"
                 #version 140
+
+                uniform mat4 transform;
 
                 in vec3 vertex;
                 in vec2 in_texcoord;
@@ -82,7 +103,7 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                 out vec2 texcoord;
 
                 void main() {
-	                gl_Position = vec4(vertex.xy,0.0,1.0);
+	                gl_Position = transform * vec4(vertex,1.0);
 	                texcoord = in_texcoord;
                 }
                 ";
@@ -119,11 +140,11 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                     switch(renderMode)
                     {
                         case 0: c = t.rgb; break;
-                        case 1: c = vec3(t.r); break;
-                        case 2: c = vec3(t.g); break;
-                        case 3: c = vec3(t.b); break;
+                        case 1: c = vec3(t.r) * vec3(1.0,0.8,0.8); break;
+                        case 2: c = vec3(t.g) * vec3(0.8,1.0,0.8); break;
+                        case 3: c = vec3(t.b) * vec3(0.8,0.8,1.0); break;
                         case 4: c = vec3(t.a); break;
-                        case 5: c = t.rgb * 0.5 + 0.5; break;  // normal
+                        case 5: c = t.rbg * 0.5 + 0.5; break;  // normal
                         case 6: c = getHeightCol(t.r); break;
                     }
 
@@ -249,6 +270,19 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             return currentTexture;
         }
 
+        public RenderMode PreviousRenderMode()
+        {
+            if (currentTexture < 0) return RenderMode.RGB;
+            if (Textures[currentTexture].RenderMode == (RenderMode)0) return Textures[currentTexture].RenderMode;
+            return Textures[currentTexture].RenderMode = (RenderMode)(((int)Textures[currentTexture].RenderMode + (int)RenderMode.MAX - 1) % (int)RenderMode.MAX);
+        }
+        public RenderMode NextRenderMode()
+        {
+            if (currentTexture < 0) return RenderMode.RGB;
+            if (Textures[currentTexture].RenderMode == (RenderMode)((int)RenderMode.MAX - 1)) return Textures[currentTexture].RenderMode;
+            return Textures[currentTexture].RenderMode = (RenderMode)(((int)Textures[currentTexture].RenderMode + 1) % (int)RenderMode.MAX);
+        }
+
         public bool Visible { get; set; }
         public int DrawOrder { get; set; }
 
@@ -266,14 +300,16 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                 throw new InvalidOperationException("empty/null textureinfo");
             }
 
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
+            GL.Disable(EnableCap.CullFace);
+            //GL.CullFace(CullFaceMode.Back);
             GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.Blend);
 
 
             texture.Texture.Bind(TextureUnit.Texture0);
             program
                 .UseProgram()
+                .SetUniform("transform", transform)
                 .SetUniform("tex", 0)
                 .SetUniform("renderMode", (int)texture.RenderMode);
 
@@ -282,6 +318,30 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
 
+            this.RenderText();
+
+        }
+
+        private void RenderText()
+        {
+            float x = 0.2f;
+            float y = 0.1f;
+
+            if (this.currentTexture >= 0)
+            {
+                textManager.AddOrUpdate(new TextBlock("textureinfo",
+                    string.Format("{0} {1}", Textures[currentTexture].Texture.Name, Textures[currentTexture].RenderMode.ToString()),
+                    new Vector3(x, y, 0.0f), 0.0005f, new Vector4(1f, 1f, 1f, 1f)));
+            }
+
+            if (textManager.NeedsRefresh)
+            {
+                textManager.Refresh();
+            }
+
+            GL.Enable(EnableCap.Blend);
+
+            textManager.Render(transform, Matrix4.Identity);
         }
     }
 }

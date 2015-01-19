@@ -400,6 +400,15 @@ namespace Snowscape.TerrainGenerationViewer
                 }
             }
 
+            if (e.Key == Key.LBracket)
+            {
+                this.textureDebugRenderer.PreviousRenderMode();
+            }
+            if (e.Key == Key.RBracket)
+            {
+                this.textureDebugRenderer.NextRenderMode();
+            }
+
 
 
 
@@ -502,6 +511,7 @@ namespace Snowscape.TerrainGenerationViewer
             // setup font
             font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
             textManager.Font = font;
+            textureDebugRenderer.Font = font;
 
 
             // load components
