@@ -38,6 +38,7 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
         public class TextureInfo
         {
+            public string Source { get; set; }
             public Texture Texture { get; set; }
             public RenderMode RenderMode { get; set; }
             public TextureInfo()
@@ -238,24 +239,24 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
 
 
-        public void Add(Texture texture, RenderMode renderMode = RenderMode.RGB)
+        public void Add(Texture texture, object source, RenderMode renderMode = RenderMode.RGB)
         {
             if (!textures.Any(ti => ti.Texture == texture))
             {
-                textures.Add(new TextureInfo { Texture = texture, RenderMode = renderMode });
+                textures.Add(new TextureInfo { Texture = texture, RenderMode = renderMode, Source = source.GetType().Name });
                 currentTexture = textures.Count - 1;
             }
         }
-        public void Add(Texture texture)
+        public void Add(Texture texture, object source)
         {
-            Add(texture, GuessRenderMode(texture));
+            Add(texture, source, GuessRenderMode(texture));
         }
 
-        public void Add(IEnumerable<Texture> textures)
+        public void Add(IEnumerable<Tuple<Texture, object>> textures)
         {
             foreach (var texture in textures)
             {
-                Add(texture);
+                Add(texture.Item1, texture.Item2);
             }
         }
 
@@ -326,12 +327,23 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
         {
             float x = 0.2f;
             float y = 0.1f;
+            float size = 0.0004f;
+            float alpha = 0.7f;
 
             if (this.currentTexture >= 0)
             {
                 textManager.AddOrUpdate(new TextBlock("textureinfo",
-                    string.Format("{0} {1}", Textures[currentTexture].Texture.Name, Textures[currentTexture].RenderMode.ToString()),
-                    new Vector3(x, y, 0.0f), 0.0005f, new Vector4(1f, 1f, 1f, 1f)));
+                    
+                    string.Format(
+                        "{0}: {1} ({2}) {3}", 
+                        Textures[currentTexture].Source, 
+                        Textures[currentTexture].Texture.Name, 
+                        Textures[currentTexture].RenderMode.ToString(),
+                        Textures[currentTexture].Texture.InternalFormat.ToString()
+                        ),
+                    
+                    new Vector3(x, y, 0.0f), size, new Vector4(1f, 1f, 1f, alpha)));
+                y += size * 1.2f;
             }
 
             if (textManager.NeedsRefresh)

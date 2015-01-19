@@ -7,6 +7,7 @@ using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
 using Utils;
+using OpenTKExtensions.Framework;
 
 namespace TerrainGeneration
 {
@@ -93,7 +94,7 @@ namespace TerrainGeneration
     /// 
     /// 
     /// </summary>
-    public class GPUParticleErosion : ITerrainGen
+    public class GPUParticleErosion : ITerrainGen, IListTextures
     {
         private const string P_DEPOSITRATE = "erosion-depositrate";
         private const string P_EROSIONRATE = "erosion-erosionrate";
@@ -101,7 +102,7 @@ namespace TerrainGeneration
         private const string P_HARDFACTOR = "erosion-hardfactor";
         private const string P_CARRYCAPLOWPASS = "erosion-capacitylowpass";
         private const string P_CARRYSPEED = "erosion-carryingspeed";
-        private const string P_WATERHEIGHT = "erosion-waterheight";   
+        private const string P_WATERHEIGHT = "erosion-waterheight";
         private const string P_WATERDECAY = "erosion-waterdecay";
         private const string P_PARTICLEWATERDEPTH = "erosion-particlewaterdepth";
         private const string P_SLIPTHRESHOLD = "erosion-slipthreshold";
@@ -112,8 +113,8 @@ namespace TerrainGeneration
         private const string P_DEATHRATE = "erosion-deathrate";
 
         private const string P_FALLRAND = "erosion-fallrandom";
-        
-        
+
+
 
         const int FILEMAGIC = 0x54455230;
         public bool NeedThread { get { return false; } }
@@ -220,6 +221,17 @@ namespace TerrainGeneration
         public ParameterCollection Parameters { get { return parameters; } }
 
 
+        public IEnumerable<Texture> Textures()
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                yield return this.TerrainTexture[i];
+                yield return this.ParticleStateTexture[i];
+                yield return this.VelocityTexture[i];
+                yield return this.SlipFlowTexture[i];
+            }
+            yield return this.ErosionAccumulationTexture;
+        }
 
 
 
@@ -237,7 +249,7 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.5f, 0.0f, 1.0f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.3f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.25f, 0.0f, 10.0f,0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.25f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.00f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.94f, 0.0f, 1.0f, 0.001f));
@@ -257,7 +269,7 @@ namespace TerrainGeneration
             for (int i = 0; i < 2; i++)
             {
                 this.TerrainTexture[i] =
-                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    new Texture("Terrain" + i.ToString(), this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -266,7 +278,7 @@ namespace TerrainGeneration
                 this.TerrainTexture[i].UploadEmpty();
 
                 this.ParticleStateTexture[i] =
-                    new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    new Texture("ParticleState" + i.ToString(), this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -275,7 +287,7 @@ namespace TerrainGeneration
                 this.ParticleStateTexture[i].UploadEmpty();
 
                 this.VelocityTexture[i] =
-                    new Texture(this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    new Texture("Velocity" + i.ToString(), this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -284,7 +296,7 @@ namespace TerrainGeneration
                 this.VelocityTexture[i].UploadEmpty();
 
                 this.SlipFlowTexture[i] =
-                    new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                    new Texture("Slip" + i.ToString(),this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -293,7 +305,7 @@ namespace TerrainGeneration
                 this.SlipFlowTexture[i].UploadEmpty();
             }
 
-            this.ErosionAccumulationTexture = new Texture(this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+            this.ErosionAccumulationTexture = new Texture("Erosion",this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
@@ -598,7 +610,7 @@ namespace TerrainGeneration
                 this.SlipFlowTexture[i].Unload();
             }
             this.ErosionAccumulationTexture.Unload();
-            
+
         }
 
 
@@ -626,7 +638,7 @@ namespace TerrainGeneration
 
             try
             {
-                using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None, 256*1024))
+                using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None, 256 * 1024))
                 {
                     using (var sr = new BinaryReader(fs))
                     {
@@ -649,13 +661,13 @@ namespace TerrainGeneration
                                     this.Width, this.Height));
                         }
 
-                        for (int i = 0; i < w*h; i++)
+                        for (int i = 0; i < w * h; i++)
                         {
-                            data[i*4 + 0] = sr.ReadSingle();
-                            data[i*4 + 1] = sr.ReadSingle();
-                            data[i*4 + 2] = 0f;
+                            data[i * 4 + 0] = sr.ReadSingle();
+                            data[i * 4 + 1] = sr.ReadSingle();
+                            data[i * 4 + 2] = 0f;
                             sr.ReadSingle();
-                            data[i*4 + 3] = 0f;
+                            data[i * 4 + 3] = 0f;
                             sr.ReadSingle();
 
                             float hh = data[i * 4 + 0] + data[i * 4 + 1];
@@ -764,5 +776,6 @@ namespace TerrainGeneration
         {
             return initialMaxHeight;
         }
+
     }
 }

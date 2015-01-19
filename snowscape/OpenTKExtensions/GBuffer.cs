@@ -223,6 +223,17 @@ namespace OpenTKExtensions
             return this;
         }
 
+        public IEnumerable<Texture> GetTextures()
+        {
+            for (int i = 0; i < MAXSLOTS; i++)
+            {
+                var t = GetTextureAtSlotOrNull(i);
+                if (t != null)
+                {
+                    yield return t;
+                }
+            }
+        }
 
         private void InitAllTextures()
         {

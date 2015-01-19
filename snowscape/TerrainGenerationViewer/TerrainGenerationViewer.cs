@@ -51,6 +51,7 @@ namespace Snowscape.TerrainGenerationViewer
             public const int Phase1 = 10;
             public const int Phase2 = 20;
             public const int Phase3 = 30;
+            public const int Phase4 = 40;
         }
 
 
@@ -217,7 +218,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
 
             this.Components.Add(this.quadTreeLodDebugRenderer = new UI.Debug.QuadTreeLodDebugRenderer(), LoadOrder.Phase3);
-            this.Components.Add(this.textureDebugRenderer = new UI.Debug.TextureDebugRenderer(), LoadOrder.Phase3);
+            this.Components.Add(this.textureDebugRenderer = new UI.Debug.TextureDebugRenderer(), LoadOrder.Phase4);
 
             #endregion
 
@@ -518,8 +519,13 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Load();
 
             // extract textures for debug renderer
-            this.textureDebugRenderer.Add(this.Components.OfType<IListTextures>().SelectMany(t => t.Textures()));
-            this.textureDebugRenderer.Add(terrainDetailTexture);
+            //this.textureDebugRenderer.Add(this.Components.OfType<IListTextures>().SelectMany(t => t.Textures().Select));
+            foreach (var component in Components.OfType<IListTextures>())
+            {
+                this.textureDebugRenderer.Add(component.Textures().Select(t => new Tuple<Texture, object>(t, component)));
+            }
+            this.textureDebugRenderer.Add(terrainDetailTexture, this);
+
 
             SetProjection();
 
@@ -542,6 +548,12 @@ namespace Snowscape.TerrainGenerationViewer
                 this.parameters.Add(p);
             }
 
+            
+            var tempterrain = this.Terrain as IListTextures;
+            if (tempterrain != null)
+            {
+                this.textureDebugRenderer.Add(tempterrain.Textures().Select(t => new Tuple<Texture, object>(t, tempterrain)));
+            }
 
 
 
