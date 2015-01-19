@@ -481,7 +481,7 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
 
-            this.terrainDetailTexture = new Texture(DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
+            this.terrainDetailTexture = new Texture("TerrainDetail", DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
             this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
             this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
             this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
@@ -508,7 +508,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Load();
 
             // extract textures for debug renderer
-            this.textureDebugRenderer.Add(this.Components.OfType<IListTextures>().SelectMany(t=>t.Textures()));
+            this.textureDebugRenderer.Add(this.Components.OfType<IListTextures>().SelectMany(t => t.Textures()));
+            this.textureDebugRenderer.Add(terrainDetailTexture);
 
             SetProjection();
 
