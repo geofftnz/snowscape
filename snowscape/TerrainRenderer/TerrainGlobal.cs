@@ -20,6 +20,9 @@ namespace Snowscape.TerrainRenderer
     /// </summary>
     public class TerrainGlobal : GameComponentBase, IListTextures
     {
+
+        public const int DetailRes = 1024;
+
         /// <summary>
         /// Height - single component float32
         /// </summary>
@@ -37,6 +40,12 @@ namespace Snowscape.TerrainRenderer
         /// Represents the amount of indirect illumination from lit parts of the terrain.
         /// </summary>
         public Texture IndirectIlluminationTexture { get; private set; }
+
+        /// <summary>
+        /// Detail texture - RGBA byte
+        /// </summary>
+        public Texture TerrainDetailTexture { get; private set; }
+
 
         // TODO: Lose these
         public float MinHeight { get; private set; }
@@ -82,6 +91,13 @@ namespace Snowscape.TerrainRenderer
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
+            this.TerrainDetailTexture = new Texture("TerrainDetail", DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
+            this.TerrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
+            this.TerrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+            this.TerrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            this.TerrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear));
+
+
         }
 
         public IEnumerable<Texture> Textures()
@@ -96,6 +112,23 @@ namespace Snowscape.TerrainRenderer
             this.HeightTexture.UploadEmpty();
             this.ShadeTexture.UploadEmpty();
             this.IndirectIlluminationTexture.UploadEmpty();
+
+            GenerateDetailTexture();
+        }
+
+        private void GenerateDetailTexture()
+        {
+            byte[] detailTextureData = new byte[DetailRes * DetailRes * 4];
+
+            new TextureSynth(DetailRes, DetailRes).ApplyWrapNoise(8, 4.0f, 1.0f, h => h < 0f ? -h : h, h => (float)Math.Sqrt(h)).Normalise().WriteComponent(detailTextureData, 0);
+            new TextureSynth(DetailRes, DetailRes).ApplyWrapNoise(3, 3.3f, 0.2f, h => h, h => h).Normalise().WriteComponent(detailTextureData, 1);
+            new TextureSynth(DetailRes, DetailRes).ApplyWrapNoise(4, 64.0f, 0.1f, h => h < 0f ? -h : h, h => h).Normalise().WriteComponent(detailTextureData, 2);
+            new TextureSynth(DetailRes, DetailRes).ApplyWrapNoise(4, 4.0f, 1.0f, h => h < 0f ? -h : h, h => (float)Math.Sqrt(h)).Normalise().WriteComponent(detailTextureData, 3);
+
+            this.TerrainDetailTexture.Upload(detailTextureData);
+
+            this.TerrainDetailTexture.Bind();
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
         }
 
         void TerrainGlobal_Unloading(object sender, EventArgs e)
@@ -103,6 +136,7 @@ namespace Snowscape.TerrainRenderer
             this.HeightTexture.Unload();
             this.ShadeTexture.Unload();
             this.IndirectIlluminationTexture.Unload();
+            this.TerrainDetailTexture.Unload();
         }
 
 

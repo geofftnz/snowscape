@@ -12,8 +12,15 @@ float SmoothShadow(float heightdiff)
 
 float getHighDetailBlendFactor(vec4 pos)
 {
-	return 1.0 - smoothstep(50.0,200.0,pos.z);
+	return 1.0 - smoothstep(80.0,120.0,pos.z);
 }
+
+vec2 getDetailTexcoord(vec2 p)
+{
+	return p * 256.0;
+}
+
+const float detailSampleOffset = 4.0 / 1024.0;
 
 #include "noise2d.glsl"
 
@@ -39,11 +46,24 @@ float sfbm(vec2 pos)
 // scale: resolution (x) and height (y) of detail
 vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
 {
-	float displacement = sfbm(pos.xz * scale.x) * scale.y;
-	displacement += snoise(pos.xz * scale.x * 64.0) * scale.y * 0.01;
-	displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.001;
+	//float displacement = sfbm(pos.xz * scale.x) * scale.y;
+	//displacement += snoise(pos.xz * scale.x * 64.0) * scale.y * 0.01;
+	//displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.001;
+
+	float displacement = 0.0;
+
+	vec4 dt = textureLod(detailTex,pos.xz * 0.125,0) - vec4(0.5);
+
+	displacement = dt.r * 0.5;
+	//displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.01;
+	//displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.001;
 
 	return vec2(0.0,displacement);
+}
+
+vec2 getDetailHeightSample(vec2 pos, vec3 basenormal, vec4 param, vec2 scale)
+{
+	return getDetailHeightSample(vec3(pos.x,0.0,pos.y), basenormal, param, scale);
 }
 
 struct DetailSample
@@ -70,9 +90,14 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, flo
 	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,param,scale).y;
 
 	res.materialdisp = h0;
-	res.normal = normalize(vec3(h2-h1,2.0 * t_,h4-h3));
+	res.normal = normalize(vec3(h2-h1,16.0 * t_,h4-h3));
 
 	return res;
+}
+
+DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec4 param, vec2 scale, float t_)
+{
+	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,param,scale,t_);
 }
 
 
@@ -136,7 +161,7 @@ vec3 getNormal(vec2 pos, float scale)
 	vec2 f2 = f*f;
 	vec2 f3 = f2*f;
 
-	// bspline weights
+	// bspline weights 
 	vec2 w0 = f2 - (f3 + f) * 0.5;
     vec2 w1 = f3 * 1.5 - f2 * 2.5 + vec2(1.0);
     vec2 w3 = (f3 - f2) * 0.5;
@@ -167,6 +192,7 @@ vec3 getNormal(vec2 pos, float scale)
 #version 140
  
 uniform sampler2D heightTex;
+uniform sampler2D detailTex;
 
 uniform mat4 transform_matrix;
 uniform vec4 boxparam;
@@ -181,6 +207,7 @@ in vec3 in_boxcoord;
 
 out vec3 boxcoord;
 out vec2 texcoord;
+out vec2 detailcoord;
 out float highDetailBlend;
 
 #include ".|Common"
@@ -204,6 +231,8 @@ void main() {
 	b.xz *= scale;
 	b.xz += offset;
 	texcoord = b.xz;
+
+	detailcoord = getDetailTexcoord(texcoord);
 
 	float h = sampleHeight(texcoord);
 
@@ -234,6 +263,7 @@ uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D shadeTex;
+uniform sampler2D detailTex;
 uniform vec4 boxparam;
 uniform float patchSize;
 uniform float scale;
@@ -242,6 +272,7 @@ uniform float detailTexScale;
 
 in vec3 boxcoord;
 in vec2 texcoord;
+in vec2 detailcoord;
 in float highDetailBlend;
 
 out vec4 out_Colour;
@@ -257,7 +288,7 @@ void main(void)
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	float height = textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(getDetailBias(),0.5,0.5,0.1); 
+	out_Colour = vec4(0.5,0.5,0.5,0.1);  
     out_Normal = texture(normalTex,texcoord);
 
 	float shadow = SmoothShadow(height - shadowAO.r);
@@ -272,6 +303,7 @@ void main(void)
  
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
+uniform sampler2D detailTex;
 
 uniform mat4 transform_matrix;
 uniform vec4 boxparam;
@@ -290,6 +322,7 @@ out vec3 binormal;
 out vec3 tangent;
 out vec3 boxcoord;
 out vec2 texcoord;
+out vec2 detailcoord;
 out float highDetailBlend;
 
 #include ".|Common"
@@ -312,6 +345,7 @@ void main() {
 	b.xz *= scale;
 	b.xz += offset;
 	texcoord = b.xz;
+	detailcoord = getDetailTexcoord(texcoord);
 
 	float h = sampleHeight(texcoord);
 	normal = textureLod(normalTex,texcoord,0).rgb;
@@ -349,6 +383,7 @@ uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D shadeTex;
+uniform sampler2D detailTex;
 uniform vec4 boxparam;
 uniform float patchSize;
 uniform float scale;
@@ -361,6 +396,7 @@ in vec3 binormal;
 in vec3 tangent;
 in vec3 boxcoord;
 in vec2 texcoord;
+in vec2 detailcoord;
 in float highDetailBlend;
 
 out vec4 out_Colour;
@@ -398,7 +434,8 @@ void main(void)
 	duv.x = max(minduv,duv.x + duv.y);
 
 	// sample detail
-	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
+	//DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
+	DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, detailSampleOffset);
 
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
@@ -407,12 +444,12 @@ void main(void)
 	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
 	vec3 n = normalize(detail.normal * nm);
 	
-    out_Normal = vec4(n,1.0);
+    out_Normal = vec4(n ,1.0);
 
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
-	out_Colour = vec4(detailBias,0.5,0.5,0.1);
+	out_Colour = vec4(0.5,0.5,0.5,0.1);
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
@@ -424,6 +461,7 @@ void main(void)
 uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
+uniform sampler2D detailTex;
 
 uniform mat4 transform_matrix;
 uniform vec4 boxparam;
@@ -442,6 +480,7 @@ out vec3 normal;
 out vec3 binormal;
 out vec3 tangent;
 out vec2 texcoord;
+out vec2 detailcoord;
 out float highDetailBlend;
 
 #include ".|Common"
@@ -468,6 +507,7 @@ void main() {
 	b.xz *= scale;
 	b.xz += offset;
 	texcoord = b.xz;
+	detailcoord = getDetailTexcoord(texcoord);
 
 	float h = sampleHeight(texcoord,boxparam.x);
 	normal = getNormal(texcoord,boxparam.x);
@@ -491,7 +531,7 @@ void main() {
 
 	// todo: add displacement in direction of normal
 	// get detail
-	vec2 detail = getDetailHeightSample(v, normal, param, detailScale);
+	vec2 detail = getDetailHeightSample(detailcoord, normal, param, vec2(detailScale));
 	
 	v += normal * detail.y;
 
@@ -515,6 +555,7 @@ uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D shadeTex;
+uniform sampler2D detailTex;
 uniform vec4 boxparam;
 uniform float patchSize;
 uniform float scale;
@@ -527,6 +568,7 @@ in vec3 normal;
 in vec3 binormal;
 in vec3 tangent;
 in vec2 texcoord;
+in vec2 detailcoord;
 in float highDetailBlend;
 
 out vec4 out_Colour;
@@ -552,14 +594,15 @@ void main(void)
 
 	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(detailBias,0.5,0.5,0.1); 
+	out_Colour = vec4(0.5,0.5,0.5,0.1); 
 
 	// get screen-space derivative
 	vec2 duv = abs(fwidth(texcoord));
 	duv.x = max(minduv,duv.x + duv.y);
 
 	// sample detail
-	DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
+	//DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, duv.x);
+	DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, detailSampleOffset);
 	
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 

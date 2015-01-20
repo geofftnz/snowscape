@@ -126,6 +126,7 @@ namespace Snowscape.TerrainRenderer.Renderers
             tile.ParamTexture.Bind(TextureUnit.Texture1);
             tile.NormalTexture.Bind(TextureUnit.Texture2);
             terrainGlobal.ShadeTexture.Bind(TextureUnit.Texture3);
+            terrainGlobal.TerrainDetailTexture.Bind(TextureUnit.Texture4);
 
             this.shader
                 .UseProgram()
@@ -134,6 +135,7 @@ namespace Snowscape.TerrainRenderer.Renderers
                 .SetUniform("paramTex", 1)
                 .SetUniform("normalTex", 2)
                 .SetUniform("shadeTex", 3)
+                .SetUniform("detailTex", 4)
                 .SetUniform("eyePos", eyePos)
                 .SetUniform("boxparam", boxparam)
                 .SetUniform("patchSize", this.Width)

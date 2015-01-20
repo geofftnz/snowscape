@@ -114,8 +114,6 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-        private Texture terrainDetailTexture;
-
         private Vector3 sunDirection = Vector3.Normalize(new Vector3(0.8f, 0.15f, 0.6f));
         private Vector3 prevSunDirection = Vector3.Zero;
 
@@ -497,20 +495,6 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Load(object sender, EventArgs e)
         {
 
-            this.terrainDetailTexture = new Texture("TerrainDetail", DetailRes, DetailRes, TextureTarget.Texture2D, PixelInternalFormat.R32f, PixelFormat.Red, PixelType.Float);
-            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat));
-            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
-            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            this.terrainDetailTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear));
-
-            TextureSynth ts = new TextureSynth(DetailRes, DetailRes);
-
-            this.terrainDetailTexture.Upload(ts.ApplyWrapNoise(6, 8.0f, 1.0f, h => Math.Abs(h), h => h).Normalise().GetData());
-
-            this.terrainDetailTexture.Bind();
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
-            (this.tileRendererPatch as GenerationVisPatchRenderer).Maybe(r => { r.DetailTexture = terrainDetailTexture; });
 
             // GL state
             GL.Enable(EnableCap.DepthTest);
@@ -530,7 +514,6 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.textureDebugRenderer.Add(component.Textures().Select(t => new Tuple<Texture, object>(t, component)));
             }
-            this.textureDebugRenderer.Add(terrainDetailTexture, this);
 
 
             SetProjection();
@@ -554,7 +537,7 @@ namespace Snowscape.TerrainGenerationViewer
                 this.parameters.Add(p);
             }
 
-            
+
             var tempterrain = this.Terrain as IListTextures;
             if (tempterrain != null)
             {
