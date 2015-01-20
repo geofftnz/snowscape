@@ -10,7 +10,7 @@ float SmoothShadow(float heightdiff)
 	return smoothstep(-0.5,-0.02,heightdiff);
 }
 
-float getHighDetailBlendFactor(vec3 pos)
+float getHighDetailBlendFactor(vec4 pos)
 {
 	return 1.0 - smoothstep(50.0,200.0,pos.z);
 }
