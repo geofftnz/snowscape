@@ -403,11 +403,17 @@ namespace Snowscape.TerrainGenerationViewer
 
             if (e.Key == Key.LBracket)
             {
-                this.textureDebugRenderer.PreviousRenderMode();
+                if (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight])
+                    this.textureDebugRenderer.ScaleDown();
+                else
+                    this.textureDebugRenderer.PreviousRenderMode();
             }
             if (e.Key == Key.RBracket)
             {
-                this.textureDebugRenderer.NextRenderMode();
+                if (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight])
+                    this.textureDebugRenderer.ScaleUp();
+                else
+                    this.textureDebugRenderer.NextRenderMode();
             }
 
 

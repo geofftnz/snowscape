@@ -41,8 +41,12 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             public string Source { get; set; }
             public Texture Texture { get; set; }
             public RenderMode RenderMode { get; set; }
+            public float Scale { get; set; }
             public TextureInfo()
             {
+                Scale = 1.0f;
+                Source = "unknown";
+                RenderMode = TextureDebugRenderer.RenderMode.RGB;
             }
         }
 
@@ -113,6 +117,7 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
                 uniform sampler2D tex;
                 uniform int renderMode;
+                uniform float scale;
 
                 in vec2 texcoord;
 
@@ -137,6 +142,8 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
                     vec4 t = texture(tex,texcoord);
                     vec3 c = vec3(0.0,0.0,0.0);
+
+                    t *= scale;
 
                     switch(renderMode)
                     {
@@ -284,6 +291,23 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             return Textures[currentTexture].RenderMode = (RenderMode)(((int)Textures[currentTexture].RenderMode + 1) % (int)RenderMode.MAX);
         }
 
+        public float ScaleDown()
+        {
+            if (currentTexture < 0) return 1.0f;
+            var t = Textures[currentTexture];
+
+            t.Scale *= 0.5f;
+            return t.Scale;
+        }
+        public float ScaleUp()
+        {
+            if (currentTexture < 0) return 1.0f;
+            var t = Textures[currentTexture];
+
+            t.Scale *= 2.0f;
+            return t.Scale;
+        }
+
         public bool Visible { get; set; }
         public int DrawOrder { get; set; }
 
@@ -312,7 +336,8 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                 .UseProgram()
                 .SetUniform("transform", transform)
                 .SetUniform("tex", 0)
-                .SetUniform("renderMode", (int)texture.RenderMode);
+                .SetUniform("renderMode", (int)texture.RenderMode)
+                .SetUniform("scale", texture.Scale);
 
             this.vertexVBO.Bind(program.VariableLocation("vertex"));
             this.texcoordVBO.Bind(program.VariableLocation("in_texcoord"));
@@ -333,15 +358,16 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             if (this.currentTexture >= 0)
             {
                 textManager.AddOrUpdate(new TextBlock("textureinfo",
-                    
+
                     string.Format(
-                        "{0}: {1} ({2}) {3}", 
-                        Textures[currentTexture].Source, 
-                        Textures[currentTexture].Texture.Name, 
+                        "{0}: {1} ({2}) {3} scale:{4:0.000}",
+                        Textures[currentTexture].Source,
+                        Textures[currentTexture].Texture.Name,
                         Textures[currentTexture].RenderMode.ToString(),
-                        Textures[currentTexture].Texture.InternalFormat.ToString()
+                        Textures[currentTexture].Texture.InternalFormat.ToString(),
+                        Textures[currentTexture].Scale
                         ),
-                    
+
                     new Vector3(x, y, 0.0f), size, new Vector4(1f, 1f, 1f, alpha)));
                 y += size * 1.2f;
             }
