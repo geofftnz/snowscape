@@ -46,19 +46,19 @@ float sfbm(vec2 pos)
 // scale: resolution (x) and height (y) of detail
 vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
 {
-	//float displacement = sfbm(pos.xz * scale.x) * scale.y;
-	//displacement += snoise(pos.xz * scale.x * 64.0) * scale.y * 0.01;
-	//displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.001;
 
-	float displacement = 0.0;
+	// get noise texture for this location
+	vec4 dt = textureLod(detailTex,pos.xz * 0.125,0);
 
-	vec4 dt = textureLod(detailTex,pos.xz * 0.125,0) - vec4(0.5);
+	float baselevel = -param.r * 8.0;  // reduce height by total loose material amount
+	vec2 rock = vec2(0.0, baselevel + dt.r * 0.5);
+	vec2 dirt = vec2(0.1, (dt.g - 0.5) * 0.2);
 
-	displacement = dt.r * 0.5;
-	//displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.01;
-	//displacement += snoise(pos.xz * scale.x * 256.0) * scale.y * 0.001;
+	// find highest sample
+	vec2 md = rock;
+	md = dirt.y > md.y ? dirt : md;
 
-	return vec2(0.0,displacement);
+	return md;
 }
 
 vec2 getDetailHeightSample(vec2 pos, vec3 basenormal, vec4 param, vec2 scale)
@@ -70,7 +70,22 @@ struct DetailSample
 {
 	vec3 normal;
 	vec2 materialdisp;
+	vec3 diffuse;
 };
+
+vec3 getMaterialDiffuse(float material, vec3 pos)
+{
+	if (material < 0.01) // rock
+	{
+		return vec3(0.1,0.08,0.06);
+	}
+	if (material < 0.11) // dirt
+	{
+		return vec3(0.3,0.28,0.1);
+	}
+	return vec3(1.0); // default
+}
+
 
 DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, float t_)
 {
@@ -91,6 +106,7 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, flo
 
 	res.materialdisp = h0;
 	res.normal = normalize(vec3(h2-h1,16.0 * t_,h4-h3));
+	res.diffuse = getMaterialDiffuse(h0.x, pos);
 
 	return res;
 }
@@ -147,6 +163,44 @@ float sampleHeight(vec2 pos, float scale)
 		textureLod(heightTex,vec2(t0.x,t1.y),0).r * s0.x * s1.y +
 		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y;
 }
+
+//|CubicParamSample
+// 4-tap b-spline bicubic interpolation.
+// credit to http://vec3.ca/bicubic-filtering-in-fewer-taps/
+vec4 sampleParam(vec2 pos, float scale)
+{
+	// get texel centre
+	vec2 tc = pos * vec2(scale);
+	vec2 itc = floor(tc);
+	
+	// fractional offset
+	vec2 f = tc - itc;
+
+	vec2 f2 = f*f;
+	vec2 f3 = f2*f;
+
+	// bspline weights
+	vec2 w0 = f2 - (f3 + f) * 0.5;
+    vec2 w1 = f3 * 1.5 - f2 * 2.5 + vec2(1.0);
+    vec2 w3 = (f3 - f2) * 0.5;
+    vec2 w2 = vec2(1.0) - w0 - w1 - w3;
+
+	vec2 s0 = w0 + w1;
+	vec2 s1 = w2 + w3;
+
+	vec2 f0 = w1 / (w0 + w1);
+	vec2 f1 = w3 / (w2 + w3);
+
+	vec2 t0 = (itc - vec2(1.0) + f0) * t;
+	vec2 t1 = (itc + vec2(1.0) + f1) * t;
+
+	return 
+		textureLod(paramTex,vec2(t0.x,t0.y),0) * s0.x * s0.y +
+		textureLod(paramTex,vec2(t1.x,t0.y),0) * s1.x * s0.y +
+		textureLod(paramTex,vec2(t0.x,t1.y),0) * s0.x * s1.y +
+		textureLod(paramTex,vec2(t1.x,t1.y),0) * s1.x * s1.y;
+}
+
 
 //|CubicNormalSample
 vec3 getNormal(vec2 pos, float scale)
@@ -287,12 +341,10 @@ void main(void)
 {
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	float height = textureLod(heightTex,texcoord,0).r;
+	float shadow = SmoothShadow(height - shadowAO.r);
 
 	out_Colour = vec4(0.5,0.5,0.5,0.1);  
     out_Normal = texture(normalTex,texcoord);
-
-	float shadow = SmoothShadow(height - shadowAO.r);
-
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
@@ -449,7 +501,7 @@ void main(void)
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
-	out_Colour = vec4(0.5,0.5,0.5,0.1);
+	out_Colour = vec4(detail.diffuse.rgb,detail.materialdisp.x); 
 	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
@@ -498,7 +550,7 @@ float sampleHeight(vec2 pos)
 }
 
 #include ".|CubicHeightSample"
-
+#include ".|CubicParamSample"
 #include ".|CubicNormalSample"
 
 void main() {
@@ -511,7 +563,8 @@ void main() {
 
 	float h = sampleHeight(texcoord,boxparam.x);
 	normal = getNormal(texcoord,boxparam.x);
-	vec4 param = texture2D(paramTex,texcoord);
+	//vec4 param = texture2D(paramTex,texcoord);
+	vec4 param = sampleParam(texcoord,boxparam.x);
 
 	// calculate tangent and binormal
 	// tangent is in X direction, so is the cross product of normal (Y) and Z
@@ -594,7 +647,6 @@ void main(void)
 
 	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
 
-	out_Colour = vec4(0.5,0.5,0.5,0.1); 
 
 	// get screen-space derivative
 	vec2 duv = abs(fwidth(texcoord));
@@ -611,6 +663,7 @@ void main(void)
 	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
 	vec3 n = normalize(detail.normal * nm);
 	
+	out_Colour = vec4(detail.diffuse.rgb,detail.materialdisp.x); 
     out_Normal = vec4(n,1.0);
 
 	float shadow = SmoothShadow(height - shadowAO.r);

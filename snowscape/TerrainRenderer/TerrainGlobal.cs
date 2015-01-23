@@ -105,6 +105,7 @@ namespace Snowscape.TerrainRenderer
             yield return this.HeightTexture;
             yield return this.ShadeTexture;
             yield return this.IndirectIlluminationTexture;
+            yield return this.TerrainDetailTexture;
         }
 
         void TerrainGlobal_Loading(object sender, EventArgs e)
