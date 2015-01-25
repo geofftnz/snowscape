@@ -669,14 +669,18 @@ void main(void)
 	vec2 duv = abs(fwidth(texcoord));
 	duv.x = max(minduv,duv.x + duv.y);
 
+	// generate transform matrix for normals
+	mat3 nm = mat3(tangent,normal,binormal);
+
+	vec3 bedrockNormal = getDetailBedrockNormal(detailcoord, detailSampleOffset);
+
 	// sample detail
 	//DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, duv.x);
-	DetailSample detail = sampleDetail(detailcoord, normal, normal,param, detailScale, detailSampleOffset);
+	DetailSample detail = sampleDetail(detailcoord, normal, bedrockNormal, param, detailScale, detailSampleOffset);
 	
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
 	// calculate normal of detail heightmap at detailpos
-	mat3 nm = mat3(tangent,normal,binormal);
 	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
 	vec3 n = normalize(detail.normal * nm);
 	
