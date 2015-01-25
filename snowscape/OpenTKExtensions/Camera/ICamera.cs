@@ -12,6 +12,8 @@ namespace OpenTKExtensions.Camera
         void Resize(int ClientWidth, int ClientHeight); 
         void Update(double time);
 
+        bool ViewEnable { get; set; }
+
         Matrix4 Projection { get; }
         Matrix4 View { get; }
 

@@ -349,6 +349,10 @@ namespace Snowscape.TerrainGenerationViewer
             {
                 this.SwitchPass();
             }
+            if (e.Key == Key.M)
+            {
+                this.camera.ViewEnable = !this.camera.ViewEnable;
+            }
 
             if (e.Key == Key.Up)
             {

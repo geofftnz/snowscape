@@ -22,6 +22,8 @@ namespace OpenTKExtensions.Camera
         public float ZNear { get; set; }
         public float ZFar { get; set; }
 
+        public bool ViewEnable { get; set; }
+
 
         /// <summary>
         /// look angle (up/down), in radians 
@@ -109,6 +111,8 @@ namespace OpenTKExtensions.Camera
             this.ZNear = 1.0f;
             this.ZFar = 4000.0f;
 
+            this.ViewEnable = true;
+
         }
 
         public WalkCamera(KeyboardDevice k, MouseDevice m)
@@ -132,22 +136,24 @@ namespace OpenTKExtensions.Camera
         {
 
             // mouse look
+            if (ViewEnable)
+            {
+                int mouseX = Mouse.X, mouseY = Mouse.Y;
 
-            int mouseX = Mouse.X, mouseY = Mouse.Y;
+                if (prevMouseX <= -10000) prevMouseX = mouseX;
+                if (prevMouseY <= -10000) prevMouseY = mouseY;
 
-            if (prevMouseX <= -10000) prevMouseX = mouseX;
-            if (prevMouseY <= -10000) prevMouseY = mouseY;
+                //int deltaX = (this.Width / 2) - mouseX;
+                //int deltaY = (this.Height / 2) - mouseY;
+                int deltaX = mouseX - prevMouseX;
+                int deltaY = mouseY - prevMouseY;
 
-            //int deltaX = (this.Width / 2) - mouseX;
-            //int deltaY = (this.Height / 2) - mouseY;
-            int deltaX = mouseX - prevMouseX;
-            int deltaY = mouseY - prevMouseY;
+                this.AngleLeftRight += (float)deltaX * -0.01f;
+                this.AngleUpDown += (float)deltaY * -0.01f;
 
-            this.AngleLeftRight += (float)deltaX * -0.01f;
-            this.AngleUpDown += (float)deltaY * -0.01f;
-
-            prevMouseX = mouseX;
-            prevMouseY = mouseY;
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+            }
 
             // keyboard move
             float speed = (float)(this.movementSpeed * time * Math.Sqrt(this.EyeHeight));
