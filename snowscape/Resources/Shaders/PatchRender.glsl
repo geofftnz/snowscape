@@ -41,10 +41,11 @@ float sfbm(vec2 pos)
 // todo: implement as material stack
 //
 // pos: base terrain pos (bicubic interpolation of base terrain) - used as noise source coordinate
-// basenormal: base terrain normal (bicubic interpolation of base terrain) - used for slope
+// basenormal: base terrain normal (bicubic interpolation of base terrain) - used for general slope
+// detailnormal: transformed normal of
 // param: thickness of terrain layers
 // scale: resolution (x) and height (y) of detail
-vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
+vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale)
 {
 
 	// get noise texture for this location
@@ -61,9 +62,24 @@ vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec4 param, vec2 scale)
 	return md;
 }
 
-vec2 getDetailHeightSample(vec2 pos, vec3 basenormal, vec4 param, vec2 scale)
+// gets the normal of the underlying rock layer, untransformed by the patch normal
+// 
+vec3 getDetailBedrockNormal(vec2 pos, float t_)
 {
-	return getDetailHeightSample(vec3(pos.x,0.0,pos.y), basenormal, param, scale);
+	vec3 t = vec3(-t_,0.0,t_);
+	pos *= 0.125;  // must match above
+	 
+	float h1 = textureLod(detailTex,pos + t.xy,0).r * 0.5;  // must match coefficients above
+	float h2 = textureLod(detailTex,pos + t.zy,0).r * 0.5;  // must match coefficients above
+	float h3 = textureLod(detailTex,pos + t.yx,0).r * 0.5;  // must match coefficients above
+	float h4 = textureLod(detailTex,pos + t.yz,0).r * 0.5;  // must match coefficients above
+	
+	return normalize(vec3(h2-h1,16.0 * t_,h4-h3));  // must match below
+}
+
+vec2 getDetailHeightSample(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale)
+{
+	return getDetailHeightSample(vec3(pos.x,0.0,pos.y), basenormal, detailnormal, param, scale);
 }
 
 struct DetailSample
@@ -87,22 +103,22 @@ vec3 getMaterialDiffuse(float material, vec3 pos)
 }
 
 
-DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, float t_)
+DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
 {
 	DetailSample res;
 	vec3 t = vec3(-t_,0.0,t_);
 
-	vec2 h0 = getDetailHeightSample(pos,basenormal,param,scale);
+	vec2 h0 = getDetailHeightSample(pos,basenormal,detailnormal,param,scale);
 
 	//   3
 	// 1 0 2
 	//   4
 	// get adjacent samples
 	// todo: approximate by using the same basenormal & param. Ideally these should be fetched from the texture again.
-	float h1 = getDetailHeightSample(pos + t.xyy,basenormal,param,scale).y;
-	float h2 = getDetailHeightSample(pos + t.zyy,basenormal,param,scale).y;
-	float h3 = getDetailHeightSample(pos + t.yyx,basenormal,param,scale).y;
-	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,param,scale).y;
+	float h1 = getDetailHeightSample(pos + t.xyy,basenormal,detailnormal,param,scale).y;
+	float h2 = getDetailHeightSample(pos + t.zyy,basenormal,detailnormal,param,scale).y;
+	float h3 = getDetailHeightSample(pos + t.yyx,basenormal,detailnormal,param,scale).y;
+	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,detailnormal,param,scale).y;
 
 	res.materialdisp = h0;
 	res.normal = normalize(vec3(h2-h1,16.0 * t_,h4-h3));
@@ -111,10 +127,11 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec4 param, vec2 scale, flo
 	return res;
 }
 
-DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec4 param, vec2 scale, float t_)
+DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
 {
-	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,param,scale,t_);
+	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,detailnormal,param,scale,t_);
 }
+
 
 
 //|FragmentCommon
@@ -487,7 +504,7 @@ void main(void)
 
 	// sample detail
 	//DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
-	DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, detailSampleOffset);
+	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset);
 
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
@@ -584,7 +601,7 @@ void main() {
 
 	// todo: add displacement in direction of normal
 	// get detail
-	vec2 detail = getDetailHeightSample(detailcoord, normal, param, vec2(detailScale));
+	vec2 detail = getDetailHeightSample(detailcoord, normal, normal, param, vec2(detailScale));
 	
 	v += normal * detail.y;
 
@@ -654,7 +671,7 @@ void main(void)
 
 	// sample detail
 	//DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, duv.x);
-	DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, detailSampleOffset);
+	DetailSample detail = sampleDetail(detailcoord, normal, normal,param, detailScale, detailSampleOffset);
 	
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
