@@ -36,6 +36,7 @@ float sfbm(vec2 pos)
 }
 
 
+float bedrockHeight = 0.5;
 // gets a tuple of material (x) and displacement (y) for a given point.
 //
 // todo: implement as material stack
@@ -51,13 +52,19 @@ vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 pa
 	// get noise texture for this location
 	vec4 dt = textureLod(detailTex,pos.xz * 0.125,0);
 
-	float baselevel = -param.r * 8.0;  // reduce height by total loose material amount
-	vec2 rock = vec2(0.0, baselevel + dt.r * 0.5);
-	vec2 dirt = vec2(0.1, (dt.g - 0.5) * 0.2);
+	float upperLayers = param.r * 16.0 * (0.5 + 0.5 * clamp(detailnormal.y,0.0,1.0));
+
+	//upperLayers = max(0.0,upperLayers * detailnormal.y);
+
+	float baselevel = -upperLayers;  // reduce height by total loose material amount
+	vec2 rock = vec2(0.0, baselevel + dt.r * bedrockHeight);
+	vec2 dirt = vec2(0.1, (dt.g - 0.5) * 0.2 + detailnormal.y * 0.2 );
+	//vec2 dirt = vec2(0.1, - basenormal.y * 0.5);
 
 	// find highest sample
 	vec2 md = rock;
 	md = dirt.y > md.y ? dirt : md;
+	//md = detailnormal.y > 0.9 ? dirt:md;
 
 	return md;
 }
@@ -69,12 +76,12 @@ vec3 getDetailBedrockNormal(vec2 pos, float t_)
 	vec3 t = vec3(-t_,0.0,t_);
 	pos *= 0.125;  // must match above
 	 
-	float h1 = textureLod(detailTex,pos + t.xy,0).r * 0.5;  // must match coefficients above
-	float h2 = textureLod(detailTex,pos + t.zy,0).r * 0.5;  // must match coefficients above
-	float h3 = textureLod(detailTex,pos + t.yx,0).r * 0.5;  // must match coefficients above
-	float h4 = textureLod(detailTex,pos + t.yz,0).r * 0.5;  // must match coefficients above
+	float h1 = textureLod(detailTex,pos + t.xy,0).r * bedrockHeight;  // must match coefficients above
+	float h2 = textureLod(detailTex,pos + t.zy,0).r * bedrockHeight;  // must match coefficients above
+	float h3 = textureLod(detailTex,pos + t.yx,0).r * bedrockHeight;  // must match coefficients above
+	float h4 = textureLod(detailTex,pos + t.yz,0).r * bedrockHeight;  // must match coefficients above
 	
-	return normalize(vec3(h2-h1,16.0 * t_,h4-h3));  // must match below
+	return normalize(vec3(h2-h1,2.0*0.125,h4-h3));  // must match below
 }
 
 vec2 getDetailHeightSample(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale)
@@ -89,7 +96,7 @@ struct DetailSample
 	vec3 diffuse;
 };
 
-vec3 getMaterialDiffuse(float material, vec3 pos)
+vec3 getMaterialDiffuse(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param)
 {
 	if (material < 0.01) // rock
 	{
@@ -97,7 +104,9 @@ vec3 getMaterialDiffuse(float material, vec3 pos)
 	}
 	if (material < 0.11) // dirt
 	{
-		return vec3(0.3,0.28,0.1);
+		float soildepth = clamp(param.r * 16.0,0.0,1.0);
+		float moisture = clamp(param.g * 64.0,0.0,1.0);
+		return mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), soildepth);
 	}
 	return vec3(1.0); // default
 }
@@ -121,8 +130,9 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,detailnormal,param,scale).y;
 
 	res.materialdisp = h0;
-	res.normal = normalize(vec3(h2-h1,16.0 * t_,h4-h3));
-	res.diffuse = getMaterialDiffuse(h0.x, pos);
+	//res.normal = normalize(vec3(h2-h1,2.0*0.125,h4-h3));
+	res.normal = normalize(vec3(h2-h1,8.0 * t_,h4-h3));
+	res.diffuse = getMaterialDiffuse(h0.x, pos, basenormal, detailnormal, param);
 
 	return res;
 }
@@ -673,6 +683,7 @@ void main(void)
 	mat3 nm = mat3(tangent,normal,binormal);
 
 	vec3 bedrockNormal = getDetailBedrockNormal(detailcoord, detailSampleOffset);
+	bedrockNormal = normalize(bedrockNormal * nm);
 
 	// sample detail
 	//DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, duv.x);
@@ -685,6 +696,7 @@ void main(void)
 	vec3 n = normalize(detail.normal * nm);
 	
 	out_Colour = vec4(detail.diffuse.rgb,detail.materialdisp.x); 
+	//out_Colour = vec4(bedrockNormal.xzy * 0.5 + 0.5  ,detail.materialdisp.x); 
     out_Normal = vec4(n,1.0);
 
 	float shadow = SmoothShadow(height - shadowAO.r);
