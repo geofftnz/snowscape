@@ -1,9 +1,15 @@
-﻿//|Common
+﻿// colour: rgb, material
+// normal+?
+// shading: [roughness|reflection], specexp, specpwr, sparkle
+// lighting - shadow, AO, emmissive, subsurface
+
+//|Common
 
 float t = 1.0 / boxparam.x;
 const vec2 detailScale = vec2(0.2,0.2);  // detailTexScale is uniform
 const float sampleOfs = 1.0/1024.0;
 const float minduv = 0.0001;
+
 
 float SmoothShadow(float heightdiff)
 {
@@ -52,18 +58,27 @@ vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 pa
 	// get noise texture for this location
 	vec4 dt = textureLod(detailTex,pos.xz * 0.125,0);
 
-	float upperLayers = param.r * 16.0 * (0.5 + 0.5 * clamp(detailnormal.y,0.0,1.0));
+	float dirtdepth = param.r * 16.0;
+	float waterdepth = 0.0;
 
-	//upperLayers = max(0.0,upperLayers * detailnormal.y);
+	if ((param.g + param.b*0.02) > 0.03) return vec2(0.2,-dt.b*0.005);
+	
 
-	float baselevel = -upperLayers;  // reduce height by total loose material amount
-	vec2 rock = vec2(0.0, baselevel + dt.r * bedrockHeight);
-	vec2 dirt = vec2(0.1, (dt.g - 0.5) * 0.2 + detailnormal.y * 0.2 );
+	//float upperLayers = dirtdepth + waterdepth;// * (0.5 + 0.5 * clamp(detailnormal.y,0.0,1.0));
+
+	//upperLayers = max(0.0,upperLayers - (0.02*(1.0 - detailnormal.y)));
+
+	//float baselevel = -upperLayers;  // reduce height by total loose material amount
+	vec2 rock = vec2(0.0, -(dirtdepth + waterdepth) + dt.r * bedrockHeight);
+	//vec2 dirt = vec2(0.1, (dt.g) * 0.2);
+	vec2 dirt = vec2(0.1, -waterdepth + (dt.g) * 0.2 + detailnormal.y * 0.05 );
 	//vec2 dirt = vec2(0.1, - basenormal.y * 0.5);
+	vec2 water = vec2(0.2,0.0);
 
 	// find highest sample
 	vec2 md = rock;
 	md = dirt.y > md.y ? dirt : md;
+	md = water.y > md.y ? water : md;
 	//md = detailnormal.y > 0.9 ? dirt:md;
 
 	return md;
@@ -93,22 +108,39 @@ struct DetailSample
 {
 	vec3 normal;
 	vec2 materialdisp;
-	vec3 diffuse;
+	vec4 diffuse;  // RGB = diffuse, A = material ID
+	vec4 shading; //R:[roughness|reflection], G:specexp, B:specpwr, A:sparkle
 };
 
-vec3 getMaterialDiffuse(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param)
+void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, out vec4 diffuse, out vec4 shading)
 {
 	if (material < 0.01) // rock
 	{
-		return vec3(0.1,0.08,0.06);
+		diffuse = vec4(0.1,0.08,0.06,material);
+		shading = vec4(0.9,1.0,0.0,0.0);
+		return;
 	}
 	if (material < 0.11) // dirt
 	{
 		float soildepth = clamp(param.r * 16.0,0.0,1.0);
-		float moisture = clamp(param.g * 64.0,0.0,1.0);
-		return mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), soildepth);
+		float moisture = clamp(param.b*1.2,0.0,1.0);
+		//return mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), soildepth);
+		diffuse = vec4(mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), moisture),material);
+		shading = vec4(0.8,2.0,0.1,0.0);
+		return;
 	}
-	return vec3(1.0); // default
+	if (material < 0.21) // water
+	{
+		//return vec3(0.5,0.5,1.0);
+		diffuse = vec4(vec3(0.5,0.5,1.0)*0.0,material);
+		shading = vec4(0.1,8.0,0.3,0.0);
+		return;
+	}
+
+	diffuse = vec4(vec3(1.0),material);
+	shading = vec4(0.0);
+
+	return ; // default
 }
 
 
@@ -132,7 +164,7 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 	res.materialdisp = h0;
 	//res.normal = normalize(vec3(h2-h1,2.0*0.125,h4-h3));
 	res.normal = normalize(vec3(h2-h1,8.0 * t_,h4-h3));
-	res.diffuse = getMaterialDiffuse(h0.x, pos, basenormal, detailnormal, param);
+	getMaterial(h0.x, pos, basenormal, detailnormal, param, res.diffuse, res.shading);
 
 	return res;
 }
@@ -369,10 +401,19 @@ void main(void)
 	vec2 shadowAO = texture(shadeTex,texcoord).rg;
 	float height = textureLod(heightTex,texcoord,0).r;
 	float shadow = SmoothShadow(height - shadowAO.r);
+	vec4 param = texture2D(paramTex,texcoord);
 
-	out_Colour = vec4(0.5,0.5,0.5,0.1);  
-    out_Normal = texture(normalTex,texcoord);
-	out_Shading = vec4(0.0);
+	vec3 normal = texture(normalTex,texcoord).rgb;
+	detailcoord = getDetailTexcoord(texcoord);
+	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset);
+
+	//out_Colour = vec4(0.5,0.5,0.5,0.1);  
+    out_Normal = vec4(normal,0.0);
+	//out_Shading = vec4(0.5,1.0,0.0,0.0);
+
+	out_Colour = detail.diffuse; 
+	out_Shading = detail.shading;
+
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
 }
@@ -528,8 +569,8 @@ void main(void)
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
-	out_Colour = vec4(detail.diffuse.rgb,detail.materialdisp.x); 
-	out_Shading = vec4(0.0);
+	out_Colour = detail.diffuse; 
+	out_Shading = detail.shading;
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
 }
@@ -695,13 +736,13 @@ void main(void)
 	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
 	vec3 n = normalize(detail.normal * nm);
 	
-	out_Colour = vec4(detail.diffuse.rgb,detail.materialdisp.x); 
+	out_Colour = detail.diffuse; 
+	out_Shading = detail.shading;
 	//out_Colour = vec4(bedrockNormal.xzy * 0.5 + 0.5  ,detail.materialdisp.x); 
     out_Normal = vec4(n,1.0);
 
 	float shadow = SmoothShadow(height - shadowAO.r);
 
-	out_Shading = vec4(0.0);
 	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
 
 }

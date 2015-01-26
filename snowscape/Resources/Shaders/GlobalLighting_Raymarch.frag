@@ -707,6 +707,12 @@ float LinearizeDepth2(float depth)
 
 void main(void)
 {
+// colour: rgb, material
+// normal+?
+// shading: [roughness|reflection], specexp, specpwr, sparkle
+// lighting - shadow, AO, emmissive, subsurface
+
+
 	vec4 colourT = texture(colourTex,texcoord0.xy);
     vec4 normalT = texture(normalTex,texcoord0.xy);
     vec4 shadingT = texture(shadingTex,texcoord0.xy);
@@ -724,6 +730,7 @@ void main(void)
     vec3 c = vec3(0.0,0.0,0.0);
     
 	vec3 normal = normalT.rgb;
+	vec3 refl = reflect(dir,normal);
 
     //vec3 normal = normalize(normalT.xyz - vec3(0.5));
     //vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
@@ -736,6 +743,9 @@ void main(void)
 	//c.rg = lightingT.rg;
 	//c.rgb = normalT.rgb;
 
+	float roughness = max(0.0,(shadingT.r-0.5)) * 2.0;  
+	float skyreflection = clamp(0.5-shadingT.r,0.0,0.5) * 2.0;
+
 	vec3 ambientlight = vec3(0.7,0.8,1.0) * 0.3;
 	//vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
 
@@ -743,6 +753,11 @@ void main(void)
 	vec3 ambient = ambientlight * lightingT.g;
 
 	c = colourT.rgb * (sun + ambient + vec3(lightingT.b));
+
+
+	// add sky reflection
+	c += texture(skyCubeTex,refl.xyz).rgb * skyreflection;
+
 
 	//c = texture(skyCubeTex,normal).rgb;
 

@@ -177,7 +177,7 @@ void main(void)
 		terrain.b * waterLowpass + erosion.r * waterDepthFactor,   // water saturation
 		//erosion.a / max(1.0,erosion.r)  //average sediment carried
 		//0.0
-		max((terrain.a * 0.95 + avgsat * 0.05 * 0.25) * saturationlowpass, terrain.a  * 0.9 + min(8.0,erosion.r) * 0.01)
+		max((terrain.a * 0.95 + avgsat * 0.05 * 0.25) * saturationlowpass, terrain.a  * 0.9 + min(8.0,erosion.r) * 0.02)
 		//mix(min(8.0,erosion.r) * 0.0625 + avgsat*0.25,terrain.a,saturationlowpass)
 		//mix(min(4.0,erosion.r),terrain.a,saturationlowpass)  // saturation
 		);
