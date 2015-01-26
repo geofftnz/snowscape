@@ -149,10 +149,18 @@ out vec4 out_Terrain;
 //  Subtracts material from soft, then hard.
 //  Modifies water depth from particle count (E.r).
 
+float saturationlowpass = 0.9999;
+vec3 t = vec3(-1.0/1024.0,0.0,1.0/1024.0);
+
 void main(void)
 {
 	vec4 terrain = textureLod(terraintex,texcoord,0);
 	vec4 erosion = textureLod(erosiontex,texcoord,0);
+
+	float avgsat = textureLod(terraintex,texcoord + t.xy,0).a;
+	avgsat += textureLod(terraintex,texcoord + t.zy,0).a;
+	avgsat += textureLod(terraintex,texcoord + t.yx,0).a;
+	avgsat += textureLod(terraintex,texcoord + t.yz,0).a;
 
 	float hard = terrain.r;
 	float soft = terrain.g;
@@ -167,7 +175,11 @@ void main(void)
 		hard - harderode, 
 		soft - softerode,
 		terrain.b * waterLowpass + erosion.r * waterDepthFactor,   // water saturation
-		erosion.a / max(1.0,erosion.r)  //average sediment carried
+		//erosion.a / max(1.0,erosion.r)  //average sediment carried
+		//0.0
+		max((terrain.a * 0.95 + avgsat * 0.05 * 0.25) * saturationlowpass, terrain.a  * 0.9 + min(8.0,erosion.r) * 0.01)
+		//mix(min(8.0,erosion.r) * 0.0625 + avgsat*0.25,terrain.a,saturationlowpass)
+		//mix(min(4.0,erosion.r),terrain.a,saturationlowpass)  // saturation
 		);
 }
 

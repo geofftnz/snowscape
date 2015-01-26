@@ -7,6 +7,7 @@ using OpenTK.Graphics.OpenGL;
 using Utils;
 using System.IO;
 using OpenTK;
+using OpenTKExtensions.Framework;
 
 namespace TerrainGeneration
 {
@@ -34,7 +35,7 @@ namespace TerrainGeneration
     /// 
     /// 
     /// </summary>
-    public class GPUSnowTransport : ITerrainGen
+    public class GPUSnowTransport : GameComponentBase,  ITerrainGen
     {
         const int FILEMAGIC = 0x54455231;  // different format for pass 2
 

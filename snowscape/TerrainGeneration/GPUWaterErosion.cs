@@ -7,6 +7,7 @@ using OpenTKExtensions;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
 using Utils;
+using OpenTKExtensions.Framework;
 
 namespace TerrainGeneration
 {
@@ -49,7 +50,7 @@ namespace TerrainGeneration
     /// -----
     /// 
     /// </summary>
-    public class GPUWaterErosion : ITerrainGen
+    public class GPUWaterErosion : GameComponentBase, ITerrainGen
     {
         const int FILEMAGIC = 0x54455230;
 

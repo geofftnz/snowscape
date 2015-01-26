@@ -170,12 +170,13 @@ namespace Snowscape.TerrainGenerationViewer
             // set default shader loader
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(SHADERPATH);
 
-            this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes);
+            
 
 
             #region create components
 
             // phase 1 
+            this.Components.Add(this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes), LoadOrder.Phase1);
 
             this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
             this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
@@ -524,7 +525,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             // setup terrain
-            this.Terrain.Init();
+            //this.Terrain.Init();
 
             try
             {

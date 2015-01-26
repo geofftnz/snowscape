@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using OpenTKExtensions.Framework;
 using Utils;
 
 namespace TerrainGeneration
 {
-    public interface ITerrainGen
+    public interface ITerrainGen : IGameComponent
     {
         bool NeedThread { get; }
         int Width { get; }

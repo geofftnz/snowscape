@@ -11,10 +11,11 @@ using System.Threading;
 using System.IO;
 using System.IO.Compression;
 using Snowscape.TerrainStorage;
+using OpenTKExtensions.Framework;
 
 namespace TerrainGeneration
 {
-    public class TerrainGen : ITerrainGen
+    public class TerrainGen : GameComponentBase, ITerrainGen
     {
         const int NUMTHREADS = 3;
         const int FILEMAGIC = 0x54455230;

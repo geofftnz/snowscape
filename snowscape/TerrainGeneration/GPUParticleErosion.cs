@@ -94,7 +94,7 @@ namespace TerrainGeneration
     /// 
     /// 
     /// </summary>
-    public class GPUParticleErosion : ITerrainGen, IListTextures
+    public class GPUParticleErosion : GameComponentBase, ITerrainGen, IListTextures, IReloadable
     {
         private const string P_DEPOSITRATE = "erosion-depositrate";
         private const string P_EROSIONRATE = "erosion-erosionrate";
@@ -135,6 +135,13 @@ namespace TerrainGeneration
             this.Height = height;
             this.ParticleTexWidth = particleTexWidth;
             this.ParticleTexHeight = particleTexHeight;
+
+            this.Loading += GPUParticleErosion_Loading;
+        }
+
+        void GPUParticleErosion_Loading(object sender, EventArgs e)
+        {
+            Init(); 
         }
 
 
@@ -144,7 +151,7 @@ namespace TerrainGeneration
         /// R: Rock (hard).
         /// G: Soil (soft).
         /// B: Water depth.
-        /// A: nothing
+        /// A: Water saturation (long-term low-pass of particle count in cell)
         /// 
         /// managed here, copied to terrain tile and terrain global
         /// need 2 copies as we ping-pong between them each iteration
@@ -219,6 +226,18 @@ namespace TerrainGeneration
 
         private ParameterCollection parameters = new ParameterCollection();
         public ParameterCollection Parameters { get { return parameters; } }
+
+        private IEnumerable<GBufferShaderStep> Steps()
+        {
+            yield return ComputeVelocityStep;
+            yield return ErosionAccumulationStep;
+            yield return UpdateLayersStep;
+            yield return UpdateParticlesStep;
+            yield return SlippageFlowStep;
+            yield return SlippageTransportStep;
+            yield return CopyParticlesStep;
+            yield return CopyVelocityStep;
+        }
 
 
         public IEnumerable<Texture> Textures()
@@ -577,6 +596,13 @@ namespace TerrainGeneration
         }
 
 
+        public void Reload()
+        {
+            foreach (var step in Steps())
+            {
+                step.ReloadShader();
+            }
+        }
 
 
         private void InitParticlesVBOs()
@@ -776,6 +802,7 @@ namespace TerrainGeneration
         {
             return initialMaxHeight;
         }
+
 
     }
 }

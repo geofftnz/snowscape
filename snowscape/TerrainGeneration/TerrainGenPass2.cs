@@ -10,10 +10,11 @@ using OpenTK;
 using System.Threading;
 using System.IO;
 using System.IO.Compression;
+using OpenTKExtensions.Framework;
 
 namespace TerrainGeneration
 {
-    public class TerrainGenPass2 : ITerrainGen
+    public class TerrainGenPass2 : GameComponentBase, ITerrainGen
     {
         const int FILEMAGIC = 0x54455231;
 
