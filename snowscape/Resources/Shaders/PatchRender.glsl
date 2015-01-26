@@ -404,7 +404,6 @@ void main(void)
 	vec4 param = texture2D(paramTex,texcoord);
 
 	vec3 normal = texture(normalTex,texcoord).rgb;
-	detailcoord = getDetailTexcoord(texcoord);
 	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset);
 
 	//out_Colour = vec4(0.5,0.5,0.5,0.1);  
