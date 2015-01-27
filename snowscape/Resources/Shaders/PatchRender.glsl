@@ -52,11 +52,9 @@ float bedrockHeight = 0.5;
 // detailnormal: transformed normal of
 // param: thickness of terrain layers
 // scale: resolution (x) and height (y) of detail
-vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale)
+// dt: 4-component noise texture sample
+vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, vec4 dt)
 {
-
-	// get noise texture for this location
-	vec4 dt = textureLod(detailTex,pos.xz * 0.125,0);
 
 	float dirtdepth = param.r * 16.0;
 	float waterdepth = 0.0;
@@ -83,6 +81,13 @@ vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 pa
 
 	return md;
 }
+
+vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale)
+{
+	// get noise texture for this location
+	return getDetailHeightSample(pos,basenormal,detailnormal,param,scale,textureLod(detailTex,pos.xz * 0.125,0));
+}
+
 
 // gets the normal of the underlying rock layer, untransformed by the patch normal
 // 
@@ -172,6 +177,20 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
 {
 	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,detailnormal,param,scale,t_);
+}
+
+DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
+{
+	DetailSample res;
+	vec3 t = vec3(-t_,0.0,t_);
+
+	vec2 h0 = getDetailHeightSample(pos,basenormal,detailnormal,param,scale, vec4(0.5));
+
+	res.materialdisp = h0;
+	res.normal = basenormal;
+	getMaterial(h0.x, pos, basenormal, detailnormal, param, res.diffuse, res.shading);
+
+	return res;
 }
 
 
@@ -404,7 +423,14 @@ void main(void)
 	vec4 param = texture2D(paramTex,texcoord);
 
 	vec3 normal = texture(normalTex,texcoord).rgb;
-	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset);
+	DetailSample detail;
+
+	if (highDetailBlend <= 0.0){
+		detail = sampleDetailLow(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
+	}
+	else{
+		detail = sampleDetail(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
+	}
 
 	//out_Colour = vec4(0.5,0.5,0.5,0.1);  
     out_Normal = vec4(normal,0.0);
