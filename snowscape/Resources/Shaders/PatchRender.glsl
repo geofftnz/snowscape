@@ -122,7 +122,11 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 {
 	if (material < 0.01) // rock
 	{
-		diffuse = vec4(0.1,0.08,0.06,material);
+		vec3 colrock = vec3(0.1,0.08,0.06);
+		vec3 colgrass = vec3(0.3,0.28,0.1);
+		float grassmix = step(0.8,detailnormal.y);
+		
+		diffuse = vec4(mix(colrock,colgrass,grassmix),material);
 		shading = vec4(0.9,1.0,0.0,0.0);
 		return;
 	}
