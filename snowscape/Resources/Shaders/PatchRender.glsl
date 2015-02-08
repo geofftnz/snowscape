@@ -203,8 +203,6 @@ DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 
 //|FragmentCommon
 float getDetailBias()
 {
-	//vec2 duv = abs(fwidth(texcoord));
-	//return min(1.0,2.0 / (1.0 + dot(duv,duv)*10000000.0));
 	return highDetailBlend;
 }
 
@@ -436,9 +434,7 @@ void main(void)
 		detail = sampleDetail(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
 	}
 
-	//out_Colour = vec4(0.5,0.5,0.5,0.1);  
     out_Normal = vec4(normal,0.0);
-	//out_Shading = vec4(0.5,1.0,0.0,0.0);
 
 	out_Colour = detail.diffuse; 
 	out_Shading = detail.shading;
@@ -557,7 +553,6 @@ out vec4 out_Lighting;
 
 #include ".|Common"
 #include ".|FragmentCommon"
-//#include ".|CubicNormalSample"
 
 void main(void)
 {
@@ -568,31 +563,15 @@ void main(void)
    	vec4 param = texture2D(paramTex,texcoord);
 
 	float detailBias = getDetailBias();
-	//out_Normal = texture(normalTex,texcoord);
-
-	// get bicubic interpolated normal
-	//vec3 normal = getNormal(texcoord,boxparam.x);
-	//vec3 normal = textureLod(normalTex,texcoord,0).rgb;
-
-	// calculate tangent and binormal
-	// tangent is in X direction, so is the cross product of normal (Y) and Z
-	//vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
-	//vec3 binormal = normalize(cross(t1,normal));
-	//vec3 tangent = normalize(cross(normal,binormal));
-
-	// get screen-space derivative
-	vec2 duv = abs(fwidth(texcoord));
-	duv.x = max(minduv,duv.x + duv.y);
 
 	// sample detail
-	//DetailSample detail = sampleDetail(basevertex, normal, param, detailScale, duv.x);
 	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset);
 
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
-	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
+
 	vec3 n = normalize(detail.normal * nm);
 	
     out_Normal = vec4(n ,1.0);
@@ -662,7 +641,6 @@ void main() {
 
 	float h = sampleHeight(texcoord,boxparam.x);
 	normal = getNormal(texcoord,boxparam.x);
-	//vec4 param = texture2D(paramTex,texcoord);
 	vec4 param = sampleParam(texcoord,boxparam.x);
 
 	// calculate tangent and binormal
@@ -681,7 +659,6 @@ void main() {
 
 	basevertex = v;
 
-	// todo: add displacement in direction of normal
 	// get detail
 	vec2 detail = getDetailHeightSample(detailcoord, normal, normal, param, vec2(detailScale));
 	
@@ -758,18 +735,15 @@ void main(void)
 	bedrockNormal = normalize(bedrockNormal * nm);
 
 	// sample detail
-	//DetailSample detail = sampleDetail(detailcoord, normal, param, detailScale, duv.x);
 	DetailSample detail = sampleDetail(detailcoord, normal, bedrockNormal, param, detailScale, detailSampleOffset);
 	
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
 	// calculate normal of detail heightmap at detailpos
-	//vec3 dn = vec3(0.0,1.0,0.0);//getDetailNormal();
 	vec3 n = normalize(detail.normal * nm);
 	
 	out_Colour = detail.diffuse; 
 	out_Shading = detail.shading;
-	//out_Colour = vec4(bedrockNormal.xzy * 0.5 + 0.5  ,detail.materialdisp.x); 
     out_Normal = vec4(n,1.0);
 
 	float shadow = SmoothShadow((height + normal.y * detail.materialdisp.y) - shadowAO.r);
