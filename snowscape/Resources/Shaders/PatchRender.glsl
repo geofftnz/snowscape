@@ -118,28 +118,67 @@ struct DetailSample
 	vec4 shading; //R:[roughness|reflection], G:specexp, B:specpwr, A:sparkle
 };
 
-void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec4 noiseSample,  out vec4 diffuse, out vec4 shading)
+
+vec3 getGrassColour(float _wind, float water, float altitude, float soildepth, float slope, vec4 noiseSample)
+{
+	vec3 grey_rock = vec3(0.541798356,0.5604991522,0.4534564755);
+	vec3 dry_grass = vec3(0.7592995507,0.6940805198,0.3066347662);
+	vec3 dry_grass2 = vec3(0.4704402453,0.5731588751,0.1604435107);
+	vec3 dry_grass3 = vec3(0.1801442892,0.2888159728,0.05112205006);
+	vec3 dark_grass = vec3(0.04298701016,0.091518353,0.01039780229);
+
+	float wind = 1.0 - clamp(((1.0-_wind)*4.0),0.0,1.0);
+	float temperature = 1.0 / (1.0 + altitude*0.01);
+
+	float steepness = 1.0 - slope; //acos(slope) / 3.1415927;
+	float scrub = (2.0 / (1.0 + steepness*6.0)) * clamp((soildepth*32.0),0.1,1.0) * clamp(temperature,0.0,1.0);
+
+
+	// calculate available moisture from water and wind estimate (wind based on AO)
+	float moisture = sqrt(water) * (1.2 - wind) * (0.6+clamp(soildepth * 128.0,0.05,0.4)) * (0.3+temperature);
+
+	vec3 grasscol = mix(grey_rock,dry_grass,clamp(moisture * 4.0 , 0.0, 1.0));
+	grasscol = mix(grasscol,dry_grass2,clamp((moisture-0.25) * 4.0 , 0.0, 1.0));
+	grasscol = mix(grasscol,dry_grass3,clamp((moisture-0.5) * 2.0 , 0.0, 1.0));
+	//grasscol = mix(grasscol,dark_grass,clamp((moisture-0.75) * 4.0 , 0.0, 1.0));
+	//vec3 grasscol = vec3(moisture,0.0,0.0);
+	//vec3 grasscol = mix(vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),clamp(moisture,0.0,1.0));
+	
+	grasscol = mix(vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),clamp(scrub,0.0,1.0));
+
+	return grasscol;
+}
+
+
+void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, float AO, vec4 noiseSample,  out vec4 diffuse, out vec4 shading)
 {
 	vec4 hfnoise = snoise(pos.xz * 256.0);
+
+	
 
 	if (material < 0.01) // rock
 	{
 		vec3 colrock = vec3(0.1,0.08,0.06);
-		vec3 colgrass = vec3(0.3,0.28,0.1);
+		vec3 colgrass = getGrassColour(AO, param.b * noiseSample.b, pos.y, param.r * noiseSample.b, basenormal.y, noiseSample);
+		//vec3 colgrass = vec3(0.3,0.28,0.1);
 		float grassthreshold = max(0.6,0.9 - param.r*4.0) - noiseSample.b * 0.4 - hfnoise * 0.05;
 		float grassmix = smoothstep(grassthreshold,grassthreshold+0.05,detailnormal.y);
 		
 		diffuse = vec4(mix(colrock,colgrass,grassmix),material);
 		shading = vec4(0.9,1.0,0.0,0.0);
+
 		return;
 	}
 	if (material < 0.11) // dirt
 	{
-		float soildepth = clamp(param.r * 16.0,0.0,1.0);
-		float moisture = clamp(param.b*1.2,0.0,1.0);
+		vec3 colgrass = getGrassColour(AO, param.b, pos.y, param.r, basenormal.y, noiseSample);
+		//float soildepth = clamp(param.r * 16.0,0.0,1.0);
+		//float moisture = clamp(param.b*1.2,0.0,1.0);
 		//return mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), soildepth);
-		diffuse = vec4(mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), moisture),material);
+		//mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), moisture)
+		diffuse = vec4(colgrass,material);
 		shading = vec4(0.8,2.0,0.1,0.0);
+		
 		return;
 	}
 	if (material < 0.21) // water
@@ -157,7 +196,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 }
 
 
-DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_, mat3 surfaceBasis)
+DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, float AO, vec2 scale, float t_, mat3 surfaceBasis)
 {
 	DetailSample res;
 	vec3 t = vec3(-t_,0.0,t_);
@@ -178,17 +217,17 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 
 	res.materialdisp = h0;
 	res.normal = normalize(vec3(h2-h1,8.0 * t_,h4-h3)) * surfaceBasis;
-	getMaterial(h0.x, pos, basenormal, res.normal, param, noiseSample, res.diffuse, res.shading);
+	getMaterial(h0.x, pos, basenormal, res.normal, param, AO, noiseSample, res.diffuse, res.shading);
 
 	return res;
 }
-
-DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_, mat3 surfaceBasis)
+/*
+DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, float AO, vec2 scale, float t_, mat3 surfaceBasis)
 {
-	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,detailnormal,param,scale,t_,surfaceBasis);
-}
+	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,detailnormal,param,AO,scale,t_,surfaceBasis);
+}*/
 
-DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
+DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, float AO, vec2 scale, float t_)
 {
 	DetailSample res;
 	vec3 t = vec3(-t_,0.0,t_);
@@ -198,7 +237,7 @@ DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 
 
 	res.materialdisp = h0;
 	res.normal = basenormal;
-	getMaterial(h0.x, pos, basenormal, detailnormal, param, noiseSample, res.diffuse, res.shading);
+	getMaterial(h0.x, pos, basenormal, detailnormal, param, AO, noiseSample, res.diffuse, res.shading);
 
 	return res;
 }
@@ -433,7 +472,7 @@ void main(void)
 	DetailSample detail;
 
 	//if (highDetailBlend <= 0.0){
-		detail = sampleDetailLow(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
+		detail = sampleDetailLow(vec3(detailcoord.x, height, detailcoord.y), normal, normal, param, shadowAO.g, detailScale, detailSampleOffset);
 	//}
 	//else{
 	//	detail = sampleDetail(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
@@ -573,7 +612,7 @@ void main(void)
 	mat3 nm = mat3(tangent,normal,binormal);
 
 	// sample detail
-	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset, nm);
+	DetailSample detail = sampleDetail(vec3(detailcoord.x, height, detailcoord.y), normal, normal, param, shadowAO.g, detailScale, detailSampleOffset, nm);
 
 	//detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
@@ -666,7 +705,7 @@ void main() {
 	basevertex = v;
 
 	// get detail
-	vec2 detail = getDetailHeightSample(detailcoord, normal, normal, param, vec2(detailScale));
+	vec2 detail = getDetailHeightSample(vec3(detailcoord.x, h, detailcoord.y), normal, normal, param, vec2(detailScale));
 	
 	v += normal * detail.y;
 
@@ -741,7 +780,7 @@ void main(void)
 	bedrockNormal = normalize(bedrockNormal * nm);
 
 	// sample detail
-	DetailSample detail = sampleDetail(detailcoord, normal, bedrockNormal, param, detailScale, detailSampleOffset, nm);
+	DetailSample detail = sampleDetail(vec3(detailcoord.x, height, detailcoord.y), normal, bedrockNormal, param, shadowAO.g, detailScale, detailSampleOffset, nm);
 	
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
