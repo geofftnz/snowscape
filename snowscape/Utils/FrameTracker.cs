@@ -97,6 +97,9 @@ namespace Utils
         private Frame[] frames = new Frame[BUFLEN];
         private int bufferPos = 0;
         private int totalSamples = 0;
+        private double frameStartTime = 0.0;
+
+        public double CurrentFrameTime { get { return this.sw.Elapsed.TotalSeconds - frameStartTime; } }
 
         public FrameTracker()
         {
@@ -111,9 +114,10 @@ namespace Utils
 
         public void StartFrame()
         {
+            this.frameStartTime = this.sw.Elapsed.TotalSeconds;
             this.totalSamples++;
             this.bufferPos = (this.bufferPos + 1) % BUFLEN;
-            this.frames[this.bufferPos].Start(this.sw.Elapsed.TotalSeconds);
+            this.frames[this.bufferPos].Start(frameStartTime);
         }
 
         public void Step(string name, Vector4 col)

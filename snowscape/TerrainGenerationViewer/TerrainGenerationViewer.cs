@@ -146,6 +146,8 @@ namespace Snowscape.TerrainGenerationViewer
         private int numPatches = 0;
         private int numTriangles = 0;
 
+        private double frameLimitDelay = 0.0;
+
 
         private PerfMonitor perfmon = new PerfMonitor();
         private FrameTracker frameTracker = new FrameTracker();
@@ -238,6 +240,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             #region Parameters
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
+            parameters.Add(new Parameter<bool>("frameLimiter", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("autoreload", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("quadtreevis", false, false, true, v => true, v => false));
 
@@ -763,6 +766,21 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             frameTracker.Step("interframe", new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
+
+
+            if (this.parameters["frameLimiter"].GetValue<bool>())
+            {
+                double frameTime = frameTracker.CurrentFrameTime * 1000.0;
+                if (frameTime < 16.0)
+                {
+                    int sleepMS = 16 - (int)frameTime;
+                    if (sleepMS > 0 && sleepMS < 16)
+                        Thread.Sleep(sleepMS);
+                }
+                frameTracker.Step("limiter", new Vector4(0.6f, 0.6f, 0.6f, 1.0f));
+            }
+
+
             frameTracker.StartFrame();
 
 
@@ -1028,10 +1046,9 @@ namespace Snowscape.TerrainGenerationViewer
             SwapBuffers();
 
             frameTracker.Step("swapbuffers", new Vector4(1.0f, 1.0f, 0.4f, 1.0f));
-
+            
             this.frameCounter.Frame();
 
-            //Thread.Sleep(0);
         }
 
         private void RenderLighting(Vector3 sunVector)
