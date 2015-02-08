@@ -118,13 +118,16 @@ struct DetailSample
 	vec4 shading; //R:[roughness|reflection], G:specexp, B:specpwr, A:sparkle
 };
 
-void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, out vec4 diffuse, out vec4 shading)
+void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec4 noiseSample,  out vec4 diffuse, out vec4 shading)
 {
+	vec4 hfnoise = snoise(pos.xz * 256.0);
+
 	if (material < 0.01) // rock
 	{
 		vec3 colrock = vec3(0.1,0.08,0.06);
 		vec3 colgrass = vec3(0.3,0.28,0.1);
-		float grassmix = step(0.8,detailnormal.y);
+		float grassthreshold = max(0.6,0.9 - param.r*4.0) - noiseSample.b * 0.4 - hfnoise * 0.05;
+		float grassmix = smoothstep(grassthreshold,grassthreshold+0.05,detailnormal.y);
 		
 		diffuse = vec4(mix(colrock,colgrass,grassmix),material);
 		shading = vec4(0.9,1.0,0.0,0.0);
@@ -159,7 +162,9 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 	DetailSample res;
 	vec3 t = vec3(-t_,0.0,t_);
 
-	vec2 h0 = getDetailHeightSample(pos,basenormal,detailnormal,param,scale);
+	vec4 noiseSample = textureLod(detailTex,pos.xz * 0.125,0);
+
+	vec2 h0 = getDetailHeightSample(pos,basenormal,detailnormal,param,scale,noiseSample);
 
 	//   3
 	// 1 0 2
@@ -173,7 +178,7 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 
 	res.materialdisp = h0;
 	res.normal = normalize(vec3(h2-h1,8.0 * t_,h4-h3)) * surfaceBasis;
-	getMaterial(h0.x, pos, basenormal, res.normal, param, res.diffuse, res.shading);
+	getMaterial(h0.x, pos, basenormal, res.normal, param, noiseSample, res.diffuse, res.shading);
 
 	return res;
 }
@@ -188,11 +193,12 @@ DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 
 	DetailSample res;
 	vec3 t = vec3(-t_,0.0,t_);
 
-	vec2 h0 = getDetailHeightSample(pos,basenormal,detailnormal,param,scale, vec4(0.5));
+	vec4 noiseSample = vec4(0.5);
+	vec2 h0 = getDetailHeightSample(pos,basenormal,detailnormal,param,scale, noiseSample);
 
 	res.materialdisp = h0;
 	res.normal = basenormal;
-	getMaterial(h0.x, pos, basenormal, detailnormal, param, res.diffuse, res.shading);
+	getMaterial(h0.x, pos, basenormal, detailnormal, param, noiseSample, res.diffuse, res.shading);
 
 	return res;
 }
