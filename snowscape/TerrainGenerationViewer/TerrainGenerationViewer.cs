@@ -774,7 +774,7 @@ namespace Snowscape.TerrainGenerationViewer
                 if (frameTime < 16.0)
                 {
                     int sleepMS = 16 - (int)frameTime;
-                    if (sleepMS > 0 && sleepMS < 16)
+                    if (sleepMS >= 0 && sleepMS <= 16)
                         Thread.Sleep(sleepMS);
                 }
                 frameTracker.Step("limiter", new Vector4(0.6f, 0.6f, 0.6f, 1.0f));

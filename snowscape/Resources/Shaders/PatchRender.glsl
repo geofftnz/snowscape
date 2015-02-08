@@ -119,32 +119,62 @@ struct DetailSample
 };
 
 
-vec3 getGrassColour(float _wind, float water, float altitude, float soildepth, float slope, vec4 noiseSample)
+vec3 getGrassColour(float ao, float water, float altitude, float soildepth, float slope, vec4 noiseSample, float hfnoise)
 {
 	vec3 grey_rock = vec3(0.541798356,0.5604991522,0.4534564755);
-	vec3 dry_grass = vec3(0.7592995507,0.6940805198,0.3066347662);
-	vec3 dry_grass2 = vec3(0.4704402453,0.5731588751,0.1604435107);
-	vec3 dry_grass3 = vec3(0.1801442892,0.2888159728,0.05112205006);
-	vec3 dark_grass = vec3(0.04298701016,0.091518353,0.01039780229);
+	vec3 dry_grass = vec3(0.5113978189,0.3837746465,0.147998023);
+	vec3 dry_grass2 = vec3(0.2631747164,0.2758328335,0.05459227728);
+	vec3 dry_grass3 = vec3(0.1165757762,0.1701383732,0.02095113191);
+	vec3 dark_grass = vec3(0.01606770089,0.02899118655,0.003302703032);
+	//vec3 grey_rock = vec3(0.541798356,0.5604991522,0.4534564755);
+	//vec3 dry_grass = vec3(0.7592995507,0.6940805198,0.3066347662);
+	//vec3 dry_grass2 = vec3(0.4704402453,0.5731588751,0.1604435107);
+	//vec3 dry_grass3 = vec3(0.1801442892,0.2888159728,0.05112205006);
+	//vec3 dark_grass = vec3(0.04298701016,0.091518353,0.01039780229);
 
-	float wind = 1.0 - clamp(((1.0-_wind)*4.0),0.0,1.0);
+	float wind = (altitude * 0.01) * (1.0 - clamp(((1.0-ao)*1.8),0.0,0.98));
 	float temperature = 1.0 / (1.0 + altitude*0.01);
 
 	float steepness = 1.0 - slope; //acos(slope) / 3.1415927;
-	float scrub = (2.0 / (1.0 + steepness*6.0)) * clamp((soildepth*32.0),0.1,1.0) * clamp(temperature,0.0,1.0);
+	//float scrub = (2.0 / (1.0 + steepness*6.0)) * clamp((soildepth*32.0),0.1,1.0) * clamp(temperature,0.0,1.0);
+
 
 
 	// calculate available moisture from water and wind estimate (wind based on AO)
-	float moisture = sqrt(water) * (1.2 - wind) * (0.6+clamp(soildepth * 128.0,0.05,0.4)) * (0.3+temperature);
+	//float moisture = sqrt(water) * (1.2 - wind) * (0.6+clamp(soildepth * 128.0,0.05,0.4)) * (0.3+temperature);
+	float moisture = 
+		clamp(0.1+(soildepth * 16.0),0.0,0.4) - ao * 0.25 + // base amount provided by soil depth, unaffected by wind, but dried out by the sun
+		clamp(water * 0.5,0.0,0.8) + // flowing water nearby
+		clamp((soildepth * 8.0),0.0,0.8) * (1.0 - (wind))  // amount provided by soil, but dried out by wind
+		;
 
-	vec3 grasscol = mix(grey_rock,dry_grass,clamp(moisture * 4.0 , 0.0, 1.0));
-	grasscol = mix(grasscol,dry_grass2,clamp((moisture-0.25) * 4.0 , 0.0, 1.0));
-	grasscol = mix(grasscol,dry_grass3,clamp((moisture-0.5) * 2.0 , 0.0, 1.0));
+	float scrub = 1.0;
+	scrub *= smoothstep(0.7,0.8,slope);  // scrub steepness threshold
+	scrub *= smoothstep(0.1,0.45,moisture);
+	scrub *= (1.0 - smoothstep(0.5,0.7,wind));
+
+	//scrub = 1.0 - smoothstep(0.2,0.8,(noiseSample.g - scrub) * 2.0);
+
+	float scrubthreshold = 0.25 + (1.0 - scrub)*0.55;
+	scrub = smoothstep(scrubthreshold,scrubthreshold + 0.1,(hfnoise * hfnoise - 0.05));
+
+
+	vec3 grasscol = mix(dry_grass,dry_grass2,clamp(moisture, 0.0, 1.0));
+	grasscol = mix(grasscol,dry_grass3,clamp((moisture-0.4) * 4.0 , 0.0, 1.0));
+
+	//grasscol *= (1.0 - hfnoise * 0.3);
+
+
+
+//	grasscol = mix(grasscol,dry_grass3,clamp((moisture-0.5) * 2.0 , 0.0, 1.0));
 	//grasscol = mix(grasscol,dark_grass,clamp((moisture-0.75) * 4.0 , 0.0, 1.0));
 	//vec3 grasscol = vec3(moisture,0.0,0.0);
 	//vec3 grasscol = mix(vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),clamp(moisture,0.0,1.0));
+	grasscol = mix(grasscol,dark_grass,scrub);
 	
-	grasscol = mix(vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),clamp(scrub,0.0,1.0));
+	//grasscol = mix(vec3(0.0,1.0,0.0),vec3(1.0,0.0,0.0),clamp(wind,0.0,1.0));
+	//grasscol = mix(vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),clamp(moisture,0.0,1.0));
+	//grasscol = mix(vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),clamp(scrub,0.0,1.0));
 
 	return grasscol;
 }
@@ -152,14 +182,14 @@ vec3 getGrassColour(float _wind, float water, float altitude, float soildepth, f
 
 void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, float AO, vec4 noiseSample,  out vec4 diffuse, out vec4 shading)
 {
-	vec4 hfnoise = snoise(pos.xz * 256.0);
+	float hfnoise = snoise(pos.xz * 16.0);
 
 	
 
 	if (material < 0.01) // rock
 	{
 		vec3 colrock = vec3(0.1,0.08,0.06);
-		vec3 colgrass = getGrassColour(AO, param.b * noiseSample.b, pos.y, param.r * noiseSample.b, basenormal.y, noiseSample);
+		vec3 colgrass = getGrassColour(AO, param.b * noiseSample.b, pos.y, param.r * noiseSample.b, basenormal.y, noiseSample, hfnoise);
 		//vec3 colgrass = vec3(0.3,0.28,0.1);
 		float grassthreshold = max(0.6,0.9 - param.r*4.0) - noiseSample.b * 0.4 - hfnoise * 0.05;
 		float grassmix = smoothstep(grassthreshold,grassthreshold+0.05,detailnormal.y);
@@ -171,7 +201,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 	}
 	if (material < 0.11) // dirt
 	{
-		vec3 colgrass = getGrassColour(AO, param.b, pos.y, param.r, basenormal.y, noiseSample);
+		vec3 colgrass = getGrassColour(AO, param.b, pos.y, param.r, basenormal.y, noiseSample, hfnoise);
 		//float soildepth = clamp(param.r * 16.0,0.0,1.0);
 		//float moisture = clamp(param.b*1.2,0.0,1.0);
 		//return mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), soildepth);
