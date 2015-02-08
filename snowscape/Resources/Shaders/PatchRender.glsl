@@ -154,7 +154,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 }
 
 
-DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
+DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_, mat3 surfaceBasis)
 {
 	DetailSample res;
 	vec3 t = vec3(-t_,0.0,t_);
@@ -172,16 +172,15 @@ DetailSample sampleDetail(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 par
 	float h4 = getDetailHeightSample(pos + t.yyz,basenormal,detailnormal,param,scale).y;
 
 	res.materialdisp = h0;
-	//res.normal = normalize(vec3(h2-h1,2.0*0.125,h4-h3));
-	res.normal = normalize(vec3(h2-h1,8.0 * t_,h4-h3));
-	getMaterial(h0.x, pos, basenormal, detailnormal, param, res.diffuse, res.shading);
+	res.normal = normalize(vec3(h2-h1,8.0 * t_,h4-h3)) * surfaceBasis;
+	getMaterial(h0.x, pos, basenormal, res.normal, param, res.diffuse, res.shading);
 
 	return res;
 }
 
-DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
+DetailSample sampleDetail(vec2 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_, mat3 surfaceBasis)
 {
-	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,detailnormal,param,scale,t_);
+	return sampleDetail(vec3(pos.x,0.0,pos.y),basenormal,detailnormal,param,scale,t_,surfaceBasis);
 }
 
 DetailSample sampleDetailLow(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, float t_)
@@ -427,12 +426,12 @@ void main(void)
 	vec3 normal = texture(normalTex,texcoord).rgb;
 	DetailSample detail;
 
-	if (highDetailBlend <= 0.0){
+	//if (highDetailBlend <= 0.0){
 		detail = sampleDetailLow(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
-	}
-	else{
-		detail = sampleDetail(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
-	}
+	//}
+	//else{
+	//	detail = sampleDetail(vec3(detailcoord.x,0.0,detailcoord.y), normal, normal, param, detailScale, detailSampleOffset);
+	//}
 
     out_Normal = vec4(normal,0.0);
 
@@ -564,17 +563,18 @@ void main(void)
 
 	float detailBias = getDetailBias();
 
-	// sample detail
-	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset);
-
-	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
-
 	// calculate normal of detail heightmap at detailpos
 	mat3 nm = mat3(tangent,normal,binormal);
 
-	vec3 n = normalize(detail.normal * nm);
+	// sample detail
+	DetailSample detail = sampleDetail(detailcoord, normal, normal, param, detailScale, detailSampleOffset, nm);
+
+	//detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
+
+
+	//vec3 n = normalize(detail.normal * nm);
 	
-    out_Normal = vec4(n ,1.0);
+    out_Normal = vec4(detail.normal ,1.0);
 
 
 	float shadow = SmoothShadow((height + normal.y * detail.materialdisp.y) - shadowAO.r);
@@ -735,16 +735,16 @@ void main(void)
 	bedrockNormal = normalize(bedrockNormal * nm);
 
 	// sample detail
-	DetailSample detail = sampleDetail(detailcoord, normal, bedrockNormal, param, detailScale, detailSampleOffset);
+	DetailSample detail = sampleDetail(detailcoord, normal, bedrockNormal, param, detailScale, detailSampleOffset, nm);
 	
 	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
 
 	// calculate normal of detail heightmap at detailpos
-	vec3 n = normalize(detail.normal * nm);
+	//vec3 n = normalize(detail.normal * nm);
 	
 	out_Colour = detail.diffuse; 
 	out_Shading = detail.shading;
-    out_Normal = vec4(n,1.0);
+    out_Normal = vec4(detail.normal,1.0);
 
 	float shadow = SmoothShadow((height + normal.y * detail.materialdisp.y) - shadowAO.r);
 
