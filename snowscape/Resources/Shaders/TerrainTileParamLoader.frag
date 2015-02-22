@@ -12,7 +12,7 @@ void main(void)
 
 	vec4 p = vec4(0.0);
 
-	p.r = clamp(t.g / 64.0,0.0,1.0);
+	p.r = clamp(t.g * 0.125,0.0,1.0);
 	p.g = clamp(t.b,0.0,1.0);
 	p.b = clamp(t.a,0.0,1.0);
 

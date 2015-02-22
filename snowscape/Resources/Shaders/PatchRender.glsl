@@ -56,21 +56,30 @@ float bedrockHeight = 0.5;
 vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale, vec4 dt)
 {
 
-	float dirtdepth = param.r * 16.0;
+	float dirtdepth = param.r;
 	float waterdepth = 0.0;
 
 	float wateramount = param.g + param.b*0.02;
-	if (wateramount > 0.03) return vec2(0.2,-dt.b*0.005 + wateramount * 2.0);
+	//if (wateramount > 0.03) return vec2(0.2,-dt.b*0.005 + wateramount * 2.0);
+	if (wateramount > 0.03) return vec2(0.2,-dt.b*0.005);
 	
 
 	//float upperLayers = dirtdepth + waterdepth;// * (0.5 + 0.5 * clamp(detailnormal.y,0.0,1.0));
 
 	//upperLayers = max(0.0,upperLayers - (0.02*(1.0 - detailnormal.y)));
 
-	//float baselevel = -upperLayers;  // reduce height by total loose material amount
-	vec2 rock = vec2(0.0, -(dirtdepth + waterdepth) + dt.r * bedrockHeight + (max(0.0,dt.g - 0.7)) * 0.5);
-	//vec2 dirt = vec2(0.1, (dt.g) * 0.2);
-	vec2 dirt = vec2(0.1, -waterdepth + (dt.g * dt.g) * 0.5 + detailnormal.y * 0.05 );
+	float rockheight = -(dirtdepth + waterdepth) + dt.r * bedrockHeight + (max(0.0,dt.g - 0.7)) * 0.5;
+	float dirtheight = -waterdepth + (dt.g * dt.g) * 0.5 + detailnormal.y * 0.05;
+	
+	// vec2 rock = vec2(0.0, rockheight);
+	// vec2 dirt = vec2(0.1,  dirtheight) ;
+	
+	float dmix = sqrt(dirtdepth);
+
+	vec2 rock = vec2(0.0, mix(rockheight,dirtheight, clamp(dmix * 2.0,0.0,1.0 )  ));
+	vec2 dirt = vec2(0.1,  mix(rockheight,dirtheight, clamp( dmix * 2.3,0.0,1.0   ) )) ;
+
+	//vec2 dirt = vec2(0.1,  mix(rock, -waterdepth + (dt.g * dt.g) * 0.5 + detailnormal.y * 0.05 - 0.1, clamp(param.r*128.0,0.0,1.0)))    ;
 	//vec2 dirt = vec2(0.1, - basenormal.y * 0.5);
 	vec2 water = vec2(0.2,0.0);
 
@@ -182,16 +191,16 @@ vec3 getGrassColour(float ao, float water, float altitude, float soildepth, floa
 
 void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, float AO, vec4 noiseSample,  out vec4 diffuse, out vec4 shading)
 {
-	float hfnoise = snoise(pos.xz * 16.0);
+	float hfnoise = snoise(pos.xz * 8.0);
+	hfnoise *= hfnoise;
 
-	
+	float adddirt = noiseSample.a * (clamp(param.r * param.r - 0.05,0.0,0.2) );
 
 	if (material < 0.01) // rock
 	{
 		vec3 colrock = vec3(0.1,0.08,0.06);
-		vec3 colgrass = getGrassColour(AO, param.b * noiseSample.b, pos.y, param.r * noiseSample.b, basenormal.y, noiseSample, hfnoise);
-		//vec3 colgrass = vec3(0.3,0.28,0.1);
-		float grassthreshold = max(0.6,0.9 - param.r*4.0) - noiseSample.b * 0.4 - hfnoise * 0.05;
+		vec3 colgrass = getGrassColour(AO, param.b * noiseSample.b, pos.y, param.r * 0.25 + adddirt, basenormal.y, noiseSample, hfnoise);
+		float grassthreshold = max(0.6,0.9 - param.r*0.5) - noiseSample.b * 0.4 - hfnoise * 0.05;
 		float grassmix = smoothstep(grassthreshold,grassthreshold+0.05,detailnormal.y);
 		
 		diffuse = vec4(mix(colrock,colgrass,grassmix),material);
@@ -201,11 +210,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 	}
 	if (material < 0.11) // dirt
 	{
-		vec3 colgrass = getGrassColour(AO, param.b, pos.y, param.r, basenormal.y, noiseSample, hfnoise);
-		//float soildepth = clamp(param.r * 16.0,0.0,1.0);
-		//float moisture = clamp(param.b*1.2,0.0,1.0);
-		//return mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), soildepth);
-		//mix(vec3(0.3,0.28,0.1),vec3(0.1,0.15,0.02), moisture)
+		vec3 colgrass = getGrassColour(AO, param.b, pos.y, param.r * 0.25 + adddirt , basenormal.y, noiseSample, hfnoise);
 		diffuse = vec4(colgrass,material);
 		shading = vec4(0.8,2.0,0.1,0.0);
 		
