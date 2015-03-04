@@ -195,9 +195,21 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 	hfnoise *= hfnoise;
 
 	float adddirt = noiseSample.a * (clamp(param.r * param.r - 0.05,0.0,0.2) );
+	
+	float snowAmount = smoothstep(50.0,100.0,pos.y + noiseSample.a * 0.0 ) * max(0.0,detailnormal.y-0.5);
+	
+	//if (snowAmount > 0.1) material = 0.3;
 
 	if (material < 0.01) // rock
 	{
+		if (snowAmount > 0.1) 
+		{
+			material = 0.3;
+			diffuse = vec4(vec3(0.9),material);
+			shading = vec4(0.6,3.0,0.4,0.0);
+			return;
+		}
+		
 		vec3 colrock = vec3(0.1,0.08,0.06);
 		vec3 colgrass = getGrassColour(AO, param.b * noiseSample.b, pos.y, param.r * 0.25 + adddirt, basenormal.y, noiseSample, hfnoise);
 		float grassthreshold = max(0.6,0.9 - param.r*0.5) - noiseSample.b * 0.4 - hfnoise * 0.05;
@@ -210,6 +222,14 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 	}
 	if (material < 0.11) // dirt
 	{
+		if (snowAmount > 0.1) 
+		{
+			material = 0.3;
+			diffuse = vec4(vec3(0.9),material);
+			shading = vec4(0.6,3.0,0.4,0.0);
+			return;
+		}
+
 		vec3 colgrass = getGrassColour(AO, param.b, pos.y, param.r * 0.25 + adddirt , basenormal.y, noiseSample, hfnoise);
 		diffuse = vec4(colgrass,material);
 		shading = vec4(0.8,2.0,0.1,0.0);
@@ -221,6 +241,12 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 		//return vec3(0.5,0.5,1.0);
 		diffuse = vec4(vec3(0.5,0.5,1.0)*0.0,material);
 		shading = vec4(0.1,8.0,0.3,0.0);
+		return;
+	}
+	if (material < 0.31) // snow
+	{
+		diffuse = vec4(vec3(0.9),material);
+		shading = vec4(0.6,3.0,0.4,0.0);
 		return;
 	}
 
