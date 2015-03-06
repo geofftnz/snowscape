@@ -172,7 +172,7 @@ namespace Snowscape.TerrainGenerationViewer
             // set default shader loader
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(SHADERPATH);
 
-            
+
 
 
             #region create components
@@ -1046,7 +1046,7 @@ namespace Snowscape.TerrainGenerationViewer
             SwapBuffers();
 
             frameTracker.Step("swapbuffers", new Vector4(1.0f, 1.0f, 0.4f, 1.0f));
-            
+
             this.frameCounter.Frame();
 
         }
@@ -1063,27 +1063,23 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderSky(Vector3 eyePos, Vector3 sunVector, float groundLevel)
         {
-            this.skyRenderer.Render(
-                eyePos,
-                sunVector,
-                groundLevel,
-                -0.01f,
-                (float)this.parameters["raleighBrightness"].GetValue(),
-                (float)this.parameters["miePhase"].GetValue(),
-                (float)this.parameters["mieBrightness"].GetValue(),
-                (float)this.parameters["scatterAbsorb"].GetValue(),
-                new Vector3(
-                    (float)this.parameters["Kr_r"].GetValue(),
-                    (float)this.parameters["Kr_g"].GetValue(),
-                    (float)this.parameters["Kr_b"].GetValue()
-                ),
-                new Vector3(
-                        (float)this.parameters["Sun_r"].GetValue(),
-                        (float)this.parameters["Sun_g"].GetValue(),
-                        (float)this.parameters["Sun_b"].GetValue()
-                    ),
-                this.parameters["skyPrecalcBoundary"].GetValue<float>()
-                );
+            var skyParams = new Atmosphere.SkyRenderParams
+            {
+                eye = eyePos,
+                sunVector = sunVector,
+                groundLevel = groundLevel,
+                rayleighPhase = -0.01f,
+                rayleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
+                miePhase = (float)this.parameters["miePhase"].GetValue(),
+                mieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
+                scatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
+                Kr = new Vector3((float)this.parameters["Kr_r"].GetValue(), (float)this.parameters["Kr_g"].GetValue(), (float)this.parameters["Kr_b"].GetValue()),
+                sunLight = new Vector3((float)this.parameters["Sun_r"].GetValue(), (float)this.parameters["Sun_g"].GetValue(), (float)this.parameters["Sun_b"].GetValue()),
+                skyPrecalcBoundary = this.parameters["skyPrecalcBoundary"].GetValue<float>()
+            };
+
+
+            this.skyRenderer.Render(skyParams);
         }
 
         private void RenderSkyRayDirections()
