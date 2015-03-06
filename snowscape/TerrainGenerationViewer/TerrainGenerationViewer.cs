@@ -76,6 +76,7 @@ namespace Snowscape.TerrainGenerationViewer
         private Atmosphere.RayDirectionRenderer skyRayDirectionRenderer;
         private Atmosphere.SkyCubeRenderer skyCubeRenderer;
         private Atmosphere.SkyScatteringCubeRenderer skyRenderer;
+        private Atmosphere.SkylightRenderer skylightRenderer;
 
         private Lighting.LightingCombiner lightingStep;
         private HDR.HDRExposureMapper hdrExposure;
@@ -186,6 +187,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.skyRayDirectionRenderer = new Atmosphere.RayDirectionRenderer(), LoadOrder.Phase1);
             this.Components.Add(this.skyRenderer = new Atmosphere.SkyScatteringCubeRenderer(SkyRes), LoadOrder.Phase1);
             this.Components.Add(this.skyCubeRenderer = new Atmosphere.SkyCubeRenderer(), LoadOrder.Phase1);
+            this.components.Add(this.skylightRenderer = new Atmosphere.SkylightRenderer(), LoadOrder.Phase1);
 
             this.Components.Add(this.tileRendererPatchLow = new GenerationVisPatchLowRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileRendererPatch = new GenerationVisPatchRenderer(TileWidth, TileHeight, patchCache), LoadOrder.Phase1);
@@ -1080,6 +1082,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
             this.skyRenderer.Render(skyParams);
+            this.skylightRenderer.Render(skyParams);
         }
 
         private void RenderSkyRayDirections()

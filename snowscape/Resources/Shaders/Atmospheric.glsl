@@ -255,7 +255,7 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		vec3 lightToEye = vec3(0.0);
 		
 		// sun disk
-		lightToEye += influxAtP * smoothstep(0.99983194915,0.99983194915+0.00002,dot(dir,sunVector)) * dist * groundHitHard;
+		lightToEye += influxAtP * sunLight * smoothstep(0.99983194915,0.99983194915+0.00002,dot(dir,sunVector)) * dist * groundHitHard;
 		
 		// mie to eye
 		lightToEye += mie * influxAtP * dist * groundHitHard;
@@ -347,7 +347,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		vec3 lightToEye = vec3(0.0);
 		
 		// sun disk
-		lightToEye += influxAtP * smoothstep(0.99983194915,0.99983194915+0.00002,dot(dir,sunVector)) * dist * dt * groundHitHard;
+		//lightToEye += influxAtP * smoothstep(0.99983194915-0.00001,0.99983194915+0.00001,dot(dir,sunVector)) * dist * dt * groundHitHard * 50.0;
 		
 		// mie to eye
 		lightToEye += mie * influxAtP * dist * dt * groundHitHard;

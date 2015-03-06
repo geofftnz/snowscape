@@ -17,7 +17,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
     /// - same stuff as sky cube renderer
     /// 
     /// </summary>
-    public class SkylightRenderer : GameComponentBase, IReloadable
+    public class SkylightRenderer : GameComponentBase, IReloadable, IListTextures
     {
         // Needs:
         private GBufferShaderStep gb;
@@ -46,7 +46,7 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         void SkylightRenderer_Loading(object sender, EventArgs e)
         {
             gb.SetOutputTexture(0, "out_Sky", this.SkylightTexture);
-            gb.Init(@"SkyScatterCube.vert", @"SkyScatterCube.frag");
+            gb.Init(@"Skylight.glsl|vs", @"Skylight.glsl|fs");
         }
 
         public void Reload()
@@ -58,16 +58,32 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         }
 
 
-
-
-        public void Render(Vector3 eye, Vector3 sunVector, float groundLevel, float rayleighPhase, float rayleighBrightness, float miePhase, float mieBrightness, float scatterAbsorb, Vector3 Kr, Vector3 sunLight, float skyPrecalcBoundary)
+        public void Render(SkyRenderParams p)
         {
-
+            gb.Render(
+                () => { },
+                (sp) =>
+                {
+                    sp.SetUniform("eye", p.eye);
+                    sp.SetUniform("sunVector", p.sunVector);
+                    sp.SetUniform("groundLevel", p.groundLevel);
+                    sp.SetUniform("rayleighBrightness", p.rayleighBrightness);
+                    sp.SetUniform("rayleighPhase", p.rayleighPhase);
+                    sp.SetUniform("mieBrightness", 0.0f);
+                    sp.SetUniform("miePhase", 0.8f);
+                    //sp.SetUniform("mieBrightness", p.mieBrightness);
+                    //sp.SetUniform("miePhase", p.miePhase);
+                    sp.SetUniform("scatterAbsorb", p.scatterAbsorb);
+                    sp.SetUniform("Kr", p.Kr);
+                    sp.SetUniform("sunLight", p.sunLight);
+                    sp.SetUniform("skyPrecalcBoundary", p.skyPrecalcBoundary);
+                }
+                );
         }
 
-        private void RenderFace(Texture cubeMapTex, TextureTarget target, Vector3 facenormal, Vector3 facexbasis, Vector3 faceybasis, Action<ShaderProgram> uniforms)
+        public IEnumerable<Texture> Textures()
         {
+            yield return this.SkylightTexture;
         }
-
     }
 }
