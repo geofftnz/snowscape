@@ -61,18 +61,8 @@ void main(void)
 
 	vec3 dir = vec3(p2.x, 1.0 - length(p2), p2.y);
 
-	//out_Sky = dir.xzy * 0.5 + 0.5;
-
-	//vec3 dir = normalize(facenormal + facexbasis * sky2d.x + faceybasis * sky2d.y);
-
 	out_Sky = getRayMarchedScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, 0.0,10000.0);
 
-
-	//if (dir.x > 0.0){
-		//out_Sky = getInscatterSky(eye, dir);
-	//}
-	//else{
-		//out_Sky = getInscatterSkyMulti(eye, dir);
-	//}
-//
+	// debug
+	//out_Sky.r = max(0.0,1.0 - length(p2)*4.0);
 }

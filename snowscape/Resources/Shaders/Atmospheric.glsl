@@ -277,6 +277,22 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 }
 
 
+
+vec3 getSunInflux(vec3 p, vec3 sunVector)
+{
+	// calculate atmospheric depth towards sun from p
+	float adepthSun = max(0.0,adepthSky(p,sunVector));
+		
+	// calculate lowest altitude of sun ray to p
+	float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
+		
+	// air density of lowest point
+	float airDensityOfIncomingSun = airDensityNorm(minAltitude);
+		
+	return absorb(adepthSun * airDensityOfIncomingSun, sunLight, scatterAbsorb);
+
+}
+
 // =====================================================================================================================================
 
 vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterAbsorb, float minDistance, float maxDistance)
@@ -319,17 +335,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		float mie = phase(alpha,miePhase) * mieBrightness * (1.0+totalAir);
 		
 		// calculate incoming light to point p
-		
-		// calculate atmospheric depth towards sun from p
-		float adepthSun = max(0.0,adepthSky(p,sunVector));
-		
-		// calculate lowest altitude of sun ray to p
-		float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
-		
-		// air density of lowest point
-		float airDensityOfIncomingSun = airDensityNorm(minAltitude);
-		
-		vec3 sunAtP = absorb(adepthSun * airDensityOfIncomingSun, sunLight, scatterAbsorb);
+		vec3 sunAtP = getSunInflux(p,sunVector);
 		
 		
 		float groundHitHard = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.001));
