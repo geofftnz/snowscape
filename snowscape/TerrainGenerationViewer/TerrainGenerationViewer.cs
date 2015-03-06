@@ -690,6 +690,7 @@ namespace Snowscape.TerrainGenerationViewer
                 ShadeTexture = this.terrainGlobal.ShadeTexture,
                 SkyCubeTexture = this.skyRenderer.SkyCubeTexture,
                 IndirectIlluminationTexture = this.terrainGlobal.IndirectIlluminationTexture,
+                SkylightTexture = this.skylightRenderer.SkylightTexture,
                 EyePos = this.eyePos,
                 SunDirection = this.sunDirection,
                 MinHeight = this.terrainGlobal.MinHeight,
