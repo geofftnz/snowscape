@@ -1,4 +1,9 @@
-﻿#version 140
+﻿// colour: rgb, material
+// normal+?
+// shading: [roughness|reflection], specexp, specpwr, sparkle
+// lighting - shadow, AO, emmissive, subsurface
+
+#version 140
 precision highp float;
 
 // textures from gbuffer
@@ -12,7 +17,9 @@ uniform sampler2D heightTex;
 uniform sampler2D shadeTex;
 uniform sampler2D indirectTex;
 uniform sampler2D depthTex;
-uniform sampler2D skylightTex;
+uniform sampler2D skylightSharpTex;
+uniform sampler2D skylightSmoothTex;
+
 uniform samplerCube skyCubeTex;
 
 // projection
@@ -118,20 +125,28 @@ void main(void)
 
 	//vec3 ambientlight = vec3(0.7,0.8,1.0) * 0.3;
 
+	vec3 skyReflectionEnv = texture(skyCubeTex,refl.xyz).rgb; //texture(skylightSharpTex,refl.xz * 0.5 + 0.5).rgb * 0.5;
+	// texture(skyCubeTex,refl.xyz).rgb
+
 	vec3 ambientDirection = mix(vec3(0.0,1.0,0.0),normal,0.4 + 0.6 * lightingT.g*lightingT.g); // skew ambient normal towards up-vector where there is more ambient occlusion
-	vec3 ambientlight = texture(skylightTex,ambientDirection.xz * 0.5 + 0.5).rgb;
+	vec3 ambientlight = texture(skylightSmoothTex,ambientDirection.xz * 0.5 + 0.5).rgb * (1.0 - shadingT.b);
+	ambientlight += texture(skylightSharpTex,refl.xz * 0.5 + 0.5).rgb * shadingT.b;
+
+
 	//vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
 
 	vec3 sunAtP = getSunInflux(vec3(0.0),sunVector);
 
-	vec3 sun = (sunAtP * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0); 
+	vec3 sun = (sunAtP * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0);  // diffuse sun - needs to be oren-nayar + specular
+	vec3 spec = (sunAtP * lightingT.r) * clamp(pow(dot(refl, sunVector),shadingT.g*100.0),0.0,1.0) * shadingT.b;
+
 	vec3 ambient = ambientlight * lightingT.g;
 
-	c = colourT.rgb * (sun + ambient + vec3(lightingT.b));
+	c = colourT.rgb * (sun + ambient + vec3(lightingT.b)) + spec;
 
 
 	// add sky reflection
-	c += texture(skyCubeTex,refl.xyz).rgb * skyreflection;
+	c +=  skyReflectionEnv * skyreflection * lightingT.g;
 
 
 	//c = texture(skyCubeTex,normal).rgb;

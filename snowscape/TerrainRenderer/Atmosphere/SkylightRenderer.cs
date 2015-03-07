@@ -21,8 +21,11 @@ namespace Snowscape.TerrainRenderer.Atmosphere
     {
         // Needs:
         private GBufferShaderStep gb;
+        private GBufferSimpleStep blur1;
+        private GBufferSimpleStep blur2;
 
         public Texture SkylightTexture { get; private set; }
+        public Texture SkylightTexture2 { get; private set; }
         public int SkyRes { get; set; }
 
 
@@ -31,30 +34,49 @@ namespace Snowscape.TerrainRenderer.Atmosphere
         {
             this.SkyRes = resolution;
 
-            this.SkylightTexture = new Texture(SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
+
+            this.Loading += SkylightRenderer_Loading;
+            this.Unloading += SkylightRenderer_Unloading;
+        }
+
+        void SkylightRenderer_Unloading(object sender, EventArgs e)
+        {
+            this.SkylightTexture.Unload();
+            this.SkylightTexture2.Unload();
+        }
+
+        void SkylightRenderer_Loading(object sender, EventArgs e)
+        {
+            this.SkylightTexture = new Texture("Skylight1", SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
             this.SkylightTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
             this.SkylightTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
             this.SkylightTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
             this.SkylightTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
             this.SkylightTexture.UploadEmpty();
 
+            this.SkylightTexture2 = new Texture("Skylight2", SkyRes, SkyRes, TextureTarget.Texture2D, PixelInternalFormat.Rgb16f, PixelFormat.Rgb, PixelType.HalfFloat);
+            this.SkylightTexture2.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
+            this.SkylightTexture2.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
+            this.SkylightTexture2.SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
+            this.SkylightTexture2.SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
+            this.SkylightTexture2.UploadEmpty();
+
             gb = new GBufferShaderStep("skylight");
+            blur1 = new GBufferSimpleStep("skylight-blur1", @"Skylight.glsl|vs", @"Skylight.glsl|blur1", "skyTex", "out_Sky", this.SkylightTexture2);
+            blur2 = new GBufferSimpleStep("skylight-blur2", @"Skylight.glsl|vs", @"Skylight.glsl|blur2", "skyTex", "out_Sky", this.SkylightTexture);
 
-            this.Loading += SkylightRenderer_Loading;
-        }
-
-        void SkylightRenderer_Loading(object sender, EventArgs e)
-        {
             gb.SetOutputTexture(0, "out_Sky", this.SkylightTexture);
             gb.Init(@"Skylight.glsl|vs", @"Skylight.glsl|fs");
+
+            blur1.Init();
+            blur2.Init();
         }
 
         public void Reload()
         {
-            if (gb != null)
-            {
-                gb.ReloadShader();
-            }
+            gb.Maybe(a => a.ReloadShader());
+            blur1.Maybe(a => a.Reload());
+            blur2.Maybe(a => a.Reload());
         }
 
 
@@ -79,11 +101,16 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                     sp.SetUniform("skyPrecalcBoundary", p.skyPrecalcBoundary);
                 }
                 );
+
+            blur1.Render(this.SkylightTexture);
+            blur2.Render(this.SkylightTexture2);
+
         }
 
         public IEnumerable<Texture> Textures()
         {
             yield return this.SkylightTexture;
+            yield return this.SkylightTexture2;
         }
     }
 }

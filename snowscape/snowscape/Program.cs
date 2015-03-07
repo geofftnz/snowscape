@@ -33,6 +33,9 @@ namespace Snowscape
             catch (Exception ex)
             {
                 //MessageBox.Show(ex.Message, ex.GetType().Name);
+
+                log.Error("uncaught exception", ex);
+
                 throw;
             }
 

@@ -60,7 +60,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             public Texture NoiseTexture { get; set; }
             public Texture SkyCubeTexture { get; set; }
             public Texture IndirectIlluminationTexture { get; set; }
-            public Texture SkylightTexture { get; set; }
+            public Texture SkylightTextureSharp { get; set; }
+            public Texture SkylightTextureSmooth { get; set; }
             public Vector3 EyePos { get; set; }
             public Vector3 SunDirection { get; set; }
             public float MinHeight { get; set; }
@@ -196,7 +197,8 @@ namespace Snowscape.TerrainRenderer.Lighting
             rp.IndirectIlluminationTexture.Bind(TextureUnit.Texture6);
             rp.SkyCubeTexture.Bind(TextureUnit.Texture7);
             rp.DepthTexture.Bind(TextureUnit.Texture8);
-            rp.SkylightTexture.Bind(TextureUnit.Texture9);
+            rp.SkylightTextureSharp.Bind(TextureUnit.Texture9);
+            rp.SkylightTextureSmooth.Bind(TextureUnit.Texture10);
 
             this.gbufferCombiner.Render(Matrix4.Identity, Matrix4.Identity, (sp) =>
             {
@@ -214,7 +216,8 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("indirectTex", 6);
                 sp.SetUniform("skyCubeTex", 7);
                 sp.SetUniform("depthTex", 8);
-                sp.SetUniform("skylightTex", 9);
+                sp.SetUniform("skylightSharpTex", 9);
+                sp.SetUniform("skylightSmoothTex", 10);
 
                 //sp.SetUniform("miscTex", 8);
                 //sp.SetUniform("miscTex2", 9);
