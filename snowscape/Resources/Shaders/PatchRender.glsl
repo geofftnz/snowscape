@@ -10,8 +10,8 @@ const vec2 detailScale = vec2(0.2,0.2);  // detailTexScale is uniform
 const float sampleOfs = 1.0/1024.0;
 const float minduv = 0.0001;
 
-const vec4 snowshading = vec4(0.6,0.3,0.3,0.0);
-
+const vec4 snowshading = vec4(0.8,0.1,0.5,0.0);
+const vec3 snowcol = vec3(0.9);
 
 
 float SmoothShadow(float heightdiff)
@@ -208,7 +208,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 		if (snowAmount > 0.1) 
 		{
 			material = 0.3;
-			diffuse = vec4(vec3(0.9),material);
+			diffuse = vec4(snowcol,material);
 			shading = snowshading;
 			return;
 		}
@@ -228,7 +228,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 		if (snowAmount > 0.1) 
 		{
 			material = 0.3;
-			diffuse = vec4(vec3(0.9),material);
+			diffuse = vec4(snowcol,material);
 			shading = snowshading;
 			return;
 		}
@@ -248,7 +248,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 	}
 	if (material < 0.31) // snow
 	{
-		diffuse = vec4(vec3(0.9),material);
+		diffuse = vec4(snowcol,material);
 		shading = snowshading;
 		return;
 	}

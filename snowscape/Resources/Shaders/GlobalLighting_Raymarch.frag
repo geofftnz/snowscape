@@ -110,8 +110,9 @@ void main(void)
 	vec3 refl = reflect(dir,normal);
 
     //vec3 normal = normalize(normalT.xyz - vec3(0.5));
-    //vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
+    vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
 
+	float eyeShadow = smoothstep(-0.05,0.05,eyePos.y - texture(shadeTex,eyePos.xz * texel).r);
 
 	// output diffuse
 	//c = diffuseT.rgb;
@@ -130,7 +131,9 @@ void main(void)
 
 	vec3 ambientDirection = mix(vec3(0.0,1.0,0.0),normal,0.4 + 0.6 * lightingT.g*lightingT.g); // skew ambient normal towards up-vector where there is more ambient occlusion
 	vec3 ambientlight = texture(skylightSmoothTex,ambientDirection.xz * 0.5 + 0.5).rgb * (1.0 - shadingT.b);
-	ambientlight += texture(skylightSharpTex,refl.xz * 0.5 + 0.5).rgb * shadingT.b;
+
+	vec3 ambientDirectionRefl = mix(vec3(0.0,1.0,0.0),refl,0.4 + 0.6 * lightingT.g*lightingT.g); // skew ambient normal towards up-vector where there is more ambient occlusion
+	ambientlight += texture(skylightSmoothTex,ambientDirectionRefl.xz * 0.5 + 0.5).rgb * shadingT.b;
 
 
 	//vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
@@ -157,8 +160,10 @@ void main(void)
 	float distnorm = skyPrecalcBoundary  / earthAtmosphereRadius;  // len  * 0.256
 
 	//c = vec3(len / 1024.0);
-	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, distnorm);
+	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, distnorm) * eyeShadow;
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
+
+	//c += vec3(1.0,0.0,0.0) * eyeShadow;
 	
 	
 	out_Colour = vec4(c.rgb,1.0);
