@@ -162,16 +162,15 @@ vec3 outscatter(float dist, vec3 col, float f)
 }
 
 
-float airDensity(float hnorm)
-{
-	return 0.001224 * exp(denormh(hnorm) * 0.000105);
-}
-
 float airDensityNorm(float hnorm)
 {
-	return exp(denormh(hnorm) * 0.000105);
+	return exp(denormh(hnorm) * -0.000105) ;
 }
 
+float airDensity(float hnorm)
+{
+	return 0.001224 * airDensityNorm(hnorm);
+}
 
 float pathAirMass(vec3 start, vec3 end)
 {
@@ -222,8 +221,8 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 	float totalAir = (airDensityAtP + airDensityAtEye) * 0.5 * dist;
 	
 		float alpha = dot(dir,sunVector);
-		float ral = phase(alpha,rayleighPhase) * rayleighBrightness;
-		float mie = phase(alpha,miePhase) * mieBrightness * (1.0+totalAir);
+		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * totalAir;
+		float mie = phase(alpha,miePhase) * mieBrightness * totalAir;
 		
 		
 		// calculate incoming light to point p
@@ -331,8 +330,8 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		distmul *= riCurrent;
 		
 		float alpha = dot(dir,sunVector);
-		float ral = phase(alpha,rayleighPhase) * rayleighBrightness;
-		float mie = phase(alpha,miePhase) * mieBrightness * (1.0+totalAir);
+		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * totalAir;
+		float mie = phase(alpha,miePhase) * mieBrightness * totalAir;
 		
 		// calculate incoming light to point p
 		vec3 sunAtP = getSunInflux(p,sunVector);
@@ -363,7 +362,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		// rayleigh to eye
 		lightToEye += ral * influxAtP * Kr * dist * dt;
 		
-		col += absorb(dist * t, lightToEye, 1.0-totalAir);
+		col += absorb(totalAir, lightToEye, scatterAbsorb);
 			
 	}
 	
