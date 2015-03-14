@@ -35,7 +35,11 @@ vec3 Kral4 = vec3(2.1381376E-25,9.150625E-26,4.100625E-26);
 
 float denormh(float hnorm)
 {
-	return max(hnorm-groundLevel,0.001)*earthAtmosphereRadius;
+	return max(hnorm-groundLevel,0.0000001)*earthAtmosphereRadius;
+}
+float denorm(float n)
+{
+	return n*earthAtmosphereRadius;
 }
 
 // bullshit hack, but close enough for low altitudes
@@ -162,6 +166,7 @@ vec3 outscatter(float dist, vec3 col, float f)
 }
 
 const float airDensityFalloff = -0.000105;
+//const float airDensityFactor = 100.0;
 
 float airDensityNorm(float hnorm)
 {
@@ -173,10 +178,10 @@ float airDensityDenorm(float h)
 	return exp(h * airDensityFalloff) ;
 }
 
-float airDensity(float hnorm)
-{
-	return 0.001224 * airDensityNorm(hnorm);
-}
+//float airDensity(float hnorm)
+//{
+//	return 0.001224 * airDensityNorm(hnorm);
+//}
 
 float airDensityIntegralDenorm(float h)
 {
@@ -205,7 +210,7 @@ float pathAirMassFlat(vec3 start, vec3 end)
 	float dist = length(end-start);
 
 	// horizontal ray - use linear approximation to avoid div by zero
-	if (abs(dh) < 0.00001){
+	if (abs(dh) < 0.01){
 		return airDensityDenorm(h0) * dist;
 	}
 
@@ -214,6 +219,25 @@ float pathAirMassFlat(vec3 start, vec3 end)
 
 	return (air1-air0) * (dist / dh);
 }
+
+float pathAirMassSpherical(vec3 start, vec3 end)
+{
+	float h0 = denormh(length(start));
+	float h1 = denormh(length(end));
+	float dh = h1-h0; 
+	float dist = length(end-start);
+
+	// horizontal ray - use linear approximation to avoid div by zero
+	if (abs(dh) < 0.01){
+		return airDensityDenorm(h0) * dist;
+	}
+
+	float air0 = airDensityIntegralDenorm(h0);
+	float air1 = airDensityIntegralDenorm(h1);
+
+	return (air1-air0) * (dist / dh);
+}
+
 
 float pointLineDistance(vec3 p, vec3 v, vec3 q)
 {
@@ -325,12 +349,12 @@ vec3 getSunInflux(vec3 p, vec3 sunVector)
 	float adepthSun = max(0.0,adepthSky(p,sunVector));
 		
 	// calculate lowest altitude of sun ray to p
-	float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
+	//float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
+	//float airDensityOfIncomingSun = airDensityNorm(minAltitude);
+	//float airMassOnSunPath = adepthSun * airDensityOfIncomingSun;
+	float airMassOnSunPath = pathAirMassSpherical(p,p+sunVector*adepthSun);
 		
-	// air density of lowest point
-	float airDensityOfIncomingSun = airDensityNorm(minAltitude);
-		
-	return absorb(adepthSun * airDensityOfIncomingSun, sunLight, scatterAbsorb);
+	return absorb(airMassOnSunPath, sunLight, scatterAbsorb);
 
 }
 
@@ -354,7 +378,7 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 	
 	float distmul = 1.0;
 	
-	float totalAir = 0.0;
+	float totalAir = 0.0; 
 	vec3 dir = dir2;
 	
 	for (float t=0.0;t<=1.0;t+=0.05)
@@ -362,7 +386,8 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		p = eye + dir * dist * t;
 		
 		float airDensityAtP = airDensityNorm(length(p));
-		totalAir += airDensityAtP * dist * dt;
+		float airMassOverSegment = airDensityAtP * dist * dt;
+		totalAir += airMassOverSegment;
 		
 		// refraction in air
 		float riCurrent = airRefractiveIndex(length(p));
@@ -372,8 +397,8 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		distmul *= riCurrent;
 		
 		float alpha = dot(dir,sunVector);
-		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * totalAir;
-		float mie = phase(alpha,miePhase) * mieBrightness * totalAir;
+		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * airMassOverSegment;
+		float mie = phase(alpha,miePhase) * mieBrightness * airMassOverSegment;
 		
 		// calculate incoming light to point p
 		vec3 sunAtP = getSunInflux(p,sunVector);
@@ -386,8 +411,8 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		vec3 influxAtP = sunAtP * groundHitSoft;
 		
 		// add some light to fake multi-scattering
-		vec3 additionalInflux = absorb(dist*2.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.1)),scatterAbsorb);
-		additionalInflux += absorb(dist*16.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.5)),scatterAbsorb);
+		vec3 additionalInflux = absorb(airMassOverSegment*2.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.1)),scatterAbsorb);
+		additionalInflux += absorb(airMassOverSegment*16.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.5)),scatterAbsorb);
 		
 		//col += influxAtP * dist * dt;
 		

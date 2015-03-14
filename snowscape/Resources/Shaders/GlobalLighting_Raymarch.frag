@@ -170,22 +170,26 @@ void main(void)
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
 
-	
+	vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
-	// calculate absorbtion amount over airmass
-	// if we're not rendering sky, calculate absorbtion
-	//if (colourT.a < 1.0)
-	//{
-	//	c = absorb(totalAir,c,scatterAbsorb);
-	//};
+	// calculate absorbtion amount over airmass, apart from sky, which has this baked in
+	if (colourT.a < 1.0) c *= absorbAmount;
+
+	// add in scattering from sky dome, based on angle of view
+	vec3 skyProbe = texture(skylightSmoothTex,vec2(dir.xz * 0.5 + 0.5)).rgb;
+	c += skyProbe * (vec3(1.0) - absorbAmount);
+	
 
 
 	//c = vec3(len / 1024.0);
-	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist,eyeShadow) * 10000.0;
+	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist,eyeShadow);
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 
+	//c = ;
+
 	//c += vec3(1.0,0.0,0.0) * eyeShadow;
-	//c = vec3(totalAir)*100.0;
+	//c = vec3(totalAir,0.0,scatteringdist) * 100.0;
+	//c = vec3(scatteringdist) * 100.0;
 	//c = vec3(eyeHeightNorm);
 	
 	out_Colour = vec4(c.rgb,1.0);
