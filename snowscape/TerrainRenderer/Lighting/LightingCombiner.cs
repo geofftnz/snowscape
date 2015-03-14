@@ -71,7 +71,7 @@ namespace Snowscape.TerrainRenderer.Lighting
             public float ScatterAbsorb { get; set; }
             public float MieBrightness { get; set; }
             public float MiePhase { get; set; }
-            public float RaleighBrightness { get; set; }
+            public float RayleighBrightness { get; set; }
             public float SkylightBrightness { get; set; }
             public float GroundLevel { get; set; }
             public float SkyPrecalcBoundary { get; set; }
@@ -229,7 +229,7 @@ namespace Snowscape.TerrainRenderer.Lighting
                 sp.SetUniform("scatterAbsorb", rp.ScatterAbsorb);
                 sp.SetUniform("mieBrightness", rp.MieBrightness);
                 sp.SetUniform("miePhase", rp.MiePhase);
-                sp.SetUniform("raleighBrightness", rp.RaleighBrightness);
+                sp.SetUniform("rayleighBrightness", rp.RayleighBrightness);
                 sp.SetUniform("skylightBrightness", rp.SkylightBrightness);
                 sp.SetUniform("groundLevel", rp.GroundLevel);
                 sp.SetUniform("skyPrecalcBoundary", rp.SkyPrecalcBoundary);

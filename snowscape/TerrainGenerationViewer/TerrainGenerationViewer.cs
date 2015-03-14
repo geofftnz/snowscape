@@ -268,9 +268,9 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("Kr_r", 0.1287f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Kr_g", 0.2698f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Kr_b", 0.7216f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));  // 0.6616
-            parameters.Add(new Parameter<float>("Sun_r", 5.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Sun_g", 5.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Sun_b", 5.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
+            parameters.Add(new Parameter<float>("Sun_r", 10.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("Sun_g", 10.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("Sun_b", 10.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));  // 0.028  0.1
 
@@ -710,7 +710,7 @@ namespace Snowscape.TerrainGenerationViewer
                 ScatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
                 MieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
                 MiePhase = (float)this.parameters["miePhase"].GetValue(),
-                RaleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
+                RayleighBrightness = (float)this.parameters["raleighBrightness"].GetValue(),
                 SkylightBrightness = (float)this.parameters["skylightBrightness"].GetValue(),
                 GroundLevel = (float)this.parameters["groundLevel"].GetValue(),
                 SkyPrecalcBoundary = this.parameters["skyPrecalcBoundary"].GetValue<float>(),
