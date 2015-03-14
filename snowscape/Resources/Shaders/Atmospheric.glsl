@@ -33,7 +33,7 @@ float earthAtmosphereHeight = earthAtmosphereRadius * (1.0 - groundLevel);
 
 vec3 Kral4 = vec3(2.1381376E-25,9.150625E-26,4.100625E-26);
 
-float denormh(float hnorm)
+float radiusToAltitude(float hnorm)
 {
 	return max(hnorm-groundLevel,0.0000001)*earthAtmosphereRadius;
 }
@@ -45,13 +45,13 @@ float denorm(float n)
 // bullshit hack, but close enough for low altitudes
 float airRefractiveIndex(float hnorm)
 {
-	return 1.000293 - (1.0-1.0/(1.0+denormh(hnorm)*0.0002))*0.000293;
+	return 1.000293 - (1.0-1.0/(1.0+radiusToAltitude(hnorm)*0.0002))*0.000293;
 }
 
 // bullshit hack
 float NbyHeight(float hnorm)
 {
-	return 2.55E25 * exp(-0.00011 * denormh(hnorm));		
+	return 2.55E25 * exp(-0.00011 * radiusToAltitude(hnorm));		
 }
 
 
@@ -166,11 +166,11 @@ vec3 outscatter(float dist, vec3 col, float f)
 }
 
 const float airDensityFalloff = -0.000105;
-//const float airDensityFactor = 100.0;
+const float airDensityFactor = 817.0;
 
 float airDensityNorm(float hnorm)
 {
-	return exp(denormh(hnorm) * airDensityFalloff) ;
+	return exp(radiusToAltitude(hnorm) * airDensityFalloff) ;
 }
 
 float airDensityDenorm(float h)
@@ -185,7 +185,8 @@ float airDensityDenorm(float h)
 
 float airDensityIntegralDenorm(float h)
 {
-	return (-1.0 / airDensityFalloff) * (1.0 - exp(h * airDensityFalloff));
+	return (-1.0 / airDensityFalloff) * (1.0 - exp(h * airDensityFalloff)) * airDensityFactor;
+	//return (1.0 / -airDensityFalloff) * (exp(h * -airDensityFalloff));
 }
 
 float pathAirMassSphericalEstimate(vec3 start, vec3 end)
@@ -204,14 +205,14 @@ float pathAirMassFlatLinear(vec3 start, vec3 end)
 
 float pathAirMassFlat(vec3 start, vec3 end)
 {
-	float h0 = denormh(start.y);
-	float h1 = denormh(end.y);
+	float h0 = radiusToAltitude(start.y);
+	float h1 = radiusToAltitude(end.y);
 	float dh = h1-h0; 
-	float dist = length(end-start);
+	float dist = length(end-start); 
 
 	// horizontal ray - use linear approximation to avoid div by zero
-	if (abs(dh) < 0.01){
-		return airDensityDenorm(h0) * dist;
+	if (abs(dh) < 0.1){
+		return (airDensityDenorm(h0) + airDensityDenorm(h1)) * dist * 0.5 * airDensityFactor;
 	}
 
 	float air0 = airDensityIntegralDenorm(h0);
@@ -222,13 +223,13 @@ float pathAirMassFlat(vec3 start, vec3 end)
 
 float pathAirMassSpherical(vec3 start, vec3 end)
 {
-	float h0 = denormh(length(start));
-	float h1 = denormh(length(end));
+	float h0 = radiusToAltitude(length(start));
+	float h1 = radiusToAltitude(length(end));
 	float dh = h1-h0; 
 	float dist = length(end-start);
 
 	// horizontal ray - use linear approximation to avoid div by zero
-	if (abs(dh) < 0.01){
+	if (abs(dh) < 0.001){
 		return airDensityDenorm(h0) * dist;
 	}
 

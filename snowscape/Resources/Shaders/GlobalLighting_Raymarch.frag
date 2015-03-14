@@ -169,6 +169,7 @@ void main(void)
 
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
+	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
 
 	vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
@@ -188,9 +189,11 @@ void main(void)
 	//c = ;
 
 	//c += vec3(1.0,0.0,0.0) * eyeShadow;
-	//c = vec3(totalAir,0.0,scatteringdist) * 100.0;
+	//c = vec3(totalAir,scatteringdist,0.0,(scatteringdist-totalAir) * 100.0) * 100.0;
+	//c = vec3(max(0.0,scatteringdist-totalAir),max(0.0,totalAir-scatteringdist),0.0) * 1.0;
 	//c = vec3(scatteringdist) * 100.0;
 	//c = vec3(eyeHeightNorm);
+	//c = vec3(totalAir);
 	
 	out_Colour = vec4(c.rgb,1.0);
 }

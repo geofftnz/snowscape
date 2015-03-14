@@ -276,9 +276,9 @@ namespace Snowscape.TerrainGenerationViewer
 
             parameters.Add(new Parameter<float>("skyPrecalcBoundary", 16.0f, 0.1f, 128.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
 
-            parameters.Add(new Parameter<float>("mieBrightness", 0.2f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("mieBrightness", 0.2f, 0.0001f, 1000.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("miePhase", 0.97f, 0.0f, 1.0f, v => v + 0.001f, v => v - 0.001f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("raleighBrightness", 10.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("raleighBrightness", 10.0f, 0.0001f, 1000.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
 
 
             parameters.Add(new Parameter<float>("skylightBrightness", 3.8f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
