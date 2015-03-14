@@ -260,7 +260,7 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 	//float airDensityAtEye = airDensityNorm(length(eye));	
 	//float airDensityAtP = airDensityNorm(length(p));	
 	//float totalAir = (airDensityAtP + airDensityAtEye) * 0.5 * dist;
-	float totalAir = pathAirMassFlatLinear(eye,p);
+	float totalAir = pathAirMassFlat(eye,p);
 	
 		float alpha = dot(dir,sunVector);
 		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * totalAir;

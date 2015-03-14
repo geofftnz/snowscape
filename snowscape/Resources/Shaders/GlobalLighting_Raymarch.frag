@@ -106,7 +106,7 @@ void main(void)
 	float len = length(dir);
 	dir = normalize(dir);
 
-	float ndist= len * tileSizeKm * texel;
+	float ndist = len * tileSizeKm * texel;
 
     vec3 c = vec3(0.0,0.0,0.0);
     
@@ -161,14 +161,32 @@ void main(void)
 	// incoming scattering
 
 	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+
+	float eyeHeightNorm = max(0.0,((eyePos.y * tileSizeKm * texel) / earthAtmosphereRadius)) + groundLevel;
+
 	float scatteringdist = min(ndist,skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+	vec3 eyeScatteringNorm = vec3(0.0,eyeHeightNorm,0.0);
+
+	// get total air mass between eye and end of scattering 
+	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
+
+	
+
+	// calculate absorbtion amount over airmass
+	// if we're not rendering sky, calculate absorbtion
+	//if (colourT.a < 1.0)
+	//{
+	//	c = absorb(totalAir,c,scatterAbsorb);
+	//};
+
 
 	//c = vec3(len / 1024.0);
-	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, scatteringdist,eyeShadow) * 10000.0;
+	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist,eyeShadow) * 10000.0;
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 
 	//c += vec3(1.0,0.0,0.0) * eyeShadow;
-	
+	//c = vec3(totalAir)*100.0;
+	//c = vec3(eyeHeightNorm);
 	
 	out_Colour = vec4(c.rgb,1.0);
 }
