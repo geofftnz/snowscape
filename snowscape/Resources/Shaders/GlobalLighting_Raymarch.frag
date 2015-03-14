@@ -41,6 +41,8 @@ uniform vec3 Kr;
 //uniform vec3 eye;
 uniform vec3 sunLight;
 
+const float tileSizeKm = 16.0;
+
 /*
 uniform float minHeight;
 uniform float maxHeight;
@@ -104,6 +106,8 @@ void main(void)
 	float len = length(dir);
 	dir = normalize(dir);
 
+	float ndist= len * tileSizeKm * texel;
+
     vec3 c = vec3(0.0,0.0,0.0);
     
 	vec3 normal = normalT.rgb;
@@ -157,10 +161,10 @@ void main(void)
 	// incoming scattering
 
 	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
-	float distnorm = skyPrecalcBoundary  / earthAtmosphereRadius;  // len  * 0.256
+	float scatteringdist = min(ndist,skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
 
 	//c = vec3(len / 1024.0);
-	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, distnorm) * eyeShadow;
+	c += getSimpleScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, scatteringdist,eyeShadow) * 10000.0;
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 
 	//c += vec3(1.0,0.0,0.0) * eyeShadow;

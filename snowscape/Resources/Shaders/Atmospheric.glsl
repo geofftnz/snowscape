@@ -161,10 +161,16 @@ vec3 outscatter(float dist, vec3 col, float f)
     return col * pow(Kr, vec3(f / dist));
 }
 
+const float airDensityFalloff = -0.000105;
 
 float airDensityNorm(float hnorm)
 {
-	return exp(denormh(hnorm) * -0.000105) ;
+	return exp(denormh(hnorm) * airDensityFalloff) ;
+}
+
+float airDensityDenorm(float h)
+{
+	return exp(h * airDensityFalloff) ;
 }
 
 float airDensity(float hnorm)
@@ -172,11 +178,41 @@ float airDensity(float hnorm)
 	return 0.001224 * airDensityNorm(hnorm);
 }
 
-float pathAirMass(vec3 start, vec3 end)
+float airDensityIntegralDenorm(float h)
 {
-	float densityStart = airDensity(length(start));
-	float densityEnd = airDensity(length(end));
+	return (-1.0 / airDensityFalloff) * (1.0 - exp(h * airDensityFalloff));
+}
+
+float pathAirMassSphericalEstimate(vec3 start, vec3 end)
+{
+	float densityStart = airDensityNorm(length(start));
+	float densityEnd = airDensityNorm(length(end));
 	return (densityStart + densityEnd) * 0.5 * length(end-start);
+}
+
+float pathAirMassFlatLinear(vec3 start, vec3 end)
+{
+	float densityStart = airDensityNorm(length(start));
+	float densityEnd = airDensityNorm(length(end));
+	return (densityStart + densityEnd) * 0.5 * length(end-start);
+}
+
+float pathAirMassFlat(vec3 start, vec3 end)
+{
+	float h0 = denormh(start.y);
+	float h1 = denormh(end.y);
+	float dh = h1-h0; 
+	float dist = length(end-start);
+
+	// horizontal ray - use linear approximation to avoid div by zero
+	if (abs(dh) < 0.00001){
+		return airDensityDenorm(h0) * dist;
+	}
+
+	float air0 = airDensityIntegralDenorm(h0);
+	float air1 = airDensityIntegralDenorm(h1);
+
+	return (air1-air0) * (dist / dh);
 }
 
 float pointLineDistance(vec3 p, vec3 v, vec3 q)
@@ -210,15 +246,21 @@ vec3 sunIntensity(vec3 p, vec3 sunVector, vec3 sunLight, float scatterAbsorb)
 	return absorb(depth, sunLight, scatterAbsorb);
 }
 
-vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float maxDist)
+// simple single-step scattering approximation
+// designed to be a cheaper implementation than raymarched scattering
+// all parameters should be normalized to the r=1 sphere
+//
+//
+vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float maxDist, float mieFactor)
 {
 	vec3 col = vec3(0);
 	float dist = min(maxDist,adepthSkyGround(eye, dir, groundLevel));
 	vec3 p = eye + dir * dist;
 
-	float airDensityAtEye = airDensityNorm(length(eye));	
-	float airDensityAtP = airDensityNorm(length(p));	
-	float totalAir = (airDensityAtP + airDensityAtEye) * 0.5 * dist;
+	//float airDensityAtEye = airDensityNorm(length(eye));	
+	//float airDensityAtP = airDensityNorm(length(p));	
+	//float totalAir = (airDensityAtP + airDensityAtEye) * 0.5 * dist;
+	float totalAir = pathAirMassFlatLinear(eye,p);
 	
 		float alpha = dot(dir,sunVector);
 		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * totalAir;
@@ -246,7 +288,7 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		vec3 influxAtP = sunAtP * groundHitSoft;
 		
 		// add some light to fake multi-scattering
-		vec3 additionalInflux = absorb(1.0,sunAtP*Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.3)),scatterAbsorb);
+		vec3 additionalInflux = absorb(1.0,sunAtP*Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.1)),scatterAbsorb);
 		additionalInflux += absorb(dist*16.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.5)),scatterAbsorb);
 	
 		//col += influxAtP * dist * dt;
@@ -254,10 +296,10 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		vec3 lightToEye = vec3(0.0);
 		
 		// sun disk
-		lightToEye += influxAtP * sunLight * smoothstep(0.99983194915,0.99983194915+0.00002,dot(dir,sunVector)) * dist * groundHitHard;
+		//lightToEye += influxAtP * sunLight * smoothstep(0.99983194915,0.99983194915+0.00002,dot(dir,sunVector)) * dist * groundHitHard;
 		
 		// mie to eye
-		lightToEye += mie * influxAtP * dist * groundHitHard;
+		lightToEye += mie * influxAtP * dist * groundHitHard * mieFactor;
 		
 		influxAtP += additionalInflux;
 		
@@ -269,8 +311,8 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		
 	
 		
-		col += absorb(dist , lightToEye, 1.0-totalAir);
-	
+		//col += absorb(dist , lightToEye, 1.0-totalAir);
+		col += absorb(totalAir, lightToEye, scatterAbsorb);
 	
 	return col;
 }
