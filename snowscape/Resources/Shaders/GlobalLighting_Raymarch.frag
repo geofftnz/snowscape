@@ -125,6 +125,10 @@ void main(void)
 	//c.rg = lightingT.rg;
 	//c.rgb = normalT.rgb;
 
+	// debug: lighting components only
+	//colourT.rgb = colourT.a > 0.9999 ? colourT.rgb:vec3(1.0);
+
+
 	float roughness = max(0.0,(shadingT.r-0.5)) * 2.0;  
 	float skyreflection = clamp(0.5-shadingT.r,0.0,0.5) * 2.0;
 
@@ -149,6 +153,7 @@ void main(void)
 
 	vec3 ambient = ambientlight * lightingT.g;
 
+
 	c = colourT.rgb * (sun + ambient + vec3(lightingT.b)) + spec;
 
 
@@ -164,26 +169,31 @@ void main(void)
 
 	float eyeHeightNorm = max(0.0,((eyePos.y * tileSizeKm * texel) / earthAtmosphereRadius)) + groundLevel;
 
+	// ndist is in km, skyPrecalcBoundary in km, earthAtmosphereRadius in km
 	float scatteringdist = min(ndist,skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
 	vec3 eyeScatteringNorm = vec3(0.0,eyeHeightNorm,0.0);
 
 	// get total air mass between eye and end of scattering 
-	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
+	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * 10.0;
 	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
 
 	vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
 	// calculate absorbtion amount over airmass, apart from sky, which has this baked in
 	if (colourT.a < 1.0) c *= absorbAmount;
+	//c *= absorbAmount;
 
 	// add in scattering from sky dome, based on angle of view
-	vec3 skyProbe = texture(skylightSmoothTex,vec2(dir.xz * 0.5 + 0.5)).rgb;
-	c += skyProbe * (vec3(1.0) - absorbAmount);
+
+	vec2 skyProbeDir = (dir.y < 0.0) ? normalize(dir.xz) : dir.xz;
+
+	vec3 skyProbe = (texture(skylightSmoothTex,vec2(skyProbeDir * 0.4 + 0.5)).rgb + texture(skylightSmoothTex,vec2(0.5,0.5)).rgb) * 0.5;
+	//c += skyProbe * (vec3(1.0) - absorbAmount) * 10.0;
 	
 
 
 	//c = vec3(len / 1024.0);
-	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist,eyeShadow);
+	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist, eyeShadow) * (vec3(1.0) - absorbAmount) * 100.0;
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 
 	//c = ;

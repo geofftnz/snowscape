@@ -33,13 +33,15 @@ float earthAtmosphereHeight = earthAtmosphereRadius * (1.0 - groundLevel);
 
 vec3 Kral4 = vec3(2.1381376E-25,9.150625E-26,4.100625E-26);
 
+// normalized radius to altitude in m
 float radiusToAltitude(float hnorm)
 {
-	return max(hnorm-groundLevel,0.0000001)*earthAtmosphereRadius;
+	return max(hnorm-groundLevel,0.0000001)*earthAtmosphereRadius*1000.0;
 }
+// normalized radius to distance from centre of earth, in m.
 float denorm(float n)
 {
-	return n*earthAtmosphereRadius;
+	return n*earthAtmosphereRadius*1000.0;
 }
 
 // bullshit hack, but close enough for low altitudes
@@ -166,16 +168,16 @@ vec3 outscatter(float dist, vec3 col, float f)
 }
 
 const float airDensityFalloff = -0.000105;
-const float airDensityFactor = 817.0;
+const float airDensityFactor = 50.0;
 
 float airDensityNorm(float hnorm)
 {
-	return exp(radiusToAltitude(hnorm) * airDensityFalloff) ;
+	return exp(radiusToAltitude(hnorm) * airDensityFalloff) * airDensityFactor;
 }
 
 float airDensityDenorm(float h)
 {
-	return exp(h * airDensityFalloff) ;
+	return exp(h * airDensityFalloff) * airDensityFactor;
 }
 
 //float airDensity(float hnorm)
@@ -212,7 +214,7 @@ float pathAirMassFlat(vec3 start, vec3 end)
 
 	// horizontal ray - use linear approximation to avoid div by zero
 	if (abs(dh) < 0.1){
-		return (airDensityDenorm(h0) + airDensityDenorm(h1)) * dist * 0.5 * airDensityFactor;
+		return (airDensityDenorm(h0) + airDensityDenorm(h1)) * dist * 0.5;
 	}
 
 	float air0 = airDensityIntegralDenorm(h0);
