@@ -167,7 +167,7 @@ vec3 outscatter(float dist, vec3 col, float f)
     return col * pow(Kr, vec3(f / dist));
 }
 
-const float airDensityFalloff = -0.000105;
+const float airDensityFalloff = -0.000105*1.0;  //-0.000105
 const float airDensityFactor = 50.0;
 
 float airDensityNorm(float hnorm)
@@ -278,7 +278,7 @@ vec3 sunIntensity(vec3 p, vec3 sunVector, vec3 sunLight, float scatterAbsorb)
 // all parameters should be normalized to the r=1 sphere
 //
 //
-vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float maxDist, float mieFactor)
+vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float maxDist, float mieFactor, float airDensityFactor)
 {
 	vec3 col = vec3(0);
 	float dist = min(maxDist,adepthSkyGround(eye, dir, groundLevel));
@@ -287,7 +287,7 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 	//float airDensityAtEye = airDensityNorm(length(eye));	
 	//float airDensityAtP = airDensityNorm(length(p));	
 	//float totalAir = (airDensityAtP + airDensityAtEye) * 0.5 * dist;
-	float totalAir = pathAirMassFlat(eye,p);
+	float totalAir = pathAirMassFlat(eye,p) * airDensityFactor;
 	
 		float alpha = dot(dir,sunVector);
 		float ral = phase(alpha,rayleighPhase) * rayleighBrightness * totalAir;

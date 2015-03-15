@@ -41,7 +41,7 @@ uniform vec3 Kr;
 //uniform vec3 eye;
 uniform vec3 sunLight;
 
-const float tileSizeKm = 16.0;
+const float tileSizeKm = 64.0;
 
 /*
 uniform float minHeight;
@@ -169,31 +169,48 @@ void main(void)
 
 	float eyeHeightNorm = max(0.0,((eyePos.y * tileSizeKm * texel) / earthAtmosphereRadius)) + groundLevel;
 
-	// ndist is in km, skyPrecalcBoundary in km, earthAtmosphereRadius in km
+	// ndist is in km, skyPrecalcBoundary in km, earthAtmosphereRadius in km. scatteringdist is normalized.
 	float scatteringdist = min(ndist,skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+	//float scatteringdist = ndist / earthAtmosphereRadius;  // len  * 0.256
+
+	//scatteringdist *= 2.0;
+
 	vec3 eyeScatteringNorm = vec3(0.0,eyeHeightNorm,0.0);
 
+	// if scatteringdist puts us outside the r=1 sphere, take it back
+	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
+
+	float nearAirFactor = 1.0;
+
 	// get total air mass between eye and end of scattering 
-	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * 10.0;
+	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
 	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
 
 	vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
+	float fogAmount = 1.0 / exp(totalAir);
+
+
+	//c = vec3(1.0);
+
 	// calculate absorbtion amount over airmass, apart from sky, which has this baked in
-	if (colourT.a < 1.0) c *= absorbAmount;
+	//if (colourT.a < 1.0) c *= absorbAmount;
 	//c *= absorbAmount;
 
 	// add in scattering from sky dome, based on angle of view
 
-	vec2 skyProbeDir = (dir.y < 0.0) ? normalize(dir.xz) : dir.xz;
+	vec2 skyProbeDir = (dir.y < 0.1) ? normalize(dir.xz) : dir.xz;
 
-	vec3 skyProbe = (texture(skylightSmoothTex,vec2(skyProbeDir * 0.4 + 0.5)).rgb + texture(skylightSmoothTex,vec2(0.5,0.5)).rgb) * 0.5;
-	//c += skyProbe * (vec3(1.0) - absorbAmount) * 10.0;
+	vec3 skyProbe = texture(skylightSmoothTex,vec2(skyProbeDir * 0.48 + 0.5)).rgb;
+	//c += skyProbe * totalAir;
+
+	//skyProbe *= (vec3(1.0) + Kr * 0.8);
 	
+	c = mix(skyProbe, c, fogAmount);
 
 
 	//c = vec3(len / 1024.0);
-	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist, eyeShadow) * (vec3(1.0) - absorbAmount) * 100.0;
+	//c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist, eyeShadow,nearAirFactor);
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 
 	//c = ;
@@ -204,6 +221,7 @@ void main(void)
 	//c = vec3(scatteringdist) * 100.0;
 	//c = vec3(eyeHeightNorm);
 	//c = vec3(totalAir);
+	//c = vec3(fogAmount);
 	
 	out_Colour = vec4(c.rgb,1.0);
 }
