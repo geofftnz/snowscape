@@ -167,7 +167,7 @@ vec3 outscatter(float dist, vec3 col, float f)
     return col * pow(Kr, vec3(f / dist));
 }
 
-const float airDensityFalloff = -0.000105*1.0;  //-0.000105
+const float airDensityFalloff = -0.000105*3.0;  //-0.000105
 const float airDensityFactor = 50.0;
 
 float airDensityNorm(float hnorm)
@@ -298,18 +298,32 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		
 		// calculate atmospheric depth towards sun from p
 		float adepthSun = max(0.0,adepthSky(p,sunVector));
-		
-		// calculate lowest altitude of sun ray to p
-		float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
-		
-		// air density of lowest point
-		float airDensityOfIncomingSun = airDensityNorm(minAltitude);
-		
-		vec3 sunAtP = absorb(adepthSun * airDensityOfIncomingSun, sunLight, scatterAbsorb);
-		
-		
+
 		float groundHitHard = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.001));
 		float groundHitSoft = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.01));
+		
+		// calculate lowest altitude of sun ray to p
+		//float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
+		
+		// air density of lowest point
+		//float airDensityOfIncomingSun = airDensityNorm(minAltitude);
+
+		// air density over path
+		//float airDensityOfIncomingSun = pathAirMassFlat(p,p+sunVector*0.01);
+		//vec3 sunAtP = absorb(adepthSun * airDensityOfIncomingSun, sunLight, scatterAbsorb);
+
+		// bugs in here:
+		float totalAirToSun = 0.0;
+		for(float t=0;t<1.0;t+=0.1)
+		{
+			vec3 p2 = p+dir*dist*t;
+			totalAirToSun += pathAirMassFlat(p2,p2+sunVector*adepthSun) * (1.0 - intersectGroundSoft(p2, sunVector, groundLevel,0.001)) * 0.1;
+		}
+
+		
+		vec3 sunAtP = absorb(totalAirToSun, sunLight, scatterAbsorb);
+		
+		
 		
 		// absorb along path
 		vec3 influxAtP = sunAtP * groundHitSoft;

@@ -41,7 +41,7 @@ uniform vec3 Kr;
 //uniform vec3 eye;
 uniform vec3 sunLight;
 
-const float tileSizeKm = 64.0;
+const float tileSizeKm = 16.0;
 
 /*
 uniform float minHeight;
@@ -170,7 +170,7 @@ void main(void)
 	float eyeHeightNorm = max(0.0,((eyePos.y * tileSizeKm * texel) / earthAtmosphereRadius)) + groundLevel;
 
 	// ndist is in km, skyPrecalcBoundary in km, earthAtmosphereRadius in km. scatteringdist is normalized.
-	float scatteringdist = min(ndist,skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
+	float scatteringdist = min(ndist,skyPrecalcBoundary * tileSizeKm)  / earthAtmosphereRadius;  // len  * 0.256
 	//float scatteringdist = ndist / earthAtmosphereRadius;  // len  * 0.256
 
 	//scatteringdist *= 2.0;
@@ -180,15 +180,15 @@ void main(void)
 	// if scatteringdist puts us outside the r=1 sphere, take it back
 	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
 
-	float nearAirFactor = 1.0;
+	float nearAirFactor = 10.0;
 
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
-	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist);
+	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
 
 	vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
-	float fogAmount = 1.0 / exp(totalAir);
+	float fogAmount = 1.0 / (exp(totalAir));
 
 
 	//c = vec3(1.0);
@@ -199,18 +199,20 @@ void main(void)
 
 	// add in scattering from sky dome, based on angle of view
 
-	vec2 skyProbeDir = (dir.y < 0.1) ? normalize(dir.xz) : dir.xz;
+	vec2 skyProbeDir = dir.xz;//(dir.y < 0.0) ? normalize(dir.xz) : dir.xz;
 
 	vec3 skyProbe = texture(skylightSmoothTex,vec2(skyProbeDir * 0.48 + 0.5)).rgb;
 	//c += skyProbe * totalAir;
 
 	//skyProbe *= (vec3(1.0) + Kr * 0.8);
+
+	//if (colourT.a>0.9999)fogAmount = 1.0;
 	
 	c = mix(skyProbe, c, fogAmount);
 
 
 	//c = vec3(len / 1024.0);
-	//c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist, eyeShadow,nearAirFactor);
+	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist, eyeShadow,nearAirFactor);
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
 
 	//c = ;
