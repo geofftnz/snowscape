@@ -180,7 +180,7 @@ void main(void)
 	// if scatteringdist puts us outside the r=1 sphere, take it back
 	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
 
-	float nearAirFactor = 10.0;
+	float nearAirFactor = 5.0;
 
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
@@ -209,6 +209,7 @@ void main(void)
 	//if (colourT.a>0.9999)fogAmount = 1.0;
 	
 	c = mix(skyProbe, c, fogAmount);
+	//c = mix(vec3(0.0), c, fogAmount);
 
 
 	//c = vec3(len / 1024.0);

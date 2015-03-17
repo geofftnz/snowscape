@@ -297,10 +297,10 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		// calculate incoming light to point p
 		
 		// calculate atmospheric depth towards sun from p
-		float adepthSun = max(0.0,adepthSky(p,sunVector));
+		float adepthSun = max(0.0,adepthSky(eye,sunVector));
 
-		float groundHitHard = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.001));
-		float groundHitSoft = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.01));
+		float groundHitHard = (1.0 - intersectGroundSoft(eye, sunVector, groundLevel,0.001));
+		float groundHitSoft = (1.0 - intersectGroundSoft(eye, sunVector, groundLevel,0.01));
 		
 		// calculate lowest altitude of sun ray to p
 		//float minAltitude = pointRayDistance(p,sunVector,vec3(0.0));
@@ -314,12 +314,15 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 
 		// bugs in here:
 		float totalAirToSun = 0.0;
+		/*
 		for(float t=0;t<1.0;t+=0.1)
 		{
 			vec3 p2 = p+dir*dist*t;
 			totalAirToSun += pathAirMassFlat(p2,p2+sunVector*adepthSun) * (1.0 - intersectGroundSoft(p2, sunVector, groundLevel,0.001)) * 0.1;
-		}
+		}*/
 
+		//totalAirToSun = pathAirMassFlat(p,p+sunVector*adepthSun);
+		totalAirToSun = (pathAirMassSpherical(eye,eye+sunVector*(adepthSun+0.001)) + pathAirMassFlat(eye,eye+sunVector*(adepthSun+0.001))) * 0.5; 
 		
 		vec3 sunAtP = absorb(totalAirToSun, sunLight, scatterAbsorb);
 		
@@ -342,7 +345,7 @@ vec3 getSimpleScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb
 		// mie to eye
 		lightToEye += mie * influxAtP * dist * groundHitHard * mieFactor;
 		
-		influxAtP += additionalInflux;
+		//influxAtP += additionalInflux;
 		
 		// rayleigh to eye
 		lightToEye += ral * influxAtP * Kr * dist;
