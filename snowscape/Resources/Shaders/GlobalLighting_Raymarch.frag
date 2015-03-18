@@ -41,6 +41,8 @@ uniform vec3 Kr;
 //uniform vec3 eye;
 uniform vec3 sunLight;
 
+uniform float nearScatterDistance;
+
 const float tileSizeKm = 16.0;
 
 /*
@@ -59,7 +61,7 @@ uniform vec3 sunLight;
 uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scattering coordinates for absorb(). Started at 0.004/6000.0 to match skybox
 uniform float aoInfluenceHeight; // height above the terrain to blend influence of AO when raymarching scattering
 uniform float time;
-uniform float nearScatterDistance;
+
 uniform float ambientBias;  // amount of skylight
 uniform float indirectBias; // amount of indirect light
 uniform float renderMode;
@@ -80,7 +82,8 @@ float texel = 1.0 / boxparam.x;
 
 // expected variables for atmospheric scattering
 float earthAtmosphereRadius = 6450.0;
-#include "atmospheric.glsl"
+#include "atmospheric.glsl|base"
+#include "atmospheric.glsl|Terrain"
 
 
 
@@ -114,7 +117,7 @@ void main(void)
 	vec3 refl = reflect(dir,normal);
 
     //vec3 normal = normalize(normalT.xyz - vec3(0.5));
-    vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
+    //vec2 shadowAO = texture(shadeTex,pos.xz * texel).rg;
 
 	float eyeShadow = smoothstep(-0.05,0.05,eyePos.y - texture(shadeTex,eyePos.xz * texel).r);
 
@@ -164,6 +167,9 @@ void main(void)
 	//c = texture(skyCubeTex,normal).rgb;
 
 	// incoming scattering
+	
+	if (texcoord0.x < 0.5)
+	{
 
 	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
 
@@ -180,7 +186,7 @@ void main(void)
 	// if scatteringdist puts us outside the r=1 sphere, take it back
 	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
 
-	float nearAirFactor = 5.0;
+	float nearAirFactor = 1.0;
 
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
@@ -200,15 +206,14 @@ void main(void)
 	// add in scattering from sky dome, based on angle of view
 
 	vec2 skyProbeDir = dir.xz;//(dir.y < 0.0) ? normalize(dir.xz) : dir.xz;
-
 	vec3 skyProbe = texture(skylightSmoothTex,vec2(skyProbeDir * 0.48 + 0.5)).rgb;
+	c = mix(skyProbe, c, fogAmount);
 	//c += skyProbe * totalAir;
 
 	//skyProbe *= (vec3(1.0) + Kr * 0.8);
 
 	//if (colourT.a>0.9999)fogAmount = 1.0;
 	
-	c = mix(skyProbe, c, fogAmount);
 	//c = mix(vec3(0.0), c, fogAmount);
 
 
@@ -225,6 +230,12 @@ void main(void)
 	//c = vec3(eyeHeightNorm);
 	//c = vec3(totalAir);
 	//c = vec3(fogAmount);
+	
+	}
+	else
+	{
+		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance));
+	}
 	
 	out_Colour = vec4(c.rgb,1.0);
 }

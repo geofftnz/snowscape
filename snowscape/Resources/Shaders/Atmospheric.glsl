@@ -12,6 +12,8 @@
 	Some code pinched from here: http://glsl.heroku.com/e#17563.3
 	and here: http://codeflow.org/entries/2011/apr/13/advanced-webgl-part-2-sky-rendering/
 */
+//|base
+
 #define PI 3.1415927
 
 // expects:
@@ -456,3 +458,49 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 	return col;
 }
 
+//|Terrain
+// this code assumes it's running in the global lighting shader
+
+float getShadow(vec3 p)
+{
+    return smoothstep(-1.0,-0.02,p.y - texture(shadeTex,p.xz * texel).r);
+}
+
+vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist)
+{
+	vec3 c = vec3(0.0);
+
+	// raymarch as series of t1-t2 segments.
+
+	float alpha = dot(dir,sunVector);
+	//float ral = phase(alpha,rayleighPhase) * rayleighBrightness * airMassOverSegment;
+	float mie = phase(alpha,miePhase) * mieBrightness; // * airMassOverSegment;
+
+	float prevShadow = getShadow(eye);
+	float p1 = eye;
+	
+	for (float t1 = 0; t1 < 1.0; t1 += 0.02)
+	{
+		float t2 = t1 + 0.02;
+		float t2sq = t2 * t2;
+		float dt = t2sq - t1 * t1;
+		float dtlen = dt * dist;
+		
+		vec3 p2 = eye + dir * t2sq * dist;
+		
+		float segmentAirMass = pathAirMassFlat(p1,p2);
+	
+		
+		//float shadow = (getShadow(p) + prevShadow) * 0.5;
+		float shadow = getShadow(p);
+		
+		c += vec3(4.0,0.0,0.0) * shadow * dt;
+		
+		prevShadow = shadow;
+		p1 = p2;
+	}
+
+	c *= mie;
+
+	return c;
+}

@@ -26,7 +26,7 @@ out vec3 out_Sky;
 float earthAtmosphereRadius = 6450.0;
 
 
-#include "atmospheric.glsl"
+#include "atmospheric.glsl|base"
 
 
 void main(void)
