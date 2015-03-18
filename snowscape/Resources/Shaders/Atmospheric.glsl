@@ -463,10 +463,16 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 
 float getShadow(vec3 p)
 {
-    return smoothstep(-1.0,-0.02,p.y - texture(shadeTex,p.xz * texel).r);
+    return smoothstep(-0.05,-0.02,p.y - texture(shadeTex,p.xz * texel).r);
 }
 
-vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist)
+vec3 normpos(vec3 p, float scale)
+{
+	return ((p * scale) / earthAtmosphereRadius) + vec3(0.0,groundLevel,0.0);
+}
+
+// scale = size of terrain unit (texel) in km
+vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist, float scale)
 {
 	vec3 c = vec3(0.0);
 
@@ -477,24 +483,29 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	float mie = phase(alpha,miePhase) * mieBrightness; // * airMassOverSegment;
 
 	float prevShadow = getShadow(eye);
-	float p1 = eye;
+	vec3 p1 = eye;
 	
-	for (float t1 = 0; t1 < 1.0; t1 += 0.02)
+	float n = hash(time + hash(dir.x) + hash(dir.y) + hash(dir.z));
+	
+	for (float t = 0; t < 1.0; t += 0.05)
 	{
-		float t2 = t1 + 0.02;
+		float t1 = t + n * 0.04;
+		float t1sq = t1 * t1;
+		float t2 = min(1.0,t1 + 0.05);
 		float t2sq = t2 * t2;
-		float dt = t2sq - t1 * t1;
+		float dt = t2sq - t1sq;
 		float dtlen = dt * dist;
 		
 		vec3 p2 = eye + dir * t2sq * dist;
 		
-		float segmentAirMass = pathAirMassFlat(p1,p2);
+		//float segmentAirMass = pathAirMassFlat(normpos(p1,scale),normpos(p2,scale));
+		float segmentAirMass = airDensityDenorm(p2.y * scale*1000.0) * dtlen;
 	
 		
 		//float shadow = (getShadow(p) + prevShadow) * 0.5;
-		float shadow = getShadow(p);
+		float shadow = getShadow(p2);
 		
-		c += vec3(4.0,0.0,0.0) * shadow * dt;
+		c += vec3(1.0,0.0,0.0) * shadow * segmentAirMass * 0.0001;
 		
 		prevShadow = shadow;
 		p1 = p2;

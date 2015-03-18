@@ -43,6 +43,8 @@ uniform vec3 sunLight;
 
 uniform float nearScatterDistance;
 
+uniform float time;
+
 const float tileSizeKm = 16.0;
 
 /*
@@ -60,7 +62,7 @@ uniform float groundLevel;
 uniform vec3 sunLight;
 uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scattering coordinates for absorb(). Started at 0.004/6000.0 to match skybox
 uniform float aoInfluenceHeight; // height above the terrain to blend influence of AO when raymarching scattering
-uniform float time;
+
 
 uniform float ambientBias;  // amount of skylight
 uniform float indirectBias; // amount of indirect light
@@ -80,11 +82,12 @@ out vec4 out_Colour;
 
 float texel = 1.0 / boxparam.x;
 
+#include "noise.glsl"
+
 // expected variables for atmospheric scattering
 float earthAtmosphereRadius = 6450.0;
 #include "atmospheric.glsl|base"
 #include "atmospheric.glsl|Terrain"
-
 
 
 void main(void)
@@ -168,7 +171,7 @@ void main(void)
 
 	// incoming scattering
 	
-	if (texcoord0.x < 0.5)
+	if (texcoord0.x < 0.2)
 	{
 
 	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
@@ -234,8 +237,10 @@ void main(void)
 	}
 	else
 	{
-		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance));
+		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance),tileSizeKm * texel);
 	}
+	
+	//c = mod(pos.xyz, vec3(1.0));
 	
 	out_Colour = vec4(c.rgb,1.0);
 }
