@@ -468,7 +468,7 @@ float getShadow(vec3 p)
 
 vec3 normpos(vec3 p, float scale)
 {
-	return ((p * scale) / earthAtmosphereRadius) + vec3(0.0,groundLevel,0.0);
+	return ((p * scale) / (earthAtmosphereRadius)) + vec3(0.0,groundLevel,0.0);
 }
 
 // scale = size of terrain unit (texel) in km
@@ -485,7 +485,8 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	// solar influx to viewer - used as influx for entire ray
 	vec3 eyenorm = normpos(eye,scale);
 	float adepthSun = max(0.0,adepthSky(eyenorm,sunVector));
-	float totalAirToSun = pathAirMassSpherical(eyenorm,eyenorm+sunVector*adepthSun);
+	//float totalAirToSun = pathAirMassSpherical(eyenorm,eyenorm+sunVector*adepthSun);
+	float totalAirToSun = pathAirMassFlat(eyenorm,eyenorm+sunVector*adepthSun);
 	vec3 sunInflux = absorb(totalAirToSun, sunLight, scatterAbsorb);
 	
 	//return vec3(1.0,0.0,0.0) * sunInflux * 0.1;
@@ -507,6 +508,12 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 		float t2len = t2 * dist;
 		
 		vec3 p2 = eye + dir * t2sq * dist;
+		
+		//vec3 p2norm = normpos(p2,scale);
+		//adepthSun = max(0.0,adepthSky(p2norm,sunVector));
+		//totalAirToSun = pathAirMassSpherical(p2norm,p2norm+sunVector*adepthSun);
+		//sunInflux = absorb(totalAirToSun, sunLight, scatterAbsorb);
+		
 		
 		//float segmentAirMass = pathAirMassFlat(normpos(p1,scale),normpos(p2,scale));
 		float segmentAirMass = airDensityDenorm(p2.y * scale) * dtlen * (scale / (earthAtmosphereRadius)) * nearAirFactor;
