@@ -472,46 +472,61 @@ vec3 normpos(vec3 p, float scale)
 }
 
 // scale = size of terrain unit (texel) in km
-vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist, float scale)
+vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist, float scale, float nearAirFactor)
 {
 	vec3 c = vec3(0.0);
 
 	// raymarch as series of t1-t2 segments.
 
 	float alpha = dot(dir,sunVector);
-	//float ral = phase(alpha,rayleighPhase) * rayleighBrightness * airMassOverSegment;
-	float mie = phase(alpha,miePhase) * mieBrightness; // * airMassOverSegment;
+	float ral = phase(alpha,rayleighPhase) * rayleighBrightness * 0.001;
+	float mie = phase(alpha,miePhase) * mieBrightness  * 0.001; 
+	
+	// solar influx to viewer - used as influx for entire ray
+	vec3 eyenorm = normpos(eye,scale);
+	float adepthSun = max(0.0,adepthSky(eyenorm,sunVector));
+	float totalAirToSun = pathAirMassSpherical(eyenorm,eyenorm+sunVector*adepthSun);
+	vec3 sunInflux = absorb(totalAirToSun, sunLight, scatterAbsorb);
+	
+	//return vec3(1.0,0.0,0.0) * sunInflux * 0.1;
 
 	float prevShadow = getShadow(eye);
 	vec3 p1 = eye;
 	
 	float n = hash(time + hash(dir.x) + hash(dir.y) + hash(dir.z));
-	
+	float totalAir = 0.0;
+	 
 	for (float t = 0; t < 1.0; t += 0.05)
 	{
-		float t1 = t + n * 0.04;
+		float t1 = t + n * 0.045;
 		float t1sq = t1 * t1;
 		float t2 = min(1.0,t1 + 0.05);
 		float t2sq = t2 * t2;
 		float dt = t2sq - t1sq;
 		float dtlen = dt * dist;
+		float t2len = t2 * dist;
 		
 		vec3 p2 = eye + dir * t2sq * dist;
 		
 		//float segmentAirMass = pathAirMassFlat(normpos(p1,scale),normpos(p2,scale));
-		float segmentAirMass = airDensityDenorm(p2.y * scale*1000.0) * dtlen;
-	
+		float segmentAirMass = airDensityDenorm(p2.y * scale) * dtlen * (scale / (earthAtmosphereRadius)) * nearAirFactor;
+		totalAir += segmentAirMass;
 		
 		//float shadow = (getShadow(p) + prevShadow) * 0.5;
 		float shadow = getShadow(p2);
 		
-		c += vec3(1.0,0.0,0.0) * shadow * segmentAirMass * 0.0001;
+		// contains fudge factor of 0.01
+		//c += absorb(totalAir,sunInflux * shadow * segmentAirMass, scatterAbsorb);
+		vec3 sun = (sunInflux * shadow * segmentAirMass);
+		vec3 cseg =  sun * mie;
+		cseg += sun * Kr * ral;
+		c += absorb(totalAir, cseg, scatterAbsorb); 
 		
 		prevShadow = shadow;
 		p1 = p2;
 	}
 
-	c *= mie;
+	//c *= mie;
 
 	return c;
 }

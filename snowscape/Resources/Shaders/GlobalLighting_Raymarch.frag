@@ -171,8 +171,6 @@ void main(void)
 
 	// incoming scattering
 	
-	if (texcoord0.x < 0.2)
-	{
 
 	//float distnorm = min(len, skyPrecalcBoundary)  / earthAtmosphereRadius;  // len  * 0.256
 
@@ -189,7 +187,7 @@ void main(void)
 	// if scatteringdist puts us outside the r=1 sphere, take it back
 	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
 
-	float nearAirFactor = 1.0;
+	float nearAirFactor = 4.0;
 
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
@@ -220,6 +218,8 @@ void main(void)
 	//c = mix(vec3(0.0), c, fogAmount);
 
 
+	if (texcoord0.x < 0.0)
+	{
 	//c = vec3(len / 1024.0);
 	c += getSimpleScattering(eyeScatteringNorm, dir, sunVector, scatterAbsorb, scatteringdist, eyeShadow,nearAirFactor);
 	//c += getRayMarchedScattering2(eye, dir, sunVector, scatterAbsorb, 0.0, min(distnorm, skyPrecalcBoundary)  / earthAtmosphereRadius );
@@ -237,7 +237,7 @@ void main(void)
 	}
 	else
 	{
-		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance),tileSizeKm * texel);
+		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance),tileSizeKm * texel,nearAirFactor);
 	}
 	
 	//c = mod(pos.xyz, vec3(1.0));
