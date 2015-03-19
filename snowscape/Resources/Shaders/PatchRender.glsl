@@ -429,6 +429,42 @@ vec3 getNormal(vec2 pos, float scale)
 		);
 }
 
+//|CubicShadowAOSample
+// 4-tap b-spline bicubic interpolation.
+// credit to http://vec3.ca/bicubic-filtering-in-fewer-taps/
+vec2 sampleShadowAO(vec2 pos, float scale)
+{
+	// get texel centre
+	vec2 tc = pos * vec2(scale);
+	vec2 itc = floor(tc);
+	
+	// fractional offset
+	vec2 f = tc - itc;
+
+	vec2 f2 = f*f;
+	vec2 f3 = f2*f;
+
+	// bspline weights
+	vec2 w0 = f2 - (f3 + f) * 0.5;
+    vec2 w1 = f3 * 1.5 - f2 * 2.5 + vec2(1.0);
+    vec2 w3 = (f3 - f2) * 0.5;
+    vec2 w2 = vec2(1.0) - w0 - w1 - w3;
+
+	vec2 s0 = w0 + w1;
+	vec2 s1 = w2 + w3;
+
+	vec2 f0 = w1 / (w0 + w1);
+	vec2 f1 = w3 / (w2 + w3);
+
+	vec2 t0 = (itc - vec2(1.0) + f0) * t;
+	vec2 t1 = (itc + vec2(1.0) + f1) * t;
+
+	return 
+		textureLod(shadeTex,vec2(t0.x,t0.y),0).rg * s0.x * s0.y +
+		textureLod(shadeTex,vec2(t1.x,t0.y),0).rg * s1.x * s0.y +
+		textureLod(shadeTex,vec2(t0.x,t1.y),0).rg * s0.x * s1.y +
+		textureLod(shadeTex,vec2(t1.x,t1.y),0).rg * s1.x * s1.y;
+}
 
 
 //|LowVertex
@@ -701,6 +737,7 @@ uniform sampler2D heightTex;
 uniform sampler2D normalTex;
 uniform sampler2D paramTex;
 uniform sampler2D detailTex;
+uniform sampler2D shadeTex;
 
 uniform mat4 transform_matrix;
 uniform vec4 boxparam;
@@ -720,6 +757,7 @@ out vec3 binormal;
 out vec3 tangent;
 out vec2 texcoord;
 out vec2 detailcoord;
+out vec2 shadowAOinterp;
 out float highDetailBlend;
 
 #include ".|Common"
@@ -739,6 +777,7 @@ float sampleHeight(vec2 pos)
 #include ".|CubicHeightSample"
 #include ".|CubicParamSample"
 #include ".|CubicNormalSample"
+#include ".|CubicShadowAOSample"
 
 void main() {
 
@@ -751,6 +790,7 @@ void main() {
 	float h = sampleHeight(texcoord,boxparam.x);
 	normal = getNormal(texcoord,boxparam.x);
 	vec4 param = sampleParam(texcoord,boxparam.x);
+	shadowAOinterp = sampleShadowAO(texcoord,boxparam.x);
 
 	// calculate tangent and binormal
 	// tangent is in X direction, so is the cross product of normal (Y) and Z
@@ -807,6 +847,7 @@ in vec3 binormal;
 in vec3 tangent;
 in vec2 texcoord;
 in vec2 detailcoord;
+in vec2 shadowAOinterp;
 in float highDetailBlend;
 
 out vec4 out_Colour;
@@ -816,6 +857,7 @@ out vec4 out_Lighting;
 
 #include ".|Common"
 #include ".|FragmentCommon"
+#include ".|CubicShadowAOSample"
 
 float getDUV()
 {
@@ -826,7 +868,10 @@ float getDUV()
 
 void main(void)
 {
-	vec2 shadowAO = texture(shadeTex,texcoord).rg;
+	//vec2 shadowAO = texture(shadeTex,texcoord).rg;
+	//vec2 shadowAO = sampleShadowAO(texcoord,boxparam.x);
+	vec2 shadowAO = shadowAOinterp;
+	
 	vec4 param = texture2D(paramTex,texcoord);
 	float detailBias = getDetailBias();
 
