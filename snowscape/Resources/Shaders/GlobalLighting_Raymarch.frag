@@ -151,7 +151,16 @@ void main(void)
 
 	//vec3 sunlight = vec3(1.0,0.95,0.92) * 5.0;
 
-	vec3 sunAtP = getSunInflux(vec3(0.0),sunVector);
+	// original sun influx
+	//vec3 sunAtP = getSunInflux(vec3(0.0),sunVector);
+	
+	// new sun influx to target location
+	vec3 eyenorm = normpos(pos.xyz,tileSizeKm * texel);
+	float adepthSun = max(0.0,adepthSky(eyenorm,sunVector));
+	//float totalAirToSun = pathAirMassSpherical(eyenorm,eyenorm+sunVector*adepthSun);
+	float totalAirToSun = pathAirMassFlat(eyenorm,eyenorm+sunVector*adepthSun);
+	vec3 sunAtP = absorb(totalAirToSun, sunLight, scatterAbsorb);
+	
 
 	vec3 sun = (sunAtP * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0);  // diffuse sun - needs to be oren-nayar + specular
 	vec3 spec = (sunAtP * lightingT.r) * clamp(pow(dot(refl, sunVector),shadingT.g*100.0),0.0,1.0) * shadingT.b;
