@@ -42,7 +42,7 @@ uniform vec3 Kr;
 uniform vec3 sunLight;
 
 uniform float nearScatterDistance;
-
+uniform float skylightBrightness;
 uniform float time;
 
 const float tileSizeKm = 16.0;
@@ -57,7 +57,6 @@ uniform float raleighBrightness;
 uniform float mieBrightness;
 uniform float miePhase;
 uniform float nearMieBrightness;
-uniform float skylightBrightness;
 uniform float groundLevel;
 uniform vec3 sunLight;
 uniform float sampleDistanceFactor; // convert terrain coordinates into sky-scattering coordinates for absorb(). Started at 0.004/6000.0 to match skybox
@@ -187,7 +186,7 @@ void main(void)
 	// if scatteringdist puts us outside the r=1 sphere, take it back
 	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
 
-	float nearAirFactor = 4.0;
+	float nearAirFactor = skylightBrightness;
 
 	// get total air mass between eye and end of scattering 
 	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
