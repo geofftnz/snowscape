@@ -471,6 +471,8 @@ vec3 normpos(vec3 p, float scale)
 	return ((p * scale) / (earthAtmosphereRadius)) + vec3(0.0,groundLevel,0.0);
 }
 
+const float scattering_stepsize = 0.1;
+
 // scale = size of terrain unit (texel) in km
 vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist, float scale, float nearAirFactor)
 {
@@ -497,11 +499,11 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	float n = hash(time + hash(dir.x) + hash(dir.y) + hash(dir.z));
 	float totalAir = 0.0;
 	 
-	for (float t = 0; t < 1.0; t += 0.05)
+	for (float t = 0; t < 1.0; t += scattering_stepsize)
 	{
-		float t1 = t + n * 0.045;
+		float t1 = min(0.9999,t + n * scattering_stepsize * 0.95);
 		float t1sq = t1 * t1;
-		float t2 = min(1.0,t1 + 0.05);
+		float t2 = min(1.0,t1 + scattering_stepsize);
 		float t2sq = t2 * t2;
 		float dt = t2sq - t1sq;
 		float dtlen = dt * dist;
