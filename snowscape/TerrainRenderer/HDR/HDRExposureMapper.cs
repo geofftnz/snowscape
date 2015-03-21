@@ -10,7 +10,7 @@ using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.HDR
 {
-    public class HDRExposureMapper : GameComponentBase
+    public class HDRExposureMapper : GameComponentBase, IReloadable
     {
         private const int HISTOGRAMWIDTH = 256;
 
@@ -69,16 +69,8 @@ namespace Snowscape.TerrainRenderer.HDR
                 }));  // colour
             this.gbuffer.Init(this.Width, this.Height);
 
-            program.Init(
-                @"HDRExpose.vert",
-                @"HDRExpose.frag",
-                new List<Variable> 
-                { 
-                    new Variable(0, "vertex"), 
-                    new Variable(1, "in_texcoord0") 
-                });
-
-            this.gbufferCombiner = new GBufferCombiner(this.gbuffer, this.program);
+            this.gbufferCombiner = new GBufferCombiner(this.gbuffer);
+            this.Reload();
 
             this.projection = Matrix4.CreateOrthographicOffCenter(0.0f, 1.0f, 0.0f, 1.0f, 0.001f, 10.0f);
             this.modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
@@ -90,6 +82,35 @@ namespace Snowscape.TerrainRenderer.HDR
             this.histogramTexture.SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
             this.histogramTexture.UploadEmpty();
 
+        }
+
+        private ShaderProgram LoadShader()
+        {
+            var program = new ShaderProgram(this.GetType().Name);
+            program.Init(
+                @"HDRExpose.vert",
+                @"HDRExpose.frag",
+                new List<Variable> 
+                { 
+                    new Variable(0, "vertex"), 
+                    new Variable(1, "in_texcoord0") 
+                });
+            return program;
+        }
+
+        private void SetShader(ShaderProgram newprogram)
+        {
+            if (this.program != null)
+            {
+                this.program.Unload();
+            }
+            this.program = newprogram;
+            this.gbufferCombiner.Maybe(gb => gb.CombineProgram = this.program);
+        }
+
+        public void Reload()
+        {
+            this.ReloadShader(this.LoadShader, this.SetShader, log);
         }
 
         public void Resize(int width, int height)
@@ -246,5 +267,6 @@ namespace Snowscape.TerrainRenderer.HDR
                 sp.SetUniform("blacklevel", this.BlackLevel);
             });
         }
+
     }
 }
