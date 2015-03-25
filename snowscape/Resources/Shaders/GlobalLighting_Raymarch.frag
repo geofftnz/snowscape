@@ -198,11 +198,13 @@ void main(void)
 	float nearAirFactor = skylightBrightness;
 
 	// get total air mass between eye and end of scattering 
-	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
-	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
+	//float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
+	float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
 
-	vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
+	//vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
+	float fogAirDensityFactor = 10.0;
+	
 	float fogAmount = 1.0 / (exp(totalAir));
 
 
@@ -214,8 +216,12 @@ void main(void)
 
 	// add in scattering from sky dome, based on angle of view
 
-	vec2 skyProbeDir = dir.xz;//(dir.y < 0.0) ? normalize(dir.xz) : dir.xz;
+	vec2 skyProbeDir = (dir.y < 0.0) ? normalize((dir * vec3(1.0,0.1,1.0)).xz) : dir.xz;
 	vec3 skyProbe = texture(skylightSmoothTex,vec2(skyProbeDir * 0.48 + 0.5)).rgb;
+	//skyProbe *= absorbAmount;
+	skyProbe = absorb(totalAir,skyProbe,scatterAbsorb);
+	
+	
 	c = mix(skyProbe, c, fogAmount);
 	//c += skyProbe * totalAir;
 
