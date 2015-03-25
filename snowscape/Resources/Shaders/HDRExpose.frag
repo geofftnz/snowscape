@@ -32,55 +32,35 @@ vec3 Uncharted2Tonemap(vec3 col)
 		   ) - vec3(E/F);
 }
 
-void main(void)
+const vec3 luminance = vec3(0.2126,0.7152,0.0722);
+
+vec3 getSample(vec2 p)
 {
-	
-	//vec3 col = texture(colTex,texcoord0).rgb;
-	vec3 col = textureLod(colTex,texcoord0,0).rgb;
-
-
-	// chromatic aberration
-	//vec2 posFromCentre = texcoord0.xy - vec2(0.5);
-	//vec3 col;
-	//col.r = textureLod(colTex,texcoord0 + posFromCentre * 0.0,0).r;
-	//col.g = textureLod(colTex,texcoord0 + posFromCentre * 0.005,0).g;
-	//col.b = textureLod(colTex,texcoord0 + posFromCentre * 0.01,0).b;
-//
+	vec3 col = textureLod(colTex,p,0).rgb;
 
 	// set black level
-	col.rgb -= vec3(blacklevel);
-
+	//col.rgb -= vec3(blacklevel);
+	col.rgb = mix(pow(col.rgb,vec3(1.0 + blacklevel)),col.rgb,min(1.0,pow(dot(col,luminance),3.0)));
+	
+	
 	// apply exposure
 	//col.rgb = vec3(1.0) - exp(col.rgb * exposure);
 	col.rgb *= -exposure;
 
 	// reinhard tone map
-	//float whitelevel = 2.0;
 	col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
 
-	// uncharted 2 tonemap - do not do exp and gamma
-	//float expBias = exposure;
-	//col = Uncharted2Tonemap(col * expBias);
-	//vec3 white = 1.0 / Uncharted2Tonemap(vec3(W));
-	//col = col*white;
-//
-	// gamma correct
-	//col = sqrt(col.rgb);
+	// gamma correction
 	col = pow(col.rgb,vec3(1.0/2.2));
-
-	// TODO: Anti-alias
-	/*
-	// render histogram
-	vec2 p = (texcoord0 - vec2(0.5,0.9)) * vec2(2.2,9.2);
-	if (p.x >= 0.0 && p.y >= 0.0 && p.x < 1.0 && p.y < 1.0)
-	{
-		vec4 h = texture(histogramTex,vec2(p.x,0.0));
-
-		col *= 0.75;
-		col.rgb += (vec3(1.0)-step(h.rgb,vec3(p.y))) * 0.2;
-		col.rgb += vec3((1.0 - step(h.a,p.y)) * 0.5);
-	}*/
 	
+	return col;
+}
+
+void main(void)
+{
+	vec3 col = getSample(texcoord0);
+
+		
 
 	// output
 	out_Colour = vec4(col,1.0);
