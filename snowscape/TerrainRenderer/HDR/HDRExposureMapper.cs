@@ -255,8 +255,12 @@ namespace Snowscape.TerrainRenderer.HDR
 
 
 
-        public void Render()
+        public void Render(float fxaaQualitySubpix = 0.75f, float fxaaQualityEdgeThreshold = 0.166f, float fxaaQualityEdgeThresholdMin = 0.0833f)
         {
+            if (this.Width < 1 || this.Height < 1) return;
+
+            var invresolution = new Vector2(1.0f / (float)this.Width, 1.0f / (float)this.Height);
+
             this.histogramTexture.Bind(TextureUnit.Texture1);
             this.gbufferCombiner.Render(projection, modelview, (sp) =>
             {
@@ -265,6 +269,37 @@ namespace Snowscape.TerrainRenderer.HDR
                 sp.SetUniform("exposure", this.Exposure);
                 sp.SetUniform("whitelevel", this.WhiteLevel);
                 sp.SetUniform("blacklevel", this.BlackLevel);
+                sp.SetUniform("fxaaQualityRcpFrame", invresolution);
+
+                // Choose the amount of sub-pixel aliasing removal.
+                // This can effect sharpness.
+                //   1.00 - upper limit (softer)
+                //   0.75 - default amount of filtering
+                //   0.50 - lower limit (sharper, less sub-pixel aliasing removal)
+                //   0.25 - almost off
+                //   0.00 - completely off
+                sp.SetUniform("fxaaQualitySubpix", fxaaQualitySubpix);
+
+                // The minimum amount of local contrast required to apply algorithm.
+                //   0.333 - too little (faster)
+                //   0.250 - low quality
+                //   0.166 - default
+                //   0.125 - high quality 
+                //   0.063 - overkill (slower)
+                sp.SetUniform("fxaaQualityEdgeThreshold", fxaaQualityEdgeThreshold);
+
+                // Trims the algorithm from processing darks.
+                //   0.0833 - upper limit (default, the start of visible unfiltered edges)
+                //   0.0625 - high quality (faster)
+                //   0.0312 - visible limit (slower)
+                // Special notes when using FXAA_GREEN_AS_LUMA,
+                //   Likely want to set this to zero.
+                //   As colors that are mostly not-green
+                //   will appear very dark in the green channel!
+                //   Tune by looking at mostly non-green content,
+                //   then start at zero and increase until aliasing is a problem.
+                sp.SetUniform("fxaaQualityEdgeThresholdMin", 0.0f);
+
             });
         }
 

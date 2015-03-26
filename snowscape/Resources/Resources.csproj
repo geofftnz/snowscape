@@ -59,6 +59,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Shaders\Atmospheric.glsl" />
+    <Content Include="Shaders\fxaa.glsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Shaders\noise4d.glsl" />
     <None Include="Shaders\noise3d.glsl" />
     <None Include="Shaders\noise2d.glsl" />

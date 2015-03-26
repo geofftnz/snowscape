@@ -308,6 +308,11 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("NormalBlendNearDistance", 100.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("NormalBlendFarDistance", 500.0f, 0.0f, 2000.0f, v => v * 1.02f, v => v * 0.98f));
 
+
+            parameters.Add(new Parameter<float>("FXAAQuality", 0.75f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
+            parameters.Add(new Parameter<float>("FXAAThreshold", 0.166f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f));
+            parameters.Add(new Parameter<float>("FXAAThresholdMin", 0.0833f, 0.001f, 0.1f, v => v + 0.001f, v => v - 0.001f));
+
             #endregion
 
 
@@ -986,7 +991,11 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
-            this.hdrExposure.Render();
+            this.hdrExposure.Render(
+                parameters["FXAAQuality"      ].GetValue<float>(),    
+                parameters["FXAAThreshold"    ].GetValue<float>(),
+                parameters["FXAAThresholdMin" ].GetValue<float>()
+                );
 
             if (stepFence)
             {
