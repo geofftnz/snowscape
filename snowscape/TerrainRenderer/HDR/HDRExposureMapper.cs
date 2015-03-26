@@ -62,8 +62,8 @@ namespace Snowscape.TerrainRenderer.HDR
                 new GBuffer.TextureSlotParam(TextureTarget.Texture2D, PixelInternalFormat.Rgba16f, PixelFormat.Rgba, PixelType.HalfFloat, false,
                 new List<ITextureParameter>
                 {
-                    new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest),
-                    new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest),
+                    new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear),
+                    new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear),
                     new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge),
                     new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge)
                 }));  // colour
@@ -255,7 +255,7 @@ namespace Snowscape.TerrainRenderer.HDR
 
 
 
-        public void Render(float fxaaQualitySubpix = 0.75f, float fxaaQualityEdgeThreshold = 0.166f, float fxaaQualityEdgeThresholdMin = 0.0833f)
+        public void Render(float time, float fxaaQualitySubpix = 0.75f, float fxaaQualityEdgeThreshold = 0.166f, float fxaaQualityEdgeThresholdMin = 0.0833f)
         {
             if (this.Width < 1 || this.Height < 1) return;
 
@@ -269,6 +269,7 @@ namespace Snowscape.TerrainRenderer.HDR
                 sp.SetUniform("exposure", this.Exposure);
                 sp.SetUniform("whitelevel", this.WhiteLevel);
                 sp.SetUniform("blacklevel", this.BlackLevel);
+                sp.SetUniform("time", time);
                 sp.SetUniform("fxaaQualityRcpFrame", invresolution);
 
                 // Choose the amount of sub-pixel aliasing removal.

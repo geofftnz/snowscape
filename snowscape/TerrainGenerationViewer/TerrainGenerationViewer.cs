@@ -992,6 +992,7 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
             this.hdrExposure.Render(
+                (float)(this.frameCounter.Frames % 65536),
                 parameters["FXAAQuality"      ].GetValue<float>(),    
                 parameters["FXAAThreshold"    ].GetValue<float>(),
                 parameters["FXAAThresholdMin" ].GetValue<float>()

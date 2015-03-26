@@ -7,6 +7,8 @@ uniform float exposure;
 uniform float whitelevel;
 uniform float blacklevel;
 
+uniform float time;
+
 // FXAA
 uniform vec2 fxaaQualityRcpFrame;
 uniform float fxaaQualitySubpix;
@@ -17,6 +19,7 @@ uniform float fxaaQualityEdgeThresholdMin;
 noperspective in vec2 texcoord0;
 out vec4 out_Colour;
 
+#include "noise.glsl"
 
 const vec3 luminance = vec3(0.2126,0.7152,0.0722);
 
@@ -48,10 +51,20 @@ vec4 getSample(vec2 p)
 
 void main(void)
 {
-	//vec4 col = getSample(texcoord0);
+	vec4 col;
 
-	vec4 col = FxaaPixelShader(texcoord0);
+	if (texcoord0.x < 0.5)
+	{
+		col = getSample(texcoord0); 
+	}
+	else
+	{
+		col = FxaaPixelShader(texcoord0);
+	}
 	
+
+	//float n = hash(time + hash(texcoord0.x) + hash(texcoord0.y));
+	//col *= (1.0 - n * 0.1);
 
 	// output
 	out_Colour = col;
