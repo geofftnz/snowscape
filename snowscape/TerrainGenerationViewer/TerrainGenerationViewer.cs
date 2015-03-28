@@ -580,8 +580,11 @@ namespace Snowscape.TerrainGenerationViewer
         {
             SetProjection();
             //this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
-            this.lightingStep.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
-            this.hdrExposure.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            //this.lightingStep.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            //this.hdrExposure.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+
+            this.components.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+
             this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 

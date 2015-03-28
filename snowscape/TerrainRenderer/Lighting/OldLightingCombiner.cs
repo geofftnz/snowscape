@@ -32,7 +32,7 @@ namespace Snowscape.TerrainRenderer.Lighting
     /// - render the gbuffer from the previous step into a new colour buffer
     /// 
     /// </summary>
-    public class OldLightingCombiner : GameComponentBase
+    public class OldLightingCombiner : GameComponentBase, IResizeable
     {
         private GBuffer gbuffer = new GBuffer("lighting", true);
         private ShaderProgram program = new ShaderProgram("combiner");

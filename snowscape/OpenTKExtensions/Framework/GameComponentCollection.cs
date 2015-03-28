@@ -28,9 +28,18 @@ namespace OpenTKExtensions.Framework
             }
         }
 
+        public void Do<T>(Action<T> action) where T : class
+        {
+            foreach (var component in this.SelectMany(c => (c as T).Enum()))
+            {
+                action(component);
+            }
+        }
+
+
         public void Render<F>(F frameData) where F : IFrameRenderData
         {
-            foreach (var component in this.Select(c => c as IRenderable).Where(c => c != null).Where(c => c.Visible).OrderBy(c => c.DrawOrder))
+            foreach (var component in this.OfType<IRenderable>().Where(c => c.Visible).OrderBy(c => c.DrawOrder))
             {
                 component.Render(frameData);
             }
@@ -38,20 +47,19 @@ namespace OpenTKExtensions.Framework
 
         public void Update<F>(F frameData) where F : IFrameUpdateData
         {
-            foreach (var component in this.Select(c => c as IUpdateable).Where(c => c != null))
-            {
-                component.Update(frameData);
-            }
+            this.Do<IUpdateable>(c => c.Update(frameData));
         }
 
         public void Reload()
         {
-            foreach (var component in this.SelectMany(c => (c as IReloadable).Enum()))
-            //foreach (var component in this.Select(c => c as IReloadable).Where(c => c != null))
-            {
-                component.Reload();
-            }
+            this.Do<IReloadable>(c => c.Reload());
         }
+
+        public void Resize(int width, int height)
+        {
+            this.Do<IResizeable>(c => c.Resize(width, height));
+        }
+
 
         public void Add(IGameComponent component, int loadOrder)
         {

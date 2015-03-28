@@ -10,7 +10,7 @@ using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.HDR
 {
-    public class HDRExposureMapper : GameComponentBase, IReloadable
+    public class HDRExposureMapper : GameComponentBase, IReloadable, IResizeable
     {
         private const int HISTOGRAMWIDTH = 256;
 

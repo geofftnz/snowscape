@@ -71,6 +71,7 @@
     <Compile Include="Framework\IListTextures.cs" />
     <Compile Include="Framework\IReloadable.cs" />
     <Compile Include="Framework\IRenderable.cs" />
+    <Compile Include="Framework\IResizeable.cs" />
     <Compile Include="Framework\IUpdateable.cs" />
     <Compile Include="Framework\ReloadResult.cs" />
     <Compile Include="GBuffer.cs" />

@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AA\AAPostProcess.cs" />
     <Compile Include="Atmosphere\CloudDepthRenderer.cs" />
     <Compile Include="Atmosphere\SkyCubeRenderer.cs" />
     <Compile Include="Atmosphere\SkylightRenderer.cs" />
