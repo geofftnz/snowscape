@@ -114,8 +114,11 @@ namespace OpenTKExtensions
 
             setUniforms(this.CombineProgram);
 
-            this.gbufferCombineVertexVBO.Bind(this.CombineProgram.VariableLocation("vertex"));
-            this.gbufferCombineTexcoordVBO.Bind(this.CombineProgram.VariableLocation("in_texcoord0"));
+            //this.gbufferCombineVertexVBO.Bind(this.CombineProgram.VariableLocation("vertex"));
+
+            this.CombineProgram.BindVariable("vertex", v => this.gbufferCombineVertexVBO.Bind(v));
+            this.CombineProgram.BindVariable("in_texcoord0", v => this.gbufferCombineTexcoordVBO.Bind(v));
+
             this.gbufferCombineIndexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.gbufferCombineIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
 

@@ -71,6 +71,7 @@
     <None Include="Shaders\LineBuffer.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Shaders\AAPost.glsl" />
     <None Include="Shaders\Skylight.glsl" />
     <None Include="Shaders\WireframePatch.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

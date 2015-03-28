@@ -20,6 +20,7 @@ using OpenTKExtensions.Camera;
 using Atmosphere = Snowscape.TerrainRenderer.Atmosphere;
 using Lighting = Snowscape.TerrainRenderer.Lighting;
 using HDR = Snowscape.TerrainRenderer.HDR;
+using AA = Snowscape.TerrainRenderer.AA;
 using Snowscape.TerrainRenderer.Mesh;
 using Loaders = Snowscape.TerrainRenderer.Loaders;
 using OpenTKExtensions.Framework;
@@ -80,6 +81,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Lighting.LightingCombiner lightingStep;
         private HDR.HDRExposureMapper hdrExposure;
+        private AA.AAPostProcess postProcessStep;
 
         private QuadtreeLODRenderer tileRendererQuadtree;
         private GenerationVisPatchDetailRenderer tileRendererPatchDetail;
@@ -219,6 +221,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Components.Add(this.lightingStep = new Lighting.LightingCombiner(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
             this.Components.Add(this.hdrExposure = new HDR.HDRExposureMapper(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
+            this.Components.Add(this.postProcessStep = new AA.AAPostProcess(this.ClientRectangle.Width, this.ClientRectangle.Height), LoadOrder.Phase3);
 
             this.Components.Add(this.quadTreeLodDebugRenderer = new UI.Debug.QuadTreeLodDebugRenderer(), LoadOrder.Phase3);
             this.Components.Add(this.textureDebugRenderer = new UI.Debug.TextureDebugRenderer(), LoadOrder.Phase4);
@@ -579,9 +582,6 @@ namespace Snowscape.TerrainGenerationViewer
         void TerrainGenerationViewer_Resize(object sender, EventArgs e)
         {
             SetProjection();
-            //this.gbuffer.Init(this.ClientRectangle.Width, this.ClientRectangle.Height);
-            //this.lightingStep.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
-            //this.hdrExposure.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             this.components.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
@@ -987,25 +987,40 @@ namespace Snowscape.TerrainGenerationViewer
             }
             frameTracker.Step("scattering", new Vector4(0.0f, 0.0f, 1.0f, 1.0f));
 
-            // render hdr buffer to screen
 
-            GL.Viewport(this.ClientRectangle);
-            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
+            
+            // render HDR to post-process
+            this.postProcessStep.BindForWriting();
 
             this.hdrExposure.Render(
                 (float)(this.frameCounter.Frames % 65536),
-                parameters["FXAAQuality"      ].GetValue<float>(),    
-                parameters["FXAAThreshold"    ].GetValue<float>(),
-                parameters["FXAAThresholdMin" ].GetValue<float>()
+                parameters["FXAAQuality"].GetValue<float>(),
+                parameters["FXAAThreshold"].GetValue<float>(),
+                parameters["FXAAThresholdMin"].GetValue<float>()
                 );
+
+            this.postProcessStep.UnbindFromWriting();
 
             if (stepFence)
             {
                 GL.Finish();
             }
             frameTracker.Step("HDR", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
+
+
+
+
+
+            // render post-process buffer to screen
+
+            GL.Viewport(this.ClientRectangle);
+            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
+
+            this.postProcessStep.Render(true);
+
+            frameTracker.Step("PostProcess", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
             // textures
             if (this.textureDebugRenderer.Visible)

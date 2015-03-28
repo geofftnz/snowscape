@@ -127,16 +127,36 @@ namespace OpenTKExtensions
             return this;
         }
 
+        public bool TryGetVariableLocation(string name, out int location)
+        {
+            return this.VariableLocations.TryGetValue(name, out location);
+        }
 
         public int VariableLocation(string name)
         {
             int location;
-            if (this.VariableLocations.TryGetValue(name, out location))
+            if (TryGetVariableLocation(name, out location))
             {
                 return location;
             }
+            
             throw new InvalidOperationException(string.Format("Shader Program {0} could not find variable {1}", this.Name, name));
         }
+
+        public bool BindVariable(string name, Action<int> bindAction)
+        {
+            int location;
+            if (TryGetVariableLocation(name, out location))
+            {
+                if (bindAction != null)
+                {
+                    bindAction(location);
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
         private void BindFragDataLocation(int colourSlot, string outputName)
         {
