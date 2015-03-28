@@ -52,15 +52,16 @@ vec4 getSample(vec2 p)
 void main(void)
 {
 	vec4 col;
+	col = getSample(texcoord0); 
 
-	if (texcoord0.x < 0.5)
-	{
-		col = getSample(texcoord0); 
-	}
-	else
-	{
-		col = FxaaPixelShader(texcoord0);
-	}
+	// if (texcoord0.x < 0.5)
+	// {
+		// col = getSample(texcoord0); 
+	// }
+	// else
+	// {
+		// col = FxaaPixelShader(texcoord0);
+	// }
 	
 
 	//float n = hash(time + hash(texcoord0.x) + hash(texcoord0.y));

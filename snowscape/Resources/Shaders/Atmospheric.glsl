@@ -501,7 +501,7 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	 
 	for (float t = 0; t < 1.0; t += scattering_stepsize)
 	{
-		float t1 = min(0.9999,t + n * scattering_stepsize * 0.95);
+		float t1 = min(0.9999,t + n * scattering_stepsize * 0.995);
 		float t1sq = t1 * t1;
 		float t2 = min(1.0,t1 + scattering_stepsize);
 		float t2sq = t2 * t2;
