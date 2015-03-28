@@ -73,6 +73,7 @@
     <Compile Include="NoiseTexture.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
     <Compile Include="Renderers\CompositeLODRenderer.cs" />
+    <Compile Include="Renderers\GenerationVisConicalRenderer.cs" />
     <Compile Include="Renderers\PatchHighRenderer.cs" />
     <Compile Include="Renderers\PatchMediumRenderer.cs" />
     <Compile Include="Renderers\PatchLowRenderer.cs" />
