@@ -36,6 +36,8 @@ namespace OpenTKExtensions.Camera
         private int prevMouseY = -10000;
         float movementSpeed = 5f;
 
+        private Random rand = new Random();
+
 
         public float AngleUpDown
         {
@@ -158,6 +160,9 @@ namespace OpenTKExtensions.Camera
             // keyboard move
             float speed = (float)(this.movementSpeed * time * Math.Sqrt(this.EyeHeight));
 
+            float speedmul = this.Keyboard[Key.ShiftLeft] ? 1.0f : 0.1f;
+            speed *= speedmul;
+
             var pos = this.Position;
             if (this.Keyboard[Key.W])
             {
@@ -186,12 +191,12 @@ namespace OpenTKExtensions.Camera
 
             if (this.Keyboard[Key.F])
             {
-                this.EyeHeight += 10.0f * this.movementSpeed * (float)time;
+                this.EyeHeight += 10.0f * this.movementSpeed * speedmul * (float)time;
                 this.IsMoving = true;
             }
             if (this.Keyboard[Key.V])
             {
-                this.EyeHeight -= 10.0f * this.movementSpeed * (float)time;
+                this.EyeHeight -= 10.0f * this.movementSpeed * speedmul * (float)time;
                 this.IsMoving = true;
             }
 
@@ -207,7 +212,18 @@ namespace OpenTKExtensions.Camera
 
         public Matrix4 View
         {
-            get { return Matrix4.LookAt(this.EyePos, this.LookTarget, -Vector3.UnitY); }
+            get
+            {
+                Vector3 lookDither = Vector3.Zero;
+                float ditherAmount = 0.0002f;
+
+                lookDither.X = (float)((rand.NextDouble() - 0.5));
+                lookDither.Y = (float)((rand.NextDouble() - 0.5));
+                lookDither.Z = (float)((rand.NextDouble() - 0.5));
+
+
+                return Matrix4.LookAt(this.EyePos, this.LookTarget + lookDither * ditherAmount, -Vector3.UnitY);
+            }
         }
     }
 }
