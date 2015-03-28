@@ -66,6 +66,7 @@
     <Compile Include="Loaders\TerrainTileParamLoader.cs" />
     <Compile Include="Loaders\TerrainTileLoader.cs" />
     <Compile Include="Loaders\TerrainGlobalLoader.cs" />
+    <Compile Include="Mesh\ConicalMesh.cs" />
     <Compile Include="Mesh\IPatchCache.cs" />
     <Compile Include="Mesh\PatchCache.cs" />
     <Compile Include="Mesh\TerrainPatchMesh.cs" />
