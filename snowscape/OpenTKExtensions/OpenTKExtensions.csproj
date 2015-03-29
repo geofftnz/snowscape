@@ -81,6 +81,7 @@
     <Compile Include="GBufferSimpleStep.cs" />
     <Compile Include="GBufferSimpleStepComponent.cs" />
     <Compile Include="Generators\GridMesh.cs" />
+    <Compile Include="Generators\ScreenTri.cs" />
     <Compile Include="IDrawableComponent.cs" />
     <Compile Include="ISamplerParameter.cs" />
     <Compile Include="Loaders\FileSystemLoader.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="UI\FrameTimeGraphRenderer.cs" />
     <Compile Include="Variable.cs" />
     <Compile Include="VBO.cs" />
+    <Compile Include="VBOExtensions.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>
