@@ -166,7 +166,7 @@ namespace OpenTKExtensions.Camera
                 int deltaX = mouseX - prevMouseX;
                 int deltaY = mouseY - prevMouseY;
 
-                IsMouseMoving = (deltaX != 0 || deltaY != 0);
+                IsMouseMoving = (IsMouseMoving || deltaX != 0 || deltaY != 0);
 
                 this.AngleLeftRight += (float)deltaX * -0.01f;
                 this.AngleUpDown += (float)deltaY * -0.01f;
