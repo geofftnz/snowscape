@@ -263,6 +263,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
             parameters.Add(new Parameter<float>("BlackLevel", 0.0f, 0.0f, 100.0f, v => v += 0.01f, v => v -= 0.01f));
 
+            parameters.Add(new Parameter<float>("CameraDither", 0.0001f, 0.0f, 0.01f, v => v += 0.00001f, v => v -= 0.00001f));
 
 
             parameters.Add(new Parameter<float>("sunElevation", 0.1f, -1.0f, 1.0f, v => v + 0.001f, v => v - 0.001f, ParameterImpact.PreCalcLighting));
@@ -771,6 +772,9 @@ namespace Snowscape.TerrainGenerationViewer
             // set component visibility from parameters
             quadTreeLodDebugRenderer.Visible = this.parameters["quadtreevis"].GetValue<bool>();
             textureDebugRenderer.Visible = this.parameters["debugtextures"].GetValue<bool>();
+
+            // camera setup
+            (camera as WalkCamera).Maybe(c => c.DitherAmount = this.parameters["CameraDither"].GetValue<float>());
 
 
             GL.Finish();
