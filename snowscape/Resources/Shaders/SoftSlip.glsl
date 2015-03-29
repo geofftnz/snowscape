@@ -167,6 +167,162 @@ void main(void)
 }
 
 
+//|HardOutflow
+/*
+	Simulation of exposed rock fracturing by ice.
+
+	- Slope must be very steep 
+	- Amount of loose material must be minimal
+	- No saturation impact
+	- process is random
+*/
+
+#version 140
+precision highp float;
+
+uniform sampler2D terraintex;
+
+uniform float texsize;
+uniform float maxdiff;
+uniform float sliprate;
+uniform float maxsoft;
+uniform float time;
+uniform float probability;
+
+in vec2 texcoord;
+
+out vec4 out_SlipO;
+out vec4 out_SlipD;
+
+#include "noise.glsl"
+
+float t = 1.0 / texsize;
+vec3 tt = vec3(-t,0,t);
+float diag = 0.707;
+
+
+float getHeight(vec4 l)
+{
+	return l.r + l.g;
+}
+
+void main(void)
+{
+	vec4 l = texture(terraintex,texcoord);
+
+	float rand = hash(hash(time) + hash(texcoord.x) + hash(texcoord.y));
+
+	// early exit if conditions not met
+	if (l.g > maxsoft || rand > probability)
+	{
+		out_SlipO = vec4(0.0);
+		out_SlipD = vec4(0.0);
+		return;
+	}
+
+
+	vec4 ter_n = texture(terraintex,texcoord + tt.yx);
+	vec4 ter_s = texture(terraintex,texcoord + tt.yz);
+	vec4 ter_w = texture(terraintex,texcoord + tt.xy);
+	vec4 ter_e = texture(terraintex,texcoord + tt.zy);
+	vec4 ter_nw = texture(terraintex,texcoord + tt.xx);
+	vec4 ter_ne = texture(terraintex,texcoord + tt.zx);
+	vec4 ter_sw = texture(terraintex,texcoord + tt.xz);
+	vec4 ter_se = texture(terraintex,texcoord + tt.zz);
+
+	float h = l.r - maxdiff;
+
+	vec4 outflowO = vec4(0);
+	vec4 outflowD = vec4(0);
+	
+	outflowO.r = max(0,h - getHeight(ter_n));	 // N
+	outflowO.g = max(0,h - getHeight(ter_s));	 // S
+	outflowO.b = max(0,h - getHeight(ter_w));	 // W
+	outflowO.a = max(0,h - getHeight(ter_e));	 // E
+
+	outflowD.r = max(0,h - getHeight(ter_nw));	 // NW
+	outflowD.g = max(0,h - getHeight(ter_ne));	 // NE
+	outflowD.b = max(0,h - getHeight(ter_sw));	 // SW
+	outflowD.a = max(0,h - getHeight(ter_se));	 // SE
+	outflowD *= diag; // correction for diagonal transfers
+
+	float ptotal = dot(outflowO,vec4(1)) + dot(outflowD,vec4(1)); // add components
+	
+	float pscale = sliprate / max(ptotal,0.001);//(ptotal * clamp(1.0 / ptotal,0.0,1.0)) * min(0.1, sliprate);
+
+	out_SlipO = outflowO * pscale;
+	out_SlipD = outflowD * pscale;
+}
+
+
+//|HardTransport
+
+#version 140
+precision highp float;
+
+uniform sampler2D terraintex;
+uniform sampler2D flowOtex;
+uniform sampler2D flowDtex;
+
+uniform float texsize;
+
+in vec2 texcoord;
+
+out vec4 out_Terrain;
+
+float t = 1.0 / texsize;
+
+//	Ortho: RGBA = N S W E
+//	Diag: RGBA = NW NE SW SE
+
+// N S W E = yx yz xy zy
+// NW NE SW SE = xx zx xz zz
+
+void main(void)
+{
+	vec4 terrain = texture(terraintex,texcoord);
+	
+	vec3 tt = vec3(-t,0,t); // offset swizzle
+
+	// subtract our outflow from hard
+	terrain.r = max(0.0,
+					terrain.r - 
+					(
+						dot(texture(flowOtex,texcoord),vec4(1.0)) + 
+						dot(texture(flowDtex,texcoord),vec4(1.0))
+					) 
+				);
+
+	// add to soft
+
+	// inflow from N (S)
+	terrain.g += texture(flowOtex,texcoord + tt.yx).g;
+
+	// inflow from S (N)
+	terrain.g += texture(flowOtex,texcoord + tt.yz).r;
+
+	// inflow from W (E)
+	terrain.g += texture(flowOtex,texcoord + tt.xy).a;
+
+	// inflow from E (W)
+	terrain.g += texture(flowOtex,texcoord + tt.zy).b;
+
+	// inflow from NW (SE)
+	terrain.g += texture(flowDtex,texcoord + tt.xx).a;
+
+	// inflow from NE (SW)
+	terrain.g += texture(flowDtex,texcoord + tt.zx).b;
+
+	// inflow from SW (NE)
+	terrain.g += texture(flowDtex,texcoord + tt.xz).g;
+
+	// inflow from SE (NW)
+	terrain.g += texture(flowDtex,texcoord + tt.zz).r;
+
+	out_Terrain = terrain;
+}
+
+
 
 //|SnowOutflow
 

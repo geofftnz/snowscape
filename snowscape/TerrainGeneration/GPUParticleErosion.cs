@@ -111,8 +111,13 @@ namespace TerrainGeneration
         private const string P_SATURATIONRATE = "erosion-saturationrate";
         private const string P_SATURATIONTHRESHOLD = "erosion-satthreshold";
         private const string P_DEATHRATE = "erosion-deathrate";
-
         private const string P_FALLRAND = "erosion-fallrandom";
+
+        // hard erosion
+        private const string P_HARDTHRESHOLD = "erosion-hardslipthreshold";
+        private const string P_HARDSLIPRATE = "erosion-hardsliprate";
+        private const string P_HARDSLIPMAXSOFT = "erosion-hardslipmaxsoft";
+        private const string P_HARDSLIPPROBABILITY = "erosion-hardslipprobability";
 
 
 
@@ -128,6 +133,7 @@ namespace TerrainGeneration
 
         private float initialMinHeight = 0f;
         private float initialMaxHeight = 1000f;
+        private uint iterations = 0;
 
         public GPUParticleErosion(int width, int height, int particleTexWidth, int particleTexHeight)
         {
@@ -219,10 +225,16 @@ namespace TerrainGeneration
         private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("erosion-slipflow");
         private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("erosion-sliptransport");
 
+        // Step 7: Hard Slip 
+        private GBufferShaderStep HardSlippageFlowStep = new GBufferShaderStep("erosion-hardslipflow");
+        private GBufferShaderStep HardSlippageTransportStep = new GBufferShaderStep("erosion-hardsliptransport");
+
         // Copy particles from buffer 1 to buffer 0
         private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("gpupe-copyparticles");
         private GBufferShaderStep CopyVelocityStep = new GBufferShaderStep("gpupe-copyvelocity");
 
+        // Copy terrain from buffer 1 to buffer 0
+        private GBufferShaderStep CopyTerrainStep = new GBufferShaderStep("gpupe-copyterrain");
 
         private ParameterCollection parameters = new ParameterCollection();
         public ParameterCollection Parameters { get { return parameters; } }
@@ -235,8 +247,11 @@ namespace TerrainGeneration
             yield return UpdateParticlesStep;
             yield return SlippageFlowStep;
             yield return SlippageTransportStep;
+            yield return HardSlippageFlowStep;
+            yield return HardSlippageTransportStep;
             yield return CopyParticlesStep;
             yield return CopyVelocityStep;
+            yield return CopyTerrainStep;
         }
 
 
@@ -283,6 +298,13 @@ namespace TerrainGeneration
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.02f, 0.0f, 2.0f, 0.001f));
+
+            
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDTHRESHOLD,3.0f,0.0f,20.0f,0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDSLIPRATE,0.02f,0.0f,0.5f,0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDSLIPMAXSOFT,0.5f,0.0f,2.0f,0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDSLIPPROBABILITY,0.01f,0.0f,1.0f,0.001f));
+
 
             // setup textures
             for (int i = 0; i < 2; i++)
@@ -406,6 +428,22 @@ namespace TerrainGeneration
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SlippageTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|Transport");
 
+            //  
+            // Step 5: Hard Slip flow
+            // in: L0
+            // out: flow
+            // 
+            // Step 6: Hard Slip transport
+            // in: L0,flow
+            // out: L1
+
+            HardSlippageFlowStep.SetOutputTexture(0, "out_SlipO", this.SlipFlowTexture[0]);
+            HardSlippageFlowStep.SetOutputTexture(1, "out_SlipD", this.SlipFlowTexture[1]);
+            HardSlippageFlowStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|HardOutflow");
+            HardSlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
+            HardSlippageTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|HardTransport");
+
+
 
             // copy particles
             CopyParticlesStep.SetOutputTexture(0, "out_Particle", this.ParticleStateTexture[0]);
@@ -413,6 +451,16 @@ namespace TerrainGeneration
 
             CopyVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
             CopyVelocityStep.Init(@"BasicQuad.vert", @"ParticleErosion.glsl|CopyVelocity");
+
+            // copy terrain
+            // in: L1
+            // out: L0
+            // TODO: change fragment shader location
+            CopyTerrainStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            CopyTerrainStep.Init(@"BasicQuad.vert", @"Erosion_9TerrainCopy.frag");
+
+
+
         }
 
 
@@ -568,6 +616,40 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
+            // step 7 - hard slippage flow calc
+            // in: terrain
+            // out: slip-flow
+            HardSlippageFlowStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("maxdiff", (float)this.Parameters[P_HARDTHRESHOLD].GetValue());
+                    sp.SetUniform("sliprate", (float)this.Parameters[P_HARDSLIPRATE].GetValue());
+                    sp.SetUniform("maxsoft", (float)this.Parameters[P_HARDSLIPMAXSOFT].GetValue());
+                    sp.SetUniform("probability", (float)this.Parameters[P_HARDSLIPPROBABILITY].GetValue());
+                    sp.SetUniform("time", (float)(iterations % 65536));
+                });
+
+            // step 8 - hard slippage transport
+            SlippageTransportStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                    this.SlipFlowTexture[0].Bind(TextureUnit.Texture1);
+                    this.SlipFlowTexture[1].Bind(TextureUnit.Texture2);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("flowOtex", 1);
+                    sp.SetUniform("flowDtex", 2);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
 
 
 
@@ -593,6 +675,18 @@ namespace TerrainGeneration
                     sp.SetUniform("velocitytex", 0);
                 });
 
+            CopyTerrainStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                });
+
+
+            iterations++;
         }
 
 
