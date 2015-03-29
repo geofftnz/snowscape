@@ -265,17 +265,18 @@ namespace Snowscape.TerrainGenerationViewer
 
 
 
-            parameters.Add(new Parameter<float>("sunElevation", 0.2f, -1.0f, 1.0f, v => v + 0.005f, v => v - 0.005f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.01f, v => v - 0.01f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("sunElevation", 0.1f, -1.0f, 1.0f, v => v + 0.001f, v => v - 0.001f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("sunAzimuth", 0.2f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
 
             //vec3(0.100,0.598,0.662) * 1.4
             //0.18867780436772762, 0.4978442963618773, 0.6616065586417131
             parameters.Add(new Parameter<float>("Kr_r", 0.1287f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Kr_g", 0.2698f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Kr_b", 0.7216f, 0.0f, 1.0f, v => v + 0.002f, v => v - 0.002f, ParameterImpact.PreCalcLighting));  // 0.6616
-            parameters.Add(new Parameter<float>("Sun_r", 10.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Sun_g", 10.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
-            parameters.Add(new Parameter<float>("Sun_b", 10.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
+            parameters.Add(new Parameter<float>("Sun_r", 1.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("Sun_g", 1.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
+            parameters.Add(new Parameter<float>("Sun_b", 1.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
+            parameters.Add(new Parameter<float>("Sun_Brightness", 10.0f, 0.0f, 100.0f, v => v + 0.05f, v => v - 0.05f, ParameterImpact.PreCalcLighting));  // 0.6616
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));  // 0.028  0.1
 
@@ -286,7 +287,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("raleighBrightness", 40.0f, 0.0001f, 1000.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));
 
 
-            parameters.Add(new Parameter<float>("skylightBrightness", 3.8f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
+            parameters.Add(new Parameter<float>("skylightBrightness", 4.0f, 0.0001f, 40.0f, v => v * 1.02f, v => v * 0.98f));
             parameters.Add(new Parameter<float>("AOInfluenceHeight", 5.0f, 0.5f, 2000.0f, v => v + 0.5f, v => v - 0.5f));
 
             parameters.Add(new Parameter<float>("sampleDistanceFactor", 0.0003f, 0.0000001f, 1.0f, v => v * 1.05f, v => v * 0.95f));
@@ -299,7 +300,7 @@ namespace Snowscape.TerrainGenerationViewer
             //parameters.Add(new Parameter<float>("cloudLevel", 250.0f, -1000.0f, 1000.0f, v => v + 1f, v => v - 1f));
             //parameters.Add(new Parameter<float>("cloudThickness", 50.0f, 10.0f, 2000.0f, v => v + 5f, v => v - 5f));
 
-            parameters.Add(new Parameter<float>("NearScatterDistance", 1200.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
+            parameters.Add(new Parameter<float>("NearScatterDistance", 2500.0f, 10.0f, 20000.0f, v => v + 10f, v => v - 10f));
             parameters.Add(new Parameter<float>("NearMieBrightness", 10.0f, 0.0f, 20.0f, v => v + 0.1f, v => v - 0.1f));
 
             parameters.Add(new Parameter<float>("ScatteringInitialStepSize", 0.002f, 0.0001f, 10.0f, v => v + 0.0001f, v => v - 0.0001f));
@@ -718,11 +719,7 @@ namespace Snowscape.TerrainGenerationViewer
                         (float)this.parameters["Kr_g"].GetValue(),
                         (float)this.parameters["Kr_b"].GetValue()
                     ),
-                SunLight = new Vector3(
-                        (float)this.parameters["Sun_r"].GetValue(),
-                        (float)this.parameters["Sun_g"].GetValue(),
-                        (float)this.parameters["Sun_b"].GetValue()
-                    ),
+                SunLight = new Vector3(this.parameters["Sun_r"].GetValue<float>(), this.parameters["Sun_g"].GetValue<float>(), this.parameters["Sun_b"].GetValue<float>()) * this.parameters["Sun_Brightness"].GetValue<float>(),
                 ScatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
                 MieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
                 MiePhase = (float)this.parameters["miePhase"].GetValue(),
@@ -1118,7 +1115,7 @@ namespace Snowscape.TerrainGenerationViewer
                 mieBrightness = (float)this.parameters["mieBrightness"].GetValue(),
                 scatterAbsorb = (float)this.parameters["scatterAbsorb"].GetValue(),
                 Kr = new Vector3((float)this.parameters["Kr_r"].GetValue(), (float)this.parameters["Kr_g"].GetValue(), (float)this.parameters["Kr_b"].GetValue()),
-                sunLight = new Vector3((float)this.parameters["Sun_r"].GetValue(), (float)this.parameters["Sun_g"].GetValue(), (float)this.parameters["Sun_b"].GetValue()),
+                sunLight = new Vector3(this.parameters["Sun_r"].GetValue<float>(), this.parameters["Sun_g"].GetValue<float>(), this.parameters["Sun_b"].GetValue<float>()) * this.parameters["Sun_Brightness"].GetValue<float>(),
                 skyPrecalcBoundary = this.parameters["skyPrecalcBoundary"].GetValue<float>()
             };
 
