@@ -218,9 +218,9 @@ namespace Snowscape.TerrainRenderer.AA
             }
             else
             {
-                FrameBlend *= 0.8f;
-                if (FrameBlend < 0.1f)
-                    FrameBlend = 0.1f;
+                FrameBlend -= 0.1f;
+                if (FrameBlend < 0.05f)
+                    FrameBlend = 0.05f;
             }
 
             // Render source gbuffer into destination accumulation buffer

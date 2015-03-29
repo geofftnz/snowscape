@@ -27,13 +27,13 @@ const vec3 luminance = vec3(0.2126,0.7152,0.0722);
 
 void main(void)
 {
-	float fblend = 0.1;
+	float fblend = frameBlend;
 	vec3 c = textureLod(inputTex,tex0,0).rgb;
 	vec4 lf = textureLod(lastFrameTex,tex0,0);
 
-	float clum = dot(c,luminance);
+	//float clum = dot(c,luminance);
 
-	if (abs(clum - lf.w) > 0.8) fblend = 1.0;
+	//if (abs(clum - lf.w) > 0.8) fblend = 1.0;
 	//c.g = 1.0;
 	//lf.r = 1.0;
 	vec3 outc = mix(lf.rgb,c.rgb,fblend);

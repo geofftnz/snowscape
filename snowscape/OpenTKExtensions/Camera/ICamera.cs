@@ -17,5 +17,8 @@ namespace OpenTKExtensions.Camera
         Matrix4 Projection { get; }
         Matrix4 View { get; }
 
+        bool HasChanged();
+        void ResetChanged();
+
     }
 }

@@ -1018,7 +1018,7 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
-            this.postProcessStep.Render(true);
+            this.postProcessStep.Render(this.camera.HasChanged());
 
             frameTracker.Step("PostProcess", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
@@ -1080,6 +1080,8 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("swapbuffers", new Vector4(1.0f, 1.0f, 0.4f, 1.0f));
 
             this.frameCounter.Frame();
+
+            camera.ResetChanged();
 
         }
 

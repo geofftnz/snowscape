@@ -85,6 +85,8 @@ namespace OpenTKExtensions.Camera
         /// </summary>
         public bool IsMoving { get; set; }
 
+        public bool IsMouseMoving { get; set; }
+
         public Vector3 EyePos
         {
             get
@@ -150,6 +152,8 @@ namespace OpenTKExtensions.Camera
                 int deltaX = mouseX - prevMouseX;
                 int deltaY = mouseY - prevMouseY;
 
+                IsMouseMoving = (deltaX != 0 || deltaY != 0);
+
                 this.AngleLeftRight += (float)deltaX * -0.01f;
                 this.AngleUpDown += (float)deltaY * -0.01f;
 
@@ -204,6 +208,17 @@ namespace OpenTKExtensions.Camera
 
         }
 
+        public bool HasChanged()
+        {
+            return IsMoving || IsMouseMoving;
+        }
+
+        public void ResetChanged()
+        {
+            IsMoving = false;
+            IsMouseMoving = false;
+        }
+
         public Matrix4 Projection
         {
             get;
@@ -215,7 +230,7 @@ namespace OpenTKExtensions.Camera
             get
             {
                 Vector3 lookDither = Vector3.Zero;
-                float ditherAmount = 0.0002f;
+                float ditherAmount = 0.0005f;
 
                 lookDither.X = (float)((rand.NextDouble() - 0.5));
                 lookDither.Y = (float)((rand.NextDouble() - 0.5));
@@ -225,5 +240,9 @@ namespace OpenTKExtensions.Camera
                 return Matrix4.LookAt(this.EyePos, this.LookTarget + lookDither * ditherAmount, -Vector3.UnitY);
             }
         }
+
+
+
+
     }
 }
