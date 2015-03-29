@@ -103,6 +103,18 @@ namespace OpenTKExtensions.Camera
             }
         }
 
+        public float DitherAmount { get; set; }
+        public Vector3 LookTargetDithered
+        {
+            get
+            {
+                float ditheramount = DitherAmount;
+                float lrdither = (float)((rand.NextDouble() - 0.5)) * ditheramount;
+                float uddither = (float)((rand.NextDouble() - 0.5)) * ditheramount;
+
+                return this.EyePos + new Vector3((float)(Math.Cos(this.AngleLeftRight + lrdither) * Math.Sin(AngleUpDown + uddither)), (float)Math.Cos(AngleUpDown + uddither), (float)(Math.Sin(this.AngleLeftRight + lrdither) * Math.Sin(AngleUpDown + uddither)));
+            }
+        }
 
         public WalkCamera()
         {
@@ -116,6 +128,8 @@ namespace OpenTKExtensions.Camera
             this.ZFar = 4000.0f;
 
             this.ViewEnable = true;
+
+            this.DitherAmount = 0.0005f;
 
         }
 
@@ -229,15 +243,15 @@ namespace OpenTKExtensions.Camera
         {
             get
             {
-                Vector3 lookDither = Vector3.Zero;
-                float ditherAmount = 0.0005f;
+                //Vector3 lookDither = Vector3.Zero;
+                //float ditherAmount = 0.0002f;
 
-                lookDither.X = (float)((rand.NextDouble() - 0.5));
-                lookDither.Y = (float)((rand.NextDouble() - 0.5));
-                lookDither.Z = (float)((rand.NextDouble() - 0.5));
+                //lookDither.X = (float)((rand.NextDouble() - 0.5));
+                //lookDither.Y = (float)((rand.NextDouble() - 0.5));
+                //lookDither.Z = (float)((rand.NextDouble() - 0.5));
+                //return Matrix4.LookAt(this.EyePos, this.LookTarget + lookDither * ditherAmount, -Vector3.UnitY);
 
-
-                return Matrix4.LookAt(this.EyePos, this.LookTarget + lookDither * ditherAmount, -Vector3.UnitY);
+                return Matrix4.LookAt(this.EyePos, this.LookTargetDithered, -Vector3.UnitY);
             }
         }
 

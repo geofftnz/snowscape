@@ -143,6 +143,8 @@ namespace Snowscape.TerrainGenerationViewer
         private double updateThreadUpdateTime = 0.0;
         private long waterIterations = 0;
         private int textureUpdateCount = 0;
+        private uint currentPrecalcParamsVersion = 0;
+        private uint prevPrecalcParamsVersion = 0;
         private uint currentParamsVersion = 0;
         private uint prevParamsVersion = 0;
 
@@ -383,16 +385,19 @@ namespace Snowscape.TerrainGenerationViewer
 
                 if (this.parameters.Current.Impacts(ParameterImpact.PreCalcLighting))
                 {
-                    currentParamsVersion++;
+                    currentPrecalcParamsVersion++;
                 }
+
+                currentParamsVersion++;
             }
             if (e.Key == Key.Right)
             {
                 this.parameters.Current.Increase();
                 if (this.parameters.Current.Impacts(ParameterImpact.PreCalcLighting))
                 {
-                    currentParamsVersion++;
+                    currentPrecalcParamsVersion++;
                 }
+                currentParamsVersion++;
             }
             if (e.Key == Key.PageUp)
             {
@@ -402,8 +407,9 @@ namespace Snowscape.TerrainGenerationViewer
                 }
                 if (this.parameters.Current.Impacts(ParameterImpact.PreCalcLighting))
                 {
-                    currentParamsVersion++;
+                    currentPrecalcParamsVersion++;
                 }
+                currentParamsVersion++;
             }
             if (e.Key == Key.PageDown)
             {
@@ -413,8 +419,9 @@ namespace Snowscape.TerrainGenerationViewer
                 }
                 if (this.parameters.Current.Impacts(ParameterImpact.PreCalcLighting))
                 {
-                    currentParamsVersion++;
+                    currentPrecalcParamsVersion++;
                 }
+                currentParamsVersion++;
             }
 
             if (e.Key == Key.LBracket)
@@ -586,6 +593,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.components.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
             this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            this.currentParamsVersion++;
         }
 
         private void SetProjection()
@@ -775,6 +783,7 @@ namespace Snowscape.TerrainGenerationViewer
                 this.Components.Reload();
                 this.reloadShaders = false;
                 needToRenderLighting = true;
+                this.currentParamsVersion++;
             }
 
             frameTracker.Step("interframe", new Vector4(0.8f, 0.8f, 0.8f, 1.0f));
@@ -911,7 +920,7 @@ namespace Snowscape.TerrainGenerationViewer
             }
 
             this.CalculateSunDirection();
-            if (prevSunDirection != sunDirection || prevParamsVersion != currentParamsVersion || needToRenderLighting)
+            if (prevSunDirection != sunDirection || prevPrecalcParamsVersion != currentPrecalcParamsVersion || needToRenderLighting)
             {
                 // render lighting
                 this.RenderLighting(this.sunDirection);
@@ -938,7 +947,7 @@ namespace Snowscape.TerrainGenerationViewer
                 frameTracker.Step("sky", new Vector4(0.0f, 1.0f, 0.4f, 1.0f));
 
                 this.prevSunDirection = this.sunDirection;
-                this.prevParamsVersion = this.currentParamsVersion;
+                this.prevPrecalcParamsVersion = this.currentPrecalcParamsVersion;
             }
 
             SetTerrainProjection();
@@ -1018,7 +1027,8 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             frameTracker.Step("frame clear", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
-            this.postProcessStep.Render(this.camera.HasChanged());
+            this.postProcessStep.Render(this.camera.HasChanged() || (this.currentParamsVersion != this.prevParamsVersion));
+            this.prevParamsVersion = this.currentParamsVersion;
 
             frameTracker.Step("PostProcess", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
 
