@@ -132,20 +132,22 @@ void main(void)
 
 	// debug: lighting components only
 	//colourT.rgb = colourT.a > 0.9999 ? colourT.rgb:vec3(1.0);
-
-
+	float shadow = lightingT.r;
+	float AO = lightingT.g;
 	float roughness = max(0.0,(shadingT.r-0.5)) * 2.0;  
 	float skyreflection = clamp(0.5-shadingT.r,0.0,0.5) * 2.0;
 
 	//vec3 ambientlight = vec3(0.7,0.8,1.0) * 0.3;
 
-	vec3 skyReflectionEnv = texture(skyCubeTex,refl.xyz).rgb; //texture(skylightSharpTex,refl.xz * 0.5 + 0.5).rgb * 0.5;
-	// texture(skyCubeTex,refl.xyz).rgb
-
-	vec3 ambientDirection = mix(vec3(0.0,1.0,0.0),normal,0.4 + 0.6 * lightingT.g*lightingT.g); // skew ambient normal towards up-vector where there is more ambient occlusion
+	
+	// fake coefficients.
+	vec3 skyReflectionEnv = mix(texture(skylightSharpTex,refl.xz * 0.5 + 0.5).rgb * AO * 0.1, texture(skyCubeTex,refl.xyz).rgb, shadow);
+	
+	
+	vec3 ambientDirection = mix(vec3(0.0,1.0,0.0),normal,0.4 + 0.6 * AO*AO); // skew ambient normal towards up-vector where there is more ambient occlusion
 	vec3 ambientlight = texture(skylightSmoothTex,ambientDirection.xz * 0.5 + 0.5).rgb * (1.0 - shadingT.b);
 
-	vec3 ambientDirectionRefl = mix(vec3(0.0,1.0,0.0),refl,0.4 + 0.6 * lightingT.g*lightingT.g); // skew ambient normal towards up-vector where there is more ambient occlusion
+	vec3 ambientDirectionRefl = mix(vec3(0.0,1.0,0.0),refl,0.4 + 0.6 * AO*AO); // skew ambient normal towards up-vector where there is more ambient occlusion
 	ambientlight += texture(skylightSmoothTex,ambientDirectionRefl.xz * 0.5 + 0.5).rgb * shadingT.b;
 
 
@@ -162,10 +164,10 @@ void main(void)
 	vec3 sunAtP = absorb(totalAirToSun, sunLight, scatterAbsorb);
 	
 
-	vec3 sun = (sunAtP * lightingT.r) * clamp(dot(normal, sunVector),0.0,1.0);  // diffuse sun - needs to be oren-nayar + specular
-	vec3 spec = (sunAtP * lightingT.r) * clamp(pow(dot(refl, sunVector),shadingT.g*100.0),0.0,1.0) * shadingT.b;
+	vec3 sun = (sunAtP * shadow) * clamp(dot(normal, sunVector),0.0,1.0);  // diffuse sun - needs to be oren-nayar + specular
+	vec3 spec = (sunAtP * shadow) * clamp(pow(dot(refl, sunVector),shadingT.g*100.0),0.0,1.0) * shadingT.b;
 
-	vec3 ambient = ambientlight * lightingT.g;
+	vec3 ambient = ambientlight * AO;
 
 
 	c = colourT.rgb * (sun + ambient + vec3(lightingT.b)) + spec;
