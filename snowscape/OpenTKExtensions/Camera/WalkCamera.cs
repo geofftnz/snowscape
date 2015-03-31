@@ -251,7 +251,7 @@ namespace OpenTKExtensions.Camera
                 //lookDither.Z = (float)((rand.NextDouble() - 0.5));
                 //return Matrix4.LookAt(this.EyePos, this.LookTarget + lookDither * ditherAmount, -Vector3.UnitY);
 
-                return Matrix4.LookAt(this.EyePos, this.LookTargetDithered, -Vector3.UnitY);
+                return Matrix4.LookAt(this.EyePos, this.HasChanged() ? this.LookTarget : this.LookTargetDithered, -Vector3.UnitY);
             }
         }
 
