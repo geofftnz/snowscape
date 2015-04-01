@@ -5,6 +5,7 @@
 
 //|Common
 
+const float deg2rad = (3.1415927 / 180.0);
 float t = 1.0 / boxparam.x;
 const vec2 detailScale = vec2(0.2,0.2);  // detailTexScale is uniform
 const float sampleOfs = 1.0/1024.0;
@@ -827,6 +828,224 @@ void main() {
 }
 
 //|HighFragment
+#version 140
+precision highp float;
+uniform sampler2D heightTex;
+uniform sampler2D normalTex;
+uniform sampler2D paramTex;
+uniform sampler2D shadeTex;
+uniform sampler2D detailTex;
+uniform vec4 boxparam;
+uniform float patchSize;
+uniform float scale;
+uniform vec2 offset;
+uniform float detailTexScale; 
+
+in vec3 basevertex;
+in vec3 boxcoord;
+in vec3 normal;
+in vec3 binormal;
+in vec3 tangent;
+in vec2 texcoord;
+in vec2 detailcoord;
+in vec2 shadowAOinterp;
+in float highDetailBlend;
+
+out vec4 out_Colour;
+out vec4 out_Normal;
+out vec4 out_Shading;
+out vec4 out_Lighting;
+
+#include ".|Common"
+#include ".|FragmentCommon"
+#include ".|CubicShadowAOSample"
+
+float getDUV()
+{
+	vec2 duv = abs(fwidth(texcoord));
+	return duv.x + duv.y;
+}
+
+
+void main(void)
+{
+	//vec2 shadowAO = texture(shadeTex,texcoord).rg;
+	//vec2 shadowAO = sampleShadowAO(texcoord,boxparam.x);
+	vec2 shadowAO = shadowAOinterp;
+	
+	vec4 param = texture2D(paramTex,texcoord);
+	float detailBias = getDetailBias();
+
+	float height = boxcoord.y;//textureLod(heightTex,texcoord,0).r;
+
+
+	// get screen-space derivative
+	vec2 duv = abs(fwidth(texcoord));
+	duv.x = max(minduv,duv.x + duv.y);
+
+	// generate transform matrix for normals
+	mat3 nm = mat3(tangent,normal,binormal);
+
+	vec3 bedrockNormal = getDetailBedrockNormal(detailcoord, detailSampleOffset);
+	bedrockNormal = normalize(bedrockNormal * nm);
+
+	// sample detail
+	DetailSample detail = sampleDetail(vec3(detailcoord.x, height, detailcoord.y), normal, bedrockNormal, param, shadowAO.g, detailScale, detailSampleOffset, nm);
+	
+	detail.normal = mix(vec3(0.0,1.0,0.0),detail.normal,detailBias);
+
+	// calculate normal of detail heightmap at detailpos
+	//vec3 n = normalize(detail.normal * nm);
+	
+	out_Colour = detail.diffuse; 
+	out_Shading = detail.shading;
+    out_Normal = vec4(detail.normal,1.0);
+
+	float shadow = SmoothShadow((height + normal.y * detail.materialdisp.y) - shadowAO.r);
+
+	out_Lighting = vec4(shadow,shadowAO.g,0.0,0.0);
+
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+//|SegmentVertex
+#version 140
+uniform sampler2D heightTex;
+uniform sampler2D normalTex;
+uniform sampler2D paramTex;
+uniform sampler2D detailTex;
+uniform sampler2D shadeTex;
+
+uniform mat4 transform_matrix;
+uniform vec4 boxparam;
+uniform vec3 eyePos;
+uniform float patchSize;
+uniform float scale;
+uniform vec2 offset;
+uniform float detailTexScale; 
+
+uniform float angleOffset;  // in degrees
+uniform float angleExtent;
+uniform float radiusOffset;
+uniform float radiusExtent;
+
+in vec3 vertex;
+in vec3 in_boxcoord;
+
+out vec3 basevertex;
+out vec3 boxcoord;
+out vec3 normal;
+out vec3 binormal;
+out vec3 tangent;
+out vec2 texcoord;
+out vec2 detailcoord;
+out vec2 shadowAOinterp;
+out float highDetailBlend;
+
+#include ".|Common"
+
+
+float getHeight(vec2 pos)
+{
+	return textureLod(heightTex,pos,0).r;
+}
+
+float sampleHeight(vec2 pos)
+{
+	float c = getHeight(pos);
+	return c;
+}
+
+#include ".|CubicHeightSample"
+#include ".|CubicParamSample"
+#include ".|CubicNormalSample"
+#include ".|CubicShadowAOSample"
+
+void main() {
+
+	vec3 v = vertex;
+	float r2 = (vertex.x * radiusExtent) + radiusOffset;
+	float a2 = ((vertex.z * angleExtent) + angleOffset);
+	
+	v.x = r2 * cos(a2 * deg2rad);
+	v.z = r2 * sin(a2 * deg2rad);
+	//v.y = h + v.y;
+	v.y = 0;
+	
+	//v.xz *= boxparam.x;
+	v.xz += eyePos.xz;
+
+
+	//vec3 b = in_boxcoord;
+	//b.xz *= scale;
+	//b.xz += offset;
+
+	// calculate world-tile-space XZ coordinates 
+
+	//vec3 b = vec3(0.0);
+
+	//float r = ((in_boxcoord.y * (radiusExtent/boxparam.x)) + (radiusOffset/boxparam.x));
+	//float a = ((in_boxcoord.x * angleExtent) + angleOffset);
+
+	//b.x = r * cos(a * deg2rad);
+	//b.z = r * sin(a * deg2rad);
+
+	//vec3 v = b;
+
+	//b.xz += eyePos.xz / boxparam.x;  // shouldn't need to do this - multiple b by boxparam.x as everything else needs world space coordinates. (apart from texcoords)
+
+	vec3 b = v / boxparam.x;
+	b.y =0.0;
+	
+	texcoord = b.xz;
+	detailcoord = getDetailTexcoord(texcoord);
+
+	float h = sampleHeight(texcoord,boxparam.x);
+	normal = getNormal(texcoord,boxparam.x);
+	vec4 param = sampleParam(texcoord,boxparam.x);
+	shadowAOinterp = sampleShadowAO(texcoord,boxparam.x);
+
+	// calculate tangent and binormal
+	// tangent is in X direction, so is the cross product of normal (Y) and Z
+	vec3 t1 = normalize(cross(normal,vec3(0.0,0.0,-1.0)));
+	binormal = normalize(cross(t1,normal));
+	tangent = normalize(cross(normal,binormal));
+
+
+	//vec3 v = vertex;
+	//v.xz *= scale;
+	//v.xz += offset;
+	//v.x *= boxparam.x;
+	//v.z *= boxparam.y;
+	//v.y = h + v.y;
+
+	//v.y = h + v.y;  // can reduce this to just h with no patch skirt.
+	v.y = h + v.y;
+
+	basevertex = v;
+
+	// get detail
+	vec2 detail = getDetailHeightSample(vec3(detailcoord.x, h, detailcoord.y), normal, normal, param, vec2(detailScale));
+	
+	v += normal * detail.y;
+
+	vec4 tv = transform_matrix * vec4(v, 1.0);
+	highDetailBlend = getHighDetailBlendFactor(tv);
+    gl_Position = tv;
+
+
+	b.x *= boxparam.x;
+	b.z *= boxparam.y;
+	b.y = h;
+    
+    boxcoord = b;
+
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+//|SegmentFragment
 #version 140
 precision highp float;
 uniform sampler2D heightTex;

@@ -55,6 +55,12 @@ namespace Snowscape.TerrainGenerationViewer
             public const int Phase4 = 40;
         }
 
+        public enum RenderMode
+        {
+            Tiles = 0,
+            Segments,
+            ENUMMAX
+        }
 
         #region Components
 
@@ -91,6 +97,7 @@ namespace Snowscape.TerrainGenerationViewer
         private PatchLowRenderer tilePatchLowRenderer;
         private PatchMediumRenderer tilePatchMediumRenderer;
         private PatchHighRenderer tilePatchHighRenderer;
+        private SegmentRenderer tileSegmentRenderer;
 
         private UI.Debug.QuadTreeLodDebugRenderer quadTreeLodDebugRenderer;
         private UI.Debug.TextureDebugRenderer textureDebugRenderer;
@@ -201,6 +208,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tilePatchLowRenderer = new PatchLowRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tilePatchMediumRenderer = new PatchMediumRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tilePatchHighRenderer = new PatchHighRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
+            this.Components.Add(this.tileSegmentRenderer = new SegmentRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -246,6 +254,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
 
             #region Parameters
+            parameters.Add(new Parameter<RenderMode>("RenderMode", RenderMode.Tiles, (RenderMode)0, RenderMode.ENUMMAX - 1, v => v + 1, v => v - 1, v => v.ToString()));
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("frameLimiter", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("autoreload", false, false, true, v => true, v => false));
@@ -961,7 +970,17 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.lightingStep.BindForWriting();
 
-            RenderTiles();
+            switch (this.parameters["RenderMode"].GetValue<RenderMode>())
+            {
+                case RenderMode.Tiles:
+                    RenderTiles();
+                    break;
+                case RenderMode.Segments:
+                    RenderSegments();
+                    break;
+            }
+
+
             if (stepFence)
             {
                 GL.Finish();
@@ -998,7 +1017,7 @@ namespace Snowscape.TerrainGenerationViewer
             frameTracker.Step("scattering", new Vector4(0.0f, 0.0f, 1.0f, 1.0f));
 
 
-            
+
             // render HDR to post-process
             this.postProcessStep.BindForWriting();
 
@@ -1175,10 +1194,21 @@ namespace Snowscape.TerrainGenerationViewer
             }
         }
 
+        private void RenderSegments()
+        {
+            tileSegmentRenderer.Width = 1024;
+            tileSegmentRenderer.Height = 1024;
+            tileSegmentRenderer.DetailScale = 1.0f;
+
+            tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, -60.0f, 120.0f, 0.1f, 200.0f);
+
+
+        }
+
+
 
         private void RenderTiles()
         {
-
 
             (this.tileRendererPatch as GenerationVisPatchRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();
             (this.tileRendererPatchDetail as GenerationVisPatchDetailRenderer).DetailTexScale = (float)this.parameters["DetailHeightScale"].GetValue();

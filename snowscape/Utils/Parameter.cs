@@ -52,6 +52,7 @@ namespace Utils
         public T MaxValue { get; set; }
         public Func<T, T> IncreaseFunc { get; set; }
         public Func<T, T> DecreaseFunc { get; set; }
+        public Func<T, string> FormatFunc { get; set; }
 
         public ParameterImpact Impact { get; set; }
 
@@ -75,7 +76,7 @@ namespace Utils
         }
 
 
-        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc, ParameterImpact impact)
+        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc, ParameterImpact impact, Func<T, string> formatFunc)
         {
             this.Name = name;
             this.MinValue = minValue;
@@ -84,10 +85,20 @@ namespace Utils
             this.IncreaseFunc = increaseFunc;
             this.DecreaseFunc = decreaseFunc;
             this.Impact = impact;
+            this.FormatFunc = formatFunc;
+        }
+
+        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc, ParameterImpact impact)
+            : this(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc, impact, (v) => string.Format("{0:0.0000}", v))
+        {
         }
 
         public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc)
             : this(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc, ParameterImpact.None)
+        {
+        }
+        public Parameter(string name, T defaultValue, T minValue, T maxValue, Func<T, T> increaseFunc, Func<T, T> decreaseFunc, Func<T, string> formatFunc)
+            : this(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc, ParameterImpact.None, formatFunc)
         {
         }
 
@@ -97,7 +108,7 @@ namespace Utils
 
         public static Parameter<float> NewLinearParameter(string name, float defaultValue, float minValue, float maxValue, float change = 0.01f)
         {
-            Func<float,float> increaseFunc = (v) => v + (maxValue - minValue) * change;
+            Func<float, float> increaseFunc = (v) => v + (maxValue - minValue) * change;
             Func<float, float> decreaseFunc = (v) => v - (maxValue - minValue) * change;
             return new Parameter<float>(name, defaultValue, minValue, maxValue, increaseFunc, decreaseFunc);
         }
@@ -139,8 +150,12 @@ namespace Utils
 
         public override string ToString()
         {
-            return string.Format("{0}: {1:0.0000}", this.Name, this.Value);
+            return string.Format("{0}: {1}", this.Name, this.FormatFunc(this.Value));
         }
 
+        public string Formatter()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
