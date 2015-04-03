@@ -62,6 +62,14 @@ namespace Snowscape.TerrainGenerationViewer
             ENUMMAX
         }
 
+        public enum SegmentResolution
+        {
+            Low = 0,
+            Medium,
+            High
+        }
+        private static int[] SegmentResolutions = new int[] { 256, 512, 1024 };
+
         #region Components
 
         private TerrainLightingGenerator terrainLighting;
@@ -255,16 +263,17 @@ namespace Snowscape.TerrainGenerationViewer
 
             #region Parameters
             parameters.Add(new Parameter<RenderMode>("RenderMode", RenderMode.Tiles, (RenderMode)0, RenderMode.ENUMMAX - 1, v => v + 1, v => v - 1, v => v.ToString()));
+            parameters.Add(new Parameter<SegmentResolution>("SegmentRes", SegmentResolution.Medium, SegmentResolution.Low, SegmentResolution.High, v => v + 1, v => v - 1, v => v.ToString()));
             parameters.Add(new Parameter<bool>("glFinish", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("frameLimiter", false, false, true, v => true, v => false));
-            parameters.Add(new Parameter<bool>("autoreload", false, false, true, v => true, v => false));
+            parameters.Add(new Parameter<bool>("autoreload", true, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("quadtreevis", false, false, true, v => true, v => false));
 
             parameters.Add(new Parameter<bool>("debugtextures", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<int>("currenttexture", 0, 0, 100000, v => textureDebugRenderer.Next(), v => textureDebugRenderer.Previous()));
             //parameters.Add(new Parameter<bool>("mouselook", true, false, true, v => true, v => false));
 
-            parameters.Add(new Parameter<float>("detailscale", 6.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
+            parameters.Add(new Parameter<float>("detailscale", 12.0f, 0.2f, 100f, v => v + .2f, v => v - .2f));
             parameters.Add(new Parameter<int>("loddiff", 1, 1, 4, v => v + 1, v => v - 1));
             parameters.Add(new Parameter<int>("maxdepth", 8, 0, 12, v => v + 1, v => v - 1));
 
@@ -272,7 +281,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
             parameters.Add(new Parameter<float>("BlackLevel", 0.0f, 0.0f, 100.0f, v => v += 0.01f, v => v -= 0.01f));
 
-            parameters.Add(new Parameter<float>("CameraDither", 0.0001f, 0.0f, 0.01f, v => v += 0.00001f, v => v -= 0.00001f));
+            parameters.Add(new Parameter<float>("CameraDither", 0.001f, 0.0f, 0.01f, v => v += 0.0001f, v => v -= 0.0001f));
 
 
             parameters.Add(new Parameter<float>("sunElevation", 0.1f, -1.0f, 1.0f, v => v + 0.001f, v => v - 0.001f, ParameterImpact.PreCalcLighting));
@@ -962,10 +971,12 @@ namespace Snowscape.TerrainGenerationViewer
 
             SetTerrainProjection();
 
-
-            viewfrustum = new Frustum(this.camera.View * this.camera.Projection);
-            tilePatches = GetAllTilePatches(viewfrustum).ToList();
-            frameTracker.Step("terrain LOD", new Vector4(1.0f, 0.8f, 0.0f, 1.0f));
+            if (this.parameters["RenderMode"].GetValue<RenderMode>() == RenderMode.Tiles)
+            {
+                viewfrustum = new Frustum(this.camera.View * this.camera.Projection);
+                tilePatches = GetAllTilePatches(viewfrustum).ToList();
+                frameTracker.Step("terrain LOD", new Vector4(1.0f, 0.8f, 0.0f, 1.0f));
+            }
 
 
             this.lightingStep.BindForWriting();
@@ -1196,13 +1207,36 @@ namespace Snowscape.TerrainGenerationViewer
 
         private void RenderSegments()
         {
-            tileSegmentRenderer.Width = 1024;
-            tileSegmentRenderer.Height = 1024;
+
+            tileSegmentRenderer.Width = SegmentResolutions[(int)parameters["SegmentRes"].GetValue<SegmentResolution>()];
+            tileSegmentRenderer.Height = tileSegmentRenderer.Width;
             tileSegmentRenderer.DetailScale = 1.0f;
 
-            tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, -60.0f, 120.0f, 0.1f, 200.0f);
+            float radius = 0.1f;
+            float discRadius = 20.0f;
+            float nearSegmentRadius = 200.0f;
+            float farSegmentRadius = 2000.0f;
 
+            // central segments
+            for (int a = 0; a < 12; a++)
+            {
+                tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, (float)a * 30.0f, 30.0f, radius, discRadius);
+            }
+            radius += discRadius;
 
+            // near segments (12 x 30 degrees)
+            for (int a = 0; a < 12; a++)
+            {
+                tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, (float) a * 30.0f, 30.0f, radius, nearSegmentRadius);
+            }
+            radius += nearSegmentRadius;
+
+            // far segments (12 x 30 degrees)
+            for (int a = 0; a < 12; a++)
+            {
+                tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, (float)a * 30.0f, 30.0f, radius, farSegmentRadius);
+            }
+            radius += farSegmentRadius;
         }
 
 

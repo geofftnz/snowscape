@@ -965,10 +965,13 @@ float sampleHeight(vec2 pos)
 void main() {
 
 	vec3 v = vertex;
-	float r2 = (vertex.x * radiusExtent) + radiusOffset;
-	float a2 = ((vertex.z * angleExtent) + angleOffset);
+	//v.z *= v.z;
+
+	float r2 = (vertex.z * sqrt(radiusExtent)) + sqrt(radiusOffset);
+	r2 *=r2;
+	float a2 = ((vertex.x * angleExtent) + angleOffset);
 	
-	v.x = r2 * cos(a2 * deg2rad);
+	v.x = r2 * -cos(a2 * deg2rad);
 	v.z = r2 * sin(a2 * deg2rad);
 	//v.y = h + v.y;
 	v.y = 0;
