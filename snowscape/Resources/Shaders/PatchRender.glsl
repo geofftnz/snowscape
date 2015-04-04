@@ -13,6 +13,8 @@ const float minduv = 0.0001;
 
 const vec4 snowshading = vec4(0.8,0.1,0.5,0.0);
 const vec3 snowcol = vec3(0.9);
+const float bedrockHeight = 0.5;
+const float snowAltitude = 20.0;
 
 
 float SmoothShadow(float heightdiff)
@@ -46,7 +48,7 @@ float sfbm(vec2 pos)
 }
 
 
-float bedrockHeight = 0.5;
+
 // gets a tuple of material (x) and displacement (y) for a given point.
 //
 // todo: implement as material stack
@@ -200,7 +202,7 @@ void getMaterial(float material, vec3 pos, vec3 basenormal, vec3 detailnormal, v
 
 	float adddirt = noiseSample.a * (clamp(param.r * param.r - 0.05,0.0,0.2) );
 	
-	float snowAmount = smoothstep(50.0,100.0,pos.y + noiseSample.a * 0.0 ) * max(0.0,detailnormal.y-0.5);
+	float snowAmount = smoothstep(snowAltitude,snowAltitude + 20.0,pos.y + noiseSample.a * 0.0 ) * max(0.0,detailnormal.y-0.5);
 	
 	//if (snowAmount > 0.1) material = 0.3;
 

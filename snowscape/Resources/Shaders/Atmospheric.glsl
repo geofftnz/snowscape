@@ -495,7 +495,7 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	float ralphase = phase(alpha,rayleighPhase);
 	float ral = ralphase * rayleighBrightness * 0.004 * nearAirFactor;
 	float mie = phase(alpha,miePhase) * mieBrightness  * 0.001 * nearAirFactor; 
-	float ralSky = mix(phase(dot(dir,vec3(0.0,1.0,0.0)),rayleighPhase),ralphase,0.5) * rayleighBrightness * 0.002 * nearAirFactor;
+	float ralSky = mix(phase(dot(dir,vec3(0.0,1.0,0.0)),rayleighPhase),ralphase,0.5) * rayleighBrightness * 0.004 * nearAirFactor;
 	
 	// solar influx to viewer - used as influx for entire ray
 	vec3 eyenorm = normpos(eye,scale);
@@ -531,7 +531,7 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 		
 		
 		//float segmentAirMass = pathAirMassFlat(normpos(p1,scale),normpos(p2,scale));
-		float segmentAirMass = airDensityDenorm(p2.y * scale * 1000.0) * dtlen * (scale / (earthAtmosphereRadius)) * nearAirFactor;
+		float segmentAirMass = airDensityDenorm(p2.y * scale * 1000.0 * 4.0) * dtlen * (scale / (earthAtmosphereRadius)) * nearAirFactor;
 		totalAir += segmentAirMass;
 		
 		//float shadow = (getShadow(p) + prevShadow) * 0.5;
@@ -543,7 +543,7 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 		cseg += sun * Kr * ral;
 		
 		// sky light - from sun direct
-		cseg += sunInflux * segmentAirMass * Kr * ralSky;
+		cseg += sunInflux * Kr * Kr * segmentAirMass * ralSky;
 		//cseg += sunInflux * segmentAirMass * shadowAO.g * Kr * ralSky;
 		
 		c += absorb(totalAir, cseg, scatterAbsorb); 
