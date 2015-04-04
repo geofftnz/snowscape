@@ -472,6 +472,11 @@ vec2 getShadowAO(vec3 p)
     return vec2(smoothstep(-0.05,-0.02,p.y - SAO.r),SAO.g);
 }
 
+float getTerrainHeight(vec3 p)
+{
+    return texture(heightTex,p.xz * texel).r;
+}
+
 vec3 normpos(vec3 p, float scale)
 {
 	return ((p * scale) / (earthAtmosphereRadius)) + vec3(0.0,groundLevel,0.0);
@@ -487,9 +492,10 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	// raymarch as series of t1-t2 segments.
 
 	float alpha = dot(dir,sunVector);
-	float ral = phase(alpha,rayleighPhase) * rayleighBrightness * 0.004 * nearAirFactor;
+	float ralphase = phase(alpha,rayleighPhase);
+	float ral = ralphase * rayleighBrightness * 0.004 * nearAirFactor;
 	float mie = phase(alpha,miePhase) * mieBrightness  * 0.001 * nearAirFactor; 
-	float ralSky = phase(dot(dir,vec3(0.0,1.0,0.0)),rayleighPhase) * rayleighBrightness * 0.004 * nearAirFactor;
+	float ralSky = mix(phase(dot(dir,vec3(0.0,1.0,0.0)),rayleighPhase),ralphase,0.5) * rayleighBrightness * 0.002 * nearAirFactor;
 	
 	// solar influx to viewer - used as influx for entire ray
 	vec3 eyenorm = normpos(eye,scale);
@@ -530,13 +536,15 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 		
 		//float shadow = (getShadow(p) + prevShadow) * 0.5;
 		vec2 shadowAO = getShadowAO(p2);
+		//float h = getTerrainHeight(p2);
 				
 		vec3 sun = (sunInflux * shadowAO.r * segmentAirMass);
 		vec3 cseg =  sun * mie;
 		cseg += sun * Kr * ral;
 		
 		// sky light - from sun direct
-		cseg += sunInflux * segmentAirMass * shadowAO.g * Kr * ralSky;
+		cseg += sunInflux * segmentAirMass * Kr * ralSky;
+		//cseg += sunInflux * segmentAirMass * shadowAO.g * Kr * ralSky;
 		
 		c += absorb(totalAir, cseg, scatterAbsorb); 
 		

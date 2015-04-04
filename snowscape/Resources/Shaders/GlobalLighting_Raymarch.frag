@@ -44,6 +44,7 @@ uniform vec3 sunLight;
 uniform float nearScatterDistance;
 uniform float skylightBrightness;
 uniform float time;
+uniform float aoInfluenceHeight; // height above the terrain to blend influence of AO when raymarching scattering
 
 const float tileSizeKm = 16.0;
 
@@ -197,11 +198,12 @@ void main(void)
 	// if scatteringdist puts us outside the r=1 sphere, take it back
 	//if (eyeHeightNorm + dir.y * scatteringdist > 1.0)	scatteringdist *= 0.5;
 
+	// temp abuse of old uniform
 	float nearAirFactor = skylightBrightness;
 
 	// get total air mass between eye and end of scattering 
-	//float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
-	float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
+	float totalAir = pathAirMassFlat(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
+	//float totalAir = pathAirMassSpherical(eyeScatteringNorm,eyeScatteringNorm + dir * scatteringdist) * nearAirFactor;
 
 	//vec3 absorbAmount = absorb(totalAir,vec3(1.0),scatterAbsorb);
 
@@ -224,7 +226,7 @@ void main(void)
 	skyProbe = absorb(totalAir,skyProbe,scatterAbsorb);
 	
 	
-	c = mix(skyProbe, c, fogAmount);
+	//c = mix(skyProbe, c, fogAmount);
 	//c += skyProbe * totalAir;
 
 	//skyProbe *= (vec3(1.0) + Kr * 0.8);
