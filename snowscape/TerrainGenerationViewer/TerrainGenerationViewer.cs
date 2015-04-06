@@ -295,7 +295,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("Sun_r", 1.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Sun_g", 1.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));
             parameters.Add(new Parameter<float>("Sun_b", 1.0f, 0.0f, 16.0f, v => v + 0.02f, v => v - 0.02f, ParameterImpact.PreCalcLighting));  // 0.6616
-            parameters.Add(new Parameter<float>("Sun_Brightness", 10.0f, 0.0f, 100.0f, v => v + 0.05f, v => v - 0.05f, ParameterImpact.PreCalcLighting));  // 0.6616
+            parameters.Add(new Parameter<float>("Sun_Brightness", 30.0f, 0.0f, 100.0f, v => v + 0.05f, v => v - 0.05f, ParameterImpact.PreCalcLighting));  // 0.6616
 
             parameters.Add(new Parameter<float>("scatterAbsorb", 0.3833f, 0.0001f, 4.0f, v => v * 1.02f, v => v * 0.98f, ParameterImpact.PreCalcLighting));  // 0.028  0.1
 
