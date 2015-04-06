@@ -91,10 +91,12 @@ namespace Snowscape.TerrainRenderer.Atmosphere
                     sp.SetUniform("groundLevel", p.groundLevel);
                     sp.SetUniform("rayleighBrightness", p.rayleighBrightness);
                     sp.SetUniform("rayleighPhase", p.rayleighPhase);
-                    sp.SetUniform("mieBrightness", 0.0f);
-                    sp.SetUniform("miePhase", 0.8f);
-                    //sp.SetUniform("mieBrightness", p.mieBrightness);
-                    //sp.SetUniform("miePhase", p.miePhase);
+                    
+                    //sp.SetUniform("mieBrightness", 0.0f);
+                    //sp.SetUniform("miePhase", 0.8f);
+                    sp.SetUniform("mieBrightness", p.mieBrightness);
+                    sp.SetUniform("miePhase", p.miePhase);
+
                     sp.SetUniform("scatterAbsorb", p.scatterAbsorb);
                     sp.SetUniform("Kr", p.Kr);
                     sp.SetUniform("sunLight", p.sunLight);

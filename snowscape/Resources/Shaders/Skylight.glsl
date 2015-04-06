@@ -17,8 +17,8 @@ precision highp float;
 uniform vec3 sunVector;
 uniform float groundLevel;
 uniform float rayleighBrightness;
-float mieBrightness = 0.1;
-float miePhase = 0.7;// = 0.97;
+const float mieBrightness = 0.0;
+const float miePhase = 0.8;// = 0.97;
 uniform float rayleighPhase;// = -0.01;
 uniform float skyPrecalcBoundary;  // 16
 
@@ -61,7 +61,7 @@ void main(void)
 
 	vec3 dir = vec3(p2.x, 1.0 - length(p2), p2.y);
 
-	out_Sky = getRayMarchedScattering(vec3(0.0,groundLevel+0.001,0.0), dir, sunVector, scatterAbsorb, 0.0,10000.0);
+	out_Sky = getRayMarchedScattering(vec3(0.0,groundLevel+0.0008,0.0), dir, sunVector, scatterAbsorb, 0.0,10000.0);
 
 	// debug
 	//out_Sky.r = max(0.0,1.0 - length(p2)*4.0);
@@ -109,12 +109,26 @@ out vec3 out_Sky;
 
 #include "Skylight.glsl|blursample"
 
-
+vec3 getRadialSample(float a, float r, float weight)
+{
+	vec2 p = vec2(0.5 + r * cos(a),0.5 + r * sin(a));
+	return texture(skyTex,p).rgb * weight;
+}
 
 void main(void)
 {
-	out_Sky = blur(sky2d,0.05) * 0.5;
-	out_Sky += blur(sky2d,0.17) * 0.5;
+	vec3 c = vec3(0.0);
+
+	c = blur(sky2d,0.01) * 0.8;
+	//out_Sky += blur(sky2d,0.17) * 0.5;
+
+	// add some samples around horizon
+	for(float a = 0.0; a < 1.0; a += 0.05)
+	{
+		c += getRadialSample(a * 2.0 * 3.1415927, 0.45, 0.02);
+	}
+
+	out_Sky = c * 0.5;
 }
 
 //|blur2
@@ -130,8 +144,8 @@ out vec3 out_Sky;
 
 void main(void)
 {
-	out_Sky = blur(sky2d,0.21) * 0.5;
-	out_Sky += blur(sky2d,0.33) * 0.5;
+	out_Sky = blur(sky2d,0.05) * 0.5;
+	out_Sky += blur(sky2d,0.1) * 0.5;
 }
 
 
