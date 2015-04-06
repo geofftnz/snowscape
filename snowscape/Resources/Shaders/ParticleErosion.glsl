@@ -80,8 +80,7 @@ void main(void)
 	out_Velocity = vec4(fall,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),1.0);
 }
 
-
-//|ErosionVertex
+//|DepositVertex
 #version 140
 precision highp float;
 
@@ -97,6 +96,60 @@ void main(void)
 
 	// use vertex as lookup into particle texture to get actual position
 	texcoord = texture(particletex,vertex.xy).xy;
+	gl_Position = vec4(texcoord.xy*2.0-1.0,0.0,1.0);
+}
+
+//|Deposit
+#version 140
+precision highp float;
+
+uniform sampler2D particletex;
+uniform sampler2D velocitytex;
+uniform float deltatime;
+uniform float depositRate;
+uniform float erosionRate;
+
+in vec2 texcoord;
+in vec2 particlecoord;
+
+out vec4 out_Erosion;
+
+void main(void)
+{
+    //   Calculate particle potential as (new carrying capacity - carrying amount).
+    //   Writes R:1 G:potential B:deposit - blend as add
+	vec4 particle = textureLod(particletex,particlecoord,0);
+	vec4 velocity = textureLod(velocitytex,particlecoord,0);
+
+	float carryingCapacity = velocity.b;
+	float carrying = particle.b;
+
+	float erosionPotential = 0.0; //max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
+	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
+
+	out_Erosion = vec4(1.0, erosionPotential, depositAmount, carrying);
+}
+
+//|ErosionVertex
+#version 140
+precision highp float;
+
+uniform sampler2D particletex;
+uniform sampler2D velocitytex;
+
+in vec3 vertex;
+out vec2 texcoord;
+out vec2 particlecoord;
+
+void main(void)
+{
+	particlecoord = vertex.xy;
+
+	// use vertex as lookup into particle texture to get actual position
+	vec2 p = texture(particletex,vertex.xy).xy;
+	vec2 v = vec2(0.0); //texture(velocitytex,vertex.xy).xy;
+
+	texcoord = p + v;
 	gl_Position = vec4(texcoord.xy*2.0-1.0,0.0,1.0);
 }
 
@@ -126,7 +179,7 @@ void main(void)
 	float carrying = particle.b;
 
 	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
-	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
+	float depositAmount = 0.0; //max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
 	out_Erosion = vec4(1.0, erosionPotential, depositAmount, carrying);
 }

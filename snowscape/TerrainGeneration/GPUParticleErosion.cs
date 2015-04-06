@@ -205,7 +205,8 @@ namespace TerrainGeneration
         // Step 2: Accumulate erosion/sediment
         private VBO ParticleVertexVBO = new VBO("particle-vertex");
         private VBO ParticleIndexVBO = new VBO("particle-index", BufferTarget.ElementArrayBuffer);
-        private GBufferShaderStep ErosionAccumulationStep = new GBufferShaderStep("gpupe-2-accumulation");
+        private GBufferShaderStep DepositionAccumulationStep = new GBufferShaderStep("gpupe-2-depositaccumulation");
+        private GBufferShaderStep ErosionAccumulationStep = new GBufferShaderStep("gpupe-2b-erosionaccumulation");
         //private ShaderProgram ErosionAccumulationProgram = new ShaderProgram("erosion-accumulation");
         //private GBuffer ErosionAccumulationGBuffer = new GBuffer("erosion-accumulation");
 
@@ -362,8 +363,14 @@ namespace TerrainGeneration
             //   Calculate particle potential as (new carrying capacity - carrying amount).
             //   Writes R:1 G:potential B:deposit
             //   Blend mode: add
+            //
+            // Split into deposit and erosion - erosion takes place from position + velocity
+            DepositionAccumulationStep.SetOutputTexture(0, "out_Erosion", this.ErosionAccumulationTexture);
+            DepositionAccumulationStep.Init(@"ParticleErosion.glsl|DepositVertex", @"ParticleErosion.glsl|Deposit");
+
             ErosionAccumulationStep.SetOutputTexture(0, "out_Erosion", this.ErosionAccumulationTexture);
             ErosionAccumulationStep.Init(@"ParticleErosion.glsl|ErosionVertex", @"ParticleErosion.glsl|Erosion");
+
 
             // Step 3: Update terrain layers
             //  - Render as quad over layer
@@ -446,8 +453,8 @@ namespace TerrainGeneration
                 });
 
             // accumulate erosion
-            //ErosionAccumulationStep.ClearColourBuffer(0, new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-            ErosionAccumulationStep.Render(
+
+            DepositionAccumulationStep.Render(
                 () =>
                 {
                     this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
@@ -473,6 +480,34 @@ namespace TerrainGeneration
                     GL.Disable(EnableCap.Blend);
                 }
             );
+
+            ErosionAccumulationStep.Render(
+                () =>
+                {
+                    this.ParticleStateTexture[0].Bind(TextureUnit.Texture0);
+                    this.VelocityTexture[0].Bind(TextureUnit.Texture1);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("particletex", 0);
+                    sp.SetUniform("velocitytex", 1);
+                    sp.SetUniform("deltatime", deltaTime);
+                    sp.SetUniform("depositRate", depositRate);
+                    sp.SetUniform("erosionRate", erosionRate);
+                },
+                () =>
+                {
+                    //GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                    //GL.Clear(ClearBufferMask.ColorBufferBit);
+                    GL.Enable(EnableCap.Blend);
+                    GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.One);
+                    this.ParticleVertexVBO.Bind(this.ErosionAccumulationStep.ShaderVariableLocation("vertex"));
+                    this.ParticleIndexVBO.Bind();
+                    GL.DrawElements(BeginMode.Points, this.ParticleIndexVBO.Length, DrawElementsType.UnsignedInt, 0);
+                    GL.Disable(EnableCap.Blend);
+                }
+            );
+
 
             // Step 3: Update terrain layers
             //  - Render as quad over layer
