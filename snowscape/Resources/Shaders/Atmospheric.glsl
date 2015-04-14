@@ -482,6 +482,19 @@ vec3 normpos(vec3 p, float scale)
 	return ((p * scale) / (earthAtmosphereRadius)) + vec3(0.0,groundLevel,0.0);
 }
 
+
+const float cloud_bottom = 0.0;
+const float cloud_top = 50.0;
+
+float getCloudDensity(vec3 p)
+{
+	if (p.y < cloud_bottom || p.y > cloud_top) return 0.0;
+
+	return max(0.0,noise(p * 0.01) - 0.5) * max(0.0,noise(p * 0.05) - 0.5);
+}
+
+
+
 const float scattering_stepsize = 0.1;
 
 // scale = size of terrain unit (texel) in km
@@ -529,9 +542,10 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 		//totalAirToSun = pathAirMassSpherical(p2norm,p2norm+sunVector*adepthSun);
 		//sunInflux = absorb(totalAirToSun, sunLight, scatterAbsorb);
 		
+		//float cloud = getCloudDensity(p2);
 		
 		//float segmentAirMass = pathAirMassFlat(normpos(p1,scale),normpos(p2,scale));
-		float segmentAirMass = airDensityDenorm(p2.y * scale * 1000.0 * 4.0) * dtlen * (scale / (earthAtmosphereRadius)) * nearAirFactor;
+		float segmentAirMass = airDensityDenorm(p2.y * scale * 1000.0 * 4.0) * dtlen * (scale / (earthAtmosphereRadius)) * (nearAirFactor /*+ cloud * 5000.0*/);
 		totalAir += segmentAirMass;
 		
 		//float shadow = (getShadow(p) + prevShadow) * 0.5;
