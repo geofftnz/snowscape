@@ -692,6 +692,7 @@ namespace Snowscape.TerrainGenerationViewer
         }
 
 
+        // TODO: new pipeline
         private void RenderGBufferCombiner()
         {
             Matrix4 mv = this.terrainModelview;
@@ -981,6 +982,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.lightingStep.BindForWriting();
 
+            // TODO: new pipeline, split
             switch (this.parameters["RenderMode"].GetValue<RenderMode>())
             {
                 case RenderMode.Tiles:
@@ -1017,6 +1019,7 @@ namespace Snowscape.TerrainGenerationViewer
             // render gbuffer to hdr buffer
             this.hdrExposure.BindForWriting();
 
+            // TODO: new pipeline
             RenderGBufferCombiner();
 
             this.hdrExposure.UnbindFromWriting();

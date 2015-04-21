@@ -72,6 +72,7 @@
     <Compile Include="Mesh\PatchCache.cs" />
     <Compile Include="Mesh\TerrainPatchMesh.cs" />
     <Compile Include="NoiseTexture.cs" />
+    <Compile Include="Pipeline\Primary\PrimaryPipeline.cs" />
     <Compile Include="Renderers\BoundingBoxRenderer.cs" />
     <Compile Include="Renderers\CompositeLODRenderer.cs" />
     <Compile Include="Renderers\GenerationVisConicalRenderer.cs" />
