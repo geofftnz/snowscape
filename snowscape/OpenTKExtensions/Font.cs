@@ -6,6 +6,7 @@ using System.IO;
 using OpenTK.Graphics.OpenGL;
 using OpenTK;
 using NLog;
+using OpenTKExtensions.Framework;
 
 namespace OpenTKExtensions
 {
@@ -28,7 +29,7 @@ namespace OpenTKExtensions
      * 
      * 
     */
-    public class Font : ITextRenderer
+    public class Font : GameComponentBase, ITextRenderer
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
@@ -53,6 +54,9 @@ namespace OpenTKExtensions
         }
         public int TexWidth { get; private set; }
         public int TexHeight { get; private set; }
+
+        private string ImageFilename;
+        private string MetadataFilename;
 
         private Texture sdfTexture;
 
@@ -227,9 +231,12 @@ namespace OpenTKExtensions
         #endregion
 
 
-        public Font(string name)
+        public Font(string name, string imageFilename, string metadataFilename)
         {
             this.Name = name;
+            this.ImageFilename = imageFilename;
+            this.MetadataFilename = metadataFilename;
+
             this.IsTextureLoaded = false;
             this.IsVertexVBOLoaded = false;
             this.IsTexcoordVBOLoaded = false;
@@ -238,13 +245,34 @@ namespace OpenTKExtensions
             this.IsColourVBOLoaded = false;
             this.Count = 0;
             this.GlobalScale = 1.0f;
+
+            this.Loading += Font_Loading;
+            this.Unloading += Font_Unloading;
         }
 
-        public Font()
-            : this("Font")
+        public Font(string imageFilename, string metadataFilename)
+            : this("Font", imageFilename, metadataFilename)
         {
-
         }
+
+        void Font_Loading(object sender, EventArgs e)
+        {
+            this.LoadTexture(ImageFilename);
+            this.LoadMetaData(MetadataFilename);
+            this.NormalizeTexcoords();
+            this.InitVertexVBO();
+            this.InitTexcoordVBO();
+            this.InitColourVBO();
+            this.InitIndexVBO();
+            this.InitShader();
+        }
+
+        void Font_Unloading(object sender, EventArgs e)
+        {
+            this.sdfTexture.Unload();
+            this.shader.Unload();
+        }
+
 
         public void LoadMetaData(string fileName)
         {
@@ -525,17 +553,6 @@ namespace OpenTKExtensions
             return AddString(s, position.X, position.Y, position.Z, size, col);
         }
 
-        public void Init(string imageFilename, string metadataFilename)
-        {
-            this.LoadTexture(imageFilename);
-            this.LoadMetaData(metadataFilename);
-            this.NormalizeTexcoords();
-            this.InitVertexVBO();
-            this.InitTexcoordVBO();
-            this.InitColourVBO();
-            this.InitIndexVBO();
-            this.InitShader();
-        }
 
         public void Render(Matrix4 projection, Matrix4 modelview)
         {

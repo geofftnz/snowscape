@@ -143,7 +143,7 @@ namespace Snowscape.TerrainGenerationViewer
 
 
         uint updateCounter = 0;
-        private Font font = new Font();
+        private Font font;
         private TextManager textManager = new TextManager("DefaultText", null);
 
         private FrameCounter2 frameCounter = new FrameCounter2();
@@ -217,6 +217,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tilePatchMediumRenderer = new PatchMediumRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tilePatchHighRenderer = new PatchHighRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
             this.Components.Add(this.tileSegmentRenderer = new SegmentRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
+
+            this.Components.Add(this.font = new Font("main", Resources.FontConsolas, Resources.FontConsolasMeta), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -545,9 +547,13 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Enable(EnableCap.DepthTest);
 
             // setup font
-            font.Init(Resources.FontConsolas, Resources.FontConsolasMeta);
-            textManager.Font = font;
-            textureDebugRenderer.Font = font;
+        
+            
+            font.Loaded += (s, ea) =>
+            {
+                textManager.Font = (Font)s;
+                textureDebugRenderer.Font = (Font)s;
+            };
 
 
             // load components
@@ -1230,7 +1236,7 @@ namespace Snowscape.TerrainGenerationViewer
             // near segments (12 x 30 degrees)
             for (int a = 0; a < 12; a++)
             {
-                tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, (float) a * 30.0f, 30.0f, radius, nearSegmentRadius);
+                tileSegmentRenderer.Render(terrainTile, this.terrainGlobal, this.terrainProjection, this.terrainModelview, this.eyePos, (float)a * 30.0f, 30.0f, radius, nearSegmentRadius);
             }
             radius += nearSegmentRadius;
 
