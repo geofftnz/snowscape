@@ -700,10 +700,7 @@ namespace TerrainGeneration
                             this.initialMinHeight = hh < this.initialMinHeight ? hh : this.initialMinHeight;
                             this.initialMaxHeight = hh > this.initialMaxHeight ? hh : this.initialMaxHeight;
                         }
-
-                        sr.Close();
                     }
-                    fs.Close();
                 }
             }
             catch (Exception)
@@ -733,10 +730,7 @@ namespace TerrainGeneration
                         sw.Write(0f);
                         sw.Write(0f);
                     }
-
-                    sw.Close();
                 }
-                fs.Close();
             }
         }
 

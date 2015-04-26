@@ -99,7 +99,6 @@ char id=39    x=500   y=247   width=10    height=17    xoffset=10.563    yoffset
                 Assert.IsTrue(target.Characters.ContainsKey((char)38));
                 Assert.IsTrue(target.Characters.ContainsKey((char)0));
 
-                s.Close();
             }
         }
 

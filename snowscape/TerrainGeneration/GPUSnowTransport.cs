@@ -642,10 +642,7 @@ namespace TerrainGeneration
                         data[i * 4 + 2] = sr.ReadSingle();
                         data[i * 4 + 3] = 0f; sr.ReadSingle();
                     }
-
-                    sr.Close();
                 }
-                fs.Close();
             }
 
             UploadTerrain(data);
@@ -671,10 +668,7 @@ namespace TerrainGeneration
                         sw.Write(data[i * 4 + 2]);
                         sw.Write(data[i * 4 + 3]);
                     }
-
-                    sw.Close();
                 }
-                fs.Close();
             }
         }
 

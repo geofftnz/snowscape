@@ -143,7 +143,6 @@ namespace OpenTKExtensions.Loaders
                     line = sr.ReadLine();
                 }
 
-                sr.Close();
             }
 
             return sb.ToString();

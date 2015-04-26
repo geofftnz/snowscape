@@ -181,7 +181,7 @@ namespace Snowscape.TerrainGenerationViewer
         private bool reloadShaders = false;
 
         public class CloseEventArgs : EventArgs { }
-        public delegate void CloseEventHandler(object source, CloseEventArgs e);
+        public delegate void CloseEventHandler(object sender, CloseEventArgs e);
         public event CloseEventHandler OnClose;
 
         public TerrainGenerationViewer()

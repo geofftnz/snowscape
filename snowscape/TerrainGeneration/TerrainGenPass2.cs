@@ -473,10 +473,7 @@ namespace TerrainGeneration
                         sw.Write(this.Map[i].Snow);
                         sw.Write(this.Map[i].Powder);
                     }
-
-                    sw.Close();
                 }
-                fs.Close();
             }
         }
 
@@ -512,10 +509,7 @@ namespace TerrainGeneration
                         this.Map[i].Snow = sr.ReadSingle();
                         this.Map[i].Powder = sr.ReadSingle();
                     }
-
-                    sr.Close();
                 }
-                fs.Close();
             }
         }
 

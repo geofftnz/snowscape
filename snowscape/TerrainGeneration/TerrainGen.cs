@@ -1183,10 +1183,7 @@ namespace TerrainGeneration
                         sw.Write(this.Terrain.Map[i].Erosion);
                         sw.Write(this.Terrain.Map[i].MovingWater);
                     }
-
-                    sw.Close();
                 }
-                fs.Close();
             }
         }
 
@@ -1225,10 +1222,7 @@ namespace TerrainGeneration
                         this.Terrain.Map[i].MovingWater = 0f;
                         this.Terrain.Map[i].Erosion = 0f;
                     }
-
-                    sr.Close();
                 }
-                fs.Close();
             }
 
         }

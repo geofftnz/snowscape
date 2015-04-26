@@ -280,7 +280,6 @@ namespace OpenTKExtensions
             using (var fs = new FileStream(fileName, FileMode.Open))
             {
                 this.LoadMetaData(fs);
-                fs.Close();
             }
         }
         public void LoadMetaData(Stream input)
@@ -304,7 +303,6 @@ namespace OpenTKExtensions
                         }
                     }
                 }
-                sr.Close();
             }
             log.Trace("Font {0} meta data loaded. {1} characters parsed.", this.Name, this.Characters.Count);
         }
