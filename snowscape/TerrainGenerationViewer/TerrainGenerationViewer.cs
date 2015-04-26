@@ -166,8 +166,6 @@ namespace Snowscape.TerrainGenerationViewer
         private int numPatches = 0;
         private int numTriangles = 0;
 
-        private double frameLimitDelay = 0.0;
-
 
         private PerfMonitor perfmon = new PerfMonitor();
         private FrameTracker frameTracker = new FrameTracker();
@@ -176,7 +174,6 @@ namespace Snowscape.TerrainGenerationViewer
         private const string TERRAINPATH = @"../../../../terrains/";
         private const string SHADERPATH = @"../../../Resources/Shaders";
 
-        //private FileSystemWatcher shaderWatcher;
         private FileSystemPoller shaderDirectoryPoller;
         private bool reloadShaders = false;
 
@@ -191,10 +188,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             // set default shader loader
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(SHADERPATH);
-
-
-
-
+            
             #region create components
 
             // phase 1 
