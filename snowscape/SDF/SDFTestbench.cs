@@ -10,6 +10,7 @@ using OpenTK.Graphics;
 using System.Threading;
 using OpenTKExtensions.Text;
 using OpenTKExtensions.Components;
+using OpenTKExtensions.Camera;
 
 namespace SDF
 {
@@ -22,8 +23,10 @@ namespace SDF
         private Font font; 
         private TextManager textManager;
         private FrameCounter frameCounter;
+        private WalkCamera camera;
         #endregion
 
+        private const string SHADERPATH = @"../../Resources/Shaders";
 
         public SDFTestbench()
             : base(
@@ -32,14 +35,19 @@ namespace SDF
             "SDF Testbench",
             GameWindowFlags.Default,
             DisplayDevice.Default,
-            3, 2,
+            3, 1,
             OpenTK.Graphics.GraphicsContextFlags.Default
             )
         {
+            this.VSync = OpenTK.VSyncMode.Off;
+
+            // set default shader loader
+            ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(SHADERPATH);
 
             Components.Add(font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt"));
             Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
             Components.Add(frameCounter = new FrameCounter());
+            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse));
 
 
             this.Load += SDFTestbench_Load;
@@ -73,16 +81,16 @@ namespace SDF
             GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
             GL.ClearDepth(1.0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //GL.Disable(EnableCap.DepthTest);
-            GL.Disable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Blend);
 
             textManager.AddOrUpdate(frameCounter.TextBlock);
+
+            float y = 0.1f;
+            textManager.AddOrUpdate(new TextBlock("camera", string.Format("{0}", camera.EyePos.ToString()), new Vector3(0.0f, y, 0.0f), 0.0005f, Color4.Wheat.ToVector4())); y += 0.05f;
 
             Components.Render(frame);
 
             SwapBuffers();
-            Thread.Sleep(1);
+            //Thread.Sleep(1);
         }
 
         void SDFTestbench_UpdateFrame(object sender, FrameEventArgs e)

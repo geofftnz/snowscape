@@ -10,8 +10,6 @@ namespace OpenTKExtensions.Text
 {
     public class TextManager : GameComponentBase, IRenderable, IResizeable
     {
-        private static Logger log = LogManager.GetCurrentClassLogger();
-
         public string Name { get; set; }
         public Font Font { get; set; }
         public bool NeedsRefresh { get; private set; }
@@ -32,6 +30,8 @@ namespace OpenTKExtensions.Text
             this.Visible = true;
             this.DrawOrder = int.MaxValue;
             this.AutoTransform = false;
+            this.Projection = Matrix4.Identity;
+            this.Modelview = Matrix4.Identity;
         }
 
         public TextManager()

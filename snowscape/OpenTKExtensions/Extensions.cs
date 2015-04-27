@@ -79,6 +79,10 @@ namespace OpenTKExtensions
                 yield return a.Value;
         }
 
+        public static Vector4 ToVector4(this Color4 col)
+        {
+            return new Vector4(col.R, col.G, col.B, col.A);
+        }
 
     }
 }
