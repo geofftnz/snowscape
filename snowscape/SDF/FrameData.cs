@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SDF
 {
-    public class FrameData : IFrameUpdateData
+    public class FrameData : IFrameUpdateData, IFrameRenderData
     {
         public double Time
         {

@@ -598,7 +598,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.components.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
 
-            this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
+            //this.camera.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
             this.currentParamsVersion++;
         }
 
@@ -1076,10 +1076,10 @@ namespace Snowscape.TerrainGenerationViewer
 
             GL.Disable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Blend);
-            if (textManager.NeedsRefresh)
-            {
-                textManager.Refresh();
-            }
+            //if (textManager.NeedsRefresh)
+            //{
+            //    textManager.Refresh();
+            //}
 
             textManager.Render();
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));

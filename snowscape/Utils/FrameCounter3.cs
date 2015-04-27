@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Utils
 {
-    public class FrameCounter
+    public class FrameCounter3
     {
         const int BUFLEN = 30;
         private Stopwatch sw = new Stopwatch();
@@ -55,7 +55,7 @@ namespace Utils
         }
 
 
-        public FrameCounter()
+        public FrameCounter3()
         {
         }
 

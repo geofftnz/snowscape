@@ -9,6 +9,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Graphics;
 using System.Threading;
 using OpenTKExtensions.Text;
+using OpenTKExtensions.Components;
 
 namespace SDF
 {
@@ -18,7 +19,9 @@ namespace SDF
         private GameComponentCollection Components { get { return components; } }
 
         #region Components
-        private Font font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt");
+        private Font font; 
+        private TextManager textManager;
+        private FrameCounter frameCounter;
         #endregion
 
 
@@ -34,13 +37,22 @@ namespace SDF
             )
         {
 
-            Components.Add(font);
+            Components.Add(font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt"));
+            Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
+            Components.Add(frameCounter = new FrameCounter());
 
 
             this.Load += SDFTestbench_Load;
             this.Unload += SDFTestbench_Unload;
             this.UpdateFrame += SDFTestbench_UpdateFrame;
             this.RenderFrame += SDFTestbench_RenderFrame;
+            this.Resize += SDFTestbench_Resize;
+        }
+
+        private void SDFTestbench_Resize(object sender, EventArgs e)
+        {
+            GL.Viewport(this.ClientRectangle);
+            Components.Resize(this.ClientRectangle.Width, this.ClientRectangle.Height);
         }
 
 
@@ -53,13 +65,21 @@ namespace SDF
             Components.Unload();
         }
 
-
         void SDFTestbench_RenderFrame(object sender, FrameEventArgs e)
         {
-            GL.ClearColor(Color4.DarkBlue);
+            FrameData frame = new FrameData();
+
+            GL.Viewport(this.ClientRectangle);
+            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
             GL.ClearDepth(1.0);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            //GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
 
+            textManager.AddOrUpdate(frameCounter.TextBlock);
+
+            Components.Render(frame);
 
             SwapBuffers();
             Thread.Sleep(1);

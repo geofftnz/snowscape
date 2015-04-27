@@ -8,7 +8,7 @@ using OpenTKExtensions.Framework;
 
 namespace OpenTKExtensions.Text
 {
-    public class TextManager : GameComponentBase, IRenderable
+    public class TextManager : GameComponentBase, IRenderable, IResizeable
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
@@ -19,6 +19,7 @@ namespace OpenTKExtensions.Text
         public int DrawOrder { get; set; }
         public Matrix4 Projection { get; set; }
         public Matrix4 Modelview { get; set; }
+        public bool AutoTransform { get; set; }
 
         Dictionary<string, TextBlock> blocks = new Dictionary<string, TextBlock>();
         public Dictionary<string, TextBlock> Blocks { get { return blocks; } }
@@ -28,6 +29,9 @@ namespace OpenTKExtensions.Text
             this.Name = name;
             this.Font = font;
             this.NeedsRefresh = false;
+            this.Visible = true;
+            this.DrawOrder = int.MaxValue;
+            this.AutoTransform = false;
         }
 
         public TextManager()
@@ -145,5 +149,19 @@ namespace OpenTKExtensions.Text
             this.Font.Render(this.Projection, this.Modelview);
         }
 
+
+        public void Resize(int width, int height)
+        {
+            if (height > 0)
+            {
+                this.Projection = Matrix4.CreateOrthographicOffCenter(0.0f, (float)width / (float)height, 1.0f, 0.0f, 0.001f, 10.0f);
+                this.Modelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
+            }
+            else
+            {
+                this.Projection = this.Modelview = Matrix4.Identity;
+            }
+            
+        }
     }
 }

@@ -50,7 +50,7 @@
   <ItemGroup>
     <Compile Include="FileSystemPoller.cs" />
     <Compile Include="FrameCounter2.cs" />
-    <Compile Include="FrameCounter.cs" />
+    <Compile Include="FrameCounter3.cs" />
     <Compile Include="Intersect.cs" />
     <Compile Include="IParameter.cs" />
     <Compile Include="MaximumMipMapGenerator.cs" />
