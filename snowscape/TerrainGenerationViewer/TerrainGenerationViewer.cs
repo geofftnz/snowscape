@@ -26,7 +26,7 @@ using Loaders = Snowscape.TerrainRenderer.Loaders;
 using OpenTKExtensions.Framework;
 using Snowscape.TerrainRenderer.Renderers.LOD;
 using OpenTKExtensions.Components;
-
+using OpenTKExtensions.Text;
 
 namespace Snowscape.TerrainGenerationViewer
 {

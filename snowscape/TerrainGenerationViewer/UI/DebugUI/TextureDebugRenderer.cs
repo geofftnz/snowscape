@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
 using OpenTKExtensions.Framework;
+using OpenTKExtensions.Text;
 
 namespace Snowscape.TerrainGenerationViewer.UI.Debug
 {
