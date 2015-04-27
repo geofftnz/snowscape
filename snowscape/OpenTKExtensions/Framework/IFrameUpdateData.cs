@@ -7,5 +7,6 @@ namespace OpenTKExtensions.Framework
 {
     public interface IFrameUpdateData
     {
+        double Time { get; }
     }
 }

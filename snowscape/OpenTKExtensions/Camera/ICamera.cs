@@ -4,13 +4,14 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTK.Input;
+using OpenTKExtensions.Framework;
 
 namespace OpenTKExtensions.Camera
 {
-    public interface ICamera
+    public interface ICamera : IUpdateable, IResizeable
     {
-        void Resize(int ClientWidth, int ClientHeight); 
-        void Update(double time);
+        //void Resize(int ClientWidth, int ClientHeight); 
+        //void Update(double time);
 
         bool ViewEnable { get; set; }
 

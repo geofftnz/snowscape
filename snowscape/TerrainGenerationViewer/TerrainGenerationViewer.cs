@@ -641,12 +641,16 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_UpdateFrame(object sender, FrameEventArgs e)
         {
+            var updateData = new FrameUpdateData
+            {
+                Time = e.Time
+            };
 
             var pos = (this.camera as WalkCamera).Position;
             pos.Y = this.Terrain.GetHeightAt(pos.X, pos.Z);
             (this.camera as WalkCamera).Position = pos;
 
-            this.camera.Update(e.Time);
+            this.camera.Update(updateData);
             this.eyePos = (this.camera as WalkCamera).EyePos;
 
             if (this.parameters["autoreload"].GetValue<bool>() && (updateCounter % 200 == 0))

@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FrameRenderData.cs" />
+    <Compile Include="FrameUpdateData.cs" />
     <Compile Include="TerrainGenerationViewer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\DebugUI\QuadTreeLodDebugRenderer.cs" />

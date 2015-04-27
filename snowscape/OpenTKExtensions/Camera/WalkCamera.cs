@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using OpenTK.Input;
 using OpenTK;
+using OpenTKExtensions.Framework;
 
 namespace OpenTKExtensions.Camera
 {
-    public class WalkCamera : ICamera
+    public class WalkCamera : GameComponentBase, ICamera, IUpdateable, IResizeable
     {
 
         public KeyboardDevice Keyboard { get; set; }
@@ -149,9 +150,9 @@ namespace OpenTKExtensions.Camera
         }
 
 
-
-        public void Update(double time)
+        public void Update(IFrameUpdateData frameData)
         {
+            double time = frameData.Time;
 
             // mouse look
             if (ViewEnable)
@@ -254,9 +255,6 @@ namespace OpenTKExtensions.Camera
                 return Matrix4.LookAt(this.EyePos, this.HasChanged() ? this.LookTarget : this.LookTargetDithered, -Vector3.UnitY);
             }
         }
-
-
-
 
     }
 }
