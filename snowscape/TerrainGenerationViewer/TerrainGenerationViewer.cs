@@ -110,6 +110,8 @@ namespace Snowscape.TerrainGenerationViewer
         private UI.Debug.QuadTreeLodDebugRenderer quadTreeLodDebugRenderer;
         private UI.Debug.TextureDebugRenderer textureDebugRenderer;
 
+        private WalkCamera camera;
+
         #endregion
 
 
@@ -139,7 +141,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         private Vector3 eyePos;
 
-        private ICamera camera;
 
 
         uint updateCounter = 0;
@@ -213,6 +214,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tileSegmentRenderer = new SegmentRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
 
             this.Components.Add(this.font = new Font("main", Resources.FontConsolas, Resources.FontConsolasMeta), LoadOrder.Phase1);
+            this.Components.Add(this.camera = new WalkCamera(this.Keyboard, this.Mouse), LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -242,10 +244,6 @@ namespace Snowscape.TerrainGenerationViewer
 
             #endregion
 
-
-
-
-            this.camera = new WalkCamera(this.Keyboard, this.Mouse);
 
             this.UpdateFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_UpdateFrame);
             this.RenderFrame += new EventHandler<FrameEventArgs>(TerrainGenerationViewer_RenderFrame);
@@ -349,18 +347,6 @@ namespace Snowscape.TerrainGenerationViewer
 
         }
 
-        //void shaderWatcher_Error(object sender, ErrorEventArgs e)
-        //{
-        //    log.Warn("FileSystemWatcher: {0}",e.GetException().Message);
-        //}
-
-        //void shaderWatcher_Changed(object sender, FileSystemEventArgs e)
-        //{
-        //    if (this.parameters["autoreload"].GetValue<bool>())
-        //    {
-        //        this.reloadShaders = true;
-        //    }
-        //}
 
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
         {
@@ -650,7 +636,10 @@ namespace Snowscape.TerrainGenerationViewer
             pos.Y = this.Terrain.GetHeightAt(pos.X, pos.Z);
             (this.camera as WalkCamera).Position = pos;
 
-            this.camera.Update(updateData);
+
+            this.Components.Update(updateData);
+
+            //this.camera.Update(updateData);
             this.eyePos = (this.camera as WalkCamera).EyePos;
 
             if (this.parameters["autoreload"].GetValue<bool>() && (updateCounter % 200 == 0))
