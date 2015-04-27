@@ -614,6 +614,9 @@ namespace Snowscape.TerrainGenerationViewer
         {
             this.overlayProjection = Matrix4.CreateOrthographicOffCenter(0.0f, (float)this.ClientRectangle.Width / (float)this.ClientRectangle.Height, 1.0f, 0.0f, 0.001f, 10.0f);
             this.overlayModelview = Matrix4.Identity * Matrix4.CreateTranslation(0.0f, 0.0f, -1.0f);
+
+            this.textManager.Projection = this.overlayProjection;
+            this.textManager.Modelview = this.overlayModelview;
         }
 
 
@@ -1078,7 +1081,7 @@ namespace Snowscape.TerrainGenerationViewer
                 textManager.Refresh();
             }
 
-            textManager.Render(overlayProjection, overlayModelview);
+            textManager.Render();
             frameTracker.Step("text-render", new Vector4(1.0f, 0.0f, 0.8f, 1.0f));
 
 

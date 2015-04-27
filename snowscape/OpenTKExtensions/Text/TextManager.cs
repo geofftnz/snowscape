@@ -4,16 +4,21 @@ using System.Linq;
 using System.Text;
 using NLog;
 using OpenTK;
+using OpenTKExtensions.Framework;
 
 namespace OpenTKExtensions.Text
 {
-    public class TextManager
+    public class TextManager : GameComponentBase, IRenderable
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
         public string Name { get; set; }
         public Font Font { get; set; }
         public bool NeedsRefresh { get; private set; }
+        public bool Visible { get; set; }
+        public int DrawOrder { get; set; }
+        public Matrix4 Projection { get; set; }
+        public Matrix4 Modelview { get; set; }
 
         Dictionary<string, TextBlock> blocks = new Dictionary<string, TextBlock>();
         public Dictionary<string, TextBlock> Blocks { get { return blocks; } }
@@ -115,7 +120,11 @@ namespace OpenTKExtensions.Text
             this.NeedsRefresh = false;
         }
 
-        public void Render(Matrix4 projection, Matrix4 modelview)
+        public void Render(IFrameRenderData frameData)
+        {
+            this.Render();
+        }
+        public void Render()
         {
             if (this.Font == null)
             {
@@ -133,11 +142,8 @@ namespace OpenTKExtensions.Text
                 this.Refresh();
             }
 
-            this.Font.Render(projection, modelview);
-
+            this.Font.Render(this.Projection, this.Modelview);
         }
-
-
 
     }
 }

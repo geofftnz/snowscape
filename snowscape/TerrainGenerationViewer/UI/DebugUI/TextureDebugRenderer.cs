@@ -379,9 +379,12 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             }
 
             GL.Enable(EnableCap.Blend);
+            textManager.Projection = transform;
+            textManager.Modelview = Matrix4.Identity;
 
-            textManager.Render(transform, Matrix4.Identity);
+            textManager.Render();
         }
+
     }
 }
 
