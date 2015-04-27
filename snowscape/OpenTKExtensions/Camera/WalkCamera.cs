@@ -126,7 +126,7 @@ namespace OpenTKExtensions.Camera
             this.Position = new Vector3(0.5f, 0.5f, 0f);
             this.AngleUpDown = (float)Math.PI * 0.5f;
             this.AngleLeftRight = (float)Math.PI;
-            this.EyeHeight = 200f;
+            this.EyeHeight = 1f;
             this.ZNear = 1.0f;
             this.ZFar = 4000.0f;
 
@@ -155,6 +155,7 @@ namespace OpenTKExtensions.Camera
         public void Update(IFrameUpdateData frameData)
         {
             double time = frameData.Time;
+            if (time < 0.0001) time = 0.0001;
 
             // mouse look
             if (ViewEnable)
