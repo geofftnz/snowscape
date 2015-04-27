@@ -180,7 +180,7 @@ namespace OpenTKExtensions.Camera
             }
 
             // keyboard move
-            float speed = (float)(this.movementSpeed * time * Math.Sqrt(this.EyeHeight));
+            float speed = (float)(this.movementSpeed * time);
 
             float speedmul = this.Keyboard[Key.ShiftLeft] ? 1.0f : 0.1f;
             speed *= speedmul;
