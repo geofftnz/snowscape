@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Permissions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -12,6 +13,7 @@ namespace SDF
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
+        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
         static void Main()
         {
             Application.EnableVisualStyles();

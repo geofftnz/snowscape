@@ -25,6 +25,8 @@ namespace OpenTKExtensions.Camera
 
         public bool ViewEnable { get; set; }
 
+        public Vector3 Eye { get { return EyePos; } }
+
 
         /// <summary>
         /// look angle (up/down), in radians 

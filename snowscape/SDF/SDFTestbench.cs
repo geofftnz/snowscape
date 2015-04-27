@@ -11,6 +11,7 @@ using System.Threading;
 using OpenTKExtensions.Text;
 using OpenTKExtensions.Components;
 using OpenTKExtensions.Camera;
+using SDF.Renderers;
 
 namespace SDF
 {
@@ -24,6 +25,7 @@ namespace SDF
         private TextManager textManager;
         private FrameCounter frameCounter;
         private WalkCamera camera;
+        private SDFRenderer sdfRenderer;
         #endregion
 
         private const string SHADERPATH = @"../../Resources/Shaders";
@@ -48,6 +50,7 @@ namespace SDF
             Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
             Components.Add(frameCounter = new FrameCounter());
             Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse));
+            Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
 
             this.Load += SDFTestbench_Load;
@@ -90,7 +93,7 @@ namespace SDF
             Components.Render(frame);
 
             SwapBuffers();
-            //Thread.Sleep(1);
+            Thread.Sleep(1);
         }
 
         void SDFTestbench_UpdateFrame(object sender, FrameEventArgs e)
