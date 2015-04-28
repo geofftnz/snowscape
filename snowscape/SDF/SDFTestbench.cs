@@ -12,6 +12,7 @@ using OpenTKExtensions.Text;
 using OpenTKExtensions.Components;
 using OpenTKExtensions.Camera;
 using SDF.Renderers;
+using OpenTK.Input;
 
 namespace SDF
 {
@@ -20,8 +21,10 @@ namespace SDF
         private GameComponentCollection components = new GameComponentCollection();
         private GameComponentCollection Components { get { return components; } }
 
+        private Dictionary<Key, Action<KeyModifiers>> keyActions = new Dictionary<Key, Action<KeyModifiers>>();
+
         #region Components
-        private Font font; 
+        private Font font;
         private TextManager textManager;
         private FrameCounter frameCounter;
         private WalkCamera camera;
@@ -49,15 +52,32 @@ namespace SDF
             Components.Add(font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt"));
             Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
             Components.Add(frameCounter = new FrameCounter());
-            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse));
+            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 1.0f});
             Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
+            keyActions.Add(Key.Escape, (km) => { this.Close(); });
 
             this.Load += SDFTestbench_Load;
             this.Unload += SDFTestbench_Unload;
             this.UpdateFrame += SDFTestbench_UpdateFrame;
             this.RenderFrame += SDFTestbench_RenderFrame;
             this.Resize += SDFTestbench_Resize;
+
+            this.KeyDown += SDFTestbench_KeyDown;
+        }
+
+        void SDFTestbench_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
+        {
+            var k = e.Key;
+            var km = e.Modifiers;
+
+            Action<KeyModifiers> action = null;
+            if (keyActions.TryGetValue(e.Key, out action))
+            {
+                action(km);
+            }
+
+            
         }
 
         private void SDFTestbench_Resize(object sender, EventArgs e)

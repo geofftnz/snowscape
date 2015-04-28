@@ -41,6 +41,10 @@ namespace SDF.Renderers
             indexVBO = new uint[] { 0, 1, 2 }.ToVBO();
 
             Reload();
+            if (this.program == null)
+            {
+                throw new InvalidOperationException("Could not load shader");
+            }
 
             this.Components.Load();
         }
@@ -59,6 +63,9 @@ namespace SDF.Renderers
             var cam = Camera;
             if (cam == null) return;
 
+            var renderdata = frameData as FrameData;
+            if (renderdata == null) return;
+
 
             Matrix4 invProjectionView = Matrix4.Invert(Matrix4.Mult(cam.View, cam.Projection));
 
@@ -68,7 +75,8 @@ namespace SDF.Renderers
             this.program
                 .UseProgram()
                 .SetUniform("inverse_projectionview_matrix", invProjectionView)
-                .SetUniform("eyePos", cam.Eye);
+                .SetUniform("eyePos", cam.Eye)
+                .SetUniform("iGlobalTime",(float)renderdata.Time);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);

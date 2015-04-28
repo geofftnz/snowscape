@@ -37,7 +37,8 @@ namespace OpenTKExtensions.Camera
 
         private int prevMouseX = -10000;
         private int prevMouseY = -10000;
-        float movementSpeed = 5f;
+
+        public float MovementSpeed { get; set; }
 
         private Random rand = new Random();
 
@@ -129,6 +130,7 @@ namespace OpenTKExtensions.Camera
             this.EyeHeight = 1f;
             this.ZNear = 1.0f;
             this.ZFar = 4000.0f;
+            this.MovementSpeed = 5.0f;
 
             this.ViewEnable = true;
 
@@ -180,7 +182,7 @@ namespace OpenTKExtensions.Camera
             }
 
             // keyboard move
-            float speed = (float)(this.movementSpeed * time);
+            float speed = (float)(this.MovementSpeed * time);
 
             float speedmul = this.Keyboard[Key.ShiftLeft] ? 1.0f : 0.1f;
             speed *= speedmul;
@@ -213,12 +215,12 @@ namespace OpenTKExtensions.Camera
 
             if (this.Keyboard[Key.F])
             {
-                this.EyeHeight += 10.0f * this.movementSpeed * speedmul * (float)time;
+                this.EyeHeight += 10.0f * this.MovementSpeed * speedmul * (float)time;
                 this.IsMoving = true;
             }
             if (this.Keyboard[Key.V])
             {
-                this.EyeHeight -= 10.0f * this.movementSpeed * speedmul * (float)time;
+                this.EyeHeight -= 10.0f * this.MovementSpeed * speedmul * (float)time;
                 this.IsMoving = true;
             }
 
