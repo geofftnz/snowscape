@@ -9,10 +9,8 @@ namespace SDF
 {
     public class FrameData : IFrameUpdateData, IFrameRenderData
     {
-        public double Time
-        {
-            get;
-            set;
-        }
+
+        public double Time { get; set; }
+        public TimeSpan Elapsed { get; set; }
     }
 }

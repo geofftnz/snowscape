@@ -23,6 +23,7 @@ precision highp float;
 
 uniform vec3 eyePos;
 uniform float iGlobalTime;
+uniform float alpha;
 
 in vec4 eyeTarget;
 
@@ -30,355 +31,172 @@ out vec4 out_Col;
 
 
 
-/*
-	Pinching noise and basic raymarching setup from Octavio Good: https://www.shadertoy.com/view/4dSXDd
-*/
 
-// noise functions
-float Hash1d(float u)
-{
-    return fract(sin(u)*143.9);	// scale this down to kill the jitters
-}
-float Hash2d(vec2 uv)
-{
-    float f = uv.x + uv.y * 37.0;
-    return fract(sin(f)*104003.9);
-}
-float Hash3d(vec3 uv)
-{
-    float f = uv.x + uv.y * 37.0 + uv.z * 521.0;
-    return fract(sin(f)*110003.9);
-}
-float mixP(float f0, float f1, float a)
-{
-    return mix(f0, f1, a*a*(3.0-2.0*a));
-}
-const vec2 zeroOne = vec2(0.0, 1.0);
-float noise2d(vec2 uv)
-{
-    vec2 fr = fract(uv.xy);
-    vec2 fl = floor(uv.xy);
-    float h00 = Hash2d(fl);
-    float h10 = Hash2d(fl + zeroOne.yx);
-    float h01 = Hash2d(fl + zeroOne);
-    float h11 = Hash2d(fl + zeroOne.yy);
-    return mixP(mixP(h00, h10, fr.x), mixP(h01, h11, fr.x), fr.y);
-}
-float noise(vec3 uv)
-{
-    vec3 fr = fract(uv.xyz);
-    vec3 fl = floor(uv.xyz);
-    float h000 = Hash3d(fl);
-    float h100 = Hash3d(fl + zeroOne.yxx);
-    float h010 = Hash3d(fl + zeroOne.xyx);
-    float h110 = Hash3d(fl + zeroOne.yyx);
-    float h001 = Hash3d(fl + zeroOne.xxy);
-    float h101 = Hash3d(fl + zeroOne.yxy);
-    float h011 = Hash3d(fl + zeroOne.xyy);
-    float h111 = Hash3d(fl + zeroOne.yyy);
-    return mixP(
-        mixP(mixP(h000, h100, fr.x),
-             mixP(h010, h110, fr.x), fr.y),
-        mixP(mixP(h001, h101, fr.x),
-             mixP(h011, h111, fr.x), fr.y)
-        , fr.z);
+
+
+
+
+
+
+
+// Play with the two following values to change quality.
+// You want as many samples as your GPU can bear. :)
+#define SAMPLES 6
+#define MAXDEPTH 8
+
+// Uncomment to see how many samples never reach a light source
+//#define DEBUG
+
+// Not used for now
+#define DEPTH_RUSSIAN 2
+
+#define PI 3.14159265359
+#define DIFF 0
+#define SPEC 1
+#define REFR 2
+#define NUM_SPHERES 8
+
+float seed = 0.;
+float rand() { return fract(sin(seed++)*43758.5453123); }
+
+struct Ray { vec3 o, d; };
+struct Sphere {
+	float r;
+	vec3 p, e, c;
+	int refl;
+};
+
+Sphere lightSourceVolume = Sphere(20., vec3(50., 81.6, 81.6), vec3(12.), vec3(0.), DIFF);
+Sphere spheres[NUM_SPHERES];
+void initSpheres() {
+	spheres[0] = Sphere(1e5, vec3(-1e5+1., 40.8, 81.6),	vec3(0.1,0.03,0.02), vec3(.75, .25, .25), DIFF);
+	spheres[1] = Sphere(1e5, vec3( 1e5+99., 40.8, 81.6),vec3(0.01,0.02,0.15), vec3(.25, .25, .75), DIFF);
+	spheres[2] = Sphere(1e5, vec3(50., 40.8, -1e5),		vec3(0.), vec3(.75), DIFF);
+	spheres[3] = Sphere(1e5, vec3(50., 40.8,  1e5+170.),vec3(0.), vec3(0.), DIFF);
+	spheres[4] = Sphere(1e5, vec3(50., -1e5, 81.6),		vec3(0.), vec3(.75), DIFF);
+	spheres[5] = Sphere(1e5, vec3(50.,  1e5+81.6, 81.6),vec3(0.), vec3(.75), DIFF);
+	spheres[6] = Sphere(16.5, vec3(27., 16.5, 47.), 	vec3(0.), vec3(1.0,0.95,0.8), SPEC);
+	spheres[7] = Sphere(16.5, vec3(73., 16.5, 78.), 	vec3(0.), vec3(.7, 1., .9), REFR);
+	//spheres[8] = Sphere(600., vec3(50., 681.33, 81.6),	vec3(0.05), vec3(0.), DIFF);
 }
 
-vec3 noise3(vec3 uv)
-{
-    return vec3(
-        noise(uv),
-        noise(uv.yzx + vec3(35.654,135.7,17.2)),
-        noise(uv.zxy + vec3(19.7,39.7,117.7))
-        );
+float intersect(Sphere s, Ray r) {
+	vec3 op = s.p - r.o;
+	float t, epsilon = 1e-3, b = dot(op, r.d), det = b * b - dot(op, op) + s.r * s.r;
+	if (det < 0.) return 0.; else det = sqrt(det);
+	return (t = b - det) > epsilon ? t : ((t = b + det) > epsilon ? t : 0.);
 }
 
-float PI=3.14159265;
-
-
-float sdSphere( vec3 p, float s )
-{
-	return length(p)-s;
-}
-float sdInvSphere( vec3 p, float s )
-{
-	return -sdSphere(p,s);
-}
-float sdqSphere( vec3 p, float ss )
-{
-	return dot(p,p)-ss;
+int intersect(Ray r, out float t, out Sphere s, int avoid) {
+	int id = -1;
+	t = 1e5;
+	s = spheres[0];
+	for (int i = 0; i < NUM_SPHERES; ++i) {
+		Sphere S = spheres[i];
+		float d = intersect(S, r);
+		if (i!=avoid && d!=0. && d<t) { t = d; id = i; s=S; }
+	}
+	return id;
 }
 
-vec2 opS( vec2 d1, vec2 d2 )
-{
-    //vec2 d3 = vec2(-d2.x,d2.y);
-    //return max(-d2,d1);
-    return (-d1.x > d2.x) ? vec2(-d1.x,d1.y) : d2;
+vec3 jitter(vec3 d, float phi, float sina, float cosa) {
+	vec3 w = normalize(d), u = normalize(cross(w.yzx, w)), v = cross(w, u);
+	return (u*cos(phi) + v*sin(phi)) * sina + w * cosa;
 }
 
-vec2 opU( vec2 d1, vec2 d2 )
-{
-	return (d1.x<d2.x) ? d1 : d2;
+vec3 radiance(Ray r) {
+	vec3 acc = vec3(0.);
+	vec3 mask = vec3(1.);
+	int id = -1;
+	for (int depth = 0; depth < MAXDEPTH; ++depth) {
+		float t;
+		Sphere obj;
+		if ((id = intersect(r, t, obj, id)) < 0) break;
+		vec3 x = t * r.d + r.o;
+		vec3 n = normalize(x - obj.p), nl = n * sign(-dot(n, r.d));
+
+		//vec3 f = obj.c;
+		//float p = dot(f, vec3(1.2126, 0.7152, 0.0722));
+		//if (depth > DEPTH_RUSSIAN || p == 0.) if (rand() < p) f /= p; else { acc += mask * obj.e * E; break; }
+
+		if (obj.refl == DIFF) {
+			float r2 = rand();
+			vec3 d = jitter(nl, 2.*PI*rand(), sqrt(r2), sqrt(1. - r2));
+			vec3 e = vec3(0.);
+			//for (int i = 0; i < NUM_SPHERES; ++i)
+			{
+				// Sphere s = sphere(i);
+				// if (dot(s.e, vec3(1.)) == 0.) continue;
+
+				// Normally we would loop over the light sources and
+				// cast rays toward them, but since there is only one
+				// light source, that is mostly occluded, here goes
+				// the ad hoc optimization:
+				Sphere s = lightSourceVolume;
+				int i = 8;
+
+				vec3 l0 = s.p - x;
+				float cos_a_max = sqrt(1. - clamp(s.r * s.r / dot(l0, l0), 0., 1.));
+				float cosa = mix(cos_a_max, 1., rand());
+				vec3 l = jitter(l0, 2.*PI*rand(), sqrt(1. - cosa*cosa), cosa);
+
+				if (intersect(Ray(x, l), t, s, id) == i) {
+					float omega = 2. * PI * (1. - cos_a_max);
+					e += (s.e * clamp(dot(l, n),0.,1.) * omega) / PI;
+				}
+			}
+			float E = 1.;//float(depth==0);
+			acc += mask * obj.e * E + mask * obj.c * e;
+			mask *= obj.c;
+			r = Ray(x, d);
+		} else if (obj.refl == SPEC) {
+			acc += mask * obj.e;
+			mask *= obj.c;
+			r = Ray(x, reflect(r.d, n));
+		} else {
+			float a=dot(n,r.d), ddn=abs(a);
+			float nc=1., nt=1.5, nnt=mix(nc/nt, nt/nc, float(a>0.));
+			float cos2t=1.-nnt*nnt*(1.-ddn*ddn);
+			r = Ray(x, reflect(r.d, n));
+			if (cos2t>0.) {
+				vec3 tdir = normalize(r.d*nnt + sign(a)*n*(ddn*nnt+sqrt(cos2t)));
+				float R0=(nt-nc)*(nt-nc)/((nt+nc)*(nt+nc)),
+					c = 1.-mix(ddn,dot(tdir, n),float(a>0.));
+				float Re=R0+(1.-R0)*c*c*c*c*c,P=.25+.5*Re,RP=Re/P,TP=(1.-Re)/(1.-P);
+				if (rand()<P) { mask *= RP; }
+				else { mask *= obj.c*TP; r = Ray(x, tdir); }
+			}
+		}
+	}
+	return acc;
 }
 
-
-vec2 distanceToScene(vec3 p)
-{
-  
-    vec2 res = vec2(10000.0,0.0);
-    
-//    float t = 10000.0;//sdSphere(p - vec3(0.0), 0.1);
-    
-    
-    for(float i=-0.5;i<5.0;i+=0.9)
-    {
-        res = opU(res,vec2(sdSphere(p - vec3(0.0,-0.05,i), 0.5),1.0));
-        
-        res = opU(res,vec2(sdSphere(p - vec3(-0.5,-0.05,i), 0.1),0.9));
-        res = opU(res,vec2(sdSphere(p - vec3(0.5,-0.05,i), 0.1),0.9));
-    }
-    
-    //t = sqrt(t);
-    //if (camDist<5.0){
-    
-    float ns = 10.0, na = 0.02;
-    float n = 0.0;
-    n += noise(p*ns) * na; ns *= 2.0; na *= 0.5;
-    n += noise(p*ns) * na; ns *= 2.0; na *= 0.5;
-    n += noise(p*ns) * na; ns *= 2.0; na *= 0.5;
-    n += noise(p*ns) * na; ns *= 2.0; na *= 0.5;
-    
-    res.x-=n;
-    
-        //t = t - noise(p*20.0) * 0.02;
-        //t = t - noise(p*40.0) * 0.01;
-        //t = t - noise(p*80.0) * 0.005;
-    	//t = t - noise(p*200.0) * 0.001;
-    //}
-    
-    //return t;
-    return opS(res,vec2(sdSphere(p - vec3(0.0,0.0,-0.5), 50.0),0.0));
-}
-
-//float distanceToScene(vec3 p)
-//{
-//    return distanceToScene(p,0.0).x;
-//}
-    
-vec3 getNormal(vec3 p, float dist)
-{
-    vec3 e = vec3(0.0025, 0, 0);
-    return normalize(vec3(dist - distanceToScene(p - e.xyy).x,
-                        dist - distanceToScene(p - e.yxy).x,
-                        dist - distanceToScene(p - e.yyx).x));
-}
-
-float shadowMarch(vec3 p0, vec3 d)
-{
-    vec3 p;
-    float s = 1.0;
-    float t = 0.0;
-    
-    for(int i=0;i<16;i++)
-    {
-        p = p0 + d * t;
-        float dist = distanceToScene(p).x;
-        
-        //s *= (1.0 - smoothstep(0.001,0.002,dist)*0.8);
-       
-        t += max(dist,0.1);
-        //s *= 1.0 - clamp(abs(dist),0.0,1.0);
-        
-        //if (s<0.01) break;
-        //if (abs(dist)<0.001) break;
-            
-        
-        //t+=0.1;
-        //if (s<0.001) break;
-        //p = p0 + d * t * 0.05;
-        //float dist= distanceToScene(p);
-        //s *= (1.0 - smoothstep(0.0,0.001,dist)*0.5);
-		
-    }
-    
-    return s;
-}
-
-float softshadow( in vec3 ro, in vec3 rd, in float mint, in float tmax )
-{
-	float res = 1.0;
-    float t = mint;
-    for( int i=0; i<16; i++ )
-    {
-		float h = distanceToScene( ro + rd*t ).x;
-        res = min( res, 8.0*h/t );
-        t += clamp( h, 0.025, 0.20 );
-        if( h<0.001 || t>tmax ) break;
-    }
-    return clamp( res, 0.0, 1.0 );
-
-}
-
-vec3 tempToColour(float t)
-{
-    return vec3(
-        smoothstep(500.0,2000.0,t) * 0.95,
-        smoothstep(900.0,5000.0,t),
-        smoothstep(2000.0,10000.0,t)
-       )*4.0;
-}
-
-float OrenNayar(float roughness, float albedo, vec3 rd, vec3 nor, vec3 light)
-{
-    // oren-nayar
-    //float roughness = 0.5;
-    //float albedo = 1.0;
-    float roughness2 = roughness*roughness;
-    float onA = 1.0 - 0.5 * (roughness / (roughness+0.57));
-    float onB = 0.45 * (roughness / (roughness+0.09));
-
-    float ndotl = dot(nor,light);
-    float ndotv = dot(nor,-rd);
-
-    float ai = acos(ndotl);
-    float ar = acos(ndotv);
-
-    float onAlpha = max(ai,ar);
-    float onBeta = min(ai,ar);
-    float onGamma = dot(-rd - nor * dot(-rd,nor),light - nor * dot(light,nor)); // ?
-
-    return (albedo / 3.1415927) * max(0.0,dot(nor,light)) * (onA + (onB * max(0.0,onGamma) * sin(onAlpha) * tan(onBeta)));
-}
-
-void main()
-{
-    
-    vec3 lightV = normalize(vec3(-1.0,0.8,0.0));
-    vec3 lightC = vec3(0.85,0.9,1.0) * 0.05;
-    vec3 camLightC = vec3(0.95,0.92,0.8) * 0.5;
-    
- //   vec2 muv = iMouse.xy / iResolution.xy * 2.0 - 1.0;
-  
-	//vec3 camPos = vec3(0.0,0.0,1.5+sin(iGlobalTime * 0.1) * 2.0);
- //   //vec3 camFacing;
-	//vec3 camUp=vec3(0.0,1.0,0.0);
-	//vec3 camLookat=vec3(muv.x,muv.y,camPos.z + 1.0);
-    
-	//vec2 uv = fragCoord.xy/iResolution.xy * 2.0 - 1.0;
-
-	//// Camera setup.
-	//vec3 camVec=normalize(camLookat - camPos);
-	//vec3 sideNorm=normalize(cross(camUp, camVec));
-	//vec3 upNorm=cross(camVec, sideNorm);
-	//vec3 worldFacing=(camPos + camVec);
-	//vec3 worldPix = worldFacing + uv.x * sideNorm * (iResolution.x/iResolution.y) + uv.y * upNorm;
-	//vec3 relVec = normalize(worldPix - camPos);
+void main() {
+	initSpheres();
+	seed = iGlobalTime + eyeTarget.x + eyeTarget.y ;// + iResolution.y * fragCoord.x / iResolution.x + fragCoord.y / iResolution.y;
+	//vec2 uv = 2. * fragCoord.xy / iResolution.xy - 1.;
 
 
 	vec3 camPos = eyePos;
-	vec3 relVec = normalize(eyeTarget.xyz - eyePos);
-    
-    
-    // material parameters
-    vec3 emmissive = vec3(0.0);
-    vec3 albedo = vec3(0.0);
-    float specexp = 30.0;
-    float spec = 0.0;
-    float roughness = 0.0;
-    
-    
-    // Raymarch
-    float t = 0.0;
-    vec2 dist = vec2(0.1,0.0);
-    float distMax = 20.0;
-    vec3 p = vec3(0.0);
-    
-    for(int i=0;i<64;i++)
+	vec3 rd = normalize(eyeTarget.xyz - eyePos);
+
+	//vec3 camPos = vec3((2. * (iMouse.xy==vec2(0.)?.5*iResolution.xy:iMouse.xy) / iResolution.xy - 1.) * vec2(48., 40.) + vec2(50., 40.8), 169.);
+	//vec3 cz = normalize(vec3(50., 40., 81.6) - camPos);
+	//vec3 cx = vec3(1., 0., 0.);
+	//vec3 cy = normalize(cross(cx, cz)); cx = cross(cz, cy);
+	vec3 color = vec3(0.);
+	for (int i = 0; i < SAMPLES; ++i)
     {
-        if ((dist.x > distMax) || (abs(dist.x) < 0.001)) break;
-        
-        p = camPos + relVec * t*0.95;
-        dist = distanceToScene(p);
-        t += dist.x;//*0.9999;
+#ifdef DEBUG
+        vec3 test = radiance(Ray(camPos, rd));
+        if (dot(test, test) > 0.) color += vec3(1.); else color += vec3(0.5,0.,0.1);
+#else
+		color += radiance(Ray(camPos, rd));
+#endif
     }
-    
-    vec3 nor = getNormal(p,dist.x);
-
-    // material
-    if (dist.y>0.95)
-    {
-        vec3 n3 = noise3(p * 400.0);
-        
-        albedo = vec3(0.3) + n3 * vec3(0.05,0.07,0.1);
-        roughness = 0.9;
-        
-        nor = normalize(nor + (n3 - 0.5) * 0.2);
-        
-        float sn = noise(p*vec3(0.5,9.0,9.0)) + noise(p*30.0) * 0.05;
-        //spec = (smoothstep(0.9,0.92,sn) * (1.0-smoothstep(0.95,0.97,sn))) * smoothstep(0.5,0.7,noise(p*3.0));
-        spec = smoothstep(0.99,0.992,sn);
-        
-        spec += smoothstep(0.7,0.95,noise(p * 15.0)) * 0.05;
-        
-        albedo *= (1.0-spec*0.5); 
-        roughness *= (1.0-spec);
-    }
-    else if (dist.y > 0.85)
-    {
-        float temperature = 
-            500.0 + 
-            smoothstep(0.0,1.0,noise(p*3.0)) * 300.0 + 
-            //smoothstep(0.6,1.0,noise(p*40.0)) * 950.0 + 
-            smoothstep(0.7,1.0,noise(p*40.0)) * 3000.0;
-        temperature *= abs(sin(iGlobalTime * 0.05));
-        emmissive = tempToColour(temperature);
-        albedo = vec3(0.3);
-    }
-    
-    vec3 col = vec3(0.0);
-    //vec3 diffuse = vec3(0.2);
-    
-    // hit
-    if (abs(dist.x) < 0.1)
-    {
-        
-        // diffuse
-        col = albedo * clamp(dot(nor,lightV),0.0,1.0) * lightC;
-        
-        // camera light
-        vec3 camLightV = (camPos-p + vec3(0.1,-0.22,-0.1));
-        float camLightPower = 1.0 / dot(camLightV,camLightV);
-        camLightV = normalize(camLightV);
-        //camLightPower *= shadowMarch(p,-camLightV);
-        //camLightPower *= (softshadow(p,camLightV,0.02, 0.5));
-        
-        float diffuse = OrenNayar(1.0, 1.0, relVec, nor, camLightV);
-        
-        col += albedo * clamp(diffuse,0.0,1.0) * camLightC * camLightPower;
-        
-        // specular
-        vec3 refl = reflect(relVec,nor);
-        col += spec * pow(clamp(dot(refl,camLightV),0.0,1.0),specexp) * camLightC * camLightPower;
-        
-        // emmissive
-        col += emmissive;
-        
-        //col = nor * 0.5 + 0.5;
-    }
-
-    float fog = 1.0 - 1.0 / exp(  t * 0.9);
-    
-    
-    col = mix(col,vec3(0.0),fog);
-    fog = max(0.0,fog-0.2);
-    col = mix(col,vec3(0.6,0.8,1.0)*0.1,fog*fog);
-
-    
-    // gamma
-    col = pow(col,vec3(0.4545));
-
-    out_Col = vec4(col,1.0);
-
+	out_Col = vec4(pow(clamp(color/float(SAMPLES), 0., 1.), vec3(1./2.2)), alpha);
 }
+
+
 
 

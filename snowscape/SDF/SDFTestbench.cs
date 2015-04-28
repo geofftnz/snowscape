@@ -13,6 +13,7 @@ using OpenTKExtensions.Components;
 using OpenTKExtensions.Camera;
 using SDF.Renderers;
 using OpenTK.Input;
+using System.Diagnostics;
 
 namespace SDF
 {
@@ -22,6 +23,8 @@ namespace SDF
         private GameComponentCollection Components { get { return components; } }
 
         private Dictionary<Key, Action<KeyModifiers>> keyActions = new Dictionary<Key, Action<KeyModifiers>>();
+
+        private Stopwatch stopwatch = Stopwatch.StartNew();
 
         #region Components
         private Font font;
@@ -52,7 +55,7 @@ namespace SDF
             Components.Add(font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt"));
             Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
             Components.Add(frameCounter = new FrameCounter());
-            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 1.0f});
+            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 10.0f, Position = new Vector3(61f,16f,99f)});
             Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
             keyActions.Add(Key.Escape, (km) => { this.Close(); });
@@ -98,12 +101,13 @@ namespace SDF
 
         void SDFTestbench_RenderFrame(object sender, FrameEventArgs e)
         {
-            FrameData frame = new FrameData();
+            FrameData frame = new FrameData() { Time = e.Time, Elapsed = stopwatch.Elapsed };
 
             GL.Viewport(this.ClientRectangle);
-            GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+            //GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);
             GL.ClearDepth(1.0);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Clear(ClearBufferMask.DepthBufferBit); 
+            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             textManager.AddOrUpdate(frameCounter.TextBlock);
 

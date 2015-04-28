@@ -20,6 +20,7 @@ namespace SDF.Renderers
         private VBO indexVBO;// = new VBO("i", BufferTarget.ElementArrayBuffer);
         private ShaderProgram program = null;
         public ICamera Camera { get; set; }
+        private float alpha = 1.0f;
 
 
         private GameComponentCollection Components = new GameComponentCollection();
@@ -66,17 +67,30 @@ namespace SDF.Renderers
             var renderdata = frameData as FrameData;
             if (renderdata == null) return;
 
+            if (cam.HasChanged())
+            {
+                alpha = 1.0f;
+                cam.ResetChanged();
+            }
+            else
+            {
+                alpha *= 0.98f;
+                if (alpha < 0.05f) alpha = 0.05f;
+            }
 
             Matrix4 invProjectionView = Matrix4.Invert(Matrix4.Mult(cam.View, cam.Projection));
 
             GL.Disable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             this.program
                 .UseProgram()
                 .SetUniform("inverse_projectionview_matrix", invProjectionView)
                 .SetUniform("eyePos", cam.Eye)
-                .SetUniform("iGlobalTime",(float)renderdata.Time);
+                .SetUniform("iGlobalTime", (float)renderdata.Elapsed.TotalSeconds)
+                .SetUniform("alpha", alpha);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
