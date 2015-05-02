@@ -194,11 +194,22 @@ void main()
 
 		col *= 0.6;
 		
+		float isoline_intensity = 0.2 / (1.0 + plane_t*0.2);
+		// distance field isolines
+		float distance_isoline = max(isoLine(dist * 10.0,0.05),isoLine(dist,0.02));
+		col += vec3(1.0,0.5,0.1) * (distance_isoline * isoline_intensity);
 
-		col += vec3(isoLine(dist * 100.0,0.1)) * (0.1 / (1.0 + plane_t));
-		col += vec3(isoLine(dist * 10.0,0.05)) * (0.1 / (1.0 + plane_t * 0.1));
-		col += vec3(isoLine(dist,0.02)) * (0.1 / (1.0 + plane_t * 0.05));
-		//col += vec3(isoLine(dist * 0.1,0.005)) * (0.1 / (1.0 + plane_t * 0.005));
+		// xz grid isolines
+		col += vec3(0.2,1.0,0.5) * (isoLine(plane_p.x,0.01) * isoline_intensity);
+		col += vec3(0.2,0.5,1.0) * (isoLine(plane_p.z,0.01) * isoline_intensity);
+
+		//col += vec3(isoLine(dist * 100.0,0.1) * (0.1 / (1.0 + plane_t)));
+		//col += vec3(isoLine(dist * 10.0,0.05) * (0.1 / (1.0 + plane_t * 0.1)));
+		//col += vec3(isoLine(dist,0.02) * (0.1 / (1.0 + plane_t * 0.05)));
+		
+		// xz isolines
+		//col += vec3(isoLine(plane_p.x,0.01) * 0.1);
+
 	}
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
