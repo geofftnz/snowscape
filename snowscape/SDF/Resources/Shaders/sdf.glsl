@@ -85,7 +85,7 @@ vec2 de(vec3 p)
 	s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
 	s = dunion(s,ob(1.0,sdSphere(tr_x(p,3.0),1.0)));
 
-	s = dunion(s,ob(0.5,sdBox(p,vec3(1.,2.,3.))));
+	s = dunion(s,ob(0.5,sdBox(tr_x(p,-3.0),vec3(1.,2.,3.))));
 	return s;
 }
 
