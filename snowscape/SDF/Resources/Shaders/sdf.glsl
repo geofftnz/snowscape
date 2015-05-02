@@ -17,7 +17,6 @@ void main() {
 
 
 //|fs
-
 #version 140
 precision highp float;
 
@@ -30,195 +29,74 @@ in vec4 eyeTarget;
 out vec4 out_Col;
 
 
-
-
-
-
-
-/*
-https://www.shadertoy.com/view/4sfGDB
-
-This shader is an attempt at porting smallpt to GLSL.
-
-See what it's all about here:
-http://www.kevinbeason.com/smallpt/
-
-The code is based in particular on the slides by David Cline.
-
-Some differences:
-
-- For optimization purposes, the code considers there is
-  only one light source (see the commented loop)
-- Russian roulette and tent filter are not implemented
-
-I spent quite some time pulling my hair over inconsistent
-behavior between Chrome and Firefox, Angle and native. I
-expect many GLSL related bugs to be lurking, on top of
-implementation errors. Please Let me know if you find any.
-
---
-Zavie
-
-*/
-
-
-
-// Play with the two following values to change quality.
-// You want as many samples as your GPU can bear. :)
-#define SAMPLES 6
-#define MAXDEPTH 8
-
-// Uncomment to see how many samples never reach a light source
-//#define DEBUG
-
-// Not used for now
-#define DEPTH_RUSSIAN 2
-
-#define PI 3.14159265359
-#define DIFF 0
-#define SPEC 1
-#define REFR 2
-#define NUM_SPHERES 8
-
-float seed = 0.;
-float rand() { return fract(sin(seed++)*43758.5453123); }
-
-struct Ray { vec3 o, d; };
-struct Sphere {
-	float r;
-	vec3 p, e, c;
-	int refl;
-};
-
-Sphere lightSourceVolume = Sphere(20., vec3(50., 81.6, 81.6), vec3(12.), vec3(0.), DIFF);
-Sphere spheres[NUM_SPHERES];
-void initSpheres() {
-	spheres[0] = Sphere(1e5, vec3(-1e5+1., 40.8, 81.6),	vec3(0.1,0.03,0.02), vec3(.75, .25, .25), DIFF);
-	spheres[1] = Sphere(1e5, vec3( 1e5+99., 40.8, 81.6),vec3(0.01,0.02,0.15), vec3(.25, .25, .75), DIFF);
-	spheres[2] = Sphere(1e5, vec3(50., 40.8, -1e5),		vec3(0.), vec3(.75), DIFF);
-	spheres[3] = Sphere(1e5, vec3(50., 40.8,  1e5+170.),vec3(0.), vec3(0.), DIFF);
-	spheres[4] = Sphere(1e5, vec3(50., -1e5, 81.6),		vec3(0.), vec3(.75), DIFF);
-	spheres[5] = Sphere(1e5, vec3(50.,  1e5+81.6, 81.6),vec3(0.), vec3(.75), DIFF);
-	spheres[6] = Sphere(16.5, vec3(27., 16.5, 47.), 	vec3(0.), vec3(1.0,0.95,0.8), SPEC);
-	spheres[7] = Sphere(16.5, vec3(73., 16.5, 78.), 	vec3(0.), vec3(.7, 1., .9), REFR);
-	//spheres[8] = Sphere(600., vec3(50., 681.33, 81.6),	vec3(0.05), vec3(0.), DIFF);
+float sdSphere(vec3 p, vec4 s)
+{
+	return length(s.xyz - p) - s.w;
 }
 
-float intersect(Sphere s, Ray r) {
-	vec3 op = s.p - r.o;
-	float t, epsilon = 1e-3, b = dot(op, r.d), det = b * b - dot(op, op) + s.r * s.r;
-	if (det < 0.) return 0.; else det = sqrt(det);
-	return (t = b - det) > epsilon ? t : ((t = b + det) > epsilon ? t : 0.);
+
+float de(vec3 p)
+{
+	float s = 100000000.0;
+
+	s = min(s,sdSphere(p,vec4(1.0,0.0,2.0,0.5)));
+
+	s = min(s,sdSphere(p,vec4(1.0,0.0,0.0,1.0)));
+
+	s = min(s,sdSphere(p,vec4(10.0,0.0,0.0,1.0)));
+
+	return s;
 }
 
-int intersect(Ray r, out float t, out Sphere s, int avoid) {
-	int id = -1;
-	t = 1e5;
-	s = spheres[0];
-	for (int i = 0; i < NUM_SPHERES; ++i) {
-		Sphere S = spheres[i];
-		float d = intersect(S, r);
-		if (i!=avoid && d!=0. && d<t) { t = d; id = i; s=S; }
-	}
-	return id;
+float intersectPlane(vec3 ro, vec3 rd, vec4 plane)
+{
+	float d = dot(rd,plane.xyz);
+	if (d==0.0) return -1.0;
+	return -(dot(ro,plane.xyz)+plane.w) / d;
 }
 
-vec3 jitter(vec3 d, float phi, float sina, float cosa) {
-	vec3 w = normalize(d), u = normalize(cross(w.yzx, w)), v = cross(w, u);
-	return (u*cos(phi) + v*sin(phi)) * sina + w * cosa;
+
+float isoLine(float x)
+{
+	return 1.0-smoothstep(0.04,0.05,abs(mod(x+0.5,1.0)-0.5));
 }
 
-vec3 radiance(Ray r) {
-	vec3 acc = vec3(0.);
-	vec3 mask = vec3(1.);
-	int id = -1;
-	for (int depth = 0; depth < MAXDEPTH; ++depth) {
-		float t;
-		Sphere obj;
-		if ((id = intersect(r, t, obj, id)) < 0) break;
-		vec3 x = t * r.d + r.o;
-		vec3 n = normalize(x - obj.p), nl = n * sign(-dot(n, r.d));
+void main() 
+{
 
-		//vec3 f = obj.c;
-		//float p = dot(f, vec3(1.2126, 0.7152, 0.0722));
-		//if (depth > DEPTH_RUSSIAN || p == 0.) if (rand() < p) f /= p; else { acc += mask * obj.e * E; break; }
-
-		if (obj.refl == DIFF) {
-			float r2 = rand();
-			vec3 d = jitter(nl, 2.*PI*rand(), sqrt(r2), sqrt(1. - r2));
-			vec3 e = vec3(0.);
-			//for (int i = 0; i < NUM_SPHERES; ++i)
-			{
-				// Sphere s = sphere(i);
-				// if (dot(s.e, vec3(1.)) == 0.) continue;
-
-				// Normally we would loop over the light sources and
-				// cast rays toward them, but since there is only one
-				// light source, that is mostly occluded, here goes
-				// the ad hoc optimization:
-				Sphere s = lightSourceVolume;
-				int i = 8;
-
-				vec3 l0 = s.p - x;
-				float cos_a_max = sqrt(1. - clamp(s.r * s.r / dot(l0, l0), 0., 1.));
-				float cosa = mix(cos_a_max, 1., rand());
-				vec3 l = jitter(l0, 2.*PI*rand(), sqrt(1. - cosa*cosa), cosa);
-
-				if (intersect(Ray(x, l), t, s, id) == i) {
-					float omega = 2. * PI * (1. - cos_a_max);
-					e += (s.e * clamp(dot(l, n),0.,1.) * omega) / PI;
-				}
-			}
-			float E = 1.;//float(depth==0);
-			acc += mask * obj.e * E + mask * obj.c * e;
-			mask *= obj.c;
-			r = Ray(x, d);
-		} else if (obj.refl == SPEC) {
-			acc += mask * obj.e;
-			mask *= obj.c;
-			r = Ray(x, reflect(r.d, n));
-		} else {
-			float a=dot(n,r.d), ddn=abs(a);
-			float nc=1., nt=1.5, nnt=mix(nc/nt, nt/nc, float(a>0.));
-			float cos2t=1.-nnt*nnt*(1.-ddn*ddn);
-			r = Ray(x, reflect(r.d, n));
-			if (cos2t>0.) {
-				vec3 tdir = normalize(r.d*nnt + sign(a)*n*(ddn*nnt+sqrt(cos2t)));
-				float R0=(nt-nc)*(nt-nc)/((nt+nc)*(nt+nc)),
-					c = 1.-mix(ddn,dot(tdir, n),float(a>0.));
-				float Re=R0+(1.-R0)*c*c*c*c*c,P=.25+.5*Re,RP=Re/P,TP=(1.-Re)/(1.-P);
-				if (rand()<P) { mask *= RP; }
-				else { mask *= obj.c*TP; r = Ray(x, tdir); }
-			}
-		}
-	}
-	return acc;
-}
-
-void main() {
-	initSpheres();
-	seed = iGlobalTime + eyeTarget.x + eyeTarget.y ;// + iResolution.y * fragCoord.x / iResolution.x + fragCoord.y / iResolution.y;
-	//vec2 uv = 2. * fragCoord.xy / iResolution.xy - 1.;
-
-
-	vec3 camPos = eyePos;
+	vec3 ro = eyePos;
 	vec3 rd = normalize(eyeTarget.xyz - eyePos);
 
-	//vec3 camPos = vec3((2. * (iMouse.xy==vec2(0.)?.5*iResolution.xy:iMouse.xy) / iResolution.xy - 1.) * vec2(48., 40.) + vec2(50., 40.8), 169.);
-	//vec3 cz = normalize(vec3(50., 40., 81.6) - camPos);
-	//vec3 cx = vec3(1., 0., 0.);
-	//vec3 cy = normalize(cross(cx, cz)); cx = cross(cz, cy);
-	vec3 color = vec3(0.);
-	for (int i = 0; i < SAMPLES; ++i)
-    {
-#ifdef DEBUG
-        vec3 test = radiance(Ray(camPos, rd));
-        if (dot(test, test) > 0.) color += vec3(1.); else color += vec3(0.5,0.,0.1);
-#else
-		color += radiance(Ray(camPos, rd));
-#endif
-    }
-	out_Col = vec4(pow(clamp(color/float(SAMPLES), 0., 1.), vec3(1./2.2)), alpha);
+	vec3 col = vec3(rd*0.5+0.5);
+
+
+	// intersect with plane
+	float plane_t = intersectPlane(ro,rd,vec4(0.0,1.0,0.0,0.0));
+
+	if (plane_t > 0.0)
+	{
+		vec3 plane_p = ro + rd * plane_t;
+		
+		//col = vec3( (mod(plane_p.x,1.0) + mod(plane_p.z,1.0)) * 0.5 );
+		float dist = de(plane_p);
+
+		vec3 dcol1 = vec3(1.0,1.0,0.0);  // close
+		vec3 dcol2 = vec3(1.0,0.0,0.0);  // medium
+		vec3 dcol3 = vec3(0.0,0.0,1.0);  // far
+		vec3 dcol4 = vec3(0.0,0.0,0.1);  // veryfar
+		 
+		col = mix(dcol1, dcol2, min(1.0,dist * 0.1));
+		col = mix(col, dcol3, min(1.0,dist * 0.025));
+		col = mix(col, dcol4, min(1.0,dist * 0.005));
+		col *= 0.6;
+
+		col += vec3(isoLine(dist*10.0)) * 0.1 / (1.0 + plane_t * 0.1);
+		col += vec3(isoLine(dist)) * 0.1 / (1.0 + plane_t * 0.05);
+		col += vec3(isoLine(dist * 0.1)) * 0.1 / (1.0 + plane_t * 0.005);
+	}
+
+	col = pow(col, vec3(1.0/2.2));  // gamma
+	out_Col = vec4(col,1.0);
 }
 
 

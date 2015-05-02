@@ -14,6 +14,8 @@ using OpenTKExtensions.Camera;
 using SDF.Renderers;
 using OpenTK.Input;
 using System.Diagnostics;
+using System.IO;
+using Utils;
 
 namespace SDF
 {
@@ -25,6 +27,9 @@ namespace SDF
         private Dictionary<Key, Action<KeyModifiers>> keyActions = new Dictionary<Key, Action<KeyModifiers>>();
 
         private Stopwatch stopwatch = Stopwatch.StartNew();
+        //private FileSystemWatcher shaderWatcher;
+        private FileSystemPoller shaderWatcher;
+        private long iterations = 0;
 
         #region Components
         private Font font;
@@ -55,7 +60,7 @@ namespace SDF
             Components.Add(font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt"));
             Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
             Components.Add(frameCounter = new FrameCounter());
-            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 10.0f, Position = new Vector3(61f,16f,99f)});
+            Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 10.0f, Position = new Vector3(0f,1f,0f), LookMode = WalkCamera.LookModeEnum.Mouse1});
             Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
             keyActions.Add(Key.Escape, (km) => { this.Close(); });
@@ -67,6 +72,12 @@ namespace SDF
             this.Resize += SDFTestbench_Resize;
 
             this.KeyDown += SDFTestbench_KeyDown;
+
+            //shaderWatcher = new FileSystemWatcher(SHADERPATH);
+            //shaderWatcher.Changed += shaderWatcher_Changed;
+            //shaderWatcher.EnableRaisingEvents = true;
+            shaderWatcher = new FileSystemPoller(SHADERPATH);
+
         }
 
         void SDFTestbench_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -99,9 +110,26 @@ namespace SDF
             Components.Unload();
         }
 
+        void shaderWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            Components.Reload();
+        }
+
+
         void SDFTestbench_RenderFrame(object sender, FrameEventArgs e)
         {
+            iterations++;
             FrameData frame = new FrameData() { Time = e.Time, Elapsed = stopwatch.Elapsed };
+
+            if ((iterations & 0x3f) == 0)
+            {
+                shaderWatcher.Poll();
+                if (shaderWatcher.HasChanges)
+                {
+                    this.Components.Reload();
+                    shaderWatcher.Reset();
+                }
+            }
 
             GL.Viewport(this.ClientRectangle);
             //GL.ClearColor(0.0f, 0.0f, 0.3f, 1.0f);

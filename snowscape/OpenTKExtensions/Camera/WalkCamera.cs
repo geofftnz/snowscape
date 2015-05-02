@@ -27,6 +27,14 @@ namespace OpenTKExtensions.Camera
 
         public Vector3 Eye { get { return EyePos; } }
 
+        public enum LookModeEnum
+        {
+            Always=0,
+            Mouse1,
+            Mouse2
+        }
+        public LookModeEnum LookMode { get; set; }
+
 
         /// <summary>
         /// look angle (up/down), in radians 
@@ -136,6 +144,8 @@ namespace OpenTKExtensions.Camera
 
             this.DitherAmount = 0.0005f;
 
+            this.LookMode = LookModeEnum.Always;
+
         }
 
         public WalkCamera(KeyboardDevice k, MouseDevice m)
@@ -153,6 +163,7 @@ namespace OpenTKExtensions.Camera
             this.Projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, ClientHeight > 0 ? (float)ClientWidth / (float)ClientHeight : 1.0f, this.ZNear, this.ZFar);
         }
 
+        private bool previousViewMouseButton = false;
 
         public void Update(IFrameUpdateData frameData)
         {
@@ -160,12 +171,20 @@ namespace OpenTKExtensions.Camera
             if (time < 0.0001) time = 0.0001;
 
             // mouse look
-            if (ViewEnable)
+            if 
+                (
+                    ViewEnable &&
+                    (
+                        (LookMode == LookModeEnum.Always) ||
+                        (LookMode == LookModeEnum.Mouse1 && Mouse[MouseButton.Left]) ||
+                        (LookMode == LookModeEnum.Mouse2 && Mouse[MouseButton.Right])
+                    )
+                )
             {
                 int mouseX = Mouse.X, mouseY = Mouse.Y;
 
-                if (prevMouseX <= -10000) prevMouseX = mouseX;
-                if (prevMouseY <= -10000) prevMouseY = mouseY;
+                if (prevMouseX <= -10000 || !previousViewMouseButton) prevMouseX = mouseX;
+                if (prevMouseY <= -10000 || !previousViewMouseButton) prevMouseY = mouseY;
 
                 //int deltaX = (this.Width / 2) - mouseX;
                 //int deltaY = (this.Height / 2) - mouseY;
@@ -180,6 +199,8 @@ namespace OpenTKExtensions.Camera
                 prevMouseX = mouseX;
                 prevMouseY = mouseY;
             }
+            if (LookMode == LookModeEnum.Mouse1) previousViewMouseButton = Mouse[MouseButton.Left];
+            if (LookMode == LookModeEnum.Mouse2) previousViewMouseButton = Mouse[MouseButton.Right];
 
             // keyboard move
             float speed = (float)(this.MovementSpeed * time);

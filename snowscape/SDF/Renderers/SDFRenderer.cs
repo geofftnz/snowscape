@@ -34,6 +34,7 @@ namespace SDF.Renderers
 
             this.Loading += SDFRenderer_Loading;
             this.Unloading += SDFRenderer_Unloading;
+            
         }
 
         void SDFRenderer_Loading(object sender, EventArgs e)
@@ -67,6 +68,7 @@ namespace SDF.Renderers
             var renderdata = frameData as FrameData;
             if (renderdata == null) return;
 
+            /*
             if (cam.HasChanged())
             {
                 alpha = 1.0f;
@@ -76,7 +78,8 @@ namespace SDF.Renderers
             {
                 alpha *= 0.98f;
                 if (alpha < 0.05f) alpha = 0.05f;
-            }
+            }*/
+            alpha = 1.0f;
 
             Matrix4 invProjectionView = Matrix4.Invert(Matrix4.Mult(cam.View, cam.Projection));
 
@@ -127,6 +130,7 @@ namespace SDF.Renderers
         public void Reload()
         {
             this.ReloadShader(this.LoadShader, this.SetShader, log);
+            this.Components.Reload();
         }
     }
 }
