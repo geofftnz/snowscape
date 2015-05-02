@@ -145,7 +145,7 @@ namespace SDF
             Components.Render(frame);
 
             SwapBuffers();
-            Thread.Sleep(1);
+            Thread.Sleep(0);
         }
 
         void SDFTestbench_UpdateFrame(object sender, FrameEventArgs e)
