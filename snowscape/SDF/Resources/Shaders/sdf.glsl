@@ -75,6 +75,16 @@ vec2 dcombine(vec2 a, vec2 b, float r)
 	}
 	return m;
 }
+// radiused combiner - modified from cupe/mercury
+vec2 dcombine2(vec2 a, vec2 b, float r)
+{
+	vec2 m = dunion(a,b);
+	if (a.x < r && b.x < r)
+	{
+		return vec2(min(m.x,a.x*b.x),b.y);
+	}
+	return m;
+}
 
 // creates an object from an id and distance
 vec2 ob(float hitid, float d)
@@ -82,13 +92,16 @@ vec2 ob(float hitid, float d)
 	return vec2(d,hitid);
 }
 
-// modulus on x axis, returns instance id
-float pmodx(inout vec3 p, float m)
+// modulus on 1 axis, returns instance id
+float pmod1(inout float p, float m)
 {
-	p.x = (mod((p.x / m) + 0.5, 1.0) - 0.5) * m;
+	float m2 = m * 0.5;
+	p = mod(p+m2,m)-m2;
 
-	return 0.0;
+	return floor((p+m2)/m);
 }
+
+//vec2 drepeatx()
 
 // translation
 vec3 tr(vec3 p, vec3 t) { return p-t; }
@@ -103,7 +116,7 @@ vec2 de(vec3 p)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	//pmodx(p,5.0);
+	pmod1(p.x,20.0);
 
 	s = dunion(s,ob(1.0,sdSphere(tr_x(p,1.0),0.5)));
 	s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
@@ -113,7 +126,7 @@ vec2 de(vec3 p)
 
 	float cyl = sdCylinderz(p,0.5,1.0);
 
-	s = dcombine( ob(0.5,sdBox(tr_x(p,-1.5),vec3(1.,2.,3.))) ,ob(1.0,cyl),0.1);
+	s = dcombine( ob(0.5,sdBox(tr_x(p,-1.5),vec3(1.,2.,3.))) ,ob(1.0,cyl),1.0);
 
 	return s;
 }
