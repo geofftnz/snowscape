@@ -43,13 +43,37 @@ float sdBox(vec3 p, vec3 b)
 {
 	vec3 d = abs(p) - b;
 	return length(max(d,0.)) + max3(min(d,0.));
-
 }
+
+float sdCylindery(vec3 p, float r, float h)
+{
+	float d = length(p.xz)-r;
+	return max(d,abs(p.y)-h);
+}
+
+float sdCylinderx(vec3 p, float r, float h){ return sdCylindery(p.yzx,r,h); }
+float sdCylinderz(vec3 p, float r, float h){ return sdCylindery(p.zxy,r,h); }
 
 // returns the parameter with the smallest x component
 vec2 dunion(vec2 a, vec2 b)
 {
 	return a.x<b.x?a:b;
+}
+
+vec2 dinter(vec2 a, vec2 b)
+{
+	return a.x>b.x?a:b;
+}
+
+// radiused combiner - modified from cupe/mercury
+vec2 dcombine(vec2 a, vec2 b, float r)
+{
+	vec2 m = dunion(a,b);
+	if (a.x < r && b.x < r)
+	{
+		return vec2(min(m.x,r-length(vec2(r-a.x,r-b.x))),b.y);
+	}
+	return m;
 }
 
 // creates an object from an id and distance
@@ -85,7 +109,12 @@ vec2 de(vec3 p)
 	s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
 	s = dunion(s,ob(1.0,sdSphere(tr_x(p,3.0),1.0)));
 
-	s = dunion(s,ob(0.5,sdBox(tr_x(p,-3.0),vec3(1.,2.,3.))));
+	s = dunion(s,ob(0.5,sdBox(tr_x(p,-1.5),vec3(1.,2.,3.))));
+
+	float cyl = sdCylinderz(p,0.5,1.0);
+
+	s = dcombine( ob(0.5,sdBox(tr_x(p,-1.5),vec3(1.,2.,3.))) ,ob(1.0,cyl),0.1);
+
 	return s;
 }
 
@@ -101,27 +130,44 @@ vec3 deNormal(vec3 p, vec3 rd)
                         dist - de(p - e.yyx).x));
 }
 
-const float MAXDIST = 100000000.0;
+const float MAXDIST = 1000.0;
 
 // raymarches the scene described by distance estimator de()
 // returns distance in x, hit id in y
 vec2 intersectScene(vec3 ro, vec3 rd)
 {
-	int i=0;
 	float t=0.0;
 	vec2 pdist = vec2(MAXDIST,-1.0);
 	vec2 res = pdist;
-	float ssign = de(ro).x < 0.0 ? -1.0 : 1.0;
 
-	if (ssign < 0.0) return res;
+	// check to see if we're inside the scene
+	// if we are, find the boundary (rough) and set ray origin to there
+	//float ndist = de(ro).x;
+	//while (ndist < 0.0)
+	//{
+	//	ro -= rd * ndist;
+	//	ndist = de(ro).x;
+	//}
+	if (de(ro).x < 0.0) return res;
 
-	while (i<100 && pdist.x > 0.0001)
+	for(int i=0;i<150;i++)
 	{
 		vec3 p = ro + rd * t;  // position along ray
 		pdist = de(p); // get distance bound
 
 		t += pdist.x; // move position
-		i++;
+
+		if (pdist.x < 0.001)
+		{
+			break;
+		}
+
+		if (t > MAXDIST)
+		{
+			pdist.y = -1.0;
+			break;
+		}
+
 	}
 	res.x = t;
 	res.y = pdist.y;
@@ -138,7 +184,11 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 
 	vec3 normal = deNormal(ro + rd * scene_hit.x, rd);
 
-	return vec4(normal * 0.5+0.5, scene_hit.x);
+	vec3 diffuse = mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
+	vec3 light_dir = normalize(vec3(0.3,0.8,0.7));
+	vec3 col = diffuse * (clamp(dot(normal,light_dir),-1.0,1.0) * 0.5 + 0.5);
+
+	return vec4(col, scene_hit.x);
 }
 
 
@@ -176,40 +226,30 @@ void main()
 	{
 		vec3 plane_p = ro + rd * plane_t;
 		
-		//col = vec3( (mod(plane_p.x,1.0) + mod(plane_p.z,1.0)) * 0.5 );
 		float dist = de(plane_p).x;
 
 		vec3 dcol1 = vec3(1.0,0.5,0.0);  // close
 		vec3 dcol2 = vec3(1.0,0.02,0.05);  // medium
 		vec3 dcol3 = vec3(0.1,0.02,0.2);  // far
-		//vec3 dcol4 = vec3(0.0,0.0,0.1);  // veryfar
 		 
 		float adist = sqrt(abs(dist));
-		col = mix(dcol1, dcol2, clamp(adist,0.0,1.0));
-		col = mix(col, dcol3, clamp((adist-1.0) * 0.5,0.0,1.0));
-		//col = mix(col, dcol3, min(1.0,(dist-10.0) * 0.025));
-		//col = mix(col, dcol4, min(1.0,dist * 0.005));
+		vec3 pcol = mix(dcol1, dcol2, clamp(adist,0.0,1.0));
+		pcol = mix(pcol, dcol3, clamp((adist-1.0) * 0.5,0.0,1.0));
 
-		if (dist < 0.0) col = vec3(1.0) - col;
+		if (dist < 0.0) pcol = vec3(1.0) - pcol;
 
-		col *= 0.6;
+		pcol *= 0.8;
 		
 		float isoline_intensity = 0.2 / (1.0 + plane_t*0.2);
 		// distance field isolines
 		float distance_isoline = max(isoLine(dist * 10.0,0.05),isoLine(dist,0.02));
-		col += vec3(1.0,0.5,0.1) * (distance_isoline * isoline_intensity);
+		pcol += vec3(1.0,0.5,0.1) * (distance_isoline * isoline_intensity);
 
 		// xz grid isolines
-		col += vec3(0.2,1.0,0.5) * (isoLine(plane_p.x,0.01) * isoline_intensity);
-		col += vec3(0.2,0.5,1.0) * (isoLine(plane_p.z,0.01) * isoline_intensity);
+		pcol += vec3(0.2,1.0,0.5) * (  max(isoLine(plane_p.x,0.01),isoLine(plane_p.x*10.0,0.02))  * isoline_intensity * 0.5);
+		pcol += vec3(0.2,0.5,1.0) * (  max(isoLine(plane_p.z,0.01),isoLine(plane_p.z*10.0,0.02)) * isoline_intensity * 0.5);
 
-		//col += vec3(isoLine(dist * 100.0,0.1) * (0.1 / (1.0 + plane_t)));
-		//col += vec3(isoLine(dist * 10.0,0.05) * (0.1 / (1.0 + plane_t * 0.1)));
-		//col += vec3(isoLine(dist,0.02) * (0.1 / (1.0 + plane_t * 0.05)));
-		
-		// xz isolines
-		//col += vec3(isoLine(plane_p.x,0.01) * 0.1);
-
+		col = mix(col, pcol, 0.5);
 	}
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
