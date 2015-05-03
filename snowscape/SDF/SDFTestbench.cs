@@ -30,6 +30,7 @@ namespace SDF
         //private FileSystemWatcher shaderWatcher;
         private FileSystemPoller shaderWatcher;
         private long iterations = 0;
+        private float wheel = 0.0f;
 
         #region Components
         private Font font;
@@ -78,6 +79,13 @@ namespace SDF
             //shaderWatcher.EnableRaisingEvents = true;
             shaderWatcher = new FileSystemPoller(SHADERPATH);
 
+            this.MouseWheel += SDFTestbench_MouseWheel;
+
+        }
+
+        void SDFTestbench_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            wheel += e.DeltaPrecise;
         }
 
         void SDFTestbench_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -120,6 +128,7 @@ namespace SDF
         {
             iterations++;
             FrameData frame = new FrameData() { Time = e.Time, Elapsed = stopwatch.Elapsed };
+            sdfRenderer.Wheel = this.wheel;
 
             if ((iterations & 0x3f) == 0)
             {

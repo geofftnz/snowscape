@@ -21,6 +21,7 @@ namespace SDF.Renderers
         private ShaderProgram program = null;
         public ICamera Camera { get; set; }
         private float alpha = 1.0f;
+        public float Wheel { get; set; }
 
 
         private GameComponentCollection Components = new GameComponentCollection();
@@ -93,7 +94,8 @@ namespace SDF.Renderers
                 .SetUniform("inverse_projectionview_matrix", invProjectionView)
                 .SetUniform("eyePos", cam.Eye)
                 .SetUniform("iGlobalTime", (float)renderdata.Elapsed.TotalSeconds)
-                .SetUniform("alpha", alpha);
+                .SetUniform("alpha", alpha)
+                .SetUniform("wheel",Wheel);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
