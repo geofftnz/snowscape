@@ -263,7 +263,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 
 // shadow query - marches ray, returns light multiplier (0-1) for given direction
 // early exit on collision
-float shadowQuery(vec3 ro, vec3 rd)
+float queryLight(vec3 ro, vec3 rd)
 {
 	float res = 1.0; // default to no shadow
 	float epsilon = 0.0000005; // tolerable error
@@ -309,10 +309,10 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 	vec3 pos = ro + rd * scene_hit.x;
 
 	vec3 normal = deNormal(pos, rd);
-	float shadow = shadowQuery(pos + normal * 0.01, light_dir);
+	float light1 = queryLight(pos + normal * 0.01, light_dir);
 
-	vec3 diffuse = mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
-	vec3 col = diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * shadow;
+	vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
+	vec3 col = diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
 	return vec4(col, scene_hit.x);
 }
