@@ -179,7 +179,7 @@ vec2 de(vec3 p, vec3 dir)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	//float m = 10.0;	pmod2(p.xz,vec2(m));
+	//float m = 3.0;	pmod2(p.xz,vec2(m));
 
 	//s = dunion(s,de_boxcyl(p));
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
@@ -189,6 +189,10 @@ vec2 de(vec3 p, vec3 dir)
 	s = dsubtract(s, ob(0.0,sdSphere(p,1.2)));
 	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
 
+	s = dunion(s, ob(0.0,sdSphere(tr_x(p,-2.0),0.5)));
+	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),vec3(0.5))));
+
+	// ground plane
 	s = dunion (s, ob(1.0,sdPlaney(p,dir,-0.5)));
 	//s = dunion (s, ob(1.0,sdPlaney(p,-0.5)));
 
@@ -263,23 +267,23 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 
 // shadow query - marches ray, returns light multiplier (0-1) for given direction
 // early exit on collision
-float queryLight(vec3 ro, vec3 rd)
+float queryLight(vec3 ro, vec3 rd, float softradius)
 {
 	float res = 1.0; // default to no shadow
-	float epsilon = 0.0000005; // tolerable error
-	float t=0.0; 
-	const float softshadow = 0.05;
+	float epsilon = 0.0001; // tolerable error
+	float t=0.0;
 
 	// if we're inside the scene, we're in full shadow.
 	if (de(ro).x < 0.0) return 0.0;
 
-	for(int i=0;i<50.0;i++) // shorter, cheaper trace
+	for(int i=0;i<150.0;i++) // shorter, cheaper trace
 	{
 		vec3 p = ro + rd * t;  // position along ray
 		float pdist = de(p).x; // get distance bound
 		t += pdist; // move position
 
-		res *= clamp(pdist / softshadow,0.0,1.0);
+		float a = 1.0 / (1.0 + 100.0 * pdist);
+		res *= (1.0 - a * 0.05);
 
 		if (pdist < epsilon)  // hit surface
 		{
@@ -288,31 +292,88 @@ float queryLight(vec3 ro, vec3 rd)
 		}
 		if (t > MAXDIST) // gone too far, no shadow
 		{
-			res = 1.0;
+			//res = 1.0;
 			break;
 		}
 	}
 	return res;
 }
 
+// ambient occlusion query
+// marches ray in fixed steps from ro towards rd. 
+// accumulates occlusion based on proximity to scene
+float queryAO(vec3 ro, vec3 rd, float maxDistance)
+{
+	float t = 0.0;
+	float dt = maxDistance / 20.0; 
+	float ao = 1.0;
 
+	for(int i=0;i<20;i++)
+	{
+		vec3 p = ro + rd * t;
+		t += dt;
+		float pdist = max(0.0,de(p).x); // get distance bound
+
+		ao *= (1.0 - 0.1 * (1.0 / (1.0 + 1.0 * pdist)));
+
+		if (pdist<0.0) break;
+	}
+	
+	return ao;
+}
+
+vec3 skyDome(vec3 rd)
+{
+	vec3 col = mix(vec3(0.01,0.025,0.1),vec3(0.1,0.25,0.4),clamp(pow(1.0-rd.y,4.0),0.0,1.0));
+	col = mix(col,vec3(0.2,0.35,0.4),clamp(pow(1.0-rd.y,10.0),0.0,1.0));
+	col = mix(col,vec3(0.3,0.27,0.25),clamp(pow(1.0-rd.y,20.0),0.0,1.0));
+
+	return col;
+}
 
 // intersects the scene and returns a colour in rgb, distance along ray in a.
 vec4 shadeScene(vec3 ro, vec3 rd)
 {
-	vec3 light_dir = normalize(vec3(0.3,0.8,0.7));
+	vec3 col = vec3(0.0);
+	vec3 light_dir = normalize(vec3(0.3,0.5 + sin(iGlobalTime*0.2) * 0.3 ,0.7+ sin(iGlobalTime*0.3) * 0.1));
 
 	vec2 scene_hit = intersectScene(ro,rd);
 	
-	if (scene_hit.y < 0.0) return vec4(0.0,0.0,0.0,MAXDIST); // no hit
+	if (scene_hit.y < 0.0)
+	{ 
+		scene_hit.x = MAXDIST;
+		col = skyDome(rd);
+	}
+	else
+	{
+		vec3 pos = ro + rd * scene_hit.x;
 
-	vec3 pos = ro + rd * scene_hit.x;
+		vec3 normal = deNormal(pos, rd);
+		float light1 = queryLight(pos + normal * 0.01, light_dir,0.2);
 
-	vec3 normal = deNormal(pos, rd);
-	float light1 = queryLight(pos + normal * 0.01, light_dir);
+		// Diffuse
+		vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
+		col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
-	vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
-	vec3 col = diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
+		// Specular
+		float ior = 0.9;
+
+		float r0 = pow((1.0-ior)/(1.0+ior),2.0);
+		vec3 refl = reflect(rd, normal);
+		vec3 halfangle = (rd + light_dir) / length(rd + light_dir);
+		vec3 specular = vec3(0.5);
+		float schlick = r0 + (1-r0) * pow(1.0 - max(0.0,dot(-halfangle, rd)), 5.0);
+
+		col += specular * pow(max(0.0,dot(refl, light_dir)),40.0) * schlick * light1;
+		//col += specular * schlick * light1;
+
+		// AO
+		col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos + normal * 0.01, normal, 3.0);
+	}
+
+	// sun
+	float sun = smoothstep(0.99983194915 - 0.00005,0.99983194915+0.0002,dot(rd,light_dir)) * queryLight(ro, light_dir,0.2);
+	col += vec3(5.0) * sun;
 
 	return vec4(col, scene_hit.x);
 }
@@ -382,8 +443,9 @@ void main()
 
 	
 	// fog
-	float fog = 1.0 / max(1.0,exp(dist * 0.005));
-	col *= fog;
+	float fog = 1.0 / max(1.0,exp(dist * 0.01));
+	
+	if (dist<MAXDIST)	col = mix(vec3(0.3,0.27,0.25), col, fog);
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
 	out_Col = vec4(col,1.0);
