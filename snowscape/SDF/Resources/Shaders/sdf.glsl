@@ -55,6 +55,26 @@ float sdCylindery(vec3 p, float r, float h)
 float sdCylinderx(vec3 p, float r, float h){ return sdCylindery(p.yzx,r,h); }
 float sdCylinderz(vec3 p, float r, float h){ return sdCylindery(p.zxy,r,h); }
 
+float sdPlanex(vec3 p, float h){return p.x - h;}
+float sdPlaney(vec3 p, float h){return p.y - h;}
+float sdPlanez(vec3 p, float h){return p.z - h;}
+
+float sdPlanex(vec3 p, vec3 d, float h)
+{
+	if (d.x < -1.0) return sdPlanex(p,h);
+	if (d.x == 0.0) return 100000000.0; // ray is parallel to plane - return large number
+	return (h-p.x)/d.x;
+}
+float sdPlaney(vec3 p, vec3 d, float h)
+{
+	if (d.x < -1.0) return sdPlaney(p,h);
+	if (d.y == 0.0) return 100000000.0; // ray is parallel to plane - return large number
+	float t = (h-p.y)/d.y;
+	if (t<-0.001) return 100000000.0; // ray is parallel to plane - return large number
+	return t;
+}
+
+
 // returns the parameter with the smallest x component
 vec2 dunion(vec2 a, vec2 b)
 {
@@ -155,12 +175,12 @@ vec2 de_boxcyl(vec3 p)
 
 // distance estimator
 // returns distance bound in x, hit id in y
-vec2 de(vec3 p)
+vec2 de(vec3 p, vec3 dir)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	float m = 3.0;
-	pmod2(p.xz,vec2(m));
+	//float m = 6.0;
+	//pmod2(p.xz,vec2(m));
 
 	//s = dunion(s,de_boxcyl(p));
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
@@ -169,6 +189,8 @@ vec2 de(vec3 p)
 	s = dunion(s, ob(0.0,sdBox(p,vec3(1.0))));
 	s = dsubtract(s, ob(0.0,sdSphere(p,1.2)));
 	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
+
+	s = dunion (s, ob(1.0,sdPlaney(p,dir,-0.5)));
 
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,1.0),0.5)));
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
@@ -180,6 +202,12 @@ vec2 de(vec3 p)
 
 	return s;
 }
+
+vec2 de(vec3 p)
+{
+	return de(p,vec3(-2.,0.,0.));
+}
+
 
 // normal via distance field gradient
 const float deNormalEpsilon = 0.001;
@@ -217,7 +245,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 	for(int i=0;i<150.0;i++)
 	{
 		vec3 p = ro + rd * t;  // position along ray
-		pdist = de(p); // get distance bound
+		pdist = de(p,rd); // get distance bound
 
 		t += pdist.x; // move position
 
@@ -292,7 +320,7 @@ void main()
 	{
 		vec3 plane_p = ro + rd * plane_t;
 		
-		float dist_estimate = de(plane_p).x;
+		float dist_estimate = de(plane_p, rd).x;
 
 		vec3 dcol1 = vec3(1.0,0.5,0.0);  // close
 		vec3 dcol2 = vec3(1.0,0.02,0.05);  // medium
