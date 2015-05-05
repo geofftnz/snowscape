@@ -159,12 +159,16 @@ vec2 de(vec3 p)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	//float m = 10.0;
-	//pmod2(p.xz,vec2(m));
+	float m = 3.0;
+	pmod2(p.xz,vec2(m));
 
-	s = dunion(s,de_boxcyl(p));
+	//s = dunion(s,de_boxcyl(p));
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
 	//s = dunion(s,de_boxcyl(p - vec3(0.0,0.0,m)));
+	
+	s = dunion(s, ob(0.0,sdBox(p,vec3(1.0))));
+	s = dsubtract(s, ob(0.0,sdSphere(p,1.2)));
+	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
 
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,1.0),0.5)));
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
@@ -198,6 +202,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 	float t=0.0;
 	vec2 pdist = vec2(MAXDIST,-1.0);
 	vec2 res = pdist;
+	float epsilon = 0.00005; // tolerable error
 
 	// check to see if we're inside the scene
 	// if we are, find the boundary (rough) and set ray origin to there
@@ -216,7 +221,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 
 		t += pdist.x; // move position
 
-		if (pdist.x < 0.00005)
+		if (pdist.x < epsilon)
 		{
 			break;
 		}
@@ -226,6 +231,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 			pdist.y = -1.0;
 			break;
 		}
+		epsilon *= 1.0 + min(0.1,t * 0.001);
 
 	}
 	res.x = t;
