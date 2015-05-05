@@ -67,10 +67,10 @@ float sdPlanex(vec3 p, vec3 d, float h)
 }
 float sdPlaney(vec3 p, vec3 d, float h)
 {
-	if (d.x < -1.0) return sdPlaney(p,h);
+	if (d.x < -1.5) return sdPlaney(p,h);
 	if (d.y == 0.0) return 100000000.0; // ray is parallel to plane - return large number
-	float t = (h-p.y)/d.y;
-	if (t<-0.001) return 100000000.0; // ray is parallel to plane - return large number
+	float t = ((h-p.y)/d.y);
+	if (t<-0.01) return 10000000.0; // ray is pointing away from plane, will never intersect
 	return t;
 }
 
@@ -179,8 +179,7 @@ vec2 de(vec3 p, vec3 dir)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	//float m = 6.0;
-	//pmod2(p.xz,vec2(m));
+	//float m = 10.0;	pmod2(p.xz,vec2(m));
 
 	//s = dunion(s,de_boxcyl(p));
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
@@ -191,6 +190,7 @@ vec2 de(vec3 p, vec3 dir)
 	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
 
 	s = dunion (s, ob(1.0,sdPlaney(p,dir,-0.5)));
+	//s = dunion (s, ob(1.0,sdPlaney(p,-0.5)));
 
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,1.0),0.5)));
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
@@ -232,14 +232,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 	vec2 res = pdist;
 	float epsilon = 0.00005; // tolerable error
 
-	// check to see if we're inside the scene
-	// if we are, find the boundary (rough) and set ray origin to there
-	//float ndist = de(ro).x;
-	//while (ndist < 0.0)
-	//{
-	//	ro -= rd * ndist;
-	//	ndist = de(ro).x;
-	//}
+	// check to see if we're inside the scene and bail out if we are.
 	if (de(ro).x < 0.0) return res;
 
 	for(int i=0;i<150.0;i++)
@@ -268,18 +261,58 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 	return res;
 }
 
+// shadow query - marches ray, returns light multiplier (0-1) for given direction
+// early exit on collision
+float shadowQuery(vec3 ro, vec3 rd)
+{
+	float res = 1.0; // default to no shadow
+	float epsilon = 0.0000005; // tolerable error
+	float t=0.0; 
+	const float softshadow = 0.05;
+
+	// if we're inside the scene, we're in full shadow.
+	if (de(ro).x < 0.0) return 0.0;
+
+	for(int i=0;i<50.0;i++) // shorter, cheaper trace
+	{
+		vec3 p = ro + rd * t;  // position along ray
+		float pdist = de(p).x; // get distance bound
+		t += pdist; // move position
+
+		res *= clamp(pdist / softshadow,0.0,1.0);
+
+		if (pdist < epsilon)  // hit surface
+		{
+			res = 0.0;
+			break;
+		}
+		if (t > MAXDIST) // gone too far, no shadow
+		{
+			res = 1.0;
+			break;
+		}
+	}
+	return res;
+}
+
+
+
 // intersects the scene and returns a colour in rgb, distance along ray in a.
 vec4 shadeScene(vec3 ro, vec3 rd)
 {
+	vec3 light_dir = normalize(vec3(0.3,0.8,0.7));
+
 	vec2 scene_hit = intersectScene(ro,rd);
 	
 	if (scene_hit.y < 0.0) return vec4(0.0,0.0,0.0,MAXDIST); // no hit
 
-	vec3 normal = deNormal(ro + rd * scene_hit.x, rd);
+	vec3 pos = ro + rd * scene_hit.x;
+
+	vec3 normal = deNormal(pos, rd);
+	float shadow = shadowQuery(pos + normal * 0.01, light_dir);
 
 	vec3 diffuse = mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
-	vec3 light_dir = normalize(vec3(0.3,0.8,0.7));
-	vec3 col = diffuse * (clamp(dot(normal,light_dir),-1.0,1.0) * 0.5 + 0.5);
+	vec3 col = diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * shadow;
 
 	return vec4(col, scene_hit.x);
 }
@@ -314,7 +347,7 @@ void main()
 	float dist = scene_col.a;
 
 	// intersect with plane
-	float plane_t = intersectPlane(ro,rd,vec4(0.0,1.0,0.0,-wheel));
+	float plane_t = intersectPlane(ro,rd,vec4(0.0,1.0,0.0,-wheel*0.1));
 
 	if (plane_t > 0.0 && plane_t < scene_col.a)
 	{
