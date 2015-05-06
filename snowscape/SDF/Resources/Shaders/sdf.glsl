@@ -24,10 +24,13 @@ uniform vec3 eyePos;
 uniform float iGlobalTime;
 uniform float alpha;
 uniform float wheel;
+uniform float showTraceDepth;
 
 in vec4 eyeTarget;
 
 out vec4 out_Col;
+
+const float MAXDIST = 1000.0;
 
 #define HYBRID_RAYMARCH 1
 
@@ -61,11 +64,11 @@ float sdPlane(vec3 p, vec3 ro, vec3 rd, vec4 plane)
 {
 	// early exit
 	// if the origin point is below the plane, bail out
-	if (dot(plane.xyz,r0)+plane.w) < 0.0) return MAXDIST;
+	if ((dot(plane.xyz,ro)+plane.w) < 0.0) return MAXDIST;
 
 	// at this point we know we started above the plane.
 	// if the ray is directed away from the plane, we can never intersect
-	float d = dot(rd,plane.xyz);
+	float d = -dot(rd,plane.xyz);
 	if (d<=0.0) return MAXDIST;
 
 	return (dot(plane.xyz,p)+plane.w) / d;
@@ -255,15 +258,15 @@ vec3 deNormal(vec3 p, vec3 rd)
                         dist - de(p - e.yyx).x));
 }
 
-const float MAXDIST = 1000.0;
+
 
 // raymarches the scene described by distance estimator de()
-// returns distance in x, hit id in y
-vec2 intersectScene(vec3 ro, vec3 rd)
+// returns distance in x, hit id in y, stepcount in z
+vec3 intersectScene(vec3 ro, vec3 rd)
 {
 	float t=0.0;
 	vec2 pdist = vec2(MAXDIST,-1.0);
-	vec2 res = pdist;
+	vec3 res = vec3(pdist,0.0);
 	float epsilon = 0.00005; // tolerable error
 
 	// check to see if we're inside the scene and bail out if we are.
@@ -271,6 +274,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 
 	for(int i=0;i<150.0;i++)
 	{
+		res.z = i;
 		vec3 p = ro + rd * t;  // position along ray
 
 		#ifdef HYBRID_RAYMARCH
@@ -296,6 +300,7 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 	}
 	res.x = t;
 	res.y = pdist.y;
+	
 
 	return res;
 }
@@ -369,7 +374,9 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 	vec3 col = vec3(0.0);
 	vec3 light_dir = normalize(vec3(0.3,0.5 + sin(iGlobalTime*0.2) * 0.3 ,0.7+ sin(iGlobalTime*0.3) * 0.1));
 
-	vec2 scene_hit = intersectScene(ro,rd);
+	vec3 scene_hit = intersectScene(ro,rd);
+
+	if (showTraceDepth>0.5)	return vec4(scene_hit.z * 0.02,0.0,0.0,scene_hit.x);
 	
 	if (scene_hit.y < 0.0)
 	{ 
@@ -483,7 +490,7 @@ void main()
 	// fog
 	float fog = 1.0 / max(1.0,exp(dist * 0.01));
 	
-	if (dist<MAXDIST)	col = mix(vec3(0.3,0.27,0.25), col, fog);
+	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.3,0.27,0.25), col, fog);
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
 	out_Col = vec4(col,1.0);

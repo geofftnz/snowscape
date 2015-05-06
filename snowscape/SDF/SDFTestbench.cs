@@ -24,7 +24,8 @@ namespace SDF
         private GameComponentCollection components = new GameComponentCollection();
         private GameComponentCollection Components { get { return components; } }
 
-        private Dictionary<Key, Action<KeyModifiers>> keyActions = new Dictionary<Key, Action<KeyModifiers>>();
+        private Dictionary<Key, Action<KeyModifiers>> keyDownActions = new Dictionary<Key, Action<KeyModifiers>>();
+        private Dictionary<Key, Action<KeyModifiers>> keyUpActions = new Dictionary<Key, Action<KeyModifiers>>();
 
         private Stopwatch stopwatch = Stopwatch.StartNew();
         //private FileSystemWatcher shaderWatcher;
@@ -64,7 +65,9 @@ namespace SDF
             Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 10.0f, Position = new Vector3(0f,1f,0f), LookMode = WalkCamera.LookModeEnum.Mouse1});
             Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
-            keyActions.Add(Key.Escape, (km) => { this.Close(); });
+            keyDownActions.Add(Key.Escape, (km) => { this.Close(); });
+            keyDownActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = true; });
+            keyUpActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = false; });
 
             this.Load += SDFTestbench_Load;
             this.Unload += SDFTestbench_Unload;
@@ -73,6 +76,7 @@ namespace SDF
             this.Resize += SDFTestbench_Resize;
 
             this.KeyDown += SDFTestbench_KeyDown;
+            this.KeyUp += SDFTestbench_KeyUp;
 
             //shaderWatcher = new FileSystemWatcher(SHADERPATH);
             //shaderWatcher.Changed += shaderWatcher_Changed;
@@ -94,12 +98,21 @@ namespace SDF
             var km = e.Modifiers;
 
             Action<KeyModifiers> action = null;
-            if (keyActions.TryGetValue(e.Key, out action))
+            if (keyDownActions.TryGetValue(e.Key, out action))
             {
                 action(km);
             }
+        }
+        void SDFTestbench_KeyUp(object sender, KeyboardKeyEventArgs e)
+        {
+            var k = e.Key;
+            var km = e.Modifiers;
 
-            
+            Action<KeyModifiers> action = null;
+            if (keyUpActions.TryGetValue(e.Key, out action))
+            {
+                action(km);
+            }
         }
 
         private void SDFTestbench_Resize(object sender, EventArgs e)

@@ -22,6 +22,7 @@ namespace SDF.Renderers
         public ICamera Camera { get; set; }
         private float alpha = 1.0f;
         public float Wheel { get; set; }
+        public bool ShowTraceDepth { get; set; }
 
 
         private GameComponentCollection Components = new GameComponentCollection();
@@ -32,6 +33,7 @@ namespace SDF.Renderers
         {
             Visible = true;
             DrawOrder = 0;
+            ShowTraceDepth = false;
 
             this.Loading += SDFRenderer_Loading;
             this.Unloading += SDFRenderer_Unloading;
@@ -95,7 +97,8 @@ namespace SDF.Renderers
                 .SetUniform("eyePos", cam.Eye)
                 .SetUniform("iGlobalTime", (float)renderdata.Elapsed.TotalSeconds)
                 .SetUniform("alpha", alpha)
-                .SetUniform("wheel",Wheel);
+                .SetUniform("wheel",Wheel)
+                .SetUniform("showTraceDepth",ShowTraceDepth?1.0f:0.0f);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
