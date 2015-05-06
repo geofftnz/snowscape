@@ -301,20 +301,22 @@ float queryAO(vec3 ro, vec3 rd, float maxDistance)
 {
 	float t = 0.0;
 	float dt = maxDistance / 10.0; 
-	float ao = 1.0;
+	float ao = 0.0;
+	float m = 1.0;
 
 	for(int i=0;i<10;i++)
 	{
-		vec3 p = ro + rd * t;
+		float pdist = max(0.0,de(ro + rd * t).x); // get distance bound
+
+		//ao *= (1.0 - 0.1 * (1.0 / (1.0 + 4.0 * pdist)));
+		ao += max(0.0,t - pdist) * m;
+		m*=0.5; 
 		t += dt;
-		float pdist = max(0.0,de(p).x); // get distance bound
 
-		ao *= (1.0 - 0.1 * (1.0 / (1.0 + 4.0 * pdist)));
-
-		if (pdist<0.0) break;
+		//if (pdist<0.0) break;
 	}
 	
-	return ao;
+	return 1.0 - ao;
 }
 
 vec3 skyDome(vec3 rd)
@@ -348,7 +350,7 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 
 		// Diffuse
 		vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
-		col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
+		//col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
 		// Specular
 		float ior = 0.9;
@@ -363,7 +365,9 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		//col += specular * schlick * light1;
 
 		// AO
-		col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos , vec3(0.,1.,0.), 1.0);
+		col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos , vec3(0.,1.,0.), 1.0);// AO traced upwards
+		//col += vec3(0.1,0.25,0.4) * queryAO(pos , normal, 1.0);// AO traced outwards
+		//col += vec3(0.1,0.25,0.4) * (normal.y * 0.3 + 0.7) * queryAO(pos , normal, 1.0);// AO traced outwards
 	}
 
 	// sun
