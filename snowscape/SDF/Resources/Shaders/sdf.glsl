@@ -60,6 +60,7 @@ float sdCylindery(vec3 p, float r, float h)
 float sdCylinderx(vec3 p, float r, float h){ return sdCylindery(p.yzx,r,h); }
 float sdCylinderz(vec3 p, float r, float h){ return sdCylindery(p.zxy,r,h); }
 
+// general ray-plane intersection
 float sdPlane(vec3 p, vec3 ro, vec3 rd, vec4 plane)
 {
 	// early exit
@@ -74,6 +75,7 @@ float sdPlane(vec3 p, vec3 ro, vec3 rd, vec4 plane)
 	return (dot(plane.xyz,p)+plane.w) / d;
 }
 
+// general ray-plane distance
 float sdPlane(vec3 p, vec4 plane)
 {
 	//float d = dot(rd,plane.xyz);
@@ -84,27 +86,64 @@ float sdPlane(vec3 p, vec4 plane)
 	return (dot(plane.xyz,p)+plane.w);
 }
 
-
-
+// ray to axis-aligned-plane distance
 float sdPlanex(vec3 p, float h){return p.x - h;}
 float sdPlaney(vec3 p, float h){return p.y - h;}
 float sdPlanez(vec3 p, float h){return p.z - h;}
+float sdPlanexn(vec3 p, float h){return h - p.x;}
+float sdPlaneyn(vec3 p, float h){return h - p.y;}
+float sdPlanezn(vec3 p, float h){return h - p.z;}
 
-float sdPlanex(vec3 p, vec3 d, float h)
+// ray to axis-aligned-plane intersection
+float sdPlanex(vec3 p, vec3 ro, vec3 rd, float h)
 {
-	if (d.x < -1.0) return sdPlanex(p,h);
-	if (d.x == 0.0) return 100000000.0; // ray is parallel to plane - return large number
-	return (h-p.x)/d.x;
+	// if we don't have a valid ray direction supplied or we're below the plane, use the regular distance function
+	if (rd.x < -1.5 || ro.x < h) return sdPlanex(p,h); 
+
+	// at this point we know we started above the plane.
+	// if the ray is directed away from the plane, we can never intersect
+	if (rd.x>0.0) return MAXDIST;
+
+	// intersect
+	return (h-p.x) / rd.x;
 }
-float sdPlaney(vec3 p, vec3 ro, vec3 d, float h)
+float sdPlaney(vec3 p, vec3 ro, vec3 rd, float h)
 {
-	//if (d.x < -1.5) return sdPlaney(p,h);
-	//if (d.y == 0.0) return 100000000.0; // ray is parallel to plane - return large number
-	//float t = ((h-p.y)/d.y);
-	//if (t<-0.01) return 10000000.0; // ray is pointing away from plane, will never intersect
-	//return t;
-	if (d.x < -1.5) return sdPlane(p,vec4(0.0,1.0,0.0,-h));
-	return sdPlane(p,ro,d,vec4(0.0,1.0,0.0,-h));
+	if (rd.x < -1.5 || ro.y < h) return sdPlaney(p,h); 
+	if (rd.y>0.0) return MAXDIST;
+	return (h-p.y) / rd.y;
+}
+float sdPlanez(vec3 p, vec3 ro, vec3 rd, float h)
+{
+	if (rd.x < -1.5 || ro.z < h) return sdPlanez(p,h); 
+	if (rd.z>0.0) return MAXDIST;
+	return (h-p.z) / rd.z;
+}
+
+// ray to inverted axis-aligned-plane intersection
+float sdPlanexn(vec3 p, vec3 ro, vec3 rd, float h)
+{
+	// if we don't have a valid ray direction supplied or we're below the plane, use the regular distance function
+	if (rd.x < -1.5 || ro.x > h) return sdPlanexn(p,h); 
+
+	// at this point we know we started above the plane.
+	// if the ray is directed away from the plane, we can never intersect
+	if (rd.x<0.0) return MAXDIST;
+
+	// intersect
+	return (h-p.x) / rd.x;
+}
+float sdPlaneyn(vec3 p, vec3 ro, vec3 rd, float h)
+{
+	if (rd.x < -1.5 || ro.y > h) return sdPlaneyn(p,h); 
+	if (rd.y<0.0) return MAXDIST;
+	return (h-p.y) / rd.y;
+}
+float sdPlanezn(vec3 p, vec3 ro, vec3 rd, float h)
+{
+	if (rd.x < -1.5 || ro.z > h) return sdPlanezn(p,h); 
+	if (rd.z<0.0) return MAXDIST;
+	return (h-p.z) / rd.z;
 }
 
 
@@ -222,7 +261,7 @@ vec2 de(vec3 p, vec3 ro, vec3 dir)
 	s = dsubtract(s, ob(0.0,sdSphere(p,1.2)));
 	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
 
-	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),1.0),0.5)));
+	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),-0.3),0.5)));
 	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),vec3(0.5))));
 
 	// ground plane
