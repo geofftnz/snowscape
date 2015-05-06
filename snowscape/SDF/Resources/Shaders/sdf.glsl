@@ -29,6 +29,8 @@ in vec4 eyeTarget;
 
 out vec4 out_Col;
 
+#define HYBRID_RAYMARCH 1
+
 
 float sdSphere(vec3 p, float r)
 {
@@ -55,6 +57,32 @@ float sdCylindery(vec3 p, float r, float h)
 float sdCylinderx(vec3 p, float r, float h){ return sdCylindery(p.yzx,r,h); }
 float sdCylinderz(vec3 p, float r, float h){ return sdCylindery(p.zxy,r,h); }
 
+float sdPlane(vec3 p, vec3 ro, vec3 rd, vec4 plane)
+{
+	// early exit
+	// if the origin point is below the plane, bail out
+	if (dot(plane.xyz,r0)+plane.w) < 0.0) return MAXDIST;
+
+	// at this point we know we started above the plane.
+	// if the ray is directed away from the plane, we can never intersect
+	float d = dot(rd,plane.xyz);
+	if (d<=0.0) return MAXDIST;
+
+	return (dot(plane.xyz,p)+plane.w) / d;
+}
+
+float sdPlane(vec3 p, vec4 plane)
+{
+	//float d = dot(rd,plane.xyz);
+	//if (d<=0.0) return 100000000.0;
+
+	// distance from a plane P=xyzw to point q is given by dot(P.xyz,q)+P.w
+	// we want the distance from the point to the plane, so it's negative.
+	return (dot(plane.xyz,p)+plane.w);
+}
+
+
+
 float sdPlanex(vec3 p, float h){return p.x - h;}
 float sdPlaney(vec3 p, float h){return p.y - h;}
 float sdPlanez(vec3 p, float h){return p.z - h;}
@@ -65,13 +93,15 @@ float sdPlanex(vec3 p, vec3 d, float h)
 	if (d.x == 0.0) return 100000000.0; // ray is parallel to plane - return large number
 	return (h-p.x)/d.x;
 }
-float sdPlaney(vec3 p, vec3 d, float h)
+float sdPlaney(vec3 p, vec3 ro, vec3 d, float h)
 {
-	if (d.x < -1.5) return sdPlaney(p,h);
-	if (d.y == 0.0) return 100000000.0; // ray is parallel to plane - return large number
-	float t = ((h-p.y)/d.y);
-	if (t<-0.01) return 10000000.0; // ray is pointing away from plane, will never intersect
-	return t;
+	//if (d.x < -1.5) return sdPlaney(p,h);
+	//if (d.y == 0.0) return 100000000.0; // ray is parallel to plane - return large number
+	//float t = ((h-p.y)/d.y);
+	//if (t<-0.01) return 10000000.0; // ray is pointing away from plane, will never intersect
+	//return t;
+	if (d.x < -1.5) return sdPlane(p,vec4(0.0,1.0,0.0,-h));
+	return sdPlane(p,ro,d,vec4(0.0,1.0,0.0,-h));
 }
 
 
@@ -175,7 +205,7 @@ vec2 de_boxcyl(vec3 p)
 
 // distance estimator
 // returns distance bound in x, hit id in y
-vec2 de(vec3 p, vec3 dir)
+vec2 de(vec3 p, vec3 ro, vec3 dir)
 {
 	vec2 s = vec2(100000000.0,-1);
 
@@ -189,11 +219,11 @@ vec2 de(vec3 p, vec3 dir)
 	s = dsubtract(s, ob(0.0,sdSphere(p,1.2)));
 	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
 
-	s = dunion(s, ob(0.0,sdSphere(tr_x(p,-2.0),0.5)));
+	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),1.0),0.5)));
 	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),vec3(0.5))));
 
 	// ground plane
-	s = dunion (s, ob(1.0,sdPlaney(p,dir,-0.6)));
+	s = dunion (s, ob(1.0,sdPlaney(p,ro,dir,-0.6)));
 	//s = dunion (s, ob(1.0,sdPlaney(p,-0.5)));
 
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,1.0),0.5)));
@@ -209,7 +239,7 @@ vec2 de(vec3 p, vec3 dir)
 
 vec2 de(vec3 p)
 {
-	return de(p,vec3(-2.,0.,0.));
+	return de(p,vec3(0.0),vec3(-2.,0.,0.));
 }
 
 
@@ -242,7 +272,12 @@ vec2 intersectScene(vec3 ro, vec3 rd)
 	for(int i=0;i<150.0;i++)
 	{
 		vec3 p = ro + rd * t;  // position along ray
-		pdist = de(p,rd); // get distance bound
+
+		#ifdef HYBRID_RAYMARCH
+		pdist = de(p,ro,rd); // get distance bound (hybrid SDF/raytrace)
+		#else
+		pdist = de(p); // get distance bound (pure SDF raymarch)
+		#endif
 
 		t += pdist.x; // move position
 
@@ -302,21 +337,21 @@ float queryAO(vec3 ro, vec3 rd, float maxDistance)
 	float t = 0.0;
 	float dt = maxDistance / 10.0; 
 	float ao = 0.0;
-	float m = 1.0;
+	float m = 2.0 / maxDistance;
 
 	for(int i=0;i<10;i++)
 	{
 		float pdist = max(0.0,de(ro + rd * t).x); // get distance bound
 
 		//ao *= (1.0 - 0.1 * (1.0 / (1.0 + 4.0 * pdist)));
-		ao += max(0.0,t - pdist) * m;
+		ao += max(0.0,(t - pdist)) * m;
 		m*=0.5; 
 		t += dt;
 
 		//if (pdist<0.0) break;
 	}
 	
-	return 1.0 - ao;
+	return max(0.0,1.0 - ao);
 }
 
 vec3 skyDome(vec3 rd)
@@ -350,7 +385,7 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 
 		// Diffuse
 		vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
-		//col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
+		col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
 		// Specular
 		float ior = 0.9;
@@ -365,9 +400,9 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		//col += specular * schlick * light1;
 
 		// AO
-		col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos , vec3(0.,1.,0.), 1.0);// AO traced upwards
-		//col += vec3(0.1,0.25,0.4) * queryAO(pos , normal, 1.0);// AO traced outwards
-		//col += vec3(0.1,0.25,0.4) * (normal.y * 0.3 + 0.7) * queryAO(pos , normal, 1.0);// AO traced outwards
+		//col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos , vec3(0.,1.,0.), 1.0);// AO traced upwards
+		//col += vec3(0.1,0.25,0.4) * queryAO(pos , normal, 2.0);// AO traced outwards
+		col += vec3(0.1,0.25,0.4) * (normal.y * 0.1 + 0.9) * queryAO(pos , normal, 4.0);// AO traced outwards, with sky dome estimation
 	}
 
 	// sun
@@ -413,7 +448,11 @@ void main()
 	{
 		vec3 plane_p = ro + rd * plane_t;
 		
-		float dist_estimate = de(plane_p, rd).x;
+		#ifdef HYBRID_RAYMARCH
+		float dist_estimate = de(plane_p, ro, rd).x;
+		#else
+		float dist_estimate = de(plane_p).x;
+		#endif
 
 		vec3 dcol1 = vec3(1.0,0.5,0.0);  // close
 		vec3 dcol2 = vec3(1.0,0.02,0.05);  // medium
