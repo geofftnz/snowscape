@@ -34,22 +34,57 @@ const float MAXDIST = 1000.0;
 
 #define HYBRID_RAYMARCH 1
 
-
+// signed distance to sphere
 float sdSphere(vec3 p, float r)
 {
 	return length(p) - r;
 }
+
+// sphere intersection with early-exit
+float sdSphere(vec3 p, vec3 ro, vec3 rd, float r)
+{
+	float dist = sdSphere(p,r);  // get general SDF because we'll need it later
+
+	// if we haven't been given ro & rd, use the general SDF
+	if (rd.x<-1.5) return dist;
+
+	// compute vector from origin to sphere origin (at 0,0,0)
+	// if the sphere origin is behind us, we cannot intersect the sphere from the outside
+	//if (dot(ro,rd) > 0.0) return MAXDIST;
+
+	// check to see if we're on/in sphere
+	if (dist<=0.0) return dist;
+
+	// sphere origin is in front of us, so calculate determinant
+
+	// early exit on no intersection
+	//if (length(dot(p,rd)) > r) return MAXDIST;
+	//float a = dot(rd,p);
+	//float det = a*a - dot(p,p) + r*r;
+	//if (det < 0.0) return MAXDIST;
+
+    float a = dot(rd, rd);
+    float b = 2.0*dot(rd, p);
+    float c = dot(p,p) - r*r;
+    float det = b*b-4.0*a*c;
+	if (det<0.0) return MAXDIST; // ray does not hit sphere
+	
+	float detSqrt = sqrt(det);
+    a+=a;
+    float t1 = (-b - detSqrt) / a;
+    float t2 = (-b + detSqrt) / a;
+
+	if (t1<0.0 && t2<0.0) return MAXDIST;
+	return t1;
+
+}
+
 
 float max3(vec3 a)
 {
 	return max(a.x,max(a.y,a.z));
 }
 
-float sdBox(vec3 p, vec3 b)
-{
-	vec3 d = abs(p) - b;
-	return length(max(d,0.)) + max3(min(d,0.));
-}
 
 float sdCylindery(vec3 p, float r, float h)
 {
@@ -146,12 +181,38 @@ float sdPlanezn(vec3 p, vec3 ro, vec3 rd, float h)
 	return (h-p.z) / rd.z;
 }
 
+float dinter(float a, float b)
+{
+	return max(a,b);
+}
+
+float sdBox(vec3 p, vec3 b)
+{
+	vec3 d = abs(p) - b;
+	return length(max(d,0.)) + max3(min(d,0.));
+}
+float sdBox(vec3 p, vec3 ro, vec3 rd, vec3 b)
+{
+	if (rd.x < -1.5) return sdBox(p,b); 
+
+	return 
+		max(dinter(sdPlanex(p,ro,rd,b.x),sdPlanexn(p,ro,rd,-b.x)),
+		max(dinter(sdPlaney(p,ro,rd,b.y),sdPlaneyn(p,ro,rd,-b.y)),
+		    dinter(sdPlanez(p,ro,rd,b.z),sdPlanezn(p,ro,rd,-b.z))
+		));
+
+	
+	//vec3 d = abs(p) - b;
+	//return length(max(d,0.)) + max3(min(d,0.));
+}
+
 
 // returns the parameter with the smallest x component
 vec2 dunion(vec2 a, vec2 b)
 {
 	return a.x<b.x?a:b;
 }
+
 
 vec2 dinter(vec2 a, vec2 b)
 {
@@ -257,12 +318,12 @@ vec2 de(vec3 p, vec3 ro, vec3 dir)
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
 	//s = dunion(s,de_boxcyl(p - vec3(0.0,0.0,m)));
 	
-	s = dunion(s, ob(0.0,sdBox(p,vec3(1.0))));
-	s = dsubtract(s, ob(0.0,sdSphere(p,1.2)));
-	s = dsubtract(s, ob(0.0,-sdSphere(p,1.22)));
+	s = dunion(s, ob(0.0,sdBox(p,ro,dir,vec3(1.0))));
+	s = dsubtract(s, ob(0.0,sdSphere(p,ro,dir,1.2)));
+	s = dsubtract(s, ob(0.0,-sdSphere(p,ro,dir,1.21)));
 
-	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),-0.3),0.5)));
-	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),vec3(0.5))));
+	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),-0.3),tr_y(tr_x(ro,-2.0),-0.3),dir,0.5)));
+	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),tr_x(ro,2.0),dir,vec3(0.5))));
 
 	// ground plane
 	s = dunion (s, ob(1.0,sdPlaney(p,ro,dir,-0.6)));
