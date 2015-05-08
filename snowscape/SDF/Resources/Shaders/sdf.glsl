@@ -84,6 +84,14 @@ float max3(vec3 a)
 {
 	return max(a.x,max(a.y,a.z));
 }
+float max3(vec3 a, vec3 b)
+{
+	return max(max(a.x,b.x),max(max(a.y,b.y),max(a.z,b.z)));
+}
+float min3(vec3 a, vec3 b)
+{
+	return min(min(a.x,b.x),min(min(a.y,b.y),min(a.z,b.z)));
+}
 
 
 float sdCylindery(vec3 p, float r, float h)
@@ -215,25 +223,18 @@ float sdBox(vec3 p, vec3 ro, vec3 rd, vec3 b)
 	if (rd.x < -1.5 || (all(greaterThanEqual(p,-b)) && all(lessThanEqual(p,b)))) return sdBox(p,b); 
 
 	float tmin = -MAXDIST, tmax = MAXDIST;
+	vec3 bmin = -b - p;
+	vec3 bmax = b - p;
 
-	if (rd.x != 0.0) {
-		float tx1 = (-b.x - p.x)/rd.x;
-		float tx2 = (b.x - p.x)/rd.x;
-		tmin = max(tmin,min(tx1,tx2));
-		tmax = min(tmax,max(tx1,tx2));
-	}
-	if (rd.y != 0.0) {
-		float ty1 = (-b.y - p.y)/rd.y;
-		float ty2 = (b.y - p.y)/rd.y;
-		tmin = max(tmin,min(ty1,ty2));
-		tmax = min(tmax,max(ty1,ty2));
-	}
-	if (rd.x != 0.0) {
-		float tz1 = (-b.z - p.z)/rd.z;
-		float tz2 = (b.z - p.z)/rd.z;
-		tmin = max(tmin,min(tz1,tz2));
-		tmax = min(tmax,max(tz1,tz2));
-	}
+	vec3 t1 = bmin/rd;
+	vec3 t2 = bmax/rd;
+
+	tmin = max(tmin,min(t1.x,t2.x));
+	tmax = min(tmax,max(t1.x,t2.x));
+	tmin = max(tmin,min(t1.y,t2.y));
+	tmax = min(tmax,max(t1.y,t2.y));
+	tmin = max(tmin,min(t1.z,t2.z));
+	tmax = min(tmax,max(t1.z,t2.z));
 
 	if (tmax < tmin || tmin < 0.0) return MAXDIST;
 	return tmin;
