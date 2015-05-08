@@ -66,8 +66,10 @@ namespace SDF
             Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
             keyDownActions.Add(Key.Escape, (km) => { this.Close(); });
-            keyDownActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = true; });
-            keyUpActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = false; });
+
+            keyDownActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = !sdfRenderer.ShowTraceDepth; });
+            //keyDownActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = true; });
+            //keyUpActions.Add(Key.I, (km) => { sdfRenderer.ShowTraceDepth = false; });
 
             this.Load += SDFTestbench_Load;
             this.Unload += SDFTestbench_Unload;
