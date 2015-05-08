@@ -191,7 +191,9 @@ float sdBox(vec3 p, vec3 b)
 	vec3 d = abs(p) - b;
 	return length(max(d,0.)) + max3(min(d,0.));
 }
-float sdBox(vec3 p, vec3 ro, vec3 rd, vec3 b)
+
+// partially broken
+float sdBox2(vec3 p, vec3 ro, vec3 rd, vec3 b)
 {
 	if (rd.x < -1.5) return sdBox(p,b); 
 
@@ -204,6 +206,38 @@ float sdBox(vec3 p, vec3 ro, vec3 rd, vec3 b)
 	
 	//vec3 d = abs(p) - b;
 	//return length(max(d,0.)) + max3(min(d,0.));
+}
+
+
+float sdBox(vec3 p, vec3 ro, vec3 rd, vec3 b)
+{
+	// no direction supplied, or we're inside the box
+	if (rd.x < -1.5 || (all(greaterThanEqual(p,-b)) && all(lessThanEqual(p,b)))) return sdBox(p,b); 
+
+	float tmin = -MAXDIST, tmax = MAXDIST;
+
+	if (rd.x != 0.0) {
+		float tx1 = (-b.x - p.x)/rd.x;
+		float tx2 = (b.x - p.x)/rd.x;
+		tmin = max(tmin,min(tx1,tx2));
+		tmax = min(tmax,max(tx1,tx2));
+	}
+	if (rd.y != 0.0) {
+		float ty1 = (-b.y - p.y)/rd.y;
+		float ty2 = (b.y - p.y)/rd.y;
+		tmin = max(tmin,min(ty1,ty2));
+		tmax = min(tmax,max(ty1,ty2));
+	}
+	if (rd.x != 0.0) {
+		float tz1 = (-b.z - p.z)/rd.z;
+		float tz2 = (b.z - p.z)/rd.z;
+		tmin = max(tmin,min(tz1,tz2));
+		tmax = min(tmax,max(tz1,tz2));
+	}
+
+	if (tmax < tmin || tmin < 0.0) return MAXDIST;
+	return tmin;
+
 }
 
 
@@ -472,7 +506,8 @@ vec3 skyDome(vec3 rd)
 vec4 shadeScene(vec3 ro, vec3 rd)
 {
 	vec3 col = vec3(0.0);
-	vec3 light_dir = normalize(vec3(0.3,0.5 + sin(iGlobalTime*0.2) * 0.3 ,0.7+ sin(iGlobalTime*0.3) * 0.1));
+	//vec3 light_dir = normalize(vec3(0.3,0.5 + sin(iGlobalTime*0.2) * 0.3 ,0.7+ sin(iGlobalTime*0.3) * 0.1));
+	vec3 light_dir = normalize(vec3(0.3,0.5 + sin(0.5) * 0.3 ,0.7+ sin(0.3) * 0.1));
 
 	vec3 scene_hit = intersectScene(ro,rd);
 
@@ -556,7 +591,7 @@ void main()
 		vec3 plane_p = ro + rd * plane_t;
 		
 		#ifdef HYBRID_RAYMARCH
-		float dist_estimate = de(plane_p, ro, rd).x;
+		float dist_estimate = (showTraceDepth>0.5) ? de(plane_p).x : de(plane_p, ro, rd).x;
 		#else
 		float dist_estimate = de(plane_p).x;
 		#endif
