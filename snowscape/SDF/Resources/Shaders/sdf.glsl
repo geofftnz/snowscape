@@ -475,11 +475,11 @@ float queryLightSoft(vec3 ro, vec3 rd, float t0, float t1, float k)
 float queryAO(vec3 ro, vec3 rd, float maxDistance)
 {
 	float t = 0.0;
-	float dt = maxDistance / 10.0; 
+	float dt = maxDistance / 5.0; 
 	float ao = 0.0;
 	float m = 2.0 / maxDistance;
 
-	for(int i=0;i<10;i++)
+	for(int i=0;i<5;i++)
 	{
 		float pdist = max(0.0,de(ro + rd * t).x); // get distance bound
 
@@ -539,13 +539,13 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		vec3 specular = vec3(0.5);
 		float schlick = r0 + (1-r0) * pow(1.0 - max(0.0,dot(-halfangle, rd)), 5.0);
 
-		//col += specular * pow(max(0.0,dot(refl, light_dir)),40.0) * schlick * light1;
+		col += specular * pow(max(0.0,dot(refl, light_dir)),40.0) * schlick * light1;
 		//col += specular * schlick * light1;
 
 		// AO
 		//col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos , vec3(0.,1.,0.), 1.0);// AO traced upwards
 		//col += vec3(0.1,0.25,0.4) * queryAO(pos , normal, 2.0);// AO traced outwards
-		col += vec3(0.1,0.25,0.4) * (normal.y * 0.1 + 0.9) * queryAO(pos , normal, 4.0);// AO traced outwards, with sky dome estimation
+		col += vec3(0.1,0.25,0.4) * (normal.y * 0.1 + 0.9) * queryAO(pos , normal, 2.0);// AO traced outwards, with sky dome estimation
 	}
 
 	// sun
