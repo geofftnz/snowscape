@@ -34,6 +34,26 @@ const float MAXDIST = 1000.0;
 
 #define HYBRID_RAYMARCH 1
 
+float hash( float n )
+{
+    return fract(sin(n)*43758.5453);
+}
+
+vec3 randDir(vec3 p, float seed)
+{
+	float hseed = hash(seed);
+	return vec3
+	(
+		hash(hash(p.z * 17685.35) + hseed*389.5),
+		hash(hash(p.x * 37685.35) + hseed*179.9),
+		hash(hash(p.y * 4685.35) + hseed*787.3)
+	) * 2.0 - 1.0;
+}
+vec3 randDirNormal(vec3 p, float seed)
+{
+	return normalize(randDir(p,seed));
+}
+
 // signed distance to sphere
 float sdSphere(vec3 p, float r)
 {
@@ -353,12 +373,15 @@ vec2 de(vec3 p, vec3 ro, vec3 dir)
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
 	//s = dunion(s,de_boxcyl(p - vec3(0.0,0.0,m)));
 	
+	// hollow cube
 	s = dunion(s, ob(0.0,sdBox(p,ro,dir,vec3(1.0))));
 	s = dsubtract(s, ob(0.0,sdSphere(p,ro,dir,1.2)));
 	s = dsubtract(s, ob(0.0,-sdSphere(p,ro,dir,1.21)));
 
 	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),-0.3),tr_y(tr_x(ro,-2.0),-0.3),dir,0.5)));
 	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),tr_x(ro,2.0),dir,vec3(0.5))));
+
+
 
 	// ground plane
 	s = dunion (s, ob(1.0,sdPlaney(p,ro,dir,-0.6)));
@@ -448,7 +471,7 @@ float queryLight(vec3 ro, vec3 rd, float t0, float t1)
 	for (float t = t0; t < t1;)
 	{
 		float d = (de( ro + rd * t).x);
-		if (d<0.001) return 0.0;
+		if (d<0.0005) return 0.0;
 		t += d;
 	}
 	return 1.0;
@@ -462,7 +485,7 @@ float queryLightSoft(vec3 ro, vec3 rd, float t0, float t1, float k)
 	for (float t = t0; t < t1;)
 	{
 		float d = (de( ro + rd * t).x);
-		if (d<0.001) return 0.0;
+		if (d<0.0005) return 0.0;
 		res =  min(res, (k*d)/t);
 		t += d;
 	}
@@ -503,6 +526,62 @@ vec3 skyDome(vec3 rd)
 	return col;
 }
 
+// bounce light around the scene in a shitty attempt at path tracing.
+// assumes an outdoor scene, so non-intersecting rays sample the sky dome
+// assumes light source is at infinity with no attenuation
+// pos = intersection point
+// ro = original ray origin (may not be needed)
+// rd = original ray direction
+// normal = surface normal at intersection
+vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec3 light_dir, vec3 light_col)
+{
+	vec3 col = vec3(0.0);
+	vec3 diffuse_mul = vec3(1.0); // surface col
+	vec3 p = pos;
+	vec3 n = normal;
+	vec3 ro,rd;
+	float ii = 0.0f;
+
+
+	for(int i=0;i<2;i++)
+	{
+		// generate new ray
+		ro = p + n * 0.001;
+		rd = randDirNormal(p,iGlobalTime+ii);
+		ii += 0.17;
+		
+		float rmul = clamp(dot(n,rd),0.0,1.0);
+		if (rmul < 0.0001) break;
+		diffuse_mul *= rmul; // todo: * albedo of this hit
+
+		// trace ray
+		vec3 scene_hit = intersectScene(ro,rd);
+
+		// no hit: sample skybox
+		if (scene_hit.y < 0.0)
+		{
+			col += diffuse_mul * skyDome(rd) * 10.0;
+			break;
+		}
+		else
+		{
+			// move position, calculate distance attenuation
+			p = ro + rd * scene_hit.x;
+			n = deNormal(p, rd);
+			diffuse_mul *= (1.0 / (1.0+ scene_hit.x * scene_hit.x));
+
+			// get direct lighting contribution from light source
+			float light1 = queryLight(p + n * 0.001, light_dir,0.0,MAXDIST) * (clamp(dot(n,light_dir),0.0,1.0));
+
+			// accumulate lighting
+			col += diffuse_mul * light_col * light1;
+		}
+
+	}
+
+	return col;
+}
+
 // intersects the scene and returns a colour in rgb, distance along ray in a.
 vec4 shadeScene(vec3 ro, vec3 rd)
 {
@@ -524,11 +603,15 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		vec3 pos = ro + rd * scene_hit.x;
 
 		vec3 normal = deNormal(pos, rd);
-		float light1 = queryLightSoft(pos + normal * 0.01, light_dir,0.0,MAXDIST,8.0);
+		float light1 = queryLight(pos + normal * 0.001, light_dir,0.0,MAXDIST);
+		//float light1 = queryLightSoft(pos + normal * 0.001, light_dir,0.0,MAXDIST,20.0);
 
 		// Diffuse
 		vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
 		col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
+
+		// multi-bounce diffuse
+		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0));
 
 		// Specular
 		float ior = 0.9;
@@ -539,13 +622,13 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		vec3 specular = vec3(0.5);
 		float schlick = r0 + (1-r0) * pow(1.0 - max(0.0,dot(-halfangle, rd)), 5.0);
 
-		col += specular * pow(max(0.0,dot(refl, light_dir)),40.0) * schlick * light1;
+		//col += specular * pow(max(0.0,dot(refl, light_dir)),40.0) * schlick * light1;
 		//col += specular * schlick * light1;
 
 		// AO
 		//col += vec3(0.1,0.25,0.4) * 0.5 * queryAO(pos , vec3(0.,1.,0.), 1.0);// AO traced upwards
 		//col += vec3(0.1,0.25,0.4) * queryAO(pos , normal, 2.0);// AO traced outwards
-		col += vec3(0.1,0.25,0.4) * (normal.y * 0.1 + 0.9) * queryAO(pos , normal, 2.0);// AO traced outwards, with sky dome estimation
+		//col += vec3(0.1,0.25,0.4) * (normal.y * 0.1 + 0.9) * queryAO(pos , normal, 3.0);// AO traced outwards, with sky dome estimation
 	}
 
 	// sun
@@ -629,7 +712,7 @@ void main()
 	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.3,0.27,0.25), col, fog);
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
-	out_Col = vec4(col,1.0);
+	out_Col = vec4(col,0.05);
 }
 
 
