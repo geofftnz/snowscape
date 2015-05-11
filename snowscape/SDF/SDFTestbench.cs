@@ -164,7 +164,7 @@ namespace SDF
             textManager.AddOrUpdate(frameCounter.TextBlock);
 
             float y = 0.1f;
-            textManager.AddOrUpdate(new TextBlock("camera", string.Format("{0}", camera.EyePos.ToString()), new Vector3(0.0f, y, 0.0f), 0.0005f, Color4.Wheat.ToVector4())); y += 0.05f;
+            //textManager.AddOrUpdate(new TextBlock("camera", string.Format("{0}", camera.EyePos.ToString()), new Vector3(0.0f, y, 0.0f), 0.0005f, Color4.Wheat.ToVector4())); y += 0.05f;
 
             Components.Render(frame);
 

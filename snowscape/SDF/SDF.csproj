@@ -79,7 +79,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="Resources\Shaders\AAPost.glsl" />
+    <None Include="Resources\Shaders\Include\Noise\noise.glsl" />
     <None Include="Resources\Shaders\pathtracer.glsl" />
     <None Include="Resources\Shaders\sdf.glsl" />
   </ItemGroup>

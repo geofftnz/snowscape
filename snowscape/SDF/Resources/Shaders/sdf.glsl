@@ -30,14 +30,14 @@ in vec4 eyeTarget;
 
 out vec4 out_Col;
 
+#include "Include/Noise/noise.glsl"
+
+
+
 const float MAXDIST = 1000.0;
 
-//#define HYBRID_RAYMARCH 1
+#define HYBRID_RAYMARCH 1
 
-float hash( float n )
-{
-    return fract(sin(n)*43758.5453);
-}
 
 vec3 randDir(float randseed)
 {
@@ -71,20 +71,8 @@ float sdSphere(vec3 p, vec3 ro, vec3 rd, float r)
 	// if we haven't been given ro & rd, use the general SDF
 	if (rd.x<-1.5) return dist;
 
-	// compute vector from origin to sphere origin (at 0,0,0)
-	// if the sphere origin is behind us, we cannot intersect the sphere from the outside
-	//if (dot(ro,rd) > 0.0) return MAXDIST;
-
 	// check to see if we're on/in sphere
 	if (dist<=0.0) return dist;
-
-	// sphere origin is in front of us, so calculate determinant
-
-	// early exit on no intersection
-	//if (length(dot(p,rd)) > r) return MAXDIST;
-	//float a = dot(rd,p);
-	//float det = a*a - dot(p,p) + r*r;
-	//if (det < 0.0) return MAXDIST;
 
     float a = dot(rd, rd);
     float b = 2.0*dot(rd, p);
@@ -99,6 +87,44 @@ float sdSphere(vec3 p, vec3 ro, vec3 rd, float r)
 
 	if (t1<0.0 && t2<0.0) return MAXDIST;
 	return t1;
+}
+
+// bumpy sphere
+float sdBumpySphere(vec3 p, float r, float noise_scale, float noise_amp)
+{
+	float lp = length(p);
+
+	// early exit if we're outside noise radius
+	if (lp > r + noise_amp * 3.0) return lp - (r + noise_amp * 2.0);
+	
+	float r2 = r + noise(normalize(p) * noise_scale) * noise_amp;
+	return lp - r2;
+}
+float sdBumpySphere(vec3 p, vec3 ro, vec3 rd, float r0, float noise_scale, float noise_amp)
+{
+	// if we haven't been given ro & rd, use the general SDF
+	if (rd.x<-1.5) return sdBumpySphere(p,r0,noise_scale,noise_amp);
+
+	// check to see if we're on/in sphere
+	float dist = sdSphere(p,r0);
+	if (dist <= noise_amp * 2.1 ) return sdBumpySphere(p,r0,noise_scale,noise_amp);
+
+	// use a larger radius for the raytrace
+	float r = r0 + noise_amp * 2.0;
+	// intersect outer sphere and early fail
+    float a = dot(rd, rd);
+    float b = 2.0*dot(rd, p);
+    float c = dot(p,p) - r*r;
+    float det = b*b-4.0*a*c;
+	if (det<0.0) return MAXDIST; // ray does not hit sphere
+
+	float detSqrt = sqrt(det);
+    a+=a;
+    float t1 = (-b - detSqrt) / a;
+    float t2 = (-b + detSqrt) / a;
+
+	if (t1<0.0 && t2<0.0) return MAXDIST;  // no intersection
+	return t1 + noise_amp * 0.1;  // lie about distance to get us inside
 
 }
 
@@ -370,7 +396,7 @@ vec2 de(vec3 p, vec3 ro, vec3 dir)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	float m = 6.0;	pmod2(p.xz,vec2(m));
+	//float m = 6.0;	pmod2(p.xz,vec2(m));
 
 	//s = dunion(s,de_boxcyl(p));
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
@@ -384,11 +410,23 @@ vec2 de(vec3 p, vec3 ro, vec3 dir)
 	s = dunion(s, ob(0.0,sdSphere(tr_y(tr_x(p,-2.0),-0.3),tr_y(tr_x(ro,-2.0),-0.3),dir,0.5)));
 	s = dunion(s, ob(0.0,sdBox(tr_x(p,2.0),tr_x(ro,2.0),dir,vec3(0.5))));
 
+	// bumpy sphere
+	s = dunion(s, ob(0.0,sdBumpySphere(p - vec3(3.0,0.0,1.0),ro - vec3(3.0,0.0,1.0),dir,1.0,5.0,0.1)));
 
+
+	// tall buildings
+	//vec3 p2 = p - vec3(2.0,0.0,1.0); pmod1(p2.z,2.5);
+	//s = dunion(s, ob(0.0,sdBox(p2 - vec3(2.0,10.0,0.0),vec3(1.0,20.0,1.0))));
+	s = dunion(s, ob(0.0,sdBox(p - vec3(-2.0,10.0,-1.0),ro - vec3(-2.0,10.0,-1.0),dir,vec3(1.0,20.0,1.0))));
+	s = dunion(s, ob(0.0,sdBox(p - vec3(4.5,10.0,-5.0),ro - vec3(4.5,10.0,-5.0),dir,vec3(1.0,20.0,1.0))));
+	s = dunion(s, ob(0.0,sdBox(p - vec3(6.9,10.0,2.0),ro - vec3(6.9,10.0,2.0),dir,vec3(1.0,20.0,1.0))));
 
 	// ground plane
 	s = dunion (s, ob(1.0,sdPlaney(p,ro,dir,-0.6)));
 	//s = dunion (s, ob(1.0,sdPlaney(p,-0.5)));
+
+	// sunken box
+	s = dsubtract(s, ob(0.0,sdBox(p - vec3(-0.9,-20.0,1.2),ro - vec3(-0.9,-20.0,1.2),dir,vec3(1.0,20.0,1.0))));
 
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,1.0),0.5)));
 	//s = dunion(s,ob(1.0,sdSphere(tr_x(p,2.0),0.75)));
@@ -571,7 +609,7 @@ vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec
 			// move position, calculate distance attenuation
 			p = ro + rd * scene_hit.x;
 			n = deNormal(p, rd);
-			diffuse_mul *= (1.0 / (1.0+ scene_hit.x * scene_hit.x));
+			//diffuse_mul *= (1.0 / (1.0+ scene_hit.x * scene_hit.x));  // falloff
 
 			// get direct lighting contribution from light source
 			float light1 = queryLight(p + n * 0.001, light_dir,0.0,MAXDIST) * (clamp(dot(n,light_dir),0.0,1.0));
@@ -591,6 +629,7 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 	vec3 col = vec3(0.0);
 	//vec3 light_dir = normalize(vec3(0.3,0.5 + sin(iGlobalTime*0.2) * 0.3 ,0.7+ sin(iGlobalTime*0.3) * 0.1));
 	vec3 light_dir = normalize(vec3(0.3,0.5 + sin(0.5) * 0.3 ,0.7+ sin(0.3) * 0.1));
+	vec3 light_col = vec3(5.0);
 
 	vec3 scene_hit = intersectScene(ro,rd);
 
@@ -610,11 +649,11 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		//float light1 = queryLightSoft(pos + normal * 0.001, light_dir,0.0,MAXDIST,20.0);
 
 		// Diffuse
-		vec3 diffuse = vec3(0.9);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
-		col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
+		vec3 diffuse = vec3(1.0);//mix(vec3(1.0,0.5,0.0),vec3(0.5,0.0,0.8), scene_hit.y);
+		col += diffuse * light_col * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
 		// multi-bounce diffuse
-		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),1.0);
+		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,light_col,1.0);
 		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),2.0) * 0.25;
 		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),3.0) * 0.25;
 		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),4.0) * 0.25;
@@ -716,6 +755,10 @@ void main()
 	float fog = 1.0 / max(1.0,exp(dist * 0.01));
 	
 	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.3,0.27,0.25), col, fog);
+
+	// Reinhardt tone map
+	float whitelevel = 4.0;
+	col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
 	//todo: tonemap

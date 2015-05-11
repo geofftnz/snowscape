@@ -165,8 +165,8 @@ namespace OpenTKExtensions.Components.PostProcess
             }
 
             frame[i] = new Texture("frame" + i, this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba, PixelFormat.Rgba, PixelType.UnsignedByte);
-            frame[i].SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear));
-            frame[i].SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear));
+            frame[i].SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest));
+            frame[i].SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest));
             frame[i].SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge));
             frame[i].SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge));
 
@@ -320,7 +320,9 @@ namespace OpenTKExtensions.Components.PostProcess
 
             this.destinationprogram
                 .UseProgram()
-                .SetUniform("inputTex", 0);
+                .SetUniform("inputTex", 0)
+                .SetUniform("resolution", new Vector2((float)this.BaseWidth, (float)this.BaseHeight))
+                .SetUniform("invresolution", new Vector2(1.0f / (float)this.BaseWidth, 1.0f / (float)this.BaseHeight));
 
             this.vertexVBO.Bind(this.destinationprogram.VariableLocation("vertex"));
             this.indexVBO.Bind();
@@ -387,14 +389,25 @@ namespace OpenTKExtensions.Components.PostProcess
                 precision highp float;
 
                 uniform sampler2D inputTex;
+                uniform vec2 resolution;
+                uniform vec2 invresolution;
                 noperspective in vec2 tex0;
 
                 out vec4 out_Col;
 
                 void main(void)
                 {
-	                vec4 c = textureLod(inputTex,tex0,0);
-	                out_Col = c;
+                    float lineBlend = 1.0 - mod((tex0.y * resolution.y),2.0) * 0.25;
+                    vec3 c = vec3(0.0);
+
+                    //c += textureLod(inputTex,tex0 + vec2(0.0,-invresolution.y),0).rgb * -0.25; 
+                    //c += textureLod(inputTex,tex0 + vec2(0.0, invresolution.y),0).rgb * -0.25; 
+                    //c += textureLod(inputTex,tex0 + vec2(-invresolution.x,0.0),0).rgb * -0.25; 
+                    //c += textureLod(inputTex,tex0 + vec2( invresolution.x,0.0),0).rgb * -0.25; 
+                    c += textureLod(inputTex,tex0,0).rgb; 
+
+	                c *= lineBlend;
+	                out_Col = vec4(c.rgb,1.0);
                 }
 
             ");
