@@ -2,6 +2,7 @@
 using OpenTK.Graphics.OpenGL;
 using OpenTKExtensions;
 using OpenTKExtensions.Camera;
+using OpenTKExtensions.Components.PostProcess;
 using OpenTKExtensions.Framework;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace SDF.Renderers
 
 
         private GameComponentCollection Components = new GameComponentCollection();
+        private BlendBuffer postProcess;
 
 
 
@@ -35,9 +37,11 @@ namespace SDF.Renderers
             DrawOrder = 0;
             ShowTraceDepth = false;
 
+            Components.Add(postProcess = new BlendBuffer(256, 192, 16) { MinAlpha = 0.03f, AlphaDecay = 0.9f, DownScale = 2 });
+
             this.Loading += SDFRenderer_Loading;
             this.Unloading += SDFRenderer_Unloading;
-            
+
         }
 
         void SDFRenderer_Loading(object sender, EventArgs e)
@@ -84,12 +88,14 @@ namespace SDF.Renderers
             }*/
             alpha = 1.0f;
 
+            postProcess.BindForWriting();
+
             Matrix4 invProjectionView = Matrix4.Invert(Matrix4.Mult(cam.View, cam.Projection));
 
             GL.Disable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            //GL.Enable(EnableCap.Blend);
+            //GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
 
             this.program
                 .UseProgram()
@@ -97,16 +103,21 @@ namespace SDF.Renderers
                 .SetUniform("eyePos", cam.Eye)
                 .SetUniform("iGlobalTime", (float)renderdata.Elapsed.TotalSeconds)
                 .SetUniform("alpha", alpha)
-                .SetUniform("wheel",Wheel)
-                .SetUniform("showTraceDepth",ShowTraceDepth?1.0f:0.0f);
+                .SetUniform("wheel", Wheel)
+                .SetUniform("showTraceDepth", ShowTraceDepth ? 1.0f : 0.0f);
             this.vertexVBO.Bind(this.program.VariableLocation("vertex"));
             this.indexVBO.Bind();
             GL.DrawElements(BeginMode.Triangles, this.indexVBO.Length, DrawElementsType.UnsignedInt, 0);
+
+            postProcess.UnbindFromWriting();
+
+            postProcess.Render(cam.HasChanged());
+            cam.ResetChanged();
         }
 
         public void Resize(int width, int height)
         {
-
+            this.Components.Resize(width, height);
         }
 
 

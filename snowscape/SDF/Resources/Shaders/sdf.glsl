@@ -32,26 +32,29 @@ out vec4 out_Col;
 
 const float MAXDIST = 1000.0;
 
-#define HYBRID_RAYMARCH 1
+//#define HYBRID_RAYMARCH 1
 
 float hash( float n )
 {
     return fract(sin(n)*43758.5453);
 }
 
-vec3 randDir(vec3 p, float seed)
+vec3 randDir(float randseed)
 {
-	float hseed = hash(seed);
+	//seed = hash(seed * 7.35654) * 65464.0;
+
+	randseed += hash(randseed + 6548.31);
+
 	return vec3
 	(
-		hash(hash(p.z * 17685.35) + hseed*389.5),
-		hash(hash(p.x * 37685.35) + hseed*179.9),
-		hash(hash(p.y * 4685.35) + hseed*787.3)
+		hash(randseed * 7.35),
+		hash(randseed * 3.35),
+		hash(randseed * 9.35)
 	) * 2.0 - 1.0;
 }
-vec3 randDirNormal(vec3 p, float seed)
+vec3 randDirNormal(float randseed)
 {
-	return normalize(randDir(p,seed));
+	return normalize(randDir(randseed));
 }
 
 // signed distance to sphere
@@ -367,7 +370,7 @@ vec2 de(vec3 p, vec3 ro, vec3 dir)
 {
 	vec2 s = vec2(100000000.0,-1);
 
-	//float m = 3.0;	pmod2(p.xz,vec2(m));
+	float m = 6.0;	pmod2(p.xz,vec2(m));
 
 	//s = dunion(s,de_boxcyl(p));
 	//s = dunion(s,de_boxcyl(p - vec3(m,0.0,0.0)));
@@ -523,7 +526,7 @@ vec3 skyDome(vec3 rd)
 	col = mix(col,vec3(0.2,0.35,0.4),clamp(pow(1.0-rd.y,10.0),0.0,1.0));
 	col = mix(col,vec3(0.3,0.27,0.25),clamp(pow(1.0-rd.y,20.0),0.0,1.0));
 
-	return col;
+	return col * 2.0;
 }
 
 // bounce light around the scene in a shitty attempt at path tracing.
@@ -533,22 +536,22 @@ vec3 skyDome(vec3 rd)
 // ro = original ray origin (may not be needed)
 // rd = original ray direction
 // normal = surface normal at intersection
-vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec3 light_dir, vec3 light_col)
+vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec3 light_dir, vec3 light_col, float iteration)
 {
 	vec3 col = vec3(0.0);
 	vec3 diffuse_mul = vec3(1.0); // surface col
 	vec3 p = pos;
 	vec3 n = normal;
 	vec3 ro,rd;
-	float ii = 0.0f;
+	float ii = 17.3f * iteration;
 
 
 	for(int i=0;i<2;i++)
 	{
 		// generate new ray
 		ro = p + n * 0.001;
-		rd = randDirNormal(p,iGlobalTime+ii);
-		ii += 0.17;
+		rd = randDirNormal(  dot(ro,vec3(159.17,176.37,133.77)) * (3.0+hash(ii + iGlobalTime))   );
+		ii += 5.17;
 		
 		float rmul = clamp(dot(n,rd),0.0,1.0);
 		if (rmul < 0.0001) break;
@@ -611,7 +614,10 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		col += diffuse * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
 		// multi-bounce diffuse
-		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0));
+		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),1.0);
+		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),2.0) * 0.25;
+		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),3.0) * 0.25;
+		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),4.0) * 0.25;
 
 		// Specular
 		float ior = 0.9;
@@ -712,7 +718,8 @@ void main()
 	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.3,0.27,0.25), col, fog);
 
 	col = pow(col, vec3(1.0/2.2));  // gamma
-	out_Col = vec4(col,0.05);
+	//todo: tonemap
+	out_Col = vec4(col,1.0);
 }
 
 
