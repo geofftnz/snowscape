@@ -58,7 +58,10 @@
     <Compile Include="Camera\WalkCamera.cs" />
     <Compile Include="Components\FrameCounter.cs" />
     <Compile Include="Components\LineBuffer.cs" />
+    <Compile Include="Components\PostProcess\BlendBuffer.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Loaders\MemoryLoader.cs" />
+    <Compile Include="Loaders\ShaderLoaderBase.cs" />
     <Compile Include="Text\FontCharacter.cs" />
     <Compile Include="Text\FontMetaParser.cs" />
     <Compile Include="FrameBuffer.cs" />

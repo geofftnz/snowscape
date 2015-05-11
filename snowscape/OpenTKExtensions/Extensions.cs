@@ -84,5 +84,13 @@ namespace OpenTKExtensions
             return new Vector4(col.R, col.G, col.B, col.A);
         }
 
+        public static void Maybe<T>(this T t, Action<T> action)
+        {
+            if (t != null && action != null)
+            {
+                action(t);
+            }
+        }
+
     }
 }

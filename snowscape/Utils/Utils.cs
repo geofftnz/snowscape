@@ -114,13 +114,6 @@ namespace Utils
             return x;
         }
 
-        public static void Maybe<T>(this T t, Action<T> action)
-        {
-            if (t != null && action != null)
-            {
-                action(t);
-            }
-        }
 
         public static float DistanceToSquare(float x1, float y1, float x2, float y2, float px, float py)
         {
