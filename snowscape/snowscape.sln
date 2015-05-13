@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils.Test", "Utils.Test\Ut
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDF", "SDF\SDF.csproj", "{5934F5B7-B96F-4D64-B97B-77455D09CA46}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageSDF", "ImageSDF\ImageSDF.csproj", "{198F9BCE-762A-4214-BCFC-F2D2AF85D232}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -188,6 +190,16 @@ Global
 		{5934F5B7-B96F-4D64-B97B-77455D09CA46}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{5934F5B7-B96F-4D64-B97B-77455D09CA46}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{5934F5B7-B96F-4D64-B97B-77455D09CA46}.Release|x86.ActiveCfg = Release|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Release|Any CPU.Build.0 = Release|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{198F9BCE-762A-4214-BCFC-F2D2AF85D232}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
