@@ -451,7 +451,7 @@ vec3 deNormal(vec3 p, vec3 rd)
 {
     vec3 e = vec3(deNormalEpsilon, 0, 0);
 	p -= rd * (e * 1.1);
-	float dist = de(p);
+	float dist = de(p).x;
     return normalize(vec3(dist - de(p - e.xyy).x,
                         dist - de(p - e.yxy).x,
                         dist - de(p - e.yyx).x));

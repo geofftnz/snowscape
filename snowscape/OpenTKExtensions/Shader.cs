@@ -6,6 +6,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using NLog;
+using OpenTKExtensions.Exceptions;
 
 namespace OpenTKExtensions
 {
@@ -55,8 +56,9 @@ namespace OpenTKExtensions
 
                 if (compileStatus != 1)
                 {
-                    log.Error("Shader.Compile ({0}): {1}", this.Name, infoLog);
-                    throw new InvalidOperationException(string.Format("Shader {0} did not compile: {1}", this.Name, infoLog));
+                    var ex = new ShaderCompileException(this.Name, infoLog, this.Source);
+                    log.Error("Shader.Compile ({0}): {1}", this.Name, ex.DetailedError);
+                    throw ex;
                 }
                 else
                 {

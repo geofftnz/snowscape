@@ -59,6 +59,7 @@
     <Compile Include="Components\FrameCounter.cs" />
     <Compile Include="Components\LineBuffer.cs" />
     <Compile Include="Components\PostProcess\BlendBuffer.cs" />
+    <Compile Include="Exceptions\ShaderCompileException.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Loaders\MemoryLoader.cs" />
     <Compile Include="Loaders\ShaderLoaderBase.cs" />

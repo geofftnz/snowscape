@@ -5,6 +5,7 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using System.IO;
 
 namespace OpenTKExtensions
 {
@@ -69,7 +70,7 @@ namespace OpenTKExtensions
 
         public static IEnumerable<T> Enum<T>(this T a) where T : class
         {
-            if (a != null) 
+            if (a != null)
                 yield return a;
         }
 
@@ -90,6 +91,31 @@ namespace OpenTKExtensions
             {
                 action(t);
             }
+        }
+
+        public static int ParseIntOrDefault(this string s, int defaultValue)
+        {
+            int i;
+            if (int.TryParse(s, out i)) return i;
+            return defaultValue;
+        }
+
+        public static IEnumerable<string> AllLines(this string s)
+        {
+            using (var sr = new StringReader(s))
+            {
+                string l = sr.ReadLine();
+                while (l != null)
+                {
+                    yield return l;
+                    l = sr.ReadLine();
+                }
+            }
+        }
+
+        public static string StringJoin(this IEnumerable<string> s, string separator)
+        {
+            return string.Join(separator, s);
         }
 
     }
