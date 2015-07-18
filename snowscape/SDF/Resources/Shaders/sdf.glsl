@@ -587,7 +587,7 @@ vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec
 	for(int i=0;i<2;i++)
 	{
 		// generate new ray
-		ro = p + n * 0.001;
+		ro = p + n * 0.0001;
 		rd = randDirNormal(  dot(ro,vec3(159.17,176.37,133.77)) * (3.0+hash(ii + iGlobalTime))   );
 		ii += 5.17;
 		
@@ -601,7 +601,7 @@ vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec
 		// no hit: sample skybox
 		if (scene_hit.y < 0.0)
 		{
-			col += diffuse_mul * skyDome(rd) * 10.0;
+			col += diffuse_mul * skyDome(rd);
 			break;
 		}
 		else
@@ -610,6 +610,7 @@ vec3 diffuseBounceOutdoorParallel(vec3 pos, vec3 ro0, vec3 rd0, vec3 normal, vec
 			p = ro + rd * scene_hit.x;
 			n = deNormal(p, rd);
 			//diffuse_mul *= (1.0 / (1.0+ scene_hit.x * scene_hit.x));  // falloff
+			diffuse_mul *= (1.0 / (1.0+ scene_hit.x));  // falloff
 
 			// get direct lighting contribution from light source
 			float light1 = queryLight(p + n * 0.001, light_dir,0.0,MAXDIST) * (clamp(dot(n,light_dir),0.0,1.0));
@@ -757,10 +758,11 @@ void main()
 	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.3,0.27,0.25), col, fog);
 
 	// Reinhardt tone map
-	float whitelevel = 4.0;
-	col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
+	//float whitelevel = 4.0;
+	//col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
 
-	col = pow(col, vec3(1.0/2.2));  // gamma
+	//col = pow(col, vec3(1.0/2.2));  // gamma
+
 	//todo: tonemap
 	out_Col = vec4(col,1.0);
 }

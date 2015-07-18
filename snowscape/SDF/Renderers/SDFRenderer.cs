@@ -37,7 +37,7 @@ namespace SDF.Renderers
             DrawOrder = 0;
             ShowTraceDepth = false;
 
-            Components.Add(postProcess = new BlendBuffer(256, 192, 8) { MinAlpha = 0.05f, AlphaDecay = 0.95f, DownScale = 2 });
+            Components.Add(postProcess = new BlendBuffer(256, 192, 16) { MinAlpha = 0.05f, AlphaDecay = 0.9f, DownScale = 2 });
 
             this.Loading += SDFRenderer_Loading;
             this.Unloading += SDFRenderer_Unloading;

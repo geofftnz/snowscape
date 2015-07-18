@@ -101,7 +101,7 @@ vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 pa
 vec2 getDetailHeightSample(vec3 pos, vec3 basenormal, vec3 detailnormal, vec4 param, vec2 scale)
 {
 	// get noise texture for this location
-	return getDetailHeightSample(pos,basenormal,detailnormal,param,scale,textureLod(detailTex,pos.xz * 0.125,0));
+	return getDetailHeightSample(pos,basenormal,detailnormal,param,scale,textureLod(detailTex,pos.xz * 0.0625,0));
 }
 
 

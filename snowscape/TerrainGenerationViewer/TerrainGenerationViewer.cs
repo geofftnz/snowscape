@@ -189,7 +189,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             // set default shader loader
             ShaderProgram.DefaultLoader = new OpenTKExtensions.Loaders.FileSystemLoader(SHADERPATH);
-            
+
             #region create components
 
             // phase 1 
@@ -214,7 +214,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.tileSegmentRenderer = new SegmentRenderer(TileWidth, TileWidth, patchCache), LoadOrder.Phase1);
 
             this.Components.Add(this.font = new Font("main", Resources.FontConsolas, Resources.FontConsolasMeta), LoadOrder.Phase1);
-            this.Components.Add(this.camera = new WalkCamera(this.Keyboard, this.Mouse), LoadOrder.Phase1);
+            this.Components.Add(this.camera = new WalkCamera(this.Keyboard, this.Mouse) { LookMode = WalkCamera.LookModeEnum.Mouse1, MovementSpeed = 20f }, LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
 
@@ -527,8 +527,8 @@ namespace Snowscape.TerrainGenerationViewer
             GL.Enable(EnableCap.DepthTest);
 
             // setup font
-        
-            
+
+
             font.Loaded += (s, ea) =>
             {
                 textManager.Font = (Font)s;

@@ -368,7 +368,8 @@ namespace OpenTKExtensions.Components.PostProcess
 	                float fblend = frameBlend;
 	                vec3 c = textureLod(inputTex,tex0,0).rgb;
 	                vec4 lf = textureLod(lastFrameTex,tex0,0);
-	                vec3 outc = mix(lf.rgb,c.rgb,fblend);
+	                //vec3 outc = pow(mix(pow(lf.rgb,vec3(2.0)),pow(c.rgb,vec3(2.0)),fblend),vec3(0.5));
+                    vec3 outc = mix(lf.rgb,c.rgb,fblend);
 	                out_Col = vec4(outc, dot(outc, luminance));
                 }
 
@@ -395,6 +396,15 @@ namespace OpenTKExtensions.Components.PostProcess
 
                 out vec4 out_Col;
 
+                vec3 gamma(vec3 col){
+	                // Reinhardt tone map
+	                float whitelevel = 4.0;
+	                col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
+
+	                col = pow(col, vec3(1.0/2.2));  // gamma
+                    return col;
+                }
+
                 void main(void)
                 {
                     float lineBlend = 1.0 - mod((tex0.y * resolution.y),2.0) * 0.25;
@@ -407,7 +417,7 @@ namespace OpenTKExtensions.Components.PostProcess
                     c += textureLod(inputTex,tex0,0).rgb; 
 
 	                c *= lineBlend;
-	                out_Col = vec4(c.rgb,1.0);
+	                out_Col = vec4(gamma(c.rgb),1.0);
                 }
 
             ");
