@@ -98,6 +98,7 @@
     <Compile Include="Renderers\QuadtreeLODRenderer.cs" />
     <Compile Include="Renderers\RaycastRenderer.cs" />
     <Compile Include="Renderers\RendererHelper.cs" />
+    <Compile Include="TerrainDetail\DetailGenerator.cs" />
     <Compile Include="TerrainGlobal.cs" />
     <Compile Include="TerrainLightingGenerator.cs" />
     <Compile Include="TerrainTile.cs" />
