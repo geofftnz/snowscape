@@ -10,10 +10,13 @@ namespace Snowscape.TerrainRenderer.TerrainDetail
 
     /// <summary>
     /// Generates a higher level of detail from the base terrain maps.
+    /// 
+    /// 
     /// </summary>
     public class DetailGenerator : GameComponentBase
     {
-        public Texture HeightTexture { get; set; }
+
+        public Texture HeightTexture { get; private set; }
 
 
 
