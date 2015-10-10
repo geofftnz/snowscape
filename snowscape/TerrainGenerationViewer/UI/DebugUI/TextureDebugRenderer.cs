@@ -31,6 +31,9 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             /// </summary>
             Height,
 
+            GradientGrey,
+            GradientCol,
+
             /// <summary>
             /// DO NOT USE - used to mark the end of the enum.
             /// </summary>
@@ -139,6 +142,18 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                     return c;
                 }
 
+                vec3 getGradientCol(vec2 pos, float t, vec3 col){
+
+                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).r;
+	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).r;
+                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).r;
+	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).r;
+	                vec3 n = normalize(vec3(h3-h4,2.0,h1-h2));
+
+                    vec3 l = normalize(vec3(-0.5,0.5,-0.5));
+                    return col * (dot(n,l) * 0.5 + 0.5);
+                }
+
                 void main(void) {
 
                     vec4 t = texture(tex,texcoord);
@@ -155,6 +170,8 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                         case 4: c = vec3(t.a); break;
                         case 5: c = t.rbg * 0.5 + 0.5; break;  // normal
                         case 6: c = getHeightCol(t.r); break;
+                        case 7: c = getGradientCol(texcoord,1.0/1024.0,vec3(0.9)); break;  // gradient-grey
+                        case 8: c = getGradientCol(texcoord,1.0/1024.0,getHeightCol(t.r)); break; // gradient-col
                     }
 
                     out_Colour = vec4(c,1.0);
