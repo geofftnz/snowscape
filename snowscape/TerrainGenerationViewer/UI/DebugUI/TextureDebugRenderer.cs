@@ -33,6 +33,8 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
             GradientGrey,
             GradientCol,
+            GradientGreen,
+            GradientBlue,
 
             /// <summary>
             /// DO NOT USE - used to mark the end of the enum.
@@ -153,6 +155,28 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                     vec3 l = normalize(vec3(-0.5,0.5,-0.5));
                     return col * (dot(n,l) * 0.5 + 0.5);
                 }
+                vec3 getGradientColG(vec2 pos, float t){
+
+                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).g;
+	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).g;
+                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).g;
+	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).g;
+	                vec3 n = normalize(vec3(h3-h4,2.0,h1-h2));
+
+                    vec3 l = normalize(vec3(-0.5,0.5,-0.5));
+                    return vec3(0.2,1.0,0.05) * (dot(n,l) * 0.5 + 0.5);
+                }
+                vec3 getGradientColB(vec2 pos, float t){
+
+                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).b;
+	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).b;
+                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).b;
+	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).b;
+	                vec3 n = normalize(vec3(h3-h4,2.0,h1-h2));
+
+                    vec3 l = normalize(vec3(-0.5,0.5,-0.5));
+                    return vec3(0.2,0.7,1.0) * (dot(n,l) * 0.5 + 0.5);
+                }
 
                 void main(void) {
 
@@ -172,6 +196,8 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                         case 6: c = getHeightCol(t.r); break;
                         case 7: c = getGradientCol(texcoord,1.0/1024.0,vec3(0.9)); break;  // gradient-grey
                         case 8: c = getGradientCol(texcoord,1.0/1024.0,getHeightCol(t.r)); break; // gradient-col
+                        case 9: c = getGradientColG(texcoord,1.0/1024.0); break;  // gradient-green channel
+                        case 10: c = getGradientColB(texcoord,1.0/1024.0); break;  // gradient-blue channel
                     }
 
                     out_Colour = vec4(c,1.0);
