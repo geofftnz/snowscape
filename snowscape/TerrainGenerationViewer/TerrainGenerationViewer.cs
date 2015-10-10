@@ -27,6 +27,7 @@ using OpenTKExtensions.Framework;
 using Snowscape.TerrainRenderer.Renderers.LOD;
 using OpenTKExtensions.Components;
 using OpenTKExtensions.Text;
+using Snowscape.TerrainRenderer.TerrainDetail;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -96,6 +97,8 @@ namespace Snowscape.TerrainGenerationViewer
         private Lighting.LightingCombiner lightingStep;
         private HDR.HDRExposureMapper hdrExposure;
         private AA.AAPostProcess postProcessStep;
+
+        private DetailGenerator terrainDetailGenerator;
 
         private QuadtreeLODRenderer tileRendererQuadtree;
         private GenerationVisPatchDetailRenderer tileRendererPatchDetail;
@@ -217,6 +220,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.Components.Add(this.camera = new WalkCamera(this.Keyboard, this.Mouse) { LookMode = WalkCamera.LookModeEnum.Mouse1, MovementSpeed = 20f }, LoadOrder.Phase1);
 
             // phase 2 (dependencies on phase 1)
+
+            this.Components.Add(this.terrainDetailGenerator = new DetailGenerator(DetailRes, DetailRes), LoadOrder.Phase2);
 
             this.Components.Add(this.terrainLighting = new TerrainLightingGenerator(TileWidth, TileHeight, this.terrainGlobal.ShadeTexture), LoadOrder.Phase2);
             this.Components.Add(this.tileNormalGenerator = new Lighting.HeightmapNormalGenerator(this.terrainTile.NormalTexture, this.terrainGlobal.HeightTexture), LoadOrder.Phase2);
@@ -925,6 +930,19 @@ namespace Snowscape.TerrainGenerationViewer
                     GL.Finish();
                 }
                 frameTracker.Step("GPU normals", new Vector4(0.7f, 1.0f, 0.0f, 1.0f));
+
+
+                //TODO: move this
+                this.terrainDetailGenerator.Position = this.camera.Position.Xz;
+                this.terrainDetailGenerator.Render(this.terrainTile.HeightTexture, this.terrainTile.ParamTexture);
+
+                if (stepFence)
+                {
+                    GL.Finish();
+                }
+                frameTracker.Step("GPU detail", new Vector4(1.0f, 0.7f, 0.2f, 1.0f));
+
+
 
                 textureUpdateCount++;
                 prevThreadIterations = currentThreadIterations;

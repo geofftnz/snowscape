@@ -83,6 +83,9 @@ namespace Snowscape.TerrainRenderer.TerrainDetail
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
+            this.HeightTexture.UploadEmpty();
+            this.NormalTexture.UploadEmpty();
+            this.ParamTexture.UploadEmpty();
             
             gb.SetOutputTexture(0, "out_Height", this.HeightTexture);
             gb.SetOutputTexture(1, "out_Normal", this.NormalTexture);
@@ -109,6 +112,7 @@ namespace Snowscape.TerrainRenderer.TerrainDetail
                 sp.SetUniform("heighttex", 0);
                 sp.SetUniform("paramtex", 1);
                 sp.SetUniform("invtexsize", 1.0f/(float)inputHeightTexture.Width);
+                sp.SetUniform("position", Position);
             });
 
         }

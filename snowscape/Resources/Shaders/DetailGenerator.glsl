@@ -4,10 +4,15 @@ precision highp float;
 in vec3 vertex;
 out vec2 texcoord;
 
+uniform float invtexsize;
+uniform vec2 position;
+const float scale = 16.0;
+const float invscale = 1.0 / 16.0;
+
 void main() {
 
 	gl_Position = vec4(vertex.xy,0.0,1.0);
-	texcoord = vertex.xy * 0.5 + 0.5;
+	texcoord = (vertex.xy * 0.5) * invscale + position * invtexsize;
 }
 
 //|frag
@@ -17,6 +22,7 @@ precision highp float;
 uniform sampler2D heighttex;
 uniform sampler2D paramtex;
 uniform float invtexsize;
+
 
 in vec2 texcoord;
 
