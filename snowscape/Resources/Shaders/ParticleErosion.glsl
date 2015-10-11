@@ -161,6 +161,9 @@ void main(void)
 	avgsat += textureLod(terraintex,texcoord + t.zy,0).a;
 	avgsat += textureLod(terraintex,texcoord + t.yx,0).a;
 	avgsat += textureLod(terraintex,texcoord + t.yz,0).a;
+	avgsat += terrain.a;
+	avgsat *= 0.19;
+	avgsat += terrain.b * 2.5;
 
 	float hard = terrain.r;
 	float soft = terrain.g;
@@ -171,13 +174,18 @@ void main(void)
 	float softerode = min(soft, erosion.g);
 	float harderode = max(erosion.g - softerode,0.0) * hardErosionFactor;
 
+	float saturationrate = 0.1 + log(1.0+terrain.g*0.1) * 0.1;  // saturation rate faster on soft
+
 	out_Terrain = vec4(
 		hard - harderode, 
 		soft - softerode,
 		terrain.b * waterLowpass + erosion.r * waterDepthFactor,   // water saturation
 		//erosion.a / max(1.0,erosion.r)  //average sediment carried
 		//0.0
-		max((terrain.a * 0.95 + avgsat * 0.05 * 0.25) * saturationlowpass, terrain.a  * 0.9 + min(8.0,erosion.r) * 0.02)
+		//saturationrate * 4.0
+		avgsat
+		//mix(terrain.a,avgsat,saturationrate) //* 0.999
+		//max((terrain.a * 0.95 + avgsat * 0.05 * 0.25) * saturationlowpass, terrain.a  * 0.9 + min(8.0,erosion.r) * 0.02)
 		//mix(min(8.0,erosion.r) * 0.0625 + avgsat*0.25,terrain.a,saturationlowpass)
 		//mix(min(4.0,erosion.r),terrain.a,saturationlowpass)  // saturation
 		);
