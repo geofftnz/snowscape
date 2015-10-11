@@ -146,10 +146,10 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
 
                 vec3 getGradientCol(vec2 pos, float t, vec3 col){
 
-                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).r;
-	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).r;
-                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).r;
-	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).r;
+                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).r*scale;
+	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).r*scale;
+                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).r*scale;
+	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).r*scale;
 	                vec3 n = normalize(vec3(h3-h4,2.0,h1-h2));
 
                     vec3 l = normalize(vec3(-0.5,0.5,-0.5));
@@ -157,10 +157,10 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                 }
                 vec3 getGradientColG(vec2 pos, float t){
 
-                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).g;
-	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).g;
-                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).g;
-	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).g;
+                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).g*scale;
+	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).g*scale;
+                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).g*scale;
+	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).g*scale;
 	                vec3 n = normalize(vec3(h3-h4,2.0,h1-h2));
 
                     vec3 l = normalize(vec3(-0.5,0.5,-0.5));
@@ -168,10 +168,10 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                 }
                 vec3 getGradientColB(vec2 pos, float t){
 
-                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).b;
-	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).b;
-                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).b;
-	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).b;
+                    float h1 = texture(tex,vec2(pos.x, pos.y - t)).b*scale;
+	                float h2 = texture(tex,vec2(pos.x, pos.y + t)).b*scale;
+                    float h3 = texture(tex,vec2(pos.x - t, pos.y)).b*scale;
+	                float h4 = texture(tex,vec2(pos.x + t, pos.y)).b*scale;
 	                vec3 n = normalize(vec3(h3-h4,2.0,h1-h2));
 
                     vec3 l = normalize(vec3(-0.5,0.5,-0.5));

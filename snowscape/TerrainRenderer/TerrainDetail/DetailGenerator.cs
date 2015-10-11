@@ -15,7 +15,7 @@ namespace Snowscape.TerrainRenderer.TerrainDetail
     /// 
     /// On render
     /// </summary>
-    public class DetailGenerator : GameComponentBase, IListTextures
+    public class DetailGenerator : GameComponentBase, IListTextures, IReloadable
     {
         // output textures 
         public Texture HeightTexture { get; private set; }
@@ -109,8 +109,9 @@ namespace Snowscape.TerrainRenderer.TerrainDetail
             },
             (sp) =>
             {
-                sp.SetUniform("heighttex", 0);
-                sp.SetUniform("paramtex", 1);
+                sp.SetUniform("heightTex", 0);
+                sp.SetUniform("paramTex", 1);
+                sp.SetUniform("texsize", (float)inputHeightTexture.Width);
                 sp.SetUniform("invtexsize", 1.0f/(float)inputHeightTexture.Width);
                 sp.SetUniform("position", Position);
             });
@@ -118,6 +119,11 @@ namespace Snowscape.TerrainRenderer.TerrainDetail
         }
 
 
+
+        public void Reload()
+        {
+            gb.ReloadShader();
+        }
     }
 }
 
