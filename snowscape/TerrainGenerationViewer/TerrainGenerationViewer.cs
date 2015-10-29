@@ -196,7 +196,7 @@ namespace Snowscape.TerrainGenerationViewer
             #region create components
 
             // phase 1 
-            this.Components.Add(this.Terrain = new GPUParticleErosion(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes), LoadOrder.Phase1);
+            this.Components.Add(this.Terrain = new GPUParticleErosion2(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes), LoadOrder.Phase1);
 
             this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
             this.Components.Add(this.terrainGlobal = new TerrainGlobal(TileWidth, TileHeight), LoadOrder.Phase1);
@@ -712,6 +712,11 @@ namespace Snowscape.TerrainGenerationViewer
                 miscTexture = ((GPUParticleErosion)this.Terrain).ErosionTex;
                 miscTexture2 = ((GPUParticleErosion)this.Terrain).CurrentParticleTexture;
             };
+            if (this.Terrain is GPUParticleErosion2)
+            {
+                miscTexture = ((GPUParticleErosion2)this.Terrain).ErosionTex;
+                miscTexture2 = ((GPUParticleErosion2)this.Terrain).CurrentParticleTexture;
+            };
             if (this.Terrain is GPUSnowTransport)
             {
                 miscTexture = ((GPUSnowTransport)this.Terrain).ErosionTex;
@@ -911,6 +916,13 @@ namespace Snowscape.TerrainGenerationViewer
                 if (this.Terrain is GPUParticleErosion)
                 {
                     var terr = this.Terrain as GPUParticleErosion;
+                    this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
+                    this.terrainTileLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
+                    this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);
+                }
+                if (this.Terrain is GPUParticleErosion2)
+                {
+                    var terr = this.Terrain as GPUParticleErosion2;
                     this.terrainGlobalLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
                     this.terrainTileLoader.Render(terr.CurrentTerrainTexture, terr.WaterHeightFactor);
                     this.terrainTileParamLoader.Render(terr.CurrentTerrainTexture);

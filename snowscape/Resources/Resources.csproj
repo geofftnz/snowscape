@@ -66,6 +66,9 @@
     <None Include="Shaders\noise4d.glsl" />
     <None Include="Shaders\noise3d.glsl" />
     <None Include="Shaders\noise2d.glsl" />
+    <None Include="Shaders\ParticleErosion2.glsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Shaders\PatchRender.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
