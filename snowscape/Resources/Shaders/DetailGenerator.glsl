@@ -30,10 +30,10 @@ float sampleHeightBicubic(vec2 pos, float scale)
 	vec2 t1 = (itc + vec2(1.0) + f1) * t;
 
 	return 
-		textureLod(heightTex,vec2(t0.x,t0.y),0).r * s0.x * s0.y +
-		textureLod(heightTex,vec2(t1.x,t0.y),0).r * s1.x * s0.y +
-		textureLod(heightTex,vec2(t0.x,t1.y),0).r * s0.x * s1.y +
-		textureLod(heightTex,vec2(t1.x,t1.y),0).r * s1.x * s1.y;
+		texture(heightTex,vec2(t0.x,t0.y)).r * s0.x * s0.y +
+		texture(heightTex,vec2(t1.x,t0.y)).r * s1.x * s0.y +
+		texture(heightTex,vec2(t0.x,t1.y)).r * s0.x * s1.y +
+		texture(heightTex,vec2(t1.x,t1.y)).r * s1.x * s1.y;
 }
 
 //|CubicParamSample
@@ -111,26 +111,33 @@ float t = invtexsize;
 
 #include ".|CubicHeightSample"
 #include ".|CubicParamSample"
-
+#include "noise2d.glsl"
 
 
 float sampleHeight(vec2 pos)
 {
-	return textureLod(heightTex,pos,0).r;
+	float h0 = sampleHeightBicubic(pos,texsize);
+
+	float n = 0.5;
+	h0 += snoise(pos*256.0) * n; n*=0.5;
+	h0 += snoise(pos*512.0) * n; n*=0.5;
+	h0 += snoise(pos*1024.0) * n; n*=0.5;
+
+	return h0;
 }
 
 vec3 getNormal(vec2 pos)
 {
-    float h1 = sampleHeightBicubic(vec2(pos.x, pos.y - t),texsize);
-	float h2 = sampleHeightBicubic(vec2(pos.x, pos.y + t),texsize);
-    float h3 = sampleHeightBicubic(vec2(pos.x - t, pos.y),texsize);
-	float h4 = sampleHeightBicubic(vec2(pos.x + t, pos.y),texsize);
+    float h1 = sampleHeight(vec2(pos.x, pos.y - t));
+	float h2 = sampleHeight(vec2(pos.x, pos.y + t));
+    float h3 = sampleHeight(vec2(pos.x - t, pos.y));
+	float h4 = sampleHeight(vec2(pos.x + t, pos.y));
 	return normalize(vec3(h3-h4,2.0,h1-h2));
 }
 
 void main(void)
 {
-	out_Height = sampleHeightBicubic(texcoord,texsize);
+	out_Height = sampleHeight(texcoord);
 	out_Normal = vec4(getNormal(texcoord),1.0);
 	out_Param = textureLod(paramTex,texcoord,0);
 }
