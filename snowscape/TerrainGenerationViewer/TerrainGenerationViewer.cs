@@ -268,6 +268,7 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<bool>("autoreload", true, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("quadtreevis", false, false, true, v => true, v => false));
 
+            parameters.Add(new Parameter<bool>("detailgenerator", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<bool>("debugtextures", false, false, true, v => true, v => false));
             parameters.Add(new Parameter<int>("currenttexture", 0, 0, 100000, v => textureDebugRenderer.Next(), v => textureDebugRenderer.Previous()));
             //parameters.Add(new Parameter<bool>("mouselook", true, false, true, v => true, v => false));
@@ -933,14 +934,17 @@ namespace Snowscape.TerrainGenerationViewer
 
 
                 //TODO: move this
-                this.terrainDetailGenerator.Position = this.camera.Position.Xz;
-                this.terrainDetailGenerator.Render(this.terrainTile.HeightTexture, this.terrainTile.ParamTexture);
-
-                if (stepFence)
+                if (this.parameters["detailgenerator"].GetValue<bool>())
                 {
-                    GL.Finish();
+                    this.terrainDetailGenerator.Position = this.camera.Position.Xz;
+                    this.terrainDetailGenerator.Render(this.terrainTile.HeightTexture, this.terrainTile.ParamTexture);
+
+                    if (stepFence)
+                    {
+                        GL.Finish();
+                    }
+                    frameTracker.Step("GPU detail", new Vector4(1.0f, 0.7f, 0.2f, 1.0f));
                 }
-                frameTracker.Step("GPU detail", new Vector4(1.0f, 0.7f, 0.2f, 1.0f));
 
 
 
