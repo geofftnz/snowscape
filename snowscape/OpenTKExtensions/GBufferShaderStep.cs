@@ -147,7 +147,8 @@ namespace OpenTKExtensions
             vsSource = vertexShaderSource;
             fsSource = fragmentShaderSource;
 
-            ReloadShader();
+            if (!ReloadShader())
+                throw new InvalidOperationException("Could not load shader");
 
         }
 

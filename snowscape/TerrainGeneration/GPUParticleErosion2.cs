@@ -25,8 +25,8 @@ namespace TerrainGeneration
     /// P1: particle state: RG = pos, B = carrying, A = water amount
     /// NOTE: pos is normalized 0-1
     /// 
-    /// V0: particle velocity: RG = vel, B = new carrying capacity, A = death flag
-    /// V1: particle velocity: RG = vel, B = new carrying capacity, A = death flag
+    /// V0: particle velocity: RG = vel, B = new carrying capacity, A = water diff
+    /// V1: particle velocity: RG = vel, B = new carrying capacity, A = water diff
     /// 
     /// E: terrain erosion accumulation: R = particle count, G = total erosion potential, B = total material deposit, A = total water deposit
     /// 

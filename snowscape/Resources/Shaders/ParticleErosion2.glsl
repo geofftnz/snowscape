@@ -1,4 +1,12 @@
-﻿//|ComputeVelocity
+﻿//|Common
+
+float heightFromStack(vec4 terrainSample)
+{
+	//hard + soft + water + dynamic water * wheight
+	return dot(terrainSample, vec4(1.0,1.0,1.0,waterHeightFactor));
+}
+
+//|ComputeVelocity
 
 #version 140
 precision highp float;
@@ -21,11 +29,11 @@ float t = 1.0 / texsize;
 float diag = 0.707;
 
 #include "noise.glsl"
+#include ".|Common"
 
 float sampleHeight(vec2 pos)
 {
-	vec3 l = texture(terraintex,pos).rgb;
-	return dot(l, vec3(1.0,1.0,waterHeightFactor));  //hard + soft + waterdepth
+	return heightFromStack(texture(terraintex,pos));  
 }
 
 void main(void)
@@ -39,10 +47,10 @@ void main(void)
 	float h0 = sampleHeight(particle.xy);
 
 	// get neighbouring height differentials - positive means the neighbour is downhill from here
-	float hn = h0 - sampleHeight(particle.xy + ofs.xy); // x=0, y=-1, z=+1
-	float hs = h0 - sampleHeight(particle.xy + ofs.xz);
-	float hw = h0 - sampleHeight(particle.xy + ofs.yx);
-	float he = h0 - sampleHeight(particle.xy + ofs.zx);
+	float hn  =  h0 - sampleHeight(particle.xy + ofs.xy); // x=0, y=-1, z=+1
+	float hs  =  h0 - sampleHeight(particle.xy + ofs.xz);
+	float hw  =  h0 - sampleHeight(particle.xy + ofs.yx);
+	float he  =  h0 - sampleHeight(particle.xy + ofs.zx);
 	float hnw = (h0 - sampleHeight(particle.xy + ofs.yy)) * diag; 
 	float hne = (h0 - sampleHeight(particle.xy + ofs.zy)) * diag; 
 	float hsw = (h0 - sampleHeight(particle.xy + ofs.yz)) * diag; 
@@ -50,34 +58,41 @@ void main(void)
 
 	float maxDownhill = max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
 
-	vec2 fall = vec2(0);
+	// detect if we're in a hole (lowest point among neighbours)
+	// if we're in a hole, we drop some water in it, either to fill the hole or to deplete a percentage of the particle
+	float waterDrop = min(max(0.0,-maxDownhill),particle.a);
 
+	// TODO: if we're moving downhill and there is water here, we should pick some up.
+
+	vec2 fall = vec2(0.0);
+
+	// small amount of random noise in movement
 	fall.x = (rand(particle.xy + vec2(randSeed))-0.5) * fallRand;
 	fall.y = (rand(particle.xy + vec2(randSeed * 3.19 + 7.36))-0.5) * fallRand;
 
-	fall += vec2(0,-1) * max(0,hn);
-	fall += vec2(0,1) * max(0,hs);
-	fall += vec2(-1,0) * max(0,hw);
-	fall += vec2(1,0) * max(0,he);
-
-	fall += vec2(-1,-1) * max(0,hnw);
-	fall += vec2(1,-1) * max(0,hne);
-	fall += vec2(-1,1) * max(0,hsw);
-	fall += vec2(1,1) * max(0,hse);
+	fall += vec2(0,-1)  * max(0.0,hn);
+	fall += vec2(0,1)   * max(0.0,hs);
+	fall += vec2(-1,0)  * max(0.0,hw);
+	fall += vec2(1,0)   * max(0.0,he);
+	fall += vec2(-1,-1) * max(0.0,hnw);
+	fall += vec2(1,-1)  * max(0.0,hne);
+	fall += vec2(-1,1)  * max(0.0,hsw);
+	fall += vec2(1,1)   * max(0.0,hse);
 
 	fall = normalize(fall);
 
-
-	//  Uses slope information from L0 at position P0 to calculate acceleration of particle
-	//vec3 fall = fallVector(particle.xy);
-	//vec2 newVelocity = normalize(fall.xy) * step(0.0,-fall.z);
-
+	// calculate velocity of particle due to slope
 	float speed = atan(max(0,maxDownhill));
-	speed += 0.01 * pow(particle.a,8.0); // boost erosion early in the particle's life.
+
+	// calculate new carrying capacity based on speed and amount of water in particle
 	float newCarryingCapacity = speed * speedCarryingCoefficient * particle.a;
 	float prevCarryingCapacity = prevvel.b;
 		
-	out_Velocity = vec4(fall,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),1.0);
+	// return
+	// RG: 2D normalized movement vector 
+	// B: carrying capacity
+	// A: water drop amount (hole filling)
+	out_Velocity = vec4(fall,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),waterDrop);
 }
 
 
@@ -128,7 +143,12 @@ void main(void)
 	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
 	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
-	out_Erosion = vec4(1.0, erosionPotential, depositAmount, carrying);
+	// return:
+	// R: 1.0: particle count
+	// G: erosion potential
+	// B: deposit amount
+	// A: water dropped from particle
+	out_Erosion = vec4(1.0, erosionPotential, depositAmount, particle.a);
 }
 
 //|UpdateTerrain
@@ -147,7 +167,8 @@ out vec4 out_Terrain;
 
 //  Adds deposit amount E.b to soft L0.g
 //  Subtracts material from soft, then hard.
-//  Modifies water depth from particle count (E.r).
+//  Modifies standing water amount
+//  Modifies dynamic water depth from particle count (E.r).
 
 float saturationlowpass = 0.9999;
 vec3 t = vec3(-1.0/1024.0,0.0,1.0/1024.0);
@@ -157,33 +178,39 @@ void main(void)
 	vec4 terrain = textureLod(terraintex,texcoord,0);
 	vec4 erosion = textureLod(erosiontex,texcoord,0);
 
-	float avgsat = textureLod(terraintex,texcoord + t.xy,0).a;
-	avgsat += textureLod(terraintex,texcoord + t.zy,0).a;
-	avgsat += textureLod(terraintex,texcoord + t.yx,0).a;
-	avgsat += textureLod(terraintex,texcoord + t.yz,0).a;
-	avgsat += terrain.a;
-	avgsat *= 0.19;
-	avgsat += terrain.b * 2.5;
+	//float avgsat = textureLod(terraintex,texcoord + t.xy,0).a;
+	//avgsat += textureLod(terraintex,texcoord + t.zy,0).a;
+	//avgsat += textureLod(terraintex,texcoord + t.yx,0).a;
+	//avgsat += textureLod(terraintex,texcoord + t.yz,0).a;
+	//avgsat += terrain.a;
+	//avgsat *= 0.19;
+	//avgsat += terrain.b * 2.5;
+
+	//TODO: calculate terrain slope, reduce erosion amount on very steep slopes
+	//TODO: reduce/eliminate erosion where there is standing water and/or dynamic water
 
 	float hard = terrain.r;
 	float soft = terrain.g;
+	float water = terrain.b;
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
 
 	// calculate erosion from soft - lesser of potential and amount of soft material
 	float softerode = min(soft, erosion.g);
 	float harderode = max(erosion.g - softerode,0.0) * hardErosionFactor;
+	float waterchange = erosion.a;
 
-	float saturationrate = 0.1 + log(1.0+terrain.g*0.1) * 0.1;  // saturation rate faster on soft
+	//float saturationrate = 0.1 + log(1.0+terrain.g*0.1) * 0.1;  // saturation rate faster on soft
 
 	out_Terrain = vec4(
 		hard - harderode, 
 		soft - softerode,
-		terrain.b * waterLowpass + erosion.r * waterDepthFactor,   // water saturation
+		water + waterchange,
+		terrain.b * waterLowpass + erosion.r * waterDepthFactor   // water saturation
 		//erosion.a / max(1.0,erosion.r)  //average sediment carried
 		//0.0
 		//saturationrate * 4.0
-		avgsat
+		//avgsat
 		//mix(terrain.a,avgsat,saturationrate) //* 0.999
 		//max((terrain.a * 0.95 + avgsat * 0.05 * 0.25) * saturationlowpass, terrain.a  * 0.9 + min(8.0,erosion.r) * 0.02)
 		//mix(min(8.0,erosion.r) * 0.0625 + avgsat*0.25,terrain.a,saturationlowpass)
@@ -232,7 +259,6 @@ void main(void)
     //  Subtract deposit amount from carrying amount P0.b, write to P1.b
 	newParticle.b = max(carrying - depositAmount,0.0);
 
-
     //  Apply same calculation as step 3 to determine how much soft/hard is being eroded from L0(P0.rg).
 	float hard = terrain.r;
 	float soft = terrain.g;
@@ -248,14 +274,15 @@ void main(void)
 	float particleerode = totaleroded * (erosionPotential / erosion.g);
 	newParticle.b += particleerode;
 
+	// subtract any dropped water
+	newParticle.a = max(0.0,newParticle.a - velocity.a); 
 
     //  move particle - maybe change to intersect with cell boundary
 	newParticle.xy = particle.xy + normalize(velocity.xy) * t * deltatime;
 
 	// keep in range
 	newParticle.xy = mod(newParticle.xy + vec2(1.0),vec2(1.0));
-
-	newParticle.a *= velocity.a;
+	//newParticle.a *= velocity.a;
 
 	out_Particle = newParticle;
 
@@ -281,14 +308,14 @@ void main(void)
 	vec4 newParticle;
 
 	newParticle.xyz = particle.xyz;
-	newParticle.a = max(0.0,particle.a - particleDeathRate);	
+	//newParticle.a = max(0.0,particle.a - particleDeathRate);	
 
-	if (newParticle.a < 0.001 && newParticle.z < 0.1)
+	if (newParticle.a < 0.0001 && newParticle.z < 0.1)
 	{
 		newParticle.x = rand(particle.xy + vec2(randSeed));
 		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073));
 		newParticle.z = 0.0;
-		newParticle.w = 1.0;
+		newParticle.w = 0.05;  // TODO: make uniform (particle initial water amount)
 	}
 
 	out_Particle = newParticle;
