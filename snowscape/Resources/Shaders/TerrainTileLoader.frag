@@ -11,5 +11,6 @@ void main(void)
 {
 	vec4 t = textureLod(terraintex,texcoord,0);
 	//out_Height = vec4(t.r + t.g,0.0,0.0,0.0);
-	out_Height = vec4(t.r + t.g + t.b * waterHeightScale,0.0,0.0,0.0);
+	//out_Height = vec4(t.r + t.g + t.b + t.a * waterHeightScale,0.0,0.0,0.0);
+	out_Height = vec4(t.r + t.g + t.b,0.0,0.0,0.0);
 }
