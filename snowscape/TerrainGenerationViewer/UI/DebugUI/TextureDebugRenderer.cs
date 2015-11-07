@@ -36,6 +36,11 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
             GradientGreen,
             GradientBlue,
 
+            NegativeRed,
+            NegativeGreen,
+            NegativeBlue,
+            NegativeAlpha,
+
             /// <summary>
             /// DO NOT USE - used to mark the end of the enum.
             /// </summary>
@@ -178,6 +183,13 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                     return vec3(0.2,0.7,1.0) * (dot(n,l) * 0.5 + 0.5);
                 }
 
+                vec3 getBipolarCol(float x){
+
+                    vec3 c = vec3(1.0,0.2,0.05) * max(0.0,x);
+                    c += vec3(0.05,0.2,1.0) * max(0.0,-x);
+                    return c;
+                }
+
                 void main(void) {
 
                     vec4 t = texture(tex,texcoord);
@@ -198,6 +210,11 @@ namespace Snowscape.TerrainGenerationViewer.UI.Debug
                         case 8: c = getGradientCol(texcoord,1.0/1024.0,getHeightCol(t.r)); break; // gradient-col
                         case 9: c = getGradientColG(texcoord,1.0/1024.0); break;  // gradient-green channel
                         case 10: c = getGradientColB(texcoord,1.0/1024.0); break;  // gradient-blue channel
+
+                        case 11: c = getBipolarCol(t.r); break;
+                        case 12: c = getBipolarCol(t.g); break;
+                        case 13: c = getBipolarCol(t.b); break;
+                        case 14: c = getBipolarCol(t.a); break;
                     }
 
                     out_Colour = vec4(c,1.0);
