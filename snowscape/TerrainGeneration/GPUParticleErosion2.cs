@@ -262,19 +262,19 @@ namespace TerrainGeneration
             // setup parameters
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.06f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.05f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.05f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.01f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.5f, 0.0f, 1.0f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.3f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.25f, 0.0f, 10.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.0f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.05f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.00f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.94f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_PARTICLEWATERDEPTH, 0.003f, 0.0f, 0.1f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPTHRESHOLD, 1.0f, 0.0f, 4.0f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.001f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONSLIP, 50.0f, 0.0f, 200.0f, 0.01f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SLIPRATE, 0.001f, 0.0f, 0.1f, 0.0001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONSLIP, 0.0f, 0.0f, 200.0f, 0.01f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONTHRESHOLD, 0.0016f, 0.0f, 0.1f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_SATURATIONRATE, 0.1f, 0.0f, 10.0f, 0.001f));
 
@@ -301,7 +301,7 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-                this.ParticleStateTexture[i].UploadEmpty();
+                this.ParticleStateTexture[i].UploadZero<float>(4);
 
                 this.VelocityTexture[i] =
                     new Texture("Velocity" + i.ToString(), this.ParticleTexWidth, this.ParticleTexHeight, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
@@ -310,7 +310,7 @@ namespace TerrainGeneration
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
                     .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
 
-                this.VelocityTexture[i].UploadEmpty();
+                this.VelocityTexture[i].UploadZero<float>(4);
 
                 this.SlipFlowTexture[i] =
                     new Texture("Slip" + i.ToString(),this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)

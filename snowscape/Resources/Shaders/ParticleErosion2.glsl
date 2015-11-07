@@ -3,7 +3,8 @@
 float heightFromStack(vec4 terrainSample)
 {
 	//hard + soft + water + dynamic water * wheight
-	return dot(terrainSample, vec4(1.0,1.0,1.0,waterHeightFactor));
+	//return dot(terrainSample, vec4(1.0,1.0,1.0,waterHeightFactor));
+	return dot(terrainSample, vec4(1.0,1.0,1.0,0.0));
 }
 
 //|ComputeVelocity
@@ -191,7 +192,7 @@ void main(void)
 
 	float hard = terrain.r;
 	float soft = terrain.g;
-	float water = terrain.b;
+	float water = terrain.b - min(terrain.b,0.0001);   // reduce water due to evaporation TODO: make uniform
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
 
@@ -206,7 +207,10 @@ void main(void)
 		hard - harderode, 
 		soft - softerode,
 		water + waterchange,
-		terrain.b * waterLowpass + erosion.r * waterDepthFactor   // water saturation
+
+		terrain.a * waterLowpass + erosion.r * waterDepthFactor   // water saturation
+
+
 		//erosion.a / max(1.0,erosion.r)  //average sediment carried
 		//0.0
 		//saturationrate * 4.0
@@ -307,15 +311,15 @@ void main(void)
 	vec4 particle = textureLod(particletex,texcoord,0);
 	vec4 newParticle;
 
-	newParticle.xyz = particle.xyz;
+	newParticle = particle;
 	//newParticle.a = max(0.0,particle.a - particleDeathRate);	
 
 	if (newParticle.a < 0.0001 && newParticle.z < 0.1)
 	{
-		newParticle.x = rand(particle.xy + vec2(randSeed));
-		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073));
+		newParticle.x = rand(particle.xy + vec2(randSeed) + rand(particle.yx * 641.3));
+		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073) + rand(particle.xy * 363.3));
 		newParticle.z = 0.0;
-		newParticle.w = 0.05;  // TODO: make uniform (particle initial water amount)
+		newParticle.w = 0.01;  // TODO: make uniform (particle initial water amount)
 	}
 
 	out_Particle = newParticle;
