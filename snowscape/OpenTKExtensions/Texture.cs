@@ -109,6 +109,17 @@ namespace OpenTKExtensions
             }
         }
 
+        public void UploadZero<T>(int channels) where T:struct
+        {
+            if (Init() != -1)
+            {
+                int length = this.Width * this.Height * channels;
+                var data = new T[length];
+
+                this.Upload(data);
+            }
+        }
+
         public void UploadEmpty()
         {
             if (Init() != -1)
