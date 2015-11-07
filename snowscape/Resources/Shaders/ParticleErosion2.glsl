@@ -45,7 +45,8 @@ void main(void)
 	vec3 ofs = vec3(0,-t,t);
 
 	// get our current height
-	float h0 = sampleHeight(particle.xy);
+	vec4 terrain = texture(terraintex,particle.xy);
+	float h0 = heightFromStack(terrain);
 
 	// get neighbouring height differentials - positive means the neighbour is downhill from here
 	float hn  =  h0 - sampleHeight(particle.xy + ofs.xy); // x=0, y=-1, z=+1
@@ -61,7 +62,7 @@ void main(void)
 
 	// detect if we're in a hole (lowest point among neighbours)
 	// if we're in a hole, we drop some water in it, either to fill the hole or to deplete a percentage of the particle
-	float waterDrop = min(max(0.0,-maxDownhill),particle.a);
+	float holefill = min(max(0.0,-maxDownhill),particle.a);
 
 	// TODO: if we're moving downhill and there is water here, we should pick some up.
 
@@ -83,17 +84,36 @@ void main(void)
 	fall = normalize(fall);
 
 	// calculate velocity of particle due to slope
-	float speed = atan(max(0,maxDownhill));
+	float maxfall = max(0,maxDownhill);
+	float speed = atan(maxfall);
+
+	float potential = speed / (0.5 + maxfall*maxfall);
+
+	// reduce erosion potential if there is water in our cell
+	// TODO: add factor here, make uniform
+	potential = potential / (1.0 + terrain.b);
+
+	// reduce erosion potential where there is flowing water
+	// TODO: add factor here, make uniform
+	potential = potential / (1.0 + terrain.a);
+
+	// if we're filling a hole, we cannot erode
+	if (holefill > 0.0)
+	{
+		potential = 0.0;
+		speed = 0.0;
+	}
 
 	// calculate new carrying capacity based on speed and amount of water in particle
 	float newCarryingCapacity = speed * speedCarryingCoefficient * particle.a;
 	float prevCarryingCapacity = prevvel.b;
 		
 	// return
-	// RG: 2D normalized movement vector 
+	// R: Angle
+	// G: Erosion potential
 	// B: carrying capacity
-	// A: water drop amount (hole filling)
-	out_Velocity = vec4(fall,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),waterDrop);
+	// A: amount to fill hole (and die)
+	out_Velocity = vec4(atan(fall.y,fall.x),potential,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),holefill);
 }
 
 
@@ -138,17 +158,18 @@ void main(void)
 	vec4 particle = textureLod(particletex,particlecoord,0);
 	vec4 velocity = textureLod(velocitytex,particlecoord,0);
 
+	float erosionPotentialModifier = velocity.g;
 	float carryingCapacity = velocity.b;
 	float carrying = particle.b;
 
-	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
+	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionPotentialModifier * erosionRate * deltatime;
 	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
 	// return:
 	// R: 1.0: particle count
 	// G: erosion potential
 	// B: deposit amount
-	// A: water dropped from particle
+	// A: hole fill amount
 	out_Erosion = vec4(1.0, erosionPotential, depositAmount, particle.a);
 }
 
@@ -171,6 +192,9 @@ out vec4 out_Terrain;
 //  Modifies standing water amount
 //  Modifies dynamic water depth from particle count (E.r).
 
+//TODO: calculate a max-holefill map that contains the amount of material required to bring a hole up to 
+//      the level of its nearest neighbour - this will then be used to clamp hole filling algorithm.
+
 float saturationlowpass = 0.9999;
 vec3 t = vec3(-1.0/1024.0,0.0,1.0/1024.0);
 
@@ -192,7 +216,7 @@ void main(void)
 
 	float hard = terrain.r;
 	float soft = terrain.g;
-	float water = terrain.b - min(terrain.b,0.0001);   // reduce water due to evaporation TODO: make uniform
+	float water = terrain.b - min(terrain.b,0.001);   // reduce water due to evaporation TODO: make uniform
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
 
@@ -279,10 +303,19 @@ void main(void)
 	newParticle.b += particleerode;
 
 	// subtract any dropped water
-	newParticle.a = max(0.0,newParticle.a - velocity.a); 
+	//newParticle.a = max(0.0,newParticle.a - velocity.a); 
 
+	// check to see if we did any hole-filling and kill particle
+	if (velocity.a > 0.0)
+	{
+		newParticle.ba = vec2(0.0);
+	}
+
+
+
+	vec2 vel = vec2(cos(velocity.x),sin(velocity.y));
     //  move particle - maybe change to intersect with cell boundary
-	newParticle.xy = particle.xy + normalize(velocity.xy) * t * deltatime;
+	newParticle.xy = particle.xy + vel * t * deltatime;
 
 	// keep in range
 	newParticle.xy = mod(newParticle.xy + vec2(1.0),vec2(1.0));
