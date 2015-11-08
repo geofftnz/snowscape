@@ -30,6 +30,7 @@ namespace TerrainGeneration
     /// 
     /// E: terrain erosion accumulation: R = particle count, G = total erosion potential, B = total material deposit, A = total water deposit
     /// 
+    /// EL: erosion/deposit limits: R = max erosion for location (drop to lowest neighbour), G = max deposit (rise to highest neighbour)
     /// 
     /// Step 1: Determine particle velocities
     ///  - Render as quad over particles
@@ -185,6 +186,16 @@ namespace TerrainGeneration
 
 
         /// <summary>
+        /// Erosion limit texture:
+        /// R: Maximum erosion - drop to lowest neighbour - negative if it's a hole
+        /// G: Maximum deposit - rise to heighest neighbour - negative if it's a peak
+        /// B: Fall angle
+        /// A: Unassigned
+        /// </summary>
+        public Texture ErosionLimitTexture { get; set; }
+
+
+        /// <summary>
         /// Outflow due to soft material creep 
         /// Ortho + Diagonal
         /// 
@@ -196,6 +207,9 @@ namespace TerrainGeneration
 
 
         // particle VBOs for accumulation rendering
+
+        // Step 0: Analyse shape of terrain, calculate maximum erosion and deposit limits.
+        private GBufferShaderStep AnalyseTerrainStep = new GBufferShaderStep("gpupe-0-analyse");
 
         // Step 1: Determine particle velocities
         private GBufferShaderStep ComputeVelocityStep = new GBufferShaderStep("gpupe-1-velocity");
@@ -227,6 +241,7 @@ namespace TerrainGeneration
 
         private IEnumerable<GBufferShaderStep> Steps()
         {
+            yield return AnalyseTerrainStep;
             yield return ComputeVelocityStep;
             yield return ErosionAccumulationStep;
             yield return UpdateLayersStep;
@@ -240,6 +255,7 @@ namespace TerrainGeneration
 
         public IEnumerable<Texture> Textures()
         {
+            yield return this.ErosionLimitTexture;
             for (int i = 0; i < 2; i++)
             {
                 yield return this.TerrainTexture[i];
@@ -322,6 +338,14 @@ namespace TerrainGeneration
                 this.SlipFlowTexture[i].UploadEmpty();
             }
 
+            this.ErosionLimitTexture = new Texture("ErosionLimits", this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat))
+                .SetParameter(new TextureParameterInt(TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat));
+
+            this.ErosionLimitTexture.UploadZero<float>(4);
+
             this.ErosionAccumulationTexture = new Texture("Erosion",this.Width, this.Height, TextureTarget.Texture2D, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, PixelType.Float)
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest))
                 .SetParameter(new TextureParameterInt(TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest))
@@ -338,6 +362,18 @@ namespace TerrainGeneration
 
             // random start
             RandomizeParticles(this.ParticleStateTexture[0]);
+
+            // Step 0: Analyse terrain, compute erosion/deposition limits
+            //  - Render as quad over terrain
+            //  - Input: L0
+            //  - Output: EL
+            // Calculates highest and lowest neighbour to each cell.
+            // The current cell can only erode to the level of the lowest neighbour.
+            // The current cell can only be built up to the level of the highest neighbour.
+            AnalyseTerrainStep.SetOutputTexture(0, "out_Limits", this.ErosionLimitTexture);
+            AnalyseTerrainStep.Init(@"BasicQuad.vert", @"ParticleErosion2.glsl|AnalyseTerrain");
+
+
 
             // Step 1: Determine particle velocities
             //  - Render as quad over particles
@@ -423,18 +459,35 @@ namespace TerrainGeneration
             float erosionRate = (float)this.Parameters[P_EROSIONRATE].GetValue();
             float hardErosionFactor = (float)this.Parameters[P_HARDFACTOR].GetValue();
 
+            // calculate erosion/deposition limits
+            AnalyseTerrainStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("fallRand", (float)this.Parameters[P_FALLRAND].GetValue());
+                    sp.SetUniform("randSeed", (float)rand.NextDouble());
+                });
+
+            // calculate particle motion and carrying capacity
             ComputeVelocityStep.Render(
                 () =>
                 {
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.ParticleStateTexture[0].Bind(TextureUnit.Texture1);
                     this.VelocityTexture[1].Bind(TextureUnit.Texture2);
+                    this.ErosionLimitTexture.Bind(TextureUnit.Texture3);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("particletex", 1);
                     sp.SetUniform("velocitytex", 2);
+                    sp.SetUniform("limittex", 3);
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("carryingCapacityLowpass", (float)this.Parameters[P_CARRYCAPLOWPASS].GetValue());
                     sp.SetUniform("speedCarryingCoefficient", (float)this.Parameters[P_CARRYSPEED].GetValue());
@@ -626,15 +679,8 @@ namespace TerrainGeneration
 
         public void Unload()
         {
-            for (int i = 0; i < 2; i++)
-            {
-                this.TerrainTexture[i].Unload();
-                this.ParticleStateTexture[i].Unload();
-                this.VelocityTexture[i].Unload();
-                this.SlipFlowTexture[i].Unload();
-            }
-            this.ErosionAccumulationTexture.Unload();
-
+            foreach (var t in this.Textures())
+                t.Unload();
         }
 
 
@@ -771,7 +817,7 @@ namespace TerrainGeneration
                 data[i * 4 + 0] = (float)r.NextDouble();  // x
                 data[i * 4 + 1] = (float)r.NextDouble();  // y 
                 data[i * 4 + 2] = 0f;    // carrying nothing
-                data[i * 4 + 3] = (float)r.NextDouble();  // particle life
+                data[i * 4 + 3] = 0.001f;  // particle water mass
             }
 
             destination.Upload(data);

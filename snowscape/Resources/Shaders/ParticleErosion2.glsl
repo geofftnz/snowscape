@@ -7,6 +7,78 @@ float heightFromStack(vec4 terrainSample)
 	return dot(terrainSample, vec4(1.0,1.0,1.0,0.0));
 }
 
+//|AnalyseTerrain
+#version 140
+precision highp float;
+uniform sampler2D terraintex;
+uniform float texsize;
+uniform float fallRand;
+uniform float randSeed;
+in vec2 texcoord;
+out vec4 out_Limits;
+float t = 1.0 / texsize;
+float diag = 0.707;
+
+#include "noise.glsl"
+#include ".|Common"
+
+float sampleGroundHeight(vec2 pos)
+{
+	return dot(texture(terraintex,pos), vec4(1.0,1.0,0.0,0.0));  // hard + soft only
+}
+
+void main(void)
+{
+	vec3 ofs = vec3(0,-t,t);
+
+	// get our current height
+	float h0 = sampleGroundHeight(texcoord);
+
+	// get neighbouring height differentials - positive is downhill
+	// x=0, y=-1, z=+1
+	float hn  =  h0 - sampleGroundHeight(texcoord + ofs.xy); 
+	float hs  =  h0 - sampleGroundHeight(texcoord + ofs.xz);
+	float hw  =  h0 - sampleGroundHeight(texcoord + ofs.yx);
+	float he  =  h0 - sampleGroundHeight(texcoord + ofs.zx);
+	float hnw = (h0 - sampleGroundHeight(texcoord + ofs.yy)) * diag; 
+	float hne = (h0 - sampleGroundHeight(texcoord + ofs.zy)) * diag; 
+	float hsw = (h0 - sampleGroundHeight(texcoord + ofs.yz)) * diag; 
+	float hse = (h0 - sampleGroundHeight(texcoord + ofs.zz)) * diag; 
+
+	float lowestNeighbourDiff = max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
+	float highestNeighbourDiff = min(min(min(hn,hs),min(hw,he)),min(min(hnw,hne),min(hsw,hse)));
+
+	vec2 fall = vec2(0.0);
+
+	// small amount of random noise in movement
+	fall.x = (rand(texcoord + vec2(randSeed))-0.5) * fallRand;
+	fall.y = (rand(texcoord + vec2(randSeed * 3.19 + 7.36))-0.5) * fallRand;
+
+	fall += vec2(0,-1)  * max(0.0,hn);
+	fall += vec2(0,1)   * max(0.0,hs);
+	fall += vec2(-1,0)  * max(0.0,hw);
+	fall += vec2(1,0)   * max(0.0,he);
+	fall += vec2(-1,-1) * max(0.0,hnw);
+	fall += vec2(1,-1)  * max(0.0,hne);
+	fall += vec2(-1,1)  * max(0.0,hsw);
+	fall += vec2(1,1)   * max(0.0,hse);
+
+	fall = normalize(fall);
+
+
+	// R: max erosion
+	// G: max deposit
+	// B: fall direction
+	// A: unassigned
+	out_Limits = vec4(
+		lowestNeighbourDiff,
+		-highestNeighbourDiff,
+		atan(fall.y,fall.x),
+		0.0
+	);
+}
+
+
 //|ComputeVelocity
 
 #version 140
@@ -15,6 +87,7 @@ precision highp float;
 uniform sampler2D terraintex;
 uniform sampler2D particletex;
 uniform sampler2D velocitytex;
+uniform sampler2D limittex;
 uniform float texsize;
 uniform float carryingCapacityLowpass;
 uniform float speedCarryingCoefficient;
@@ -44,21 +117,24 @@ void main(void)
 
 	vec3 ofs = vec3(0,-t,t);
 
-	// get our current height
+	// get our current terrain and analysis from previous step
 	vec4 terrain = texture(terraintex,particle.xy);
-	float h0 = heightFromStack(terrain);
+	vec4 limit = texture(limittex,particle.xy);
+
+
+	//float h0 = heightFromStack(terrain);
 
 	// get neighbouring height differentials - positive means the neighbour is downhill from here
-	float hn  =  h0 - sampleHeight(particle.xy + ofs.xy); // x=0, y=-1, z=+1
-	float hs  =  h0 - sampleHeight(particle.xy + ofs.xz);
-	float hw  =  h0 - sampleHeight(particle.xy + ofs.yx);
-	float he  =  h0 - sampleHeight(particle.xy + ofs.zx);
-	float hnw = (h0 - sampleHeight(particle.xy + ofs.yy)) * diag; 
-	float hne = (h0 - sampleHeight(particle.xy + ofs.zy)) * diag; 
-	float hsw = (h0 - sampleHeight(particle.xy + ofs.yz)) * diag; 
-	float hse = (h0 - sampleHeight(particle.xy + ofs.zz)) * diag; 
+	//float hn  =  h0 - sampleHeight(particle.xy + ofs.xy); // x=0, y=-1, z=+1
+	//float hs  =  h0 - sampleHeight(particle.xy + ofs.xz);
+	//float hw  =  h0 - sampleHeight(particle.xy + ofs.yx);
+	//float he  =  h0 - sampleHeight(particle.xy + ofs.zx);
+	//float hnw = (h0 - sampleHeight(particle.xy + ofs.yy)) * diag; 
+	//float hne = (h0 - sampleHeight(particle.xy + ofs.zy)) * diag; 
+	//float hsw = (h0 - sampleHeight(particle.xy + ofs.yz)) * diag; 
+	//float hse = (h0 - sampleHeight(particle.xy + ofs.zz)) * diag; 
 
-	float maxDownhill = max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
+	float maxDownhill = limit.r;//max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
 
 	// detect if we're in a hole (lowest point among neighbours)
 	// if we're in a hole, we drop some water in it, either to fill the hole or to deplete a percentage of the particle
@@ -66,22 +142,22 @@ void main(void)
 
 	// TODO: if we're moving downhill and there is water here, we should pick some up.
 
-	vec2 fall = vec2(0.0);
+	vec2 fall = vec2(cos(limit.b),sin(limit.b));
 
 	// small amount of random noise in movement
-	fall.x = (rand(particle.xy + vec2(randSeed))-0.5) * fallRand;
-	fall.y = (rand(particle.xy + vec2(randSeed * 3.19 + 7.36))-0.5) * fallRand;
+	//fall.x = (rand(particle.xy + vec2(randSeed))-0.5) * fallRand;
+	//fall.y = (rand(particle.xy + vec2(randSeed * 3.19 + 7.36))-0.5) * fallRand;
 
-	fall += vec2(0,-1)  * max(0.0,hn);
-	fall += vec2(0,1)   * max(0.0,hs);
-	fall += vec2(-1,0)  * max(0.0,hw);
-	fall += vec2(1,0)   * max(0.0,he);
-	fall += vec2(-1,-1) * max(0.0,hnw);
-	fall += vec2(1,-1)  * max(0.0,hne);
-	fall += vec2(-1,1)  * max(0.0,hsw);
-	fall += vec2(1,1)   * max(0.0,hse);
+	//fall += vec2(0,-1)  * max(0.0,hn);
+	//fall += vec2(0,1)   * max(0.0,hs);
+	//fall += vec2(-1,0)  * max(0.0,hw);
+	//fall += vec2(1,0)   * max(0.0,he);
+	//fall += vec2(-1,-1) * max(0.0,hnw);
+	//fall += vec2(1,-1)  * max(0.0,hne);
+	//fall += vec2(-1,1)  * max(0.0,hsw);
+	//fall += vec2(1,1)   * max(0.0,hse);
 
-	fall = normalize(fall);
+	//fall = normalize(fall);
 
 	// calculate velocity of particle due to slope
 	float maxfall = max(0,maxDownhill);
@@ -91,11 +167,11 @@ void main(void)
 
 	// reduce erosion potential if there is water in our cell
 	// TODO: add factor here, make uniform
-	potential = potential / (1.0 + terrain.b);
+	potential = potential / (1.0 + terrain.b*100.0);
 
 	// reduce erosion potential where there is flowing water
 	// TODO: add factor here, make uniform
-	potential = potential / (1.0 + terrain.a);
+	potential = potential / (1.0 + terrain.a*20.0);
 
 	// if we're filling a hole, we cannot erode
 	if (holefill > 0.0)
@@ -113,7 +189,7 @@ void main(void)
 	// G: Erosion potential
 	// B: carrying capacity
 	// A: amount to fill hole (and die)
-	out_Velocity = vec4(atan(fall.y,fall.x),potential,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),holefill);
+	out_Velocity = vec4(limit.b,potential,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),holefill);
 }
 
 
@@ -230,7 +306,7 @@ void main(void)
 	out_Terrain = vec4(
 		hard - harderode, 
 		soft - softerode,
-		water + waterchange,
+		water,// + waterchange,
 
 		terrain.a * waterLowpass + erosion.r * waterDepthFactor   // water saturation
 
@@ -313,7 +389,7 @@ void main(void)
 
 
 
-	vec2 vel = vec2(cos(velocity.x),sin(velocity.y));
+	vec2 vel = vec2(cos(velocity.x),sin(velocity.x));
     //  move particle - maybe change to intersect with cell boundary
 	newParticle.xy = particle.xy + vel * t * deltatime;
 
