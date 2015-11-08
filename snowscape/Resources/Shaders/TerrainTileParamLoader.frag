@@ -14,7 +14,7 @@ void main(void)
 
 	p.r = clamp(t.g * 0.125,0.0,1.0);   // soft material
 	//p.g = clamp(t.b,0.0,1.0);			// standing water
-	p.g = clamp(t.a * 8.0,0.0,1.0);			// flowing water
+	p.g = clamp(t.b * 0.01 + t.a * 8.0,0.0,1.0);			// flowing water
 	p.b = clamp(t.a,0.0,1.0);           // other
 
 	out_Param = p;

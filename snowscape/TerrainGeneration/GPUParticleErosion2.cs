@@ -537,11 +537,13 @@ namespace TerrainGeneration
                 {
                     this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.ErosionAccumulationTexture.Bind(TextureUnit.Texture1);
+                    this.ErosionLimitTexture.Bind(TextureUnit.Texture2);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("terraintex", 0);
                     sp.SetUniform("erosiontex", 1);
+                    sp.SetUniform("limittex", 2);
                     sp.SetUniform("hardErosionFactor", hardErosionFactor);
                     sp.SetUniform("waterLowpass", (float)this.Parameters[P_WATERDECAY].GetValue());
                     sp.SetUniform("waterDepthFactor", (float)this.Parameters[P_PARTICLEWATERDEPTH].GetValue());
@@ -565,13 +567,15 @@ namespace TerrainGeneration
                     this.VelocityTexture[0].Bind(TextureUnit.Texture1);
                     this.ErosionAccumulationTexture.Bind(TextureUnit.Texture2);
                     this.TerrainTexture[0].Bind(TextureUnit.Texture3);
+                    this.ErosionLimitTexture.Bind(TextureUnit.Texture4);
                 },
                 (sp) =>
                 {
                     sp.SetUniform("particletex", 0);
                     sp.SetUniform("velocitytex", 1);
-                    sp.SetUniform("erosiontex", 2);
+                    sp.SetUniform("erosiontex", 2); 
                     sp.SetUniform("terraintex", 3);
+                    sp.SetUniform("limittex", 4);
                     sp.SetUniform("deltatime", deltaTime);
                     sp.SetUniform("depositRate", depositRate);
                     sp.SetUniform("erosionRate", erosionRate);
