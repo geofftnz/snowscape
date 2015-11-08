@@ -166,6 +166,7 @@ namespace Snowscape.TerrainGenerationViewer
         private uint prevPrecalcParamsVersion = 0;
         private uint currentParamsVersion = 0;
         private uint prevParamsVersion = 0;
+        private float maxRenderTimeUIHeight = 0f;
 
         private int numPatches = 0;
         private int numTriangles = 0;
@@ -862,7 +863,10 @@ namespace Snowscape.TerrainGenerationViewer
             //    y += 0.0125f;
             //}
 
-            y += 0.02f;
+            if (y > maxRenderTimeUIHeight)
+                maxRenderTimeUIHeight = y;
+
+            y = maxRenderTimeUIHeight + 0.02f;
             for (int i = 0; i < this.parameters.DisplayLength; i++) //this.parameters.Count
             {
                 int paramindex = i + this.parameters.DisplayOffset;
