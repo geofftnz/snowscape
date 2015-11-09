@@ -125,26 +125,17 @@ void main(void)
 
 	// detect if we're in a hole (lowest point among neighbours)
 	// if we're in a hole, we drop some water in it, either to fill the hole or to deplete a percentage of the particle
-	float holefill = limit.a; //min(max(0.0,-maxDownhill),particle.a);
+	float holefill = limit.a; 
 
-	// TODO: if we're moving downhill and there is water here, we should pick some up.
+	// drop water up to fill the hole, up to 90% of the amount that the particle is carrying
+	float waterdrop = min(holefill,particle.a * 0.9);
+
+	// drop 10% of particle water if we're in water
+	waterdrop += step(0.0,terrain.b) * particle.a * 0.1;
+
 
 	vec2 fall = vec2(cos(limit.b),sin(limit.b));
 
-	// small amount of random noise in movement
-	//fall.x = (rand(particle.xy + vec2(randSeed))-0.5) * fallRand;
-	//fall.y = (rand(particle.xy + vec2(randSeed * 3.19 + 7.36))-0.5) * fallRand;
-
-	//fall += vec2(0,-1)  * max(0.0,hn);
-	//fall += vec2(0,1)   * max(0.0,hs);
-	//fall += vec2(-1,0)  * max(0.0,hw);
-	//fall += vec2(1,0)   * max(0.0,he);
-	//fall += vec2(-1,-1) * max(0.0,hnw);
-	//fall += vec2(1,-1)  * max(0.0,hne);
-	//fall += vec2(-1,1)  * max(0.0,hsw);
-	//fall += vec2(1,1)   * max(0.0,hse);
-
-	//fall = normalize(fall);
 
 	// calculate velocity of particle due to slope
 	float maxfall = max(0,maxDownhill);
@@ -161,11 +152,11 @@ void main(void)
 	potential = potential / (1.0 + terrain.a*2.0);
 
 	// if we're filling a hole, we cannot erode
-	if (holefill > 0.0)
-	{
-		potential = 0.0;
-		speed = 0.0;
-	}
+	//if (holefill > 0.0)
+	//{
+	//	potential = 0.0;
+	//	speed = 0.0;
+	//}
 
 	// calculate new carrying capacity based on speed and amount of water in particle
 	float newCarryingCapacity = speed * speedCarryingCoefficient * particle.a;
@@ -176,7 +167,7 @@ void main(void)
 	// G: Erosion potential
 	// B: carrying capacity
 	// A: amount to fill hole (and die)
-	out_Velocity = vec4(limit.b,potential,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),min(holefill,particle.a));
+	out_Velocity = vec4(limit.b,potential,mix(newCarryingCapacity,prevCarryingCapacity,carryingCapacityLowpass),waterdrop);
 }
 
 
@@ -232,7 +223,7 @@ void main(void)
 	// R: 1.0: particle count
 	// G: erosion potential
 	// B: deposit amount
-	// A: hole fill amount
+	// A: water drop amount
 	out_Erosion = vec4(1.0, erosionPotential, depositAmount, velocity.a);
 }
 
@@ -250,6 +241,8 @@ uniform float waterDepthFactor;
 
 in vec2 texcoord;
 out vec4 out_Terrain;
+
+#include ".|Common"
 
 //  Adds deposit amount E.b to soft L0.g
 //  Subtracts material from soft, then hard.
@@ -278,11 +271,13 @@ void main(void)
 
 	float hard = terrain.r;
 	float soft = terrain.g;
-	float water = terrain.b - min(terrain.b,0.001);   // reduce water due to evaporation TODO: make uniform
+	float water = terrain.b;// + erosion.a;
+	
+	//water -= min(water,0.0001);   // reduce water due to evaporation TODO: make uniform
 
 	float maxerosion = limit.r;
 	float maxdeposit = limit.g;
-	float holedepth = limit.a;
+	//float holedepth = limit.a;
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
 
@@ -292,15 +287,21 @@ void main(void)
 	
 	// erode any remaining potential from hard, up to limit less softerode
 	float harderode = min(maxerosion - softerode, max(erosion.g - softerode,0.0) * hardErosionFactor);
-	
-	float waterchange = erosion.a;
 
-	//float saturationrate = 0.1 + log(1.0+terrain.g*0.1) * 0.1;  // saturation rate faster on soft
+	// calculate how much water we're giving up to particles
+	// get our old and new heights
+	float oldHeight = heightFromStack(terrain);
+	float newHeight = heightFromStack(vec4(hard - harderode,soft - softerode,water,0.0));
+	float overhang = max(0.0,max(0.0,limit.r) + (newHeight - oldHeight));
+	float wateroverhang = min(overhang, water);
+	water -= wateroverhang * step(0.0,erosion.r); // only move water if there are particles present
+	water += erosion.a; // add water inflowing to this location
+	
 
 	out_Terrain = vec4(
 		hard - harderode, 
 		soft - softerode,
-		water + waterchange,
+		water,
 
 		terrain.a * waterLowpass + erosion.r * waterDepthFactor   // water saturation
 
@@ -337,6 +338,7 @@ out vec4 out_Particle;
 
 float t = 1.0 / texsize;
 
+#include ".|Common"
 
 void main(void)
 {
@@ -345,36 +347,56 @@ void main(void)
 	vec2 terraincoord = particle.xy;
 	vec4 erosion = textureLod(erosiontex,terraincoord,0);
 	vec4 terrain = textureLod(terraintex,terraincoord,0);
+	vec4 limit = textureLod(limittex,terraincoord,0);
 
 	vec4 newParticle = particle;
 
+	float erosionPotentialModifier = velocity.g;
 	float carryingCapacity = velocity.b;
 	float carrying = particle.b;
 
     //  Replicate particle potential calc from Step 2 to get deposit/erode potentials.
-	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
+	//float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionRate * deltatime;
+	//float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
+	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionPotentialModifier * erosionRate * deltatime;
 	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
     //  Subtract deposit amount from carrying amount P0.b, write to P1.b
 	newParticle.b = max(carrying - depositAmount,0.0);
 
+
     //  Apply same calculation as step 3 to determine how much soft/hard is being eroded from L0(P0.rg).
 	float hard = terrain.r;
 	float soft = terrain.g;
+	float water = terrain.b;// + erosion.a;
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
 
+	float maxerosion = limit.r;
+	float maxdeposit = limit.g;
+
 	// calculate erosion from soft - lesser of potential and amount of soft material
-	float softerode = min(soft, erosion.g);
-	float harderode = max(erosion.g - softerode,0.0) * hardErosionFactor;
+	// clamp amount at erosion limit
+	float softerode = min(maxerosion, min(soft, erosion.g));
+	// erode any remaining potential from hard, up to limit less softerode
+	float harderode = min(maxerosion - softerode, max(erosion.g - softerode,0.0) * hardErosionFactor);
 	float totaleroded = softerode + harderode;
 
     //  Add material carried based on particle share of total V0.b / E(P0.rg).g -> P1.b
 	float particleerode = totaleroded * (erosionPotential / erosion.g);
 	newParticle.b += particleerode;
 
+	// calculate amount of water picked up from overhanging water
+	float oldHeight = heightFromStack(terrain);
+	float newHeight = heightFromStack(vec4(hard - harderode,soft - softerode,water,0.0));
+	float overhang = max(0.0,max(0.0,limit.r) + (newHeight - oldHeight));
+	float wateroverhang = min(overhang, water);
+	float wateradd = wateroverhang / max(1.0,erosion.r);
+
+
 	// subtract any dropped water and evaporation
-	newParticle.a = max(0.0,newParticle.a - velocity.a - 0.0001); 
+	newParticle.a = max(0.0,newParticle.a + wateradd - velocity.a); 
+	//newParticle.a *= 0.99;
 
 	// check to see if we did any hole-filling and kill particle
 	//if (velocity.a > 0.0)
@@ -417,13 +439,14 @@ void main(void)
 
 	newParticle = particle;
 	//newParticle.a = max(0.0,particle.a - particleDeathRate);	
+	bool die = false;
 
-	if (newParticle.a < 0.0001 && newParticle.z < 0.1)
+	if ((newParticle.a < 0.001 && newParticle.z < 0.1) || die)
 	{
 		newParticle.x = rand(particle.xy + vec2(randSeed) + rand(particle.yx * 641.3));
 		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073) + rand(particle.xy * 363.3));
 		newParticle.z = 0.0;
-		newParticle.w = 0.01;  // TODO: make uniform (particle initial water amount)
+		newParticle.w = 2.5;  // TODO: make uniform (particle initial water amount)
 	}
 
 	out_Particle = newParticle;
