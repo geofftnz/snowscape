@@ -217,7 +217,7 @@ void main(void)
 	float carrying = particle.b;
 
 	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionPotentialModifier * erosionRate * deltatime;
-	float depositAmount = max(carrying - carryingCapacity * 0.8,0.0) * depositRate * deltatime;
+	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
 
 	// return:
 	// R: 1.0: particle count
