@@ -131,8 +131,8 @@ void main(void)
 	float waterdrop = min(holefill,particle.a * 0.9);
 
 	// drop 10% of particle water if we're in water
-	waterdrop += step(0.0,terrain.b) * particle.a * 0.1;
-
+	waterdrop += step(0.0001,terrain.b) * particle.a * 0.05;
+	
 
 	vec2 fall = vec2(cos(limit.b),sin(limit.b));
 
@@ -217,7 +217,7 @@ void main(void)
 	float carrying = particle.b;
 
 	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionPotentialModifier * erosionRate * deltatime;
-	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
+	float depositAmount = max(carrying - carryingCapacity * 0.8,0.0) * depositRate * deltatime;
 
 	// return:
 	// R: 1.0: particle count
@@ -276,7 +276,7 @@ void main(void)
 	//water -= min(water,0.0001);   // reduce water due to evaporation TODO: make uniform
 
 	float maxerosion = limit.r;
-	float maxdeposit = limit.g;
+	float maxdeposit = limit.g + 0.01 + terrain.b*0.5;
 	//float holedepth = limit.a;
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
@@ -373,7 +373,7 @@ void main(void)
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
 
 	float maxerosion = limit.r;
-	float maxdeposit = limit.g;
+	float maxdeposit = limit.g + 0.01 + terrain.b*0.5;
 
 	// calculate erosion from soft - lesser of potential and amount of soft material
 	// clamp amount at erosion limit
@@ -441,12 +441,12 @@ void main(void)
 	//newParticle.a = max(0.0,particle.a - particleDeathRate);	
 	bool die = false;
 
-	if ((newParticle.a < 0.001 && newParticle.z < 0.1) || die)
+	if ((newParticle.a < 0.001 && newParticle.z < 0.01) || die)
 	{
 		newParticle.x = rand(particle.xy + vec2(randSeed) + rand(particle.yx * 641.3));
 		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073) + rand(particle.xy * 363.3));
 		newParticle.z = 0.0;
-		newParticle.w = 2.5;  // TODO: make uniform (particle initial water amount)
+		newParticle.w = 0.5;  // TODO: make uniform (particle initial water amount)
 	}
 
 	out_Particle = newParticle;
