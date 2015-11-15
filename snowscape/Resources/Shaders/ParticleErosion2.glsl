@@ -26,27 +26,42 @@ float sampleGroundHeight(vec2 pos)
 {
 	return dot(texture(terraintex,pos), vec4(1.0,1.0,1.0,0.0));  // hard + soft only
 }
+vec2 sampleGroundWaterHeight(vec2 pos)
+{
+	vec4 h = texture(terraintex,pos);
+	return vec2(
+		dot(h, vec4(1.0,1.0,1.0,0.0)),   // x: hard + soft
+		dot(h, vec4(1.0,1.0,1.0,0.0))
+		);  // y: hard + soft + water
+}
 
 void main(void)
 {
 	vec3 ofs = vec3(0,-t,t);
 
 	// get our current height
-	float h0 = sampleGroundHeight(texcoord);
+	// x=0, y=-1, z=+1
+	vec2 ter_0  = sampleGroundWaterHeight(texcoord);
+	vec2 ter_n  = sampleGroundWaterHeight(texcoord + ofs.xy); 
+	vec2 ter_s  = sampleGroundWaterHeight(texcoord + ofs.xz);
+	vec2 ter_w  = sampleGroundWaterHeight(texcoord + ofs.yx);
+	vec2 ter_e  = sampleGroundWaterHeight(texcoord + ofs.zx);
+	vec2 ter_nw = sampleGroundWaterHeight(texcoord + ofs.yy); 
+	vec2 ter_ne = sampleGroundWaterHeight(texcoord + ofs.zy); 
+	vec2 ter_sw = sampleGroundWaterHeight(texcoord + ofs.yz); 
+	vec2 ter_se = sampleGroundWaterHeight(texcoord + ofs.zz); 
+
 
 	// get neighbouring height differentials - positive is downhill
-	// x=0, y=-1, z=+1
-	float hn  =  h0 - sampleGroundHeight(texcoord + ofs.xy); 
-	float hs  =  h0 - sampleGroundHeight(texcoord + ofs.xz);
-	float hw  =  h0 - sampleGroundHeight(texcoord + ofs.yx);
-	float he  =  h0 - sampleGroundHeight(texcoord + ofs.zx);
-	float hnw = (h0 - sampleGroundHeight(texcoord + ofs.yy)) * diag; 
-	float hne = (h0 - sampleGroundHeight(texcoord + ofs.zy)) * diag; 
-	float hsw = (h0 - sampleGroundHeight(texcoord + ofs.yz)) * diag; 
-	float hse = (h0 - sampleGroundHeight(texcoord + ofs.zz)) * diag; 
-
-	float lowestNeighbourDiff = max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
-	float highestNeighbourDiff = min(min(min(hn,hs),min(hw,he)),min(min(hnw,hne),min(hsw,hse)));
+	// we ignore water when calculating movement direction.
+	float hn  =  ter_0.x - ter_n.x ; 
+	float hs  =  ter_0.x - ter_s.x ;
+	float hw  =  ter_0.x - ter_w.x ;
+	float he  =  ter_0.x - ter_e.x ;
+	float hnw = (ter_0.x - ter_nw.x) * diag; 
+	float hne = (ter_0.x - ter_ne.x) * diag; 
+	float hsw = (ter_0.x - ter_sw.x) * diag; 
+	float hse = (ter_0.x - ter_se.x) * diag; 
 
 	vec2 fall = vec2(0.0);
 
@@ -64,6 +79,19 @@ void main(void)
 	fall += vec2(1,1)   * max(0.0,hse);
 
 	fall = normalize(fall);
+
+	// recalculate differences with water included
+	hn  =  ter_0.y -  ter_n.y ; 
+	hs  =  ter_0.y -  ter_s.y ;
+	hw  =  ter_0.y -  ter_w.y ;
+	he  =  ter_0.y -  ter_e.y ;
+	hnw = (ter_0.y - ter_nw.y) * diag;
+	hne = (ter_0.y - ter_ne.y) * diag;
+	hsw = (ter_0.y - ter_sw.y) * diag;
+	hse = (ter_0.y - ter_se.y) * diag;
+
+	float lowestNeighbourDiff = max(max(max(hn,hs),max(hw,he)),max(max(hnw,hne),max(hsw,hse)));
+	float highestNeighbourDiff = min(min(min(hn,hs),min(hw,he)),min(min(hnw,hne),min(hsw,hse)));
 
 
 	// R: max erosion
@@ -127,29 +155,41 @@ void main(void)
 	// if we're in a hole, we drop some water in it, either to fill the hole or to deplete a percentage of the particle
 	float holefill = limit.a; 
 
-	// drop water up to fill the hole, up to 90% of the amount that the particle is carrying
-	float waterdrop = min(holefill,particle.a * 0.9);
+	// drop water up to fill the hole, up to 50% of the amount that the particle is carrying
+	float waterdrop = min(holefill,particle.a * 0.95);
+	particle.a = max(0.0,particle.a - waterdrop);
 
 	// drop 10% of particle water if we're in water
-	waterdrop += step(0.0001,terrain.b) * particle.a * 0.05;
-	
+	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.5;
+	particle.a = max(0.0,particle.a - waterdrop2);
+
+	// drop some water if we're on flat or near-flat terrain.
+	//float waterdrop3 = (1.0 - smoothstep(0.0,0.001,max(0.0,maxDownhill))) * particle.a * 0.01;
+	//particle.a = max(0.0,particle.a - waterdrop3);
+
+	waterdrop += waterdrop2;
+	//waterdrop += waterdrop3;
 
 	vec2 fall = vec2(cos(limit.b),sin(limit.b));
 
 
 	// calculate velocity of particle due to slope
 	float maxfall = max(0,maxDownhill);
-	float speed = atan(maxfall);
+	float speed = atan(maxfall) / 1.570796326794;
+
+	// reduce speed when we hit standing water
+	//speed /= (1.0 + terrain.b * 10.0);
 
 	float potential = speed / (0.5 + maxfall*maxfall);
 
 	// reduce erosion potential if there is water in our cell
 	// TODO: add factor here, make uniform
-	potential = potential / (1.0 + terrain.b*10.0);
+	//potential = potential / (1.0 + terrain.b*10.0);
 
 	// reduce erosion potential where there is flowing water
 	// TODO: add factor here, make uniform
-	potential = potential / (1.0 + terrain.a*2.0);
+	//potential = potential / (1.0 + terrain.a*2.0);
+
 
 	// if we're filling a hole, we cannot erode
 	//if (holefill > 0.0)
@@ -276,7 +316,7 @@ void main(void)
 	//water -= min(water,0.0001);   // reduce water due to evaporation TODO: make uniform
 
 	float maxerosion = limit.r;
-	float maxdeposit = limit.g + 0.01 + terrain.b*0.5;
+	float maxdeposit = limit.g;// + 0.01 + terrain.b*0.5;
 	//float holedepth = limit.a;
 
 	soft += erosion.b;  // add deposit amount to soft, make available for erosion
@@ -443,8 +483,10 @@ void main(void)
 
 	if ((newParticle.a < 0.001 && newParticle.z < 0.01) || die)
 	{
-		newParticle.x = rand(particle.xy + vec2(randSeed) + rand(particle.yx * 641.3));
-		newParticle.y = rand(particle.yx + vec2(randSeed + 0.073) + rand(particle.xy * 363.3));
+		//newParticle.x = rand(particle.xy * 17.54 + rand(vec2(randSeed) + texcoord.yx * 97.3));
+		//newParticle.y = rand(particle.yx * 93.11 + rand(vec2(randSeed + 0.073) + texcoord.xy * 17.3));
+		newParticle.x = hash(randSeed * hash(particle.x) * hash(texcoord.y));
+		newParticle.y = hash(randSeed * hash(particle.y) * hash(texcoord.x));
 		newParticle.z = 0.0;
 		newParticle.w = 0.5;  // TODO: make uniform (particle initial water amount)
 	}
