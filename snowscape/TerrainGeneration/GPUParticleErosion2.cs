@@ -739,10 +739,8 @@ namespace TerrainGeneration
                         {
                             data[i * 4 + 0] = sr.ReadSingle();
                             data[i * 4 + 1] = sr.ReadSingle();
-                            data[i * 4 + 2] = 0f;
-                            sr.ReadSingle();
-                            data[i * 4 + 3] = 0f;
-                            sr.ReadSingle();
+                            data[i * 4 + 2] = sr.ReadSingle();
+                            data[i * 4 + 3] = sr.ReadSingle();
 
                             float hh = data[i * 4 + 0] + data[i * 4 + 1];
                             this.initialMinHeight = hh < this.initialMinHeight ? hh : this.initialMinHeight;
@@ -775,8 +773,8 @@ namespace TerrainGeneration
                     {
                         sw.Write(data[i * 4 + 0]);
                         sw.Write(data[i * 4 + 1]);
-                        sw.Write(0f);
-                        sw.Write(0f);
+                        sw.Write(data[i * 4 + 2]);
+                        sw.Write(data[i * 4 + 3]);
                     }
                 }
             }
