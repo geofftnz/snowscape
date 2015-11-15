@@ -156,11 +156,11 @@ void main(void)
 	float holefill = limit.a; 
 
 	// drop water up to fill the hole, up to 50% of the amount that the particle is carrying
-	float waterdrop = min(holefill,particle.a * 0.95);
+	float waterdrop = min(holefill,particle.a * 0.5);
 	particle.a = max(0.0,particle.a - waterdrop);
 
 	// drop 10% of particle water if we're in water
-	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.5;
+	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.01;
 	particle.a = max(0.0,particle.a - waterdrop2);
 
 	// drop some water if we're on flat or near-flat terrain.
@@ -257,7 +257,7 @@ void main(void)
 	float carrying = particle.b;
 
 	float erosionPotential = max(carryingCapacity - carrying,0.0) * erosionPotentialModifier * erosionRate * deltatime;
-	float depositAmount = max(carrying - carryingCapacity,0.0) * depositRate * deltatime;
+	float depositAmount = max(carrying - carryingCapacity,0.0);// * depositRate * deltatime;
 
 	// return:
 	// R: 1.0: particle count
@@ -334,7 +334,7 @@ void main(void)
 	float newHeight = heightFromStack(vec4(hard - harderode,soft - softerode,water,0.0));
 	float overhang = max(0.0,max(0.0,limit.r) + (newHeight - oldHeight));
 	float wateroverhang = min(overhang, water);
-	water -= wateroverhang * step(0.0,erosion.r); // only move water if there are particles present
+	water -= wateroverhang * step(0.5,erosion.r); // only move water if there are particles present
 	water += erosion.a; // add water inflowing to this location
 	
 
@@ -472,6 +472,11 @@ out vec4 out_Particle;
 
 #include "noise.glsl"
 
+float hash2(vec2 co)
+{
+	return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
 void main(void)
 {
 	vec4 particle = textureLod(particletex,texcoord,0);
@@ -481,12 +486,14 @@ void main(void)
 	//newParticle.a = max(0.0,particle.a - particleDeathRate);	
 	bool die = false;
 
-	if ((newParticle.a < 0.001 && newParticle.z < 0.01) || die)
+	//die= true;
+
+	if ((newParticle.a < 0.001 && newParticle.z < 1.0) || die)
 	{
 		//newParticle.x = rand(particle.xy * 17.54 + rand(vec2(randSeed) + texcoord.yx * 97.3));
 		//newParticle.y = rand(particle.yx * 93.11 + rand(vec2(randSeed + 0.073) + texcoord.xy * 17.3));
-		newParticle.x = hash(randSeed * hash(particle.x) * hash(texcoord.y));
-		newParticle.y = hash(randSeed * hash(particle.y) * hash(texcoord.x));
+		newParticle.x = fract(198.0 * hash2(texcoord + vec2(randSeed)) * hash(particle.y + randSeed));
+		newParticle.y = fract(336.0 * hash2(texcoord + vec2(randSeed)) * hash(particle.x + randSeed));
 		newParticle.z = 0.0;
 		newParticle.w = 0.5;  // TODO: make uniform (particle initial water amount)
 	}
