@@ -28,6 +28,7 @@ using Snowscape.TerrainRenderer.Renderers.LOD;
 using OpenTKExtensions.Components;
 using OpenTKExtensions.Text;
 using Snowscape.TerrainRenderer.TerrainDetail;
+using OpenTKExtensions.Input;
 
 namespace Snowscape.TerrainGenerationViewer
 {
@@ -115,6 +116,7 @@ namespace Snowscape.TerrainGenerationViewer
 
         private WalkCamera camera;
 
+        private KeyboardActionManager keyboardActions;
         #endregion
 
 
@@ -196,7 +198,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             #region create components
 
-            // phase 1 
+            // phase 1
             this.Components.Add(this.Terrain = new GPUParticleErosion2(TileWidth, TileHeight, TerrainParticleRes, TerrainParticleRes), LoadOrder.Phase1);
 
             this.Components.Add(this.terrainTile = new TerrainTile(TileWidth, TileHeight), LoadOrder.Phase1);
@@ -219,7 +221,7 @@ namespace Snowscape.TerrainGenerationViewer
 
             this.Components.Add(this.font = new Font("main", Resources.FontConsolas, Resources.FontConsolasMeta), LoadOrder.Phase1);
             this.Components.Add(this.camera = new WalkCamera(this.Keyboard, this.Mouse) { LookMode = WalkCamera.LookModeEnum.Mouse1, MovementSpeed = 20f }, LoadOrder.Phase1);
-
+            this.Components.Add(this.keyboardActions = new KeyboardActionManager(), LoadOrder.Phase1);
             // phase 2 (dependencies on phase 1)
 
             this.Components.Add(this.terrainDetailGenerator = new DetailGenerator(DetailRes, DetailRes), LoadOrder.Phase2);
@@ -354,52 +356,29 @@ namespace Snowscape.TerrainGenerationViewer
 
         }
 
-
-        void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
+        void InitKeyboard()
         {
-            if (e.Key == Key.Escape)
-            {
-                this.Close();
-            }
-            if (e.Key == Key.R)
-            {
-                ResetTerrain();
-                ResetCounters();
-            }
-            if (e.Key == Key.T)
-            {
-                this.perfmon.ResetAll();
-            }
-            if (e.Key == Key.P)
-            {
-                this.SwitchPass();
-            }
-            if (e.Key == Key.M)
-            {
-                this.camera.ViewEnable = !this.camera.ViewEnable;
-            }
+            this.keyboardActions.Add(Key.Escape, 0, () => { this.Close(); });
+            this.keyboardActions.Add(Key.R, 0, () => { ResetTerrain(); ResetCounters(); });
+            this.keyboardActions.Add(Key.T, 0, () => { this.perfmon.ResetAll(); });
+            this.keyboardActions.Add(Key.P, 0, () => { this.SwitchPass(); });
+            this.keyboardActions.Add(Key.M, 0, () => { this.camera.ViewEnable = !this.camera.ViewEnable; });
+            this.keyboardActions.Add(Key.Up, 0, () => { this.parameters.CurrentIndex -= 1; });
+            this.keyboardActions.Add(Key.Up, KeyModifiers.Shift, () => { this.parameters.CurrentIndex -= 10; });
+            this.keyboardActions.Add(Key.Down, 0, () => { this.parameters.CurrentIndex += 1; });
+            this.keyboardActions.Add(Key.Down, KeyModifiers.Shift, () => { this.parameters.CurrentIndex += 10; });
 
-            if (e.Key == Key.Up)
-            {
-                this.parameters.CurrentIndex -= (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight]) ? 10 : 1;
-            }
-            if (e.Key == Key.Down)
-            {
-                this.parameters.CurrentIndex += (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight]) ? 10 : 1;
-            }
-
-            if (e.Key == Key.Left)
+            this.keyboardActions.Add(Key.Left, 0, () =>
             {
                 this.parameters.Current.Decrease();
-
                 if (this.parameters.Current.Impacts(ParameterImpact.PreCalcLighting))
                 {
                     currentPrecalcParamsVersion++;
                 }
-
                 currentParamsVersion++;
-            }
-            if (e.Key == Key.Right)
+            });
+
+            this.keyboardActions.Add(Key.Right, 0, () =>
             {
                 this.parameters.Current.Increase();
                 if (this.parameters.Current.Impacts(ParameterImpact.PreCalcLighting))
@@ -407,8 +386,9 @@ namespace Snowscape.TerrainGenerationViewer
                     currentPrecalcParamsVersion++;
                 }
                 currentParamsVersion++;
-            }
-            if (e.Key == Key.PageUp)
+            });
+
+            this.keyboardActions.Add(Key.PageUp, 0, () =>
             {
                 for (int i = 0; i < 10; i++)
                 {
@@ -419,8 +399,9 @@ namespace Snowscape.TerrainGenerationViewer
                     currentPrecalcParamsVersion++;
                 }
                 currentParamsVersion++;
-            }
-            if (e.Key == Key.PageDown)
+            });
+
+            this.keyboardActions.Add(Key.PageDown, 0, () =>
             {
                 for (int i = 0; i < 10; i++)
                 {
@@ -431,42 +412,22 @@ namespace Snowscape.TerrainGenerationViewer
                     currentPrecalcParamsVersion++;
                 }
                 currentParamsVersion++;
-            }
-
-            if (e.Key == Key.LBracket)
-            {
-                if (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight])
-                    this.textureDebugRenderer.ScaleDown();
-                else
-                    this.textureDebugRenderer.PreviousRenderMode();
-            }
-            if (e.Key == Key.RBracket)
-            {
-                if (this.Keyboard[Key.ShiftLeft] || this.Keyboard[Key.ShiftRight])
-                    this.textureDebugRenderer.ScaleUp();
-                else
-                    this.textureDebugRenderer.NextRenderMode();
-            }
+            });
 
 
+            this.keyboardActions.Add(Key.LBracket, 0, () => { this.textureDebugRenderer.PreviousRenderMode(); });
+            this.keyboardActions.Add(Key.LBracket, KeyModifiers.Shift, () => { this.textureDebugRenderer.ScaleDown(); });
+            this.keyboardActions.Add(Key.RBracket, 0, () => { this.textureDebugRenderer.NextRenderMode(); });
+            this.keyboardActions.Add(Key.RBracket, KeyModifiers.Shift, () => { this.textureDebugRenderer.ScaleUp(); });
 
+            this.keyboardActions.Add(Key.Space, 0, () => { this.pauseUpdate = !this.pauseUpdate; });
+            this.keyboardActions.Add(Key.L, 0, () => { this.reloadShaders = true; });
+            this.keyboardActions.Add(Key.F8, 0, () => { this.parameters["debugtextures"].Toggle(); });
+        }
 
-            if (e.Key == Key.Space)
-            {
-                if (pauseUpdate) // currently paused
-                {
-                    this.pauseUpdate = false;
-                }
-                else // currently running
-                {
-                    this.pauseUpdate = true;
-                }
-            }
-
-            if (e.Key == Key.L)
-            {
-                reloadShaders = true;
-            }
+        void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
+        {
+            this.keyboardActions.ProcessKeyDown(e.Key, e.Modifiers);
         }
 
         private void SwitchPass()
@@ -589,6 +550,8 @@ namespace Snowscape.TerrainGenerationViewer
             this.CalculateSunDirection();
 
             this.frameTrackerRenderer.Init();
+
+            this.InitKeyboard();
         }
 
 

@@ -157,5 +157,21 @@ namespace Utils
         {
             throw new NotImplementedException();
         }
+
+
+        public void Toggle()
+        {
+            if (this.Value.CompareTo(this.MinValue) == 0)
+            {
+                this.Increase();
+            }
+            else
+            {
+                this.Decrease();
+            }
+            
+                
+            
+        }
     }
 }

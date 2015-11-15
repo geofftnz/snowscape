@@ -11,5 +11,6 @@ namespace Utils
         object GetValue();
         T GetValue<T>();
         bool Impacts(ParameterImpact impact);
+        void Toggle();
     }
 }

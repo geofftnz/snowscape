@@ -58,6 +58,7 @@
     <Compile Include="FileLoaderTest.cs" />
     <Compile Include="Framework\GameComponentBaseTest.cs" />
     <Compile Include="ImageLoaderTest.cs" />
+    <Compile Include="Input\KeyboardActionManagerTest.cs" />
     <Compile Include="PreprocessorTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FontMetaParserTest.cs" />
