@@ -160,7 +160,7 @@ void main(void)
 	particle.a = max(0.0,particle.a - waterdrop);
 
 	// drop 10% of particle water if we're in water
-	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.01;
+	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.1;
 	particle.a = max(0.0,particle.a - waterdrop2);
 
 	// drop some water if we're on flat or near-flat terrain.
@@ -488,7 +488,7 @@ void main(void)
 
 	//die= true;
 
-	if ((newParticle.a < 0.001 && newParticle.z < 1.0) || die)
+	if ((newParticle.a < 0.001 && newParticle.z < 0.05) || die)
 	{
 		//newParticle.x = rand(particle.xy * 17.54 + rand(vec2(randSeed) + texcoord.yx * 97.3));
 		//newParticle.y = rand(particle.yx * 93.11 + rand(vec2(randSeed + 0.073) + texcoord.xy * 17.3));

@@ -231,6 +231,10 @@ namespace TerrainGeneration
         private GBufferShaderStep SlippageFlowStep = new GBufferShaderStep("erosion-slipflow");
         private GBufferShaderStep SlippageTransportStep = new GBufferShaderStep("erosion-sliptransport");
 
+        // Step 5,6: Slip 
+        private GBufferShaderStep WaterFlowStep = new GBufferShaderStep("erosion-waterflow");
+        private GBufferShaderStep WaterTransportStep = new GBufferShaderStep("erosion-watertransport");
+
         // Copy particles from buffer 1 to buffer 0
         private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("gpupe-copyparticles");
         private GBufferShaderStep CopyVelocityStep = new GBufferShaderStep("gpupe-copyvelocity");
@@ -250,6 +254,8 @@ namespace TerrainGeneration
             yield return SlippageTransportStep;
             yield return CopyParticlesStep;
             yield return CopyVelocityStep;
+            yield return WaterFlowStep;
+            yield return WaterTransportStep;
         }
 
 
@@ -276,13 +282,13 @@ namespace TerrainGeneration
         public void Init()
         {
             // setup parameters
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.9f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.8f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEPOSITRATE, 0.05f, 0.0f, 1.0f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_EROSIONRATE, 0.06f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_HARDFACTOR, 0.01f, 0.0f, 1.0f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DELTATIME, 0.5f, 0.0f, 1.0f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYCAPLOWPASS, 0.0f, 0.0f, 1.0f));
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.05f, 0.0f, 10.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_CARRYSPEED, 0.25f, 0.0f, 10.0f, 0.001f));
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERHEIGHT, 0.00f, 0.0f, 1.0f, 0.001f));
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_WATERDECAY, 0.94f, 0.0f, 1.0f, 0.001f));
@@ -296,7 +302,7 @@ namespace TerrainGeneration
 
             this.Parameters.Add(Parameter<float>.NewLinearParameter(P_DEATHRATE, 0.002f, 0.0f, 0.1f, 0.001f));
 
-            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.02f, 0.0f, 2.0f, 0.001f));
+            this.Parameters.Add(Parameter<float>.NewLinearParameter(P_FALLRAND, 0.1f, 0.0f, 2.0f, 0.001f));
 
             // setup textures
             for (int i = 0; i < 2; i++)
@@ -439,6 +445,15 @@ namespace TerrainGeneration
 
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SlippageTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|Transport");
+
+            // water flow
+            WaterFlowStep.SetOutputTexture(0, "out_SlipO", this.SlipFlowTexture[0]);
+            WaterFlowStep.SetOutputTexture(1, "out_SlipD", this.SlipFlowTexture[1]);
+            WaterFlowStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|WaterOutflow");
+
+            WaterTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            WaterTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|WaterTransport");
+
 
 
             // copy particles
@@ -583,7 +598,7 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
-
+            /*
             // step 5 - slippage flow calc
             // in: terrain
             // out: slip-flow
@@ -622,8 +637,37 @@ namespace TerrainGeneration
                     sp.SetUniform("flowDtex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
                 });
+            */
 
+            // step 7 - water flow calc
+            // in: terrain
+            // out: slip-flow
+            WaterFlowStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
 
+            // step 8 - water transport
+            WaterTransportStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                    this.SlipFlowTexture[0].Bind(TextureUnit.Texture1);
+                    this.SlipFlowTexture[1].Bind(TextureUnit.Texture2);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
+                    sp.SetUniform("flowOtex", 1);
+                    sp.SetUniform("flowDtex", 2);
+                    sp.SetUniform("texsize", (float)this.Width);
+                });
 
 
             CopyParticlesStep.Render(
