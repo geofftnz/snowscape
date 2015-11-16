@@ -253,10 +253,11 @@ namespace TerrainGeneration
             yield return UpdateParticlesStep;
             yield return SlippageFlowStep;
             yield return SlippageTransportStep;
-            yield return CopyParticlesStep;
-            yield return CopyVelocityStep;
             yield return WaterFlowStep;
             yield return WaterTransportStep;
+            yield return CopyParticlesStep;
+            yield return CopyVelocityStep;
+            yield return CopyTerrainStep;
         }
 
 

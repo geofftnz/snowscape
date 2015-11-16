@@ -184,11 +184,11 @@ void main(void)
 
 	// reduce erosion potential if there is water in our cell
 	// TODO: add factor here, make uniform
-	//potential = potential / (1.0 + terrain.b*10.0);
+	potential = potential / (1.0 + terrain.b*10.0);
 
 	// reduce erosion potential where there is flowing water
 	// TODO: add factor here, make uniform
-	//potential = potential / (1.0 + terrain.a*2.0);
+	potential = potential / (1.0 + terrain.a*2.0);
 
 
 	// if we're filling a hole, we cannot erode
@@ -527,7 +527,12 @@ out vec4 out_Terrain;
 
 void main(void)
 {
-	out_Terrain = textureLod(terraintex,texcoord,0);
+	vec4 l = textureLod(terraintex,texcoord,0);
+
+	// evaporation
+	l.b = max(0.0,l.b-0.001);
+
+	out_Terrain = l;
 }
 
 
