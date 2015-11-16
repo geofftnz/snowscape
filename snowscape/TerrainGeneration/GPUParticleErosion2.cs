@@ -498,6 +498,7 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                     sp.SetUniform("fallRand", (float)this.Parameters[P_FALLRAND].GetValue());
                     sp.SetUniform("randSeed", (float)rand.NextDouble());
+                    sp.SetUniform("waterHeightFactor", (float)this.Parameters[P_WATERHEIGHT].GetValue());
                 });
 
             // calculate particle motion and carrying capacity
@@ -574,6 +575,7 @@ namespace TerrainGeneration
                     sp.SetUniform("hardErosionFactor", hardErosionFactor);
                     sp.SetUniform("waterLowpass", (float)this.Parameters[P_WATERDECAY].GetValue());
                     sp.SetUniform("waterDepthFactor", (float)this.Parameters[P_PARTICLEWATERDEPTH].GetValue());
+                    sp.SetUniform("waterHeightFactor", (float)this.Parameters[P_WATERHEIGHT].GetValue());
                 });
 
             // Step 4: Update particle state
@@ -608,6 +610,7 @@ namespace TerrainGeneration
                     sp.SetUniform("erosionRate", erosionRate);
                     sp.SetUniform("hardErosionFactor", hardErosionFactor);
                     sp.SetUniform("texsize", (float)this.Width);
+                    sp.SetUniform("waterHeightFactor", (float)this.Parameters[P_WATERHEIGHT].GetValue());
                 });
 
             

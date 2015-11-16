@@ -4,7 +4,7 @@ float heightFromStack(vec4 terrainSample)
 {
 	//hard + soft + water + dynamic water * wheight
 	//return dot(terrainSample, vec4(1.0,1.0,1.0,waterHeightFactor));
-	return dot(terrainSample, vec4(1.0,1.0,1.0,0.0));
+	return dot(terrainSample, vec4(1.0,1.0,1.0,waterHeightFactor));
 }
 
 //|AnalyseTerrain
@@ -14,6 +14,7 @@ uniform sampler2D terraintex;
 uniform float texsize;
 uniform float fallRand;
 uniform float randSeed;
+uniform float waterHeightFactor;
 in vec2 texcoord;
 out vec4 out_Limits;
 float t = 1.0 / texsize;
@@ -24,15 +25,15 @@ float diag = 0.707;
 
 float sampleGroundHeight(vec2 pos)
 {
-	return dot(texture(terraintex,pos), vec4(1.0,1.0,1.0,0.0));  // hard + soft only
+	return dot(texture(terraintex,pos), vec4(1.0,1.0,1.0,waterHeightFactor));  // hard + soft only
 }
 vec2 sampleGroundWaterHeight(vec2 pos)
 {
 	vec4 h = texture(terraintex,pos);
 	return vec2(
-		dot(h, vec4(1.0,1.0,1.0,0.0)),   // x: hard + soft
+		dot(h, vec4(1.0,1.0,1.0,waterHeightFactor)),   // x: used to calculate fall direction. hard + soft
 		dot(h, vec4(1.0,1.0,1.0,0.0))
-		);  // y: hard + soft + water
+		);  // y: used to set limits. hard + soft + water
 }
 
 void main(void)
@@ -184,11 +185,11 @@ void main(void)
 
 	// reduce erosion potential if there is water in our cell
 	// TODO: add factor here, make uniform
-	potential = potential / (1.0 + terrain.b*10.0);
+	potential = potential / (1.0 + terrain.b*0.2);
 
 	// reduce erosion potential where there is flowing water
 	// TODO: add factor here, make uniform
-	potential = potential / (1.0 + terrain.a*2.0);
+	potential = potential / (1.0 + terrain.a*0.5);
 
 
 	// if we're filling a hole, we cannot erode
@@ -278,6 +279,7 @@ uniform sampler2D limittex;
 uniform float hardErosionFactor;
 uniform float waterLowpass;
 uniform float waterDepthFactor;
+uniform float waterHeightFactor;
 
 in vec2 texcoord;
 out vec4 out_Terrain;
@@ -372,6 +374,7 @@ uniform float depositRate;
 uniform float erosionRate;
 uniform float hardErosionFactor;
 uniform float texsize;
+uniform float waterHeightFactor;
 
 in vec2 texcoord;
 out vec4 out_Particle;
