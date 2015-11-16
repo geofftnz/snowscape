@@ -352,20 +352,21 @@ void main(void)
 
 	float max_fall = max(max(max(diff_n,diff_s),max(diff_w,diff_e)),max(max(diff_nw,diff_ne),max(diff_sw,diff_se)));
 
-	max_fall *= 0.5;  //need to exchange half of difference to equalize
+	max_fall *= 0.95;  //need to exchange half of difference to equalize
 
 	vec4 outflowO = vec4(0);
 	vec4 outflowD = vec4(0);
 
 	if (max_fall > 0.0)
 	{	
-		float water_shift = min(max_fall,l.b);  // can only shift as much water as we have
+		float water_shift = min(max_fall * 0.5,l.b);  // can only shift as much water as we have
+		//max_fall *= 0.99;
 
 		outflowO.r = step(max_fall,diff_n) * water_shift; water_shift = max(0.0,water_shift - outflowO.r); 	 // N
 		outflowO.g = step(max_fall,diff_s) * water_shift; water_shift = max(0.0,water_shift - outflowO.g);	 // S
 		outflowO.b = step(max_fall,diff_w) * water_shift; water_shift = max(0.0,water_shift - outflowO.b);	 // W
 		outflowO.a = step(max_fall,diff_e) * water_shift; water_shift = max(0.0,water_shift - outflowO.a);	 // E
-
+														  
 		outflowD.r = step(max_fall,diff_nw) * water_shift; water_shift = max(0.0,water_shift - outflowD.r);	 // NW
 		outflowD.g = step(max_fall,diff_ne) * water_shift; water_shift = max(0.0,water_shift - outflowD.g);	 // NE
 		outflowD.b = step(max_fall,diff_sw) * water_shift; water_shift = max(0.0,water_shift - outflowD.b);	 // SW

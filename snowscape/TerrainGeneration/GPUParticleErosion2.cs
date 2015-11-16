@@ -238,6 +238,7 @@ namespace TerrainGeneration
         // Copy particles from buffer 1 to buffer 0
         private GBufferShaderStep CopyParticlesStep = new GBufferShaderStep("gpupe-copyparticles");
         private GBufferShaderStep CopyVelocityStep = new GBufferShaderStep("gpupe-copyvelocity");
+        private GBufferShaderStep CopyTerrainStep = new GBufferShaderStep("gpupe-copyterrain");
 
 
         private ParameterCollection parameters = new ParameterCollection();
@@ -437,7 +438,7 @@ namespace TerrainGeneration
             // 
             // Step 6: Slip transport
             // in: L1,flow
-            // out: L0    (avoids L0/L1 switch)
+            // out: L0   
 
             SlippageFlowStep.SetOutputTexture(0, "out_SlipO", this.SlipFlowTexture[0]);
             SlippageFlowStep.SetOutputTexture(1, "out_SlipD", this.SlipFlowTexture[1]);
@@ -446,12 +447,18 @@ namespace TerrainGeneration
             SlippageTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
             SlippageTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|Transport");
 
-            // water flow
+            // Step 5: Water flow
+            // in: L0
+            // out: flow
+            // 
+            // Step 6: Water transport
+            // in: L0,flow
+            // out: L1   
             WaterFlowStep.SetOutputTexture(0, "out_SlipO", this.SlipFlowTexture[0]);
             WaterFlowStep.SetOutputTexture(1, "out_SlipD", this.SlipFlowTexture[1]);
             WaterFlowStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|WaterOutflow");
 
-            WaterTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            WaterTransportStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[1]);
             WaterTransportStep.Init(@"BasicQuad.vert", @"SoftSlip.glsl|WaterTransport");
 
 
@@ -462,6 +469,10 @@ namespace TerrainGeneration
 
             CopyVelocityStep.SetOutputTexture(0, "out_Velocity", this.VelocityTexture[1]);
             CopyVelocityStep.Init(@"BasicQuad.vert", @"ParticleErosion2.glsl|CopyVelocity");
+
+            // L1 -> L0
+            CopyTerrainStep.SetOutputTexture(0, "out_Terrain", this.TerrainTexture[0]);
+            CopyTerrainStep.Init(@"BasicQuad.vert", @"ParticleErosion2.glsl|CopyTerrain");
         }
 
 
@@ -598,10 +609,11 @@ namespace TerrainGeneration
                     sp.SetUniform("texsize", (float)this.Width);
                 });
 
-            /*
+            
             // step 5 - slippage flow calc
             // in: terrain
             // out: slip-flow
+            // L1 -> L0
             SlippageFlowStep.Render(
                 () =>
                 {
@@ -637,15 +649,16 @@ namespace TerrainGeneration
                     sp.SetUniform("flowDtex", 2);
                     sp.SetUniform("texsize", (float)this.Width);
                 });
-            */
+            
 
             // step 7 - water flow calc
             // in: terrain
             // out: slip-flow
+            // L0 -> L1
             WaterFlowStep.Render(
                 () =>
                 {
-                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                 },
                 (sp) =>
                 {
@@ -657,7 +670,7 @@ namespace TerrainGeneration
             WaterTransportStep.Render(
                 () =>
                 {
-                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                    this.TerrainTexture[0].Bind(TextureUnit.Texture0);
                     this.SlipFlowTexture[0].Bind(TextureUnit.Texture1);
                     this.SlipFlowTexture[1].Bind(TextureUnit.Texture2);
                 },
@@ -690,6 +703,16 @@ namespace TerrainGeneration
                 (sp) =>
                 {
                     sp.SetUniform("velocitytex", 0);
+                });
+
+            CopyTerrainStep.Render(
+                () =>
+                {
+                    this.TerrainTexture[1].Bind(TextureUnit.Texture0);
+                },
+                (sp) =>
+                {
+                    sp.SetUniform("terraintex", 0);
                 });
 
         }

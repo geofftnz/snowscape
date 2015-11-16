@@ -516,4 +516,21 @@ void main(void)
 	out_Velocity = textureLod(velocitytex,texcoord,0);
 }
 
+//|CopyTerrain
+#version 140
+precision highp float;
+
+uniform sampler2D terraintex;
+
+in vec2 texcoord;
+out vec4 out_Terrain;
+
+void main(void)
+{
+	out_Terrain = textureLod(terraintex,texcoord,0);
+}
+
+
+
+
 
