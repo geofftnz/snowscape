@@ -255,7 +255,8 @@ void main(void)
 	}
 	else
 	{
-		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance),tileSizeKm * texel,nearAirFactor);
+		// TODO: Move mie2 to parameter
+		c += getTerrainRaymarchScattering(eyePos, dir, sunVector, scatterAbsorb, min(len,nearScatterDistance),tileSizeKm * texel,nearAirFactor,1.0-(1.0-miePhase)*20.0);
 	}
 	
 	//c = mod(pos.xyz, vec3(1.0));

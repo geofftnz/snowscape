@@ -427,14 +427,14 @@ vec3 getRayMarchedScattering(vec3 eye, vec3 dir2, vec3 sunVector, float scatterA
 		
 		
 		float groundHitHard = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.001));
-		float groundHitSoft = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.01));
+		float groundHitSoft = (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.002));
 		
 		// absorb along path
 		vec3 influxAtP = sunAtP * groundHitSoft;
 		
 		// add some light to fake multi-scattering
-		vec3 additionalInflux = absorb(airMassOverSegment*2.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.1)),scatterAbsorb);
-		additionalInflux += absorb(airMassOverSegment*16.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.5)),scatterAbsorb);
+		vec3 additionalInflux = absorb(airMassOverSegment*2.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.004)),scatterAbsorb);
+		additionalInflux += absorb(airMassOverSegment*16.0,sunAtP * Kr * (1.0 - intersectGroundSoft(p, sunVector, groundLevel,0.008)),scatterAbsorb);
 		
 		//col += influxAtP * dist * dt;
 		
@@ -498,7 +498,7 @@ float getCloudDensity(vec3 p)
 const float scattering_stepsize = 0.1;
 
 // scale = size of terrain unit (texel) in km
-vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist, float scale, float nearAirFactor)
+vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scatterAbsorb, float dist, float scale, float nearAirFactor, float miePhase2)
 {
 	vec3 c = vec3(0.0);
 
@@ -508,6 +508,7 @@ vec3 getTerrainRaymarchScattering(vec3 eye, vec3 dir, vec3 sunVector, float scat
 	float ralphase = phase(alpha,rayleighPhase);
 	float ral = ralphase * rayleighBrightness * 0.004 * nearAirFactor;
 	float mie = phase(alpha,miePhase) * mieBrightness  * 0.001 * nearAirFactor; 
+	mie += phase(alpha,miePhase2) * mieBrightness  * 0.001 * nearAirFactor; 
 	float ralSky = mix(phase(dot(dir,vec3(0.0,1.0,0.0)),rayleighPhase),ralphase,0.5) * rayleighBrightness * 0.004 * nearAirFactor;
 	
 	// solar influx to viewer - used as influx for entire ray
