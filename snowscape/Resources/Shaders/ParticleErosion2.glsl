@@ -161,7 +161,8 @@ void main(void)
 	particle.a = max(0.0,particle.a - waterdrop);
 
 	// drop 10% of particle water if we're in water
-	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.1;
+	//float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * particle.a * 0.1;
+	float waterdrop2 = smoothstep(0.0,0.2,terrain.b) * min(particle.a * 0.5,0.01);
 	particle.a = max(0.0,particle.a - waterdrop2);
 
 	// drop some water if we're on flat or near-flat terrain.
