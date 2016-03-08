@@ -284,6 +284,9 @@ namespace Snowscape.TerrainGenerationViewer
             parameters.Add(new Parameter<float>("WhiteLevel", 10.0f, 0.05f, 100.0f, v => v += 0.05f, v => v -= 0.05f));
             parameters.Add(new Parameter<float>("BlackLevel", 0.0f, 0.0f, 100.0f, v => v += 0.01f, v => v -= 0.01f));
 
+            parameters.Add(new Parameter<float>("CameraZNear", 1f, 0.0001f, 100.0f, v => v *= 1.01f, v => v *= .99f));
+            parameters.Add(new Parameter<float>("CameraZDepth", 3999f, 1f, 100000.0f, v => v *= 1.01f, v => v *= .99f));
+            parameters.Add(new Parameter<float>("CameraFOV", 90f, 5.0f, 160.0f, v => v += .1f, v => v -= .1f));
             parameters.Add(new Parameter<float>("CameraDither", 0.001f, 0.0f, 0.01f, v => v += 0.0001f, v => v -= 0.0001f));
 
 
@@ -764,7 +767,13 @@ namespace Snowscape.TerrainGenerationViewer
             textureDebugRenderer.Visible = this.parameters["debugtextures"].GetValue<bool>();
 
             // camera setup
-            (camera as WalkCamera).Maybe(c => c.DitherAmount = this.parameters["CameraDither"].GetValue<float>());
+            (camera as WalkCamera).Maybe(c =>
+            {
+                c.FOV = this.parameters["CameraFOV"].GetValue<float>();
+                c.ZNear = this.parameters["CameraZNear"].GetValue<float>();
+                c.ZFar = this.parameters["CameraZNear"].GetValue<float>() + this.parameters["CameraZDepth"].GetValue<float>();
+                c.DitherAmount = this.parameters["CameraDither"].GetValue<float>();
+            });
 
 
             GL.Finish();

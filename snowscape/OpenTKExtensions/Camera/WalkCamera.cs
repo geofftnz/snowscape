@@ -20,8 +20,52 @@ namespace OpenTKExtensions.Camera
         public int Width { get; set; }
         public int Height { get; set; }
 
-        public float ZNear { get; set; }
-        public float ZFar { get; set; }
+        private bool updateProjectionRequired = true;
+
+        private float zNear = 1f;
+        public float ZNear
+        {
+            get { return zNear; }
+            set
+            {
+                if (zNear != value)
+                    updateProjectionRequired = true;
+
+                zNear = value;
+            }
+        }
+
+        private float zFar = 4000f;
+        public float ZFar
+        {
+            get
+            {
+                return zFar;
+            }
+            set
+            {
+                if (zFar != value)
+                    updateProjectionRequired = true;
+
+                zFar = value;
+            }
+        }
+
+        private float fov = 90f;
+        public float FOV
+        {
+            get
+            {
+                return fov;
+            }
+            set
+            {
+                if (fov != value)
+                    updateProjectionRequired = true;
+
+                fov = value;
+            }
+        }
 
         public bool ViewEnable { get; set; }
 
@@ -29,7 +73,7 @@ namespace OpenTKExtensions.Camera
 
         public enum LookModeEnum
         {
-            Always=0,
+            Always = 0,
             Mouse1,
             Mouse2
         }
@@ -136,8 +180,8 @@ namespace OpenTKExtensions.Camera
             this.AngleUpDown = (float)Math.PI * 0.5f;
             this.AngleLeftRight = (float)Math.PI;
             this.EyeHeight = 1f;
-            this.ZNear = 1.0f;
-            this.ZFar = 4000.0f;
+            //this.ZNear = 1.0f;
+            //this.ZFar = 4000.0f;
             this.MovementSpeed = 5.0f;
 
             this.ViewEnable = true;
@@ -160,7 +204,12 @@ namespace OpenTKExtensions.Camera
             this.Width = ClientWidth;
             this.Height = ClientHeight;
 
-            this.Projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * 0.4f, ClientHeight > 0 ? (float)ClientWidth / (float)ClientHeight : 1.0f, this.ZNear, this.ZFar);
+            UpdateProjection();
+        }
+
+        private void UpdateProjection()
+        {
+            this.Projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI * FOV / 180.0f, this.Height > 0 ? (float)this.Width / (float)this.Height : 1.0f, this.ZNear, this.ZFar);
         }
 
         private bool previousViewMouseButton = false;
@@ -171,7 +220,7 @@ namespace OpenTKExtensions.Camera
             if (time < 0.0001) time = 0.0001;
 
             // mouse look
-            if 
+            if
                 (
                     ViewEnable &&
                     (
@@ -260,10 +309,22 @@ namespace OpenTKExtensions.Camera
             IsMouseMoving = false;
         }
 
+        private Matrix4 projection = Matrix4.Identity;
         public Matrix4 Projection
         {
-            get;
-            private set;
+            get
+            {
+                if (updateProjectionRequired)
+                {
+                    UpdateProjection();
+                }
+                return projection;
+            }
+            private set
+            {
+                projection = value;
+                updateProjectionRequired = false;
+            }
         }
 
         public Matrix4 View
