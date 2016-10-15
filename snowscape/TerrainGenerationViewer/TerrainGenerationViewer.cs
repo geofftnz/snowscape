@@ -486,7 +486,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         void TerrainGenerationViewer_Closed(object sender, EventArgs e)
         {
-            OnClose(this, new CloseEventArgs());
+            if (OnClose != null)
+                OnClose(this, new CloseEventArgs());
         }
 
 

@@ -21,6 +21,17 @@ out vec4 out_Colour;
 
 #include "noise.glsl"
 
+
+// credit: Jim Hejl (EA) https://twitter.com/jimhejl/status/633777619998130176  
+vec3 toneMapFilmic_Hejl2015(vec3 hdr, float whitePt)
+{
+    vec4 vh = vec4(hdr,whitePt);
+    vec4 va = (1.425 * vh) + 0.05;
+    vec4 vf = ((vh * va + 0.004) / ((vh * (va + 0.55) + 0.0491))) - 0.0821;
+    return vf.rgb / vf.www;
+}
+
+
 const vec3 luminance = vec3(0.2126,0.7152,0.0722);
 
 vec4 getSample(vec2 p)
@@ -29,7 +40,7 @@ vec4 getSample(vec2 p)
 
 	// set black level
 	//col.rgb -= vec3(blacklevel);
-	col.rgb = mix(pow(col.rgb,vec3(1.0 + blacklevel)),col.rgb,min(1.0,pow(dot(col,luminance),3.0)));
+	//col.rgb = mix(pow(col.rgb,vec3(1.0 + blacklevel)),col.rgb,min(1.0,pow(dot(col,luminance),3.0)));
 	
 	
 	// apply exposure
@@ -37,7 +48,9 @@ vec4 getSample(vec2 p)
 	col.rgb *= -exposure;
 
 	// reinhard tone map
-	col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
+	//col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
+	col.rgb = toneMapFilmic_Hejl2015(col.rgb,whitelevel);
+	//col.rgb = Uncharted2Tonemap2(col.rgb);
 
 	// gamma correction
 	col = pow(col.rgb,vec3(1.0/2.2));
@@ -72,7 +85,7 @@ void main(void)
 }
 
 
-/*
+
 float A = 0.15;
 float B = 0.50;
 float C = 0.10;
@@ -94,4 +107,3 @@ vec3 Uncharted2Tonemap(vec3 col)
 				(col * (colA + vec3(B)) + vec3(D*F))
 		   ) - vec3(E/F);
 }
-*/
