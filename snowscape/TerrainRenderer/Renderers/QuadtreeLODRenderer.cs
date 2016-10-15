@@ -226,7 +226,7 @@ namespace Snowscape.TerrainRenderer.Renderers
 
         public void Render(TerrainTile tile, TerrainGlobal terrainGlobal, Matrix4 projection, Matrix4 view, Vector3 eye)
         {
-            var xformeye = Vector3.Transform(eye, tile.InverseModelMatrix);
+            Vector3 xformeye = Vector4.Transform(new Vector4(eye, 0.0f), tile.InverseModelMatrix).Xyz;
 
             // construct our top-level quadtree node
             var root = new QuadTreeNode()

@@ -261,7 +261,7 @@ namespace Snowscape.TerrainGenerationViewer
             this.Closed += new EventHandler<EventArgs>(TerrainGenerationViewer_Closed);
             this.Closing += new EventHandler<System.ComponentModel.CancelEventArgs>(TerrainGenerationViewer_Closing);
 
-            this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
+            this.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);            
 
             #region Parameters
             parameters.Add(new Parameter<RenderMode>("RenderMode", RenderMode.Tiles, (RenderMode)0, RenderMode.ENUMMAX - 1, v => v + 1, v => v - 1, v => v.ToString()));
@@ -361,6 +361,8 @@ namespace Snowscape.TerrainGenerationViewer
 
         void InitKeyboard()
         {
+            this.Keyboard.KeyRepeat = true;
+
             this.keyboardActions.Add(Key.Escape, 0, () => { this.Close(); });
             this.keyboardActions.Add(Key.R, 0, () => { ResetTerrain(); ResetCounters(); });
             this.keyboardActions.Add(Key.T, 0, () => { this.perfmon.ResetAll(); });

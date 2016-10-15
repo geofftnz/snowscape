@@ -31,7 +31,7 @@ namespace Snowscape.TerrainRenderer.Renderers
         {
             var boxparam = tile.GetBoxParam();
 
-            Vector3 eyePosTileCoords = Vector3.Transform(eyePos, tile.InverseModelMatrix);
+            Vector3 eyePosTileCoords = Vector4.Transform(new Vector4(eyePos, 0.0f), tile.InverseModelMatrix).Xyz;
 
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Front);  // we only want to render back-faces
