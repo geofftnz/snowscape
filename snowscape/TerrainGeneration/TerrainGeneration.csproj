@@ -35,6 +35,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
     </Reference>
+    <Reference Include="OpenTKExtensions, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\OpenTKExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -56,10 +60,6 @@
     <Compile Include="TerrainGenPass2.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OpenTKExtensions\OpenTKExtensions.csproj">
-      <Project>{DC685AA2-F46C-4525-9855-21CCD138E9D6}</Project>
-      <Name>OpenTKExtensions</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Terrain\Terrain.csproj">
       <Project>{B8883642-EC54-42C3-83C6-CAC66444A5A2}</Project>
       <Name>Terrain</Name>
@@ -76,7 +76,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
-xcopy /s /y "$(SolutionDir)packages\OpenTKWithOpenAL.1.1.1589.5942\NativeBinaries\x86\*.*" "$(TargetDir)"</PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
