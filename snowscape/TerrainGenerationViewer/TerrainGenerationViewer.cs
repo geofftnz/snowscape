@@ -189,7 +189,7 @@ namespace Snowscape.TerrainGenerationViewer
         public event CloseEventHandler OnClose;
 
         public TerrainGenerationViewer()
-            : base(800, 600, new GraphicsMode(new ColorFormat(8, 8, 8, 8), 24, 8), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 3, 1, GraphicsContextFlags.Default)
+            : base(800, 600, new GraphicsMode(new ColorFormat(8, 8, 8, 8), 24, 8), "Snowscape", GameWindowFlags.Default, DisplayDevice.Default, 4, 5, GraphicsContextFlags.ForwardCompatible)
         {
             this.VSync = VSyncMode.Off;
 
