@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTKExtensions;
 using Utils;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTKExtensions.Framework;
 
 namespace Snowscape.TerrainRenderer.Loaders

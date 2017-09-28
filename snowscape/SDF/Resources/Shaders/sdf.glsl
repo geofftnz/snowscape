@@ -37,6 +37,8 @@ out vec4 out_Col;
 const float MAXDIST = 1000.0;
 
 #define HYBRID_RAYMARCH 1
+#define FOG_ENABLE 1
+
 
 
 vec3 randDir(float randseed)
@@ -466,12 +468,12 @@ vec3 intersectScene(vec3 ro, vec3 rd)
 	float t=0.0;
 	vec2 pdist = vec2(MAXDIST,-1.0);
 	vec3 res = vec3(pdist,0.0);
-	float epsilon = 0.00005; // tolerable error
+	float epsilon = 0.0001; // tolerable error
 
 	// check to see if we're inside the scene and bail out if we are.
 	if (de(ro).x < 0.0) return res;
 
-	for(int i=0;i<150.0;i++)
+	for(int i=0;i<50.0;i++)
 	{
 		res.z = i;
 		vec3 p = ro + rd * t;  // position along ray
@@ -630,7 +632,7 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 	vec3 col = vec3(0.0);
 	//vec3 light_dir = normalize(vec3(0.3,0.5 + sin(iGlobalTime*0.2) * 0.3 ,0.7+ sin(iGlobalTime*0.3) * 0.1));
 	vec3 light_dir = normalize(vec3(0.3,0.5 + sin(0.5) * 0.3 ,0.7+ sin(0.3) * 0.1));
-	vec3 light_col = vec3(5.0);
+	vec3 light_col = vec3(20.0);
 
 	vec3 scene_hit = intersectScene(ro,rd);
 
@@ -654,6 +656,8 @@ vec4 shadeScene(vec3 ro, vec3 rd)
 		col += diffuse * light_col * (clamp(dot(normal,light_dir),0.0,1.0)) * light1;
 
 		// multi-bounce diffuse
+		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,light_col,1.0);
+		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,light_col,1.0);
 		col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,light_col,1.0);
 		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),2.0) * 0.25;
 		//col += diffuseBounceOutdoorParallel(pos,ro,rd,normal,light_dir,vec3(1.0),3.0) * 0.25;
@@ -753,15 +757,15 @@ void main()
 
 	
 	// fog
-	float fog = 1.0 / max(1.0,exp(dist * 0.01));
+	float fog = 1.0 / max(1.0,exp(dist * 0.5));
 	
-	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.3,0.27,0.25), col, fog);
+	if (dist<MAXDIST && (showTraceDepth<0.5))	col = mix(vec3(0.0,0.0,0.0), col, fog);   //vec3(0.3,0.27,0.25)
 
 	// Reinhardt tone map
-	//float whitelevel = 4.0;
-	//col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
+	float whitelevel = 4.0;
+	col.rgb = (col.rgb  * (vec3(1.0) + (col.rgb / (whitelevel * whitelevel))  ) ) / (vec3(1.0) + col.rgb);
 
-	//col = pow(col, vec3(1.0/2.2));  // gamma
+	col = pow(col, vec3(1.0/2.2));  // gamma
 
 	//todo: tonemap
 	out_Col = vec4(col,1.0);

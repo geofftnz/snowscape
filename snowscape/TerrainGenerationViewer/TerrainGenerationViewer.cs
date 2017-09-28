@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTKExtensions;
 using Utils;
 using TerrainGeneration;

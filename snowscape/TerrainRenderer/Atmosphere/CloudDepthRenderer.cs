@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTKExtensions;
 using OpenTK;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using Utils;
 
 namespace Snowscape.TerrainRenderer.Atmosphere

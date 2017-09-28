@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OpenTK;
+using OpenTK.Graphics.OpenGL4;
 using OpenTKExtensions;
-using OpenTK.Graphics.OpenGL;
 using System.IO;
 using Utils;
 using OpenTKExtensions.Framework;
@@ -136,6 +136,13 @@ namespace TerrainGeneration
             this.ParticleTexHeight = particleTexHeight;
 
             this.Loading += GPUParticleErosion2_Loading;
+            this.Unloading += GPUParticleErosion2_Unloading;
+        }
+
+        private void GPUParticleErosion2_Unloading(object sender, EventArgs e)
+        {
+            foreach (var t in this.Textures())
+                t.Unload();
         }
 
         void GPUParticleErosion2_Loading(object sender, EventArgs e)
@@ -751,12 +758,12 @@ namespace TerrainGeneration
 
             this.ParticleIndexVBO.SetData(index);
         }
-
+        /*
         public void Unload()
         {
             foreach (var t in this.Textures())
                 t.Unload();
-        }
+        }*/
 
 
         private void UploadTerrain(float[] data)

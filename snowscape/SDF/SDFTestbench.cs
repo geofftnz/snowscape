@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using OpenTKExtensions;
 using OpenTKExtensions.Framework;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Graphics;
 using System.Threading;
 using OpenTKExtensions.Text;
@@ -61,7 +61,7 @@ namespace SDF
 
             Components.Add(font = new Font("Resources/consolab.ttf_sdf_512.png", "Resources/consolab.ttf_sdf_512.txt"));
             Components.Add(textManager = new TextManager("main", font) { AutoTransform = true });
-            Components.Add(frameCounter = new FrameCounter());
+            Components.Add(frameCounter = new FrameCounter(font));
             Components.Add(camera = new WalkCamera(this.Keyboard, this.Mouse) { MovementSpeed = 10.0f, Position = new Vector3(0f,1f,0f), LookMode = WalkCamera.LookModeEnum.Mouse1});
             Components.Add(sdfRenderer = new SDFRenderer() { Camera = camera });
 
