@@ -6,6 +6,7 @@ using OpenTKExtensions;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using Utils;
+using OpenTKExtensions.Resources.Old;
 
 namespace Snowscape.TerrainRenderer.Mesh
 {

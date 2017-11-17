@@ -8,6 +8,7 @@ using OpenTKExtensions;
 using System.IO;
 using Utils;
 using OpenTKExtensions.Framework;
+using OpenTKExtensions.Resources.Old;
 
 namespace TerrainGeneration
 {
