@@ -16,6 +16,7 @@ using OpenTK.Input;
 using System.Diagnostics;
 using System.IO;
 using Utils;
+using OpenTKExtensions.Resources;
 
 namespace SDF
 {
